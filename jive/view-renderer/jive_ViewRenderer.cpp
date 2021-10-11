@@ -1,4 +1,6 @@
-#include "jive.h"
+#include "jive_ViewRenderer.h"
 
 //======================================================================================================================
-#include "view-renderer/jive_ViewRenderer.cpp"
+namespace jive
+{
+} // namespace jive
