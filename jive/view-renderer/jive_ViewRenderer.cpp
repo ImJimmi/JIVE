@@ -14,6 +14,8 @@ namespace jive
     {
         if (treeHasMatchingTypeIgnoringCase(sourceTree, "ToggleButton"))
             return std::make_unique<juce::ToggleButton>();
+        if (treeHasMatchingTypeIgnoringCase(sourceTree, "TextButton"))
+            return std::make_unique<juce::TextButton>();
 
         return nullptr;
     }

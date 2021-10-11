@@ -15,6 +15,7 @@ public:
     {
         testEmptyTree();
         testTreeWithToggleButtonType();
+        testTreeWithTextButtonType();
     }
 
 private:
@@ -38,6 +39,17 @@ private:
 
         const auto view = renderer.createView(juce::ValueTree{ "ToggleButton" });
         expect(dynamic_cast<juce::ToggleButton*>(view.get()) != nullptr);
+    }
+
+    void testTreeWithTextButtonType()
+    {
+        beginTest("Rendering a view from a value tree with a type of 'TextButton' should return a "
+                  "juce::TextButton");
+
+        jive::ViewRenderer renderer;
+
+        const auto view = renderer.createView(juce::ValueTree{ "TextButton" });
+        expect(dynamic_cast<juce::TextButton*>(view.get()) != nullptr);
     }
 };
 
