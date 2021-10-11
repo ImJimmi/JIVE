@@ -5,12 +5,14 @@ juce_add_console_app(jive-test-runner
 target_sources(jive-test-runner
 PRIVATE
     source/main.cpp
+
+    source/view-renderer/test_ViewRenderer.cpp
 )
 
 target_link_libraries(jive-test-runner
 PRIVATE
-    juce::juce_core
     jive::jive
+    juce::juce_gui_basics
 )
 
 target_include_directories(jive-test-runner
