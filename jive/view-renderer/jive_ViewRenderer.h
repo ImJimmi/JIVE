@@ -10,19 +10,28 @@ namespace jive
     {
     public:
         //==============================================================================================================
-        ViewRenderer() = default;
+        using ComponentCreator = std::function<std::unique_ptr<juce::Component>()>;
 
         //==============================================================================================================
-        juce::Component* createView(juce::ValueTree tree);
+        ViewRenderer();
+
+        //==============================================================================================================
+        void setComponentCreator (const juce::String& customComponentType, ComponentCreator creator);
+        void resetComponentCreators();
+
+        //==============================================================================================================
+        juce::Component& renderView(juce::ValueTree tree);
 
     private:
         //==============================================================================================================
-        juce::Component* createAndAddComponent(juce::ValueTree tree);
+        juce::Component& addComponent(juce::ValueTree tree);
 
-        void applyProperties(juce::ValueTree tree, juce::Component& component);
+        std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
+        void applyProperties(juce::ValueTree tree, juce::Component& component) const;
         void createAndAddChildren(juce::ValueTree tree, juce::Component& component);
 
         //==============================================================================================================
+        juce::HashMap<juce::String, ComponentCreator> componentCreators;
         juce::OwnedArray<juce::Component> components;
 
         //==============================================================================================================
