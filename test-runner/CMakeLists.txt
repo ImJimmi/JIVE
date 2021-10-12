@@ -6,7 +6,7 @@ target_sources(jive-test-runner
 PRIVATE
     source/main.cpp
 
-    source/view-renderer/test_ViewRenderer.cpp
+    source/tests/test_ViewRenderer.cpp
 )
 
 target_link_libraries(jive-test-runner

@@ -10,14 +10,14 @@ namespace jive
     }
 
     //==================================================================================================================
-    juce::Component& ViewRenderer::renderView(juce::ValueTree tree)
+    GuiItem& ViewRenderer::renderView(juce::ValueTree tree)
     {
-        auto& component = addComponent(tree);
+        auto& guiItem = addGuiItem(tree);
 
-        applyProperties(tree, component);
-        createAndAddChildren(tree, component);
+        applyProperties(tree, guiItem);
+        createAndAddChildren(tree, guiItem);
 
-        return component;
+        return guiItem;
     }
 
     //==================================================================================================================
@@ -40,14 +40,14 @@ namespace jive
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
 
-    juce::Component& ViewRenderer::addComponent(juce::ValueTree tree)
+    GuiItem& ViewRenderer::addGuiItem(juce::ValueTree tree)
     {
         if (auto component = createComponent(tree))
-            return *components.add(std::move(component));
+            return *guiItems.add(std::make_unique<GuiItem>(std::move(component)));
 
         // Failed to create a component for the given tree.
         jassertfalse;
-        return *components[0];
+        return *guiItems[0];
     }
 
     std::unique_ptr<juce::Component> ViewRenderer::createComponent(juce::ValueTree tree) const
@@ -65,17 +65,21 @@ namespace jive
         return nullptr;
     }
 
-    void ViewRenderer::applyProperties(juce::ValueTree tree, juce::Component& component) const
+    void ViewRenderer::applyProperties(juce::ValueTree tree, GuiItem& guiItem) const
     {
-        component.setComponentID(tree["id"]);
+        const auto id = tree["id"].toString();
+        guiItem.getComponent().setComponentID(id);
+
+        const auto display = juce::VariantConverter<GuiItem::Display>::fromVar(tree["display"]);
+        guiItem.setDisplay(display);
     }
 
-    void ViewRenderer::createAndAddChildren(juce::ValueTree tree, juce::Component& component)
+    void ViewRenderer::createAndAddChildren(juce::ValueTree tree, GuiItem& guiItem)
     {
         for (const auto& childTree : tree)
         {
             auto& childComponent = renderView(childTree);
-            component.addChildComponent(childComponent);
+            guiItem.getComponent().addChildComponent(childComponent.getComponent());
         }
     }
 } // namespace jive

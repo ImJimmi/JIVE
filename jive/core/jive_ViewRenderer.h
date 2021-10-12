@@ -1,5 +1,7 @@
 #pragma once
 
+#include "jive_GuiItem.h"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //======================================================================================================================
@@ -20,19 +22,19 @@ namespace jive
         void resetComponentCreators();
 
         //==============================================================================================================
-        juce::Component& renderView(juce::ValueTree tree);
+        GuiItem& renderView(juce::ValueTree tree);
 
     private:
         //==============================================================================================================
-        juce::Component& addComponent(juce::ValueTree tree);
+        GuiItem& addGuiItem(juce::ValueTree tree);
 
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
-        void applyProperties(juce::ValueTree tree, juce::Component& component) const;
-        void createAndAddChildren(juce::ValueTree tree, juce::Component& component);
+        void applyProperties(juce::ValueTree tree, GuiItem& guiItem) const;
+        void createAndAddChildren(juce::ValueTree tree, GuiItem& guiItem);
 
         //==============================================================================================================
         juce::HashMap<juce::String, ComponentCreator> componentCreators;
-        juce::OwnedArray<juce::Component> components;
+        juce::OwnedArray<GuiItem> guiItems;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ViewRenderer)

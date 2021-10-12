@@ -18,6 +18,7 @@ public:
         testTreeWithID();
         testNestedComponents();
         testCustomComponents();
+        testDisplayOption();
     }
 
 private:
@@ -29,8 +30,8 @@ private:
 
         jive::ViewRenderer renderer;
 
-        const auto& view = renderer.renderView(juce::ValueTree{ "ToggleButton" });
-        expect(dynamic_cast<const juce::ToggleButton*>(&view) != nullptr);
+        const auto& guiItem = renderer.renderView(juce::ValueTree{ "ToggleButton" });
+        expect(dynamic_cast<const juce::ToggleButton*>(&guiItem.getComponent()) != nullptr);
     }
 
     void testTreeWithTextButtonType()
@@ -40,8 +41,8 @@ private:
 
         jive::ViewRenderer renderer;
 
-        const auto& view = renderer.renderView(juce::ValueTree{ "TextButton" });
-        expect(dynamic_cast<const juce::TextButton*>(&view) != nullptr);
+        const auto& guiItem = renderer.renderView(juce::ValueTree{ "TextButton" });
+        expect(dynamic_cast<const juce::TextButton*>(&guiItem.getComponent()) != nullptr);
     }
 
     void testTreeWithID()
@@ -54,8 +55,8 @@ private:
 
             juce::ValueTree tree{ "ToggleButton" };
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getComponentID(), juce::String{});
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getComponentID(), juce::String{});
         }
 
         {
@@ -65,8 +66,8 @@ private:
             juce::ValueTree tree{ "ToggleButton" };
             tree.setProperty("id", "123", nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getComponentID(), juce::String{ "123" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "123" });
         }
 
         {
@@ -76,8 +77,8 @@ private:
             juce::ValueTree tree{ "ToggleButton" };
             tree.setProperty("id", "567", nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getComponentID(), juce::String{ "567" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "567" });
         }
 
         {
@@ -87,8 +88,8 @@ private:
             juce::ValueTree tree{ "TextButton" };
             tree.setProperty("id", "987", nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getComponentID(), juce::String{ "987" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "987" });
         }
 
         {
@@ -98,8 +99,8 @@ private:
             juce::ValueTree tree{ "TextButton" };
             tree.setProperty("id", "543", nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getComponentID(), juce::String{ "543" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "543" });
         }
     }
 
@@ -113,8 +114,8 @@ private:
 
             juce::ValueTree tree{ "TextButton" };
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getNumChildComponents(), 0);
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getNumChildComponents(), 0);
         }
 
         {
@@ -127,9 +128,9 @@ private:
             nestedTree.setProperty("id", "123", nullptr);
             tree.appendChild(nestedTree, nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getNumChildComponents(), 1);
-            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "123" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getNumChildComponents(), 1);
+            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "123" });
         }
 
         {
@@ -147,10 +148,10 @@ private:
             nestedTree2.setProperty("id", "789", nullptr);
             tree.appendChild(nestedTree2, nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getNumChildComponents(), 2);
-            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "345" });
-            expectEquals(view.getChildComponent(1)->getComponentID(), juce::String{ "789" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getNumChildComponents(), 2);
+            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "345" });
+            expectEquals(guiItem.getComponent().getChildComponent(1)->getComponentID(), juce::String{ "789" });
         }
 
         {
@@ -169,11 +170,11 @@ private:
             nestedTree2.setProperty("id", "432", nullptr);
             nestedTree1.appendChild(nestedTree2, nullptr);
 
-            const auto& view = renderer.renderView(tree);
-            expectEquals(view.getNumChildComponents(), 1);
-            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "285" });
-            expectEquals(view.getChildComponent(0)->getNumChildComponents(), 1);
-            expectEquals(view.getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
+            const auto& guiItem = renderer.renderView(tree);
+            expectEquals(guiItem.getComponent().getNumChildComponents(), 1);
+            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "285" });
+            expectEquals(guiItem.getComponent().getChildComponent(0)->getNumChildComponents(), 1);
+            expectEquals(guiItem.getComponent().getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
         }
     }
 
@@ -192,8 +193,8 @@ private:
 
             juce::ValueTree tree{ "MyCustomComponent" };
 
-            const auto& view = renderer.renderView(tree);
-            expect(dynamic_cast<const MyCustomComponent*>(&view) != nullptr);
+            const auto& guiItem = renderer.renderView(tree);
+            expect(dynamic_cast<const MyCustomComponent*>(&guiItem.getComponent()) != nullptr);
         }
 
         {
@@ -207,8 +208,8 @@ private:
 
             juce::ValueTree tree{ "ToggleButton" };
 
-            const auto& view = renderer.renderView(tree);
-            expect(dynamic_cast<const NotAToggleButton*>(&view) != nullptr);
+            const auto& guiItem = renderer.renderView(tree);
+            expect(dynamic_cast<const NotAToggleButton*>(&guiItem.getComponent()) != nullptr);
         }
 
         {
@@ -222,8 +223,39 @@ private:
 
             juce::ValueTree tree{ "ToggleButton" };
 
-            const auto& view = renderer.renderView(tree);
-            expect(dynamic_cast<const juce::ToggleButton*>(&view) != nullptr);
+            const auto& guiItem = renderer.renderView(tree);
+            expect(dynamic_cast<const juce::ToggleButton*>(&guiItem.getComponent()) != nullptr);
+        }
+    }
+
+    void testDisplayOption()
+    {
+        jive::ViewRenderer renderer;
+
+        {
+            beginTest("Rendering a view from a value tree with no properties set returns a GUI item with its display "
+                      "property set to 'flex'");
+
+            juce::ValueTree tree{ "ToggleButton" };
+            tree.setProperty("display",
+                             juce::VariantConverter<jive::GuiItem::Display>::toVar (jive::GuiItem::Display::flex),
+                             nullptr);
+
+            const auto& guiItem = renderer.renderView(tree);
+            expect(guiItem.getDisplay() == jive::GuiItem::Display::flex);
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with its 'display' property set to 'grid' returns a GUI item "
+                      "with its display property set to 'grid'");
+
+            juce::ValueTree tree{ "TextButton" };
+            tree.setProperty("display",
+                             juce::VariantConverter<jive::GuiItem::Display>::toVar (jive::GuiItem::Display::grid),
+                             nullptr);
+
+            const auto& guiItem = renderer.renderView(tree);
+            expect(guiItem.getDisplay() == jive::GuiItem::Display::grid);
         }
     }
 };

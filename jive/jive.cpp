@@ -1,4 +1,5 @@
 #include "jive.h"
 
 //======================================================================================================================
-#include "view-renderer/jive_ViewRenderer.cpp"
+#include "core/jive_GuiItem.cpp"
+#include "core/jive_ViewRenderer.cpp"

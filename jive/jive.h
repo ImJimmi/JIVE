@@ -14,4 +14,6 @@ END_JUCE_MODULE_DECLARATION */
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //======================================================================================================================
-#include "view-renderer/jive_ViewRenderer.h"
+#include "core/jive_GuiItem.h"
+#include "core/jive_VariantConverters.h"
+#include "core/jive_ViewRenderer.h"
