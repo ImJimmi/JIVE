@@ -17,6 +17,7 @@ public:
         testTreeWithToggleButtonType();
         testTreeWithTextButtonType();
         testTreeWithID();
+        testNestedComponents();
     }
 
 private:
@@ -39,7 +40,7 @@ private:
         jive::ViewRenderer renderer;
 
         const auto view = renderer.createView(juce::ValueTree{ "ToggleButton" });
-        expect(dynamic_cast<juce::ToggleButton*>(view.get()) != nullptr);
+        expect(dynamic_cast<juce::ToggleButton*>(view) != nullptr);
     }
 
     void testTreeWithTextButtonType()
@@ -50,7 +51,7 @@ private:
         jive::ViewRenderer renderer;
 
         const auto view = renderer.createView(juce::ValueTree{ "TextButton" });
-        expect(dynamic_cast<juce::TextButton*>(view.get()) != nullptr);
+        expect(dynamic_cast<juce::TextButton*>(view) != nullptr);
     }
 
     void testTreeWithID()
@@ -109,6 +110,80 @@ private:
 
             const auto view = renderer.createView(tree);
             expectEquals(view->getComponentID(), juce::String{ "543" });
+        }
+    }
+
+    void testNestedComponents()
+    {
+        jive::ViewRenderer renderer;
+
+        {
+            beginTest("Rendering a view from a valid value tree with no children should return a component with no "
+                      "children");
+
+            juce::ValueTree tree{ "TextButton" };
+
+            const auto view = renderer.createView(tree);
+            expectEquals(view->getNumChildComponents(), 0);
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'TextButton' and a single child node with a "
+                      "type of 'ToggleButton' and and id of '123' should return a component with a single child with "
+                      "an ID of '123'");
+
+            juce::ValueTree tree{ "TextButton" };
+            juce::ValueTree nestedTree{ "ToggleButton" };
+            nestedTree.setProperty("id", "123", nullptr);
+            tree.appendChild(nestedTree, nullptr);
+
+            const auto view = renderer.createView(tree);
+            expectEquals(view->getNumChildComponents(), 1);
+            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "123" });
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' and two child nodes each with "
+                      "a type of 'TextButton', one with an id of '345' and the other with an id of '789' should return "
+                      "a component with two children with the IDs '345' and '789'");
+
+            juce::ValueTree tree{ "ToggleButton" };
+
+            juce::ValueTree nestedTree1{ "TextButton" };
+            nestedTree1.setProperty("id", "345", nullptr);
+            tree.appendChild(nestedTree1, nullptr);
+
+            juce::ValueTree nestedTree2{ "TextButton" };
+            nestedTree2.setProperty("id", "789", nullptr);
+            tree.appendChild(nestedTree2, nullptr);
+
+            const auto view = renderer.createView(tree);
+            expectEquals(view->getNumChildComponents(), 2);
+            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "345" });
+            expectEquals(view->getChildComponent(1)->getComponentID(), juce::String{ "789" });
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' with a single child with a "
+                      "type of 'TextButton' with an id of '285' and a single child with a type of 'ToggleButton' with "
+                      "an id of '432' should return a component with a single child with an ID of '285' which has a "
+                      "single child with an ID of '432'");
+
+            juce::ValueTree tree{ "ToggleButton" };
+
+            juce::ValueTree nestedTree1{ "TextButton" };
+            nestedTree1.setProperty("id", "285", nullptr);
+            tree.appendChild(nestedTree1, nullptr);
+
+            juce::ValueTree nestedTree2{ "ToggleButton" };
+            nestedTree2.setProperty("id", "432", nullptr);
+            nestedTree1.appendChild(nestedTree2, nullptr);
+
+            const auto view = renderer.createView(tree);
+            expectEquals(view->getNumChildComponents(), 1);
+            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "285" });
+            expectEquals(view->getChildComponent(0)->getNumChildComponents(), 1);
+            expectEquals(view->getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
         }
     }
 };
