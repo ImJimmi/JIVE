@@ -4,7 +4,21 @@
 namespace jive
 {
     //==================================================================================================================
-    bool treeHasMatchingTypeIgnoringCase (const juce::ValueTree& tree, const juce::String& expectedType)
+    juce::Component* ViewRenderer::createView(juce::ValueTree tree)
+    {
+        if (auto* component = createAndAddComponent(tree))
+        {
+            applyProperties(tree, *component);
+            createAndAddChildren(tree, *component);
+
+            return component;
+        }
+
+        return nullptr;
+    }
+
+    //==================================================================================================================
+    bool treeHasMatchingTypeIgnoringCase(const juce::ValueTree& tree, const juce::String& expectedType)
     {
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
@@ -20,15 +34,25 @@ namespace jive
         return nullptr;
     }
 
-    std::unique_ptr<juce::Component> ViewRenderer::createView(juce::ValueTree sourceTree) const
+    juce::Component* ViewRenderer::createAndAddComponent(juce::ValueTree tree)
     {
-        auto component = createComponentForJiveTree(sourceTree);
+        if (auto component = createComponentForJiveTree(tree))
+            return components.add(std::move(component));
 
-        if (component != nullptr)
+        return nullptr;
+    }
+
+    void ViewRenderer::applyProperties(juce::ValueTree tree, juce::Component& component)
+    {
+        component.setComponentID(tree["id"]);
+    }
+
+    void ViewRenderer::createAndAddChildren(juce::ValueTree tree, juce::Component& component)
+    {
+        for (const auto& childTree : tree)
         {
-            component->setComponentID(sourceTree["id"]);
+            if (auto childComponent = createView(childTree))
+                component.addChildComponent(childComponent);
         }
-
-        return component;
     }
 } // namespace jive

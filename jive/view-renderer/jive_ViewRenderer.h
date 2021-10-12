@@ -13,9 +13,18 @@ namespace jive
         ViewRenderer() = default;
 
         //==============================================================================================================
-        std::unique_ptr<juce::Component> createView(juce::ValueTree sourceTree) const;
+        juce::Component* createView(juce::ValueTree tree);
 
     private:
+        //==============================================================================================================
+        juce::Component* createAndAddComponent(juce::ValueTree tree);
+
+        void applyProperties(juce::ValueTree tree, juce::Component& component);
+        void createAndAddChildren(juce::ValueTree tree, juce::Component& component);
+
+        //==============================================================================================================
+        juce::OwnedArray<juce::Component> components;
+
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ViewRenderer)
     };
