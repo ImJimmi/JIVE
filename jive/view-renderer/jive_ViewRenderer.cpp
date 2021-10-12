@@ -4,17 +4,34 @@
 namespace jive
 {
     //==================================================================================================================
-    juce::Component* ViewRenderer::createView(juce::ValueTree tree)
+    ViewRenderer::ViewRenderer()
     {
-        if (auto* component = createAndAddComponent(tree))
-        {
-            applyProperties(tree, *component);
-            createAndAddChildren(tree, *component);
+        resetComponentCreators();
+    }
 
-            return component;
-        }
+    //==================================================================================================================
+    juce::Component& ViewRenderer::renderView(juce::ValueTree tree)
+    {
+        auto& component = addComponent(tree);
 
-        return nullptr;
+        applyProperties(tree, component);
+        createAndAddChildren(tree, component);
+
+        return component;
+    }
+
+    //==================================================================================================================
+    void ViewRenderer::setComponentCreator (const juce::String& customComponentType, ComponentCreator creator)
+    {
+        componentCreators.set(customComponentType, creator);
+    }
+
+    void ViewRenderer::resetComponentCreators()
+    {
+        componentCreators.clear();
+
+        setComponentCreator("TextButton", []() { return std::make_unique<juce::TextButton>(); });
+        setComponentCreator("ToggleButton", []() { return std::make_unique<juce::ToggleButton>(); });
     }
 
     //==================================================================================================================
@@ -23,26 +40,32 @@ namespace jive
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
 
-    std::unique_ptr<juce::Component> createComponentForJiveTree(const juce::ValueTree& tree)
+    juce::Component& ViewRenderer::addComponent(juce::ValueTree tree)
     {
-        if (treeHasMatchingTypeIgnoringCase(tree, "ToggleButton"))
-            return std::make_unique<juce::ToggleButton>();
+        if (auto component = createComponent(tree))
+            return *components.add(std::move(component));
 
-        if (treeHasMatchingTypeIgnoringCase(tree, "TextButton"))
-            return std::make_unique<juce::TextButton>();
+        // Failed to create a component for the given tree.
+        jassertfalse;
+        return *components[0];
+    }
 
+    std::unique_ptr<juce::Component> ViewRenderer::createComponent(juce::ValueTree tree) const
+    {
+        const auto treeType = tree.getType().toString();
+
+        if (componentCreators.contains(treeType))
+        {
+            const auto creator = componentCreators[treeType];
+            return creator();
+        }
+
+        // No creator for the given ValueTree's type.
+        jassertfalse;
         return nullptr;
     }
 
-    juce::Component* ViewRenderer::createAndAddComponent(juce::ValueTree tree)
-    {
-        if (auto component = createComponentForJiveTree(tree))
-            return components.add(std::move(component));
-
-        return nullptr;
-    }
-
-    void ViewRenderer::applyProperties(juce::ValueTree tree, juce::Component& component)
+    void ViewRenderer::applyProperties(juce::ValueTree tree, juce::Component& component) const
     {
         component.setComponentID(tree["id"]);
     }
@@ -51,8 +74,8 @@ namespace jive
     {
         for (const auto& childTree : tree)
         {
-            if (auto childComponent = createView(childTree))
-                component.addChildComponent(childComponent);
+            auto& childComponent = renderView(childTree);
+            component.addChildComponent(childComponent);
         }
     }
 } // namespace jive

@@ -13,25 +13,15 @@ public:
     //==================================================================================================================
     void runTest() final
     {
-        testEmptyTree();
         testTreeWithToggleButtonType();
         testTreeWithTextButtonType();
         testTreeWithID();
         testNestedComponents();
+        testCustomComponents();
     }
 
 private:
     //==================================================================================================================
-    void testEmptyTree()
-    {
-        beginTest("Rendering a view from an empty value tree should return a nullptr");
-
-        jive::ViewRenderer renderer;
-
-        const auto view = renderer.createView({});
-        expect(view == nullptr);
-    }
-
     void testTreeWithToggleButtonType()
     {
         beginTest("Rendering a view from a value tree with a type of 'ToggleButton' should return a "
@@ -39,8 +29,8 @@ private:
 
         jive::ViewRenderer renderer;
 
-        const auto view = renderer.createView(juce::ValueTree{ "ToggleButton" });
-        expect(dynamic_cast<juce::ToggleButton*>(view) != nullptr);
+        const auto& view = renderer.renderView(juce::ValueTree{ "ToggleButton" });
+        expect(dynamic_cast<const juce::ToggleButton*>(&view) != nullptr);
     }
 
     void testTreeWithTextButtonType()
@@ -50,8 +40,8 @@ private:
 
         jive::ViewRenderer renderer;
 
-        const auto view = renderer.createView(juce::ValueTree{ "TextButton" });
-        expect(dynamic_cast<juce::TextButton*>(view) != nullptr);
+        const auto& view = renderer.renderView(juce::ValueTree{ "TextButton" });
+        expect(dynamic_cast<const juce::TextButton*>(&view) != nullptr);
     }
 
     void testTreeWithID()
@@ -64,8 +54,8 @@ private:
 
             juce::ValueTree tree{ "ToggleButton" };
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getComponentID(), juce::String{});
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getComponentID(), juce::String{});
         }
 
         {
@@ -75,8 +65,8 @@ private:
             juce::ValueTree tree{ "ToggleButton" };
             tree.setProperty("id", "123", nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getComponentID(), juce::String{ "123" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getComponentID(), juce::String{ "123" });
         }
 
         {
@@ -86,8 +76,8 @@ private:
             juce::ValueTree tree{ "ToggleButton" };
             tree.setProperty("id", "567", nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getComponentID(), juce::String{ "567" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getComponentID(), juce::String{ "567" });
         }
 
         {
@@ -97,8 +87,8 @@ private:
             juce::ValueTree tree{ "TextButton" };
             tree.setProperty("id", "987", nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getComponentID(), juce::String{ "987" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getComponentID(), juce::String{ "987" });
         }
 
         {
@@ -108,8 +98,8 @@ private:
             juce::ValueTree tree{ "TextButton" };
             tree.setProperty("id", "543", nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getComponentID(), juce::String{ "543" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getComponentID(), juce::String{ "543" });
         }
     }
 
@@ -123,8 +113,8 @@ private:
 
             juce::ValueTree tree{ "TextButton" };
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getNumChildComponents(), 0);
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getNumChildComponents(), 0);
         }
 
         {
@@ -137,9 +127,9 @@ private:
             nestedTree.setProperty("id", "123", nullptr);
             tree.appendChild(nestedTree, nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getNumChildComponents(), 1);
-            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "123" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getNumChildComponents(), 1);
+            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "123" });
         }
 
         {
@@ -157,10 +147,10 @@ private:
             nestedTree2.setProperty("id", "789", nullptr);
             tree.appendChild(nestedTree2, nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getNumChildComponents(), 2);
-            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "345" });
-            expectEquals(view->getChildComponent(1)->getComponentID(), juce::String{ "789" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getNumChildComponents(), 2);
+            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "345" });
+            expectEquals(view.getChildComponent(1)->getComponentID(), juce::String{ "789" });
         }
 
         {
@@ -179,11 +169,61 @@ private:
             nestedTree2.setProperty("id", "432", nullptr);
             nestedTree1.appendChild(nestedTree2, nullptr);
 
-            const auto view = renderer.createView(tree);
-            expectEquals(view->getNumChildComponents(), 1);
-            expectEquals(view->getChildComponent(0)->getComponentID(), juce::String{ "285" });
-            expectEquals(view->getChildComponent(0)->getNumChildComponents(), 1);
-            expectEquals(view->getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
+            const auto& view = renderer.renderView(tree);
+            expectEquals(view.getNumChildComponents(), 1);
+            expectEquals(view.getChildComponent(0)->getComponentID(), juce::String{ "285" });
+            expectEquals(view.getChildComponent(0)->getNumChildComponents(), 1);
+            expectEquals(view.getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
+        }
+    }
+
+    void testCustomComponents()
+    {
+        jive::ViewRenderer renderer;
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'MyCustomComponent' after giving the view "
+                      "renderer a creator for components from trees with the type 'MyCustomComponent' returns a "
+                      "component with the custom type");
+
+            struct MyCustomComponent : public juce::Component {};
+
+            renderer.setComponentCreator("MyCustomComponent", []() { return std::make_unique<MyCustomComponent>(); });
+
+            juce::ValueTree tree{ "MyCustomComponent" };
+
+            const auto& view = renderer.renderView(tree);
+            expect(dynamic_cast<const MyCustomComponent*>(&view) != nullptr);
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' after overriding the "
+                      "renderer's default creator for toggle buttons to one that returns a custom component should "
+                      "return a component with the custom type");
+
+            struct NotAToggleButton : public juce::Component {};
+
+            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<NotAToggleButton>(); });
+
+            juce::ValueTree tree{ "ToggleButton" };
+
+            const auto& view = renderer.renderView(tree);
+            expect(dynamic_cast<const NotAToggleButton*>(&view) != nullptr);
+        }
+
+        {
+            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' after overriding the "
+                      "renderer's default creator for toggle buttons to one that returns a custom component and then "
+                      "resetting the renderer to use its default creators should return a juce::ToggleButton");
+
+            struct NotAToggleButton : public juce::Component {};
+            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<NotAToggleButton>(); });
+            renderer.resetComponentCreators();
+
+            juce::ValueTree tree{ "ToggleButton" };
+
+            const auto& view = renderer.renderView(tree);
+            expect(dynamic_cast<const juce::ToggleButton*>(&view) != nullptr);
         }
     }
 };
