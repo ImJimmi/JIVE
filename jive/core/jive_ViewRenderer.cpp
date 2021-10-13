@@ -14,7 +14,6 @@ namespace jive
     {
         auto& guiItem = addGuiItem(tree);
 
-        applyProperties(tree, guiItem);
         createAndAddChildren(tree, guiItem);
 
         return guiItem;
@@ -43,7 +42,7 @@ namespace jive
     GuiItem& ViewRenderer::addGuiItem(juce::ValueTree tree)
     {
         if (auto component = createComponent(tree))
-            return *guiItems.add(std::make_unique<GuiItem>(std::move(component)));
+            return *guiItems.add(std::make_unique<GuiItem>(std::move(component), tree));
 
         // Failed to create a component for the given tree.
         jassertfalse;
@@ -63,15 +62,6 @@ namespace jive
         // No creator for the given ValueTree's type.
         jassertfalse;
         return nullptr;
-    }
-
-    void ViewRenderer::applyProperties(juce::ValueTree tree, GuiItem& guiItem) const
-    {
-        const auto id = tree["id"].toString();
-        guiItem.getComponent().setComponentID(id);
-
-        const auto display = juce::VariantConverter<GuiItem::Display>::fromVar(tree["display"]);
-        guiItem.setDisplay(display);
     }
 
     void ViewRenderer::createAndAddChildren(juce::ValueTree tree, GuiItem& guiItem)
