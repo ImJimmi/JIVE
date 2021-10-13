@@ -4,10 +4,16 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp)
+    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree)
         : component{ std::move(comp) }
+        , tree{ valueTree }
+        , display{ tree, "display", nullptr, Display::flex }
     {
         jassert(component != nullptr);
+
+        componentIdChanged();
+
+        tree.addListener(this);
     }
 
     //==================================================================================================================
@@ -26,8 +32,19 @@ namespace jive
         return display;
     }
 
-    void GuiItem::setDisplay(Display newDisplay)
+    //==================================================================================================================
+    void GuiItem::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
+                                           const juce::Identifier& propertyID)
     {
-        display = newDisplay;
+        jassert(treeWhosePropertyChanged == tree);
+
+        if (propertyID == juce::Identifier{ "id" })
+            componentIdChanged();
+    }
+
+    //==================================================================================================================
+    void GuiItem::componentIdChanged()
+    {
+        component->setComponentID(tree["id"]);
     }
 } // namespace jive

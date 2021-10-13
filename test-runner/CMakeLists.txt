@@ -6,6 +6,7 @@ target_sources(jive-test-runner
 PRIVATE
     source/main.cpp
 
+    source/tests/test_GuiItem.cpp
     source/tests/test_ViewRenderer.cpp
 )
 
