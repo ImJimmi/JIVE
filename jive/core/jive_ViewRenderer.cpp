@@ -6,7 +6,7 @@ namespace jive
     //==================================================================================================================
     ViewRenderer::ViewRenderer()
     {
-        resetComponentCreators();
+        resetFactories();
     }
 
     //==================================================================================================================
@@ -20,17 +20,17 @@ namespace jive
     }
 
     //==================================================================================================================
-    void ViewRenderer::setComponentCreator (const juce::String& customComponentType, ComponentCreator creator)
+    void ViewRenderer::setFactory (const juce::Identifier& treeType, ComponentFactory factory)
     {
-        componentCreators.set(customComponentType, creator);
+        factories.set(treeType.toString(), factory);
     }
 
-    void ViewRenderer::resetComponentCreators()
+    void ViewRenderer::resetFactories()
     {
-        componentCreators.clear();
+        factories.clear();
 
-        setComponentCreator("TextButton", []() { return std::make_unique<juce::TextButton>(); });
-        setComponentCreator("ToggleButton", []() { return std::make_unique<juce::ToggleButton>(); });
+        setFactory("TextButton", []() { return std::make_unique<juce::TextButton>(); });
+        setFactory("ToggleButton", []() { return std::make_unique<juce::ToggleButton>(); });
     }
 
     //==================================================================================================================
@@ -54,10 +54,10 @@ namespace jive
     {
         const auto treeType = tree.getType().toString();
 
-        if (componentCreators.contains(treeType))
+        if (factories.contains(treeType))
         {
-            const auto creator = componentCreators[treeType];
-            return creator();
+            const auto create = factories[treeType];
+            return create();
         }
 
         // No creator for the given ValueTree's type.
