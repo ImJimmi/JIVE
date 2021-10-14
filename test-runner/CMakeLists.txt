@@ -8,6 +8,8 @@ PRIVATE
 
     source/tests/test_GuiItem.cpp
     source/tests/test_ViewRenderer.cpp
+
+    source/utilities/jive_UnitTest.h
 )
 
 target_link_libraries(jive-test-runner

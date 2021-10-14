@@ -1,261 +1,169 @@
+#include <utilities/jive_UnitTest.h>
+
 #include <jive/jive.h>
 
 //======================================================================================================================
-class ViewRendererTests : public juce::UnitTest
+class ViewRendererTests : public jive::UnitTest
 {
 public:
     //==================================================================================================================
     ViewRendererTests()
-        : juce::UnitTest{ "jive::ViewRenderer" }
+        : jive::UnitTest{ "jive::ViewRenderer" }
     {
     }
 
     //==================================================================================================================
     void runTest() final
     {
-        testTreeWithToggleButtonType();
-        testTreeWithTextButtonType();
-        testTreeWithID();
+        testTreeTypes();
         testNestedComponents();
         testCustomComponents();
-        testDisplayOption();
     }
 
 private:
     //==================================================================================================================
-    void testTreeWithToggleButtonType()
+    void testTreeTypes()
     {
-        beginTest("Rendering a view from a value tree with a type of 'ToggleButton' should return a "
-                  "juce::ToggleButton");
+        beginTest("Tree types");
 
-        jive::ViewRenderer renderer;
-
-        const auto& guiItem = renderer.renderView(juce::ValueTree{ "ToggleButton" });
-        expect(dynamic_cast<const juce::ToggleButton*>(&guiItem.getComponent()) != nullptr);
-    }
-
-    void testTreeWithTextButtonType()
-    {
-        beginTest("Rendering a view from a value tree with a type of 'TextButton' should return a "
-                  "juce::TextButton");
-
-        jive::ViewRenderer renderer;
-
-        const auto& guiItem = renderer.renderView(juce::ValueTree{ "TextButton" });
-        expect(dynamic_cast<const juce::TextButton*>(&guiItem.getComponent()) != nullptr);
-    }
-
-    void testTreeWithID()
-    {
+        GIVEN("a view renderer");
         jive::ViewRenderer renderer;
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' and a blank 'id' property "
-                      "should return a component with no ID");
+            WHEN("a view is rendered from a value-tree with the type 'ToggleButton'");
+            const auto item = renderer.renderView(juce::ValueTree{ "ToggleButton" });
 
-            juce::ValueTree tree{ "ToggleButton" };
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getComponentID(), juce::String{});
+            THEN("the item should be of type `juce::ToggleButton`");
+            expect(dynamic_cast<const juce::ToggleButton*>(&item->getComponent()) != nullptr);
         }
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' and an 'id' property with the "
-                      "value '123' should return a component with the ID '123'");
+            WHEN("a view is rendered from a value-tree with the type 'TextButton'");
+            const auto item = renderer.renderView(juce::ValueTree{ "TextButton" });
 
-            juce::ValueTree tree{ "ToggleButton" };
-            tree.setProperty("id", "123", nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "123" });
-        }
-
-        {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' and an 'id' property with the "
-                      "value '567' should return a component with the ID '567'");
-
-            juce::ValueTree tree{ "ToggleButton" };
-            tree.setProperty("id", "567", nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "567" });
-        }
-
-        {
-            beginTest("Rendering a view from a value tree with a type of 'TextButton' and an 'id' property with the "
-                      "value '987' should return a component with the ID '987'");
-
-            juce::ValueTree tree{ "TextButton" };
-            tree.setProperty("id", "987", nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "987" });
-        }
-
-        {
-            beginTest("Rendering a view from a value tree with a type of 'TextButton' and an 'id' property with the "
-                      "value '543' should return a component with the ID '543'");
-
-            juce::ValueTree tree{ "TextButton" };
-            tree.setProperty("id", "543", nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getComponentID(), juce::String{ "543" });
+            THEN("the item should be of type `juce::TextButton`");
+            expect(dynamic_cast<const juce::TextButton*>(&item->getComponent()) != nullptr);
         }
     }
 
     void testNestedComponents()
     {
+        beginTest("Nested components");
+
+        GIVEN("a view renderer");
         jive::ViewRenderer renderer;
 
         {
-            beginTest("Rendering a view from a valid value tree with no children should return a component with no "
-                      "children");
-
+            WHEN("a view is rendered from a value-tree without any children");
             juce::ValueTree tree{ "TextButton" };
+            const auto item = renderer.renderView(tree);
 
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getNumChildComponents(), 0);
+            THEN("the item should have no children");
+            expectEquals(item->getNumChildren(), 0);
+
+            THEN("the item's component should have no children");
+            expectEquals(item->getComponent().getNumChildComponents(), 0);
         }
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'TextButton' and a single child node with a "
-                      "type of 'ToggleButton' and and id of '123' should return a component with a single child with "
-                      "an ID of '123'");
+            WHEN("a view is rendered from a value-tree with a single child");
+            juce::ValueTree tree{ "ToggleButton" };
+            tree.appendChild(juce::ValueTree{ "TextButton" }, nullptr);
 
-            juce::ValueTree tree{ "TextButton" };
-            juce::ValueTree nestedTree{ "ToggleButton" };
-            nestedTree.setProperty("id", "123", nullptr);
-            tree.appendChild(nestedTree, nullptr);
+            const auto item = renderer.renderView(tree);
 
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getNumChildComponents(), 1);
-            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "123" });
+            THEN("the item should have a single child");
+            expectEquals(item->getNumChildren(), 1);
+
+            THEN("the item's component should have a single child which has the ID '123'");
+            expectEquals(item->getComponent().getNumChildComponents(), 1);
         }
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' and two child nodes each with "
-                      "a type of 'TextButton', one with an id of '345' and the other with an id of '789' should return "
-                      "a component with two children with the IDs '345' and '789'");
+            WHEN("a view is rendered from a value-tree with two children");
+            juce::ValueTree tree{ "TextButton" };
+            tree.appendChild(juce::ValueTree{ "ToggleButton" }, nullptr);
+            tree.appendChild(juce::ValueTree{ "TextButton" }, nullptr);
 
+            const auto item = renderer.renderView(tree);
+
+            THEN("the item should have a two children");
+            expectEquals(item->getNumChildren(), 2);
+
+            THEN("the item's component should have two children");
+            expectEquals(item->getComponent().getNumChildComponents(), 2);
+        }
+
+        {
+            WHEN("a view is rendered from a value-tree with a single node which itself has a single child");
             juce::ValueTree tree{ "ToggleButton" };
 
-            juce::ValueTree nestedTree1{ "TextButton" };
-            nestedTree1.setProperty("id", "345", nullptr);
-            tree.appendChild(nestedTree1, nullptr);
+            juce::ValueTree childTree{ "TextButton" };
+            tree.appendChild(childTree, nullptr);
 
-            juce::ValueTree nestedTree2{ "TextButton" };
-            nestedTree2.setProperty("id", "789", nullptr);
-            tree.appendChild(nestedTree2, nullptr);
+            juce::ValueTree childChildTree{ "ToggleButton" };
+            childTree.appendChild(childChildTree, nullptr);
 
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getNumChildComponents(), 2);
-            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "345" });
-            expectEquals(guiItem.getComponent().getChildComponent(1)->getComponentID(), juce::String{ "789" });
-        }
+            const auto item = renderer.renderView(tree);
 
-        {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' with a single child with a "
-                      "type of 'TextButton' with an id of '285' and a single child with a type of 'ToggleButton' with "
-                      "an id of '432' should return a component with a single child with an ID of '285' which has a "
-                      "single child with an ID of '432'");
+            THEN("the item should have a single child");
+            expectEquals(item->getNumChildren(), 1);
 
-            juce::ValueTree tree{ "ToggleButton" };
+            THEN("the item's component should have a single child");
+            expectEquals(item->getComponent().getNumChildComponents(), 1);
 
-            juce::ValueTree nestedTree1{ "TextButton" };
-            nestedTree1.setProperty("id", "285", nullptr);
-            tree.appendChild(nestedTree1, nullptr);
+            THEN("the item's first child should have a single child");
+            expectEquals(item->getChild(0).getNumChildren(), 1);
 
-            juce::ValueTree nestedTree2{ "ToggleButton" };
-            nestedTree2.setProperty("id", "432", nullptr);
-            nestedTree1.appendChild(nestedTree2, nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expectEquals(guiItem.getComponent().getNumChildComponents(), 1);
-            expectEquals(guiItem.getComponent().getChildComponent(0)->getComponentID(), juce::String{ "285" });
-            expectEquals(guiItem.getComponent().getChildComponent(0)->getNumChildComponents(), 1);
-            expectEquals(guiItem.getComponent().getChildComponent(0)->getChildComponent(0)->getComponentID(), juce::String{ "432" });
+            THEN("the item's component's first child should have a single child");
+            expectEquals(item->getComponent().getChildComponent(0)->getNumChildComponents(), 1);
         }
     }
 
     void testCustomComponents()
     {
+        beginTest("Custom components");
+
+        GIVEN("a view renderer");
         jive::ViewRenderer renderer;
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'MyCustomComponent' after giving the view "
-                      "renderer a creator for components from trees with the type 'MyCustomComponent' returns a "
-                      "component with the custom type");
-
-            struct MyCustomComponent : public juce::Component {};
-
+            WHEN("the renderer is given a component creator for trees with the type 'MyCustomComponent' and a view is "
+                 "rendered from such a tree");
+            struct MyCustomComponent : public juce::Component{};
             renderer.setComponentCreator("MyCustomComponent", []() { return std::make_unique<MyCustomComponent>(); });
 
-            juce::ValueTree tree{ "MyCustomComponent" };
+            const auto item = renderer.renderView(juce::ValueTree{ "MyCustomComponent" });
 
-            const auto& guiItem = renderer.renderView(tree);
-            expect(dynamic_cast<const MyCustomComponent*>(&guiItem.getComponent()) != nullptr);
+            THEN("the item's component should be of the type 'MyCustomComponent'");
+            expect(dynamic_cast<const MyCustomComponent*>(&item->getComponent()) != nullptr);
         }
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' after overriding the "
-                      "renderer's default creator for toggle buttons to one that returns a custom component should "
-                      "return a component with the custom type");
+            WHEN("the renderer is given a component creator to override its default one for trees with the type "
+                 "'ToggleButton' which returns a component of the type 'AnotherCustomComponent' and a view is rendered "
+                 "from such a tree");
+            struct AnotherCustomComponent : public juce::Component{};
+            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<AnotherCustomComponent>(); });
 
-            struct NotAToggleButton : public juce::Component {};
+            const auto item = renderer.renderView(juce::ValueTree{ "ToggleButton" });
 
-            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<NotAToggleButton>(); });
-
-            juce::ValueTree tree{ "ToggleButton" };
-
-            const auto& guiItem = renderer.renderView(tree);
-            expect(dynamic_cast<const NotAToggleButton*>(&guiItem.getComponent()) != nullptr);
+            THEN("the item's component should be of the type 'AnotherCustomComponent'");
+            expect(dynamic_cast<const AnotherCustomComponent*>(&item->getComponent()) != nullptr);
         }
 
         {
-            beginTest("Rendering a view from a value tree with a type of 'ToggleButton' after overriding the "
-                      "renderer's default creator for toggle buttons to one that returns a custom component and then "
-                      "resetting the renderer to use its default creators should return a juce::ToggleButton");
-
-            struct NotAToggleButton : public juce::Component {};
-            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<NotAToggleButton>(); });
+            WHEN("the renderer is given a component creator to override its default one for trees with the type "
+                 "'TextButton' but then the renderer's creators are reset to their defaults, and a view is rendered "
+                 "from such a tree");
+            struct YetAnotherComponent : public juce::Component{};
+            renderer.setComponentCreator("TextButton", []() { return std::make_unique<YetAnotherComponent>(); });
             renderer.resetComponentCreators();
 
-            juce::ValueTree tree{ "ToggleButton" };
+            const auto item = renderer.renderView(juce::ValueTree{ "TextButton" });
 
-            const auto& guiItem = renderer.renderView(tree);
-            expect(dynamic_cast<const juce::ToggleButton*>(&guiItem.getComponent()) != nullptr);
-        }
-    }
-
-    void testDisplayOption()
-    {
-        jive::ViewRenderer renderer;
-
-        {
-            beginTest("Rendering a view from a value tree with no properties set returns a GUI item with its display "
-                      "property set to 'flex'");
-
-            juce::ValueTree tree{ "ToggleButton" };
-            tree.setProperty("display",
-                             juce::VariantConverter<jive::GuiItem::Display>::toVar (jive::GuiItem::Display::flex),
-                             nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expect(guiItem.getDisplay() == jive::GuiItem::Display::flex);
-        }
-
-        {
-            beginTest("Rendering a view from a value tree with its 'display' property set to 'grid' returns a GUI item "
-                      "with its display property set to 'grid'");
-
-            juce::ValueTree tree{ "TextButton" };
-            tree.setProperty("display",
-                             juce::VariantConverter<jive::GuiItem::Display>::toVar (jive::GuiItem::Display::grid),
-                             nullptr);
-
-            const auto& guiItem = renderer.renderView(tree);
-            expect(guiItem.getDisplay() == jive::GuiItem::Display::grid);
+            THEN("the item's component should be of the type 'juce::TextButton'");
+            expect(dynamic_cast<const juce::TextButton*>(&item->getComponent()) != nullptr);
         }
     }
 };
