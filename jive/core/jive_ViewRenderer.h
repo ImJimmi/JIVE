@@ -12,14 +12,14 @@ namespace jive
     {
     public:
         //==============================================================================================================
-        using ComponentCreator = std::function<std::unique_ptr<juce::Component>()>;
+        using ComponentFactory = std::function<std::unique_ptr<juce::Component>()>;
 
         //==============================================================================================================
         ViewRenderer();
 
         //==============================================================================================================
-        void setComponentCreator (const juce::String& customComponentType, ComponentCreator creator);
-        void resetComponentCreators();
+        void setFactory (const juce::Identifier& treeType, ComponentFactory factory);
+        void resetFactories();
 
         //==============================================================================================================
         std::unique_ptr<GuiItem> renderView(juce::ValueTree tree);
@@ -32,7 +32,7 @@ namespace jive
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
 
         //==============================================================================================================
-        juce::HashMap<juce::String, ComponentCreator> componentCreators;
+        juce::HashMap<juce::String, ComponentFactory> factories;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ViewRenderer)

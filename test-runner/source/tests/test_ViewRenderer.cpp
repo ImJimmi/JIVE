@@ -131,7 +131,7 @@ private:
             WHEN("the renderer is given a component creator for trees with the type 'MyCustomComponent' and a view is "
                  "rendered from such a tree");
             struct MyCustomComponent : public juce::Component{};
-            renderer.setComponentCreator("MyCustomComponent", []() { return std::make_unique<MyCustomComponent>(); });
+            renderer.setFactory("MyCustomComponent", []() { return std::make_unique<MyCustomComponent>(); });
 
             const auto item = renderer.renderView(juce::ValueTree{ "MyCustomComponent" });
 
@@ -144,7 +144,7 @@ private:
                  "'ToggleButton' which returns a component of the type 'AnotherCustomComponent' and a view is rendered "
                  "from such a tree");
             struct AnotherCustomComponent : public juce::Component{};
-            renderer.setComponentCreator("ToggleButton", []() { return std::make_unique<AnotherCustomComponent>(); });
+            renderer.setFactory("ToggleButton", []() { return std::make_unique<AnotherCustomComponent>(); });
 
             const auto item = renderer.renderView(juce::ValueTree{ "ToggleButton" });
 
@@ -157,8 +157,8 @@ private:
                  "'TextButton' but then the renderer's creators are reset to their defaults, and a view is rendered "
                  "from such a tree");
             struct YetAnotherComponent : public juce::Component{};
-            renderer.setComponentCreator("TextButton", []() { return std::make_unique<YetAnotherComponent>(); });
-            renderer.resetComponentCreators();
+            renderer.setFactory("TextButton", []() { return std::make_unique<YetAnotherComponent>(); });
+            renderer.resetFactories();
 
             const auto item = renderer.renderView(juce::ValueTree{ "TextButton" });
 
