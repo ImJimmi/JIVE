@@ -1,45 +1,93 @@
+#include <utilities/jive_UnitTest.h>
+
 #include <jive/jive.h>
 
 //======================================================================================================================
-class GuiItemTests : public juce::UnitTest
+class GuiItemTests : public jive::UnitTest
 {
 public:
     //==================================================================================================================
     GuiItemTests()
-        : juce::UnitTest{ "jive::GuiItem" }
+        : jive::UnitTest{ "jive::GuiItem" }
     {
     }
 
     //==================================================================================================================
     void runTest() final
     {
+        testChildren();
         testComponentIDs();
         testDisplayProperty();
     }
 
 private:
     //==================================================================================================================
+    void testChildren()
+    {
+        beginTest("Test children");
+
+        GIVEN("a GUI item created from a value tree with no children");
+        jive::GuiItem item{ std::make_unique<juce::Component>(), juce::ValueTree{ "Dummy" } };
+
+        {
+            THEN("the item should have no children");
+            expectEquals(item.getNumChildren(), 0);
+
+            THEN("the item's component should have no children");
+            expectEquals(item.getComponent().getNumChildComponents(), 0);
+        }
+
+        {
+            WHEN("a child is added to the item");
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          juce::ValueTree{ "AlsoADummy" }));
+
+            THEN("the item should have a single child");
+            expectEquals(item.getNumChildren(), 1);
+
+            THEN("the item's component should have a single child");
+            expectEquals(item.getComponent().getNumChildComponents(), 1);
+        }
+
+        {
+            WHEN("a second child is added to the item");
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          juce::ValueTree{ "YetAnotherDummy" }));
+
+            THEN("the item should have 2 children");
+            expectEquals(item.getNumChildren(), 2);
+
+            THEN("the item's component should have 2 children");
+            expectEquals(item.getComponent().getNumChildComponents(), 2);
+        }
+    }
+
     void testComponentIDs()
     {
         beginTest("Test Component IDs");
 
-        logMessage("    Given a GUI item,");
+        GIVEN("a GUI item");
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
 
         {
-            logMessage("      when the value-tree being used by the item has its 'id' property set to '123',");
+            THEN("the item's ID is blank");
+            expectEquals(item.getID(), juce::String{});
+        }
+
+        {
+            WHEN("the value-tree being used by the item has its 'id' property set to '123'");
             tree.setProperty("id", "123", nullptr);
 
-            logMessage("        then the component's ID is '123'.");
-            expectEquals(item.getComponent().getComponentID(), juce::String{ "123" });
+            THEN("the item's ID is '123'.");
+            expectEquals(item.getID(), juce::String{ "123" });
         }
         {
-            logMessage("      And when the value-tree begin used by the item has its 'id' property set to '456',");
+            WHEN("the value-tree begin used by the item has its 'id' property set to '456'");
             tree.setProperty("id", "456", nullptr);
 
-            logMessage("        then the component's ID is '456'.");
-            expectEquals(item.getComponent().getComponentID(), juce::String{ "456" });
+            THEN("the item's ID is '456'.");
+            expectEquals(item.getID(), juce::String{ "456" });
         }
     }
 
@@ -47,26 +95,26 @@ private:
     {
         beginTest("Test display types");
 
-        logMessage("    Given a GUI item,");
+        GIVEN("a GUI item");
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
 
         {
-            logMessage("      when the value-tree being used by the item has its 'display' property set to 'flex',");
+            WHEN("the value-tree being used by the item has its 'display' property set to 'flex'");
             tree.setProperty("display",
                              juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex),
                              nullptr);
 
-            logMessage("        then the item's display type is 'flex'.");
+            THEN("the item's display type is 'flex'");
             expect(item.getDisplay() == jive::GuiItem::Display::flex);
         }
         {
-            logMessage("      when the value-tree being used by the item has its 'display' property set to 'grid',");
+            WHEN("the value-tree being used by the item has its 'display' property set to 'grid'");
             tree.setProperty("display",
                              juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::grid),
                              nullptr);
 
-            logMessage("        then the item's display type is 'grid'.");
+            THEN("the item's display type is 'grid'");
             expect(item.getDisplay() == jive::GuiItem::Display::grid);
         }
     }

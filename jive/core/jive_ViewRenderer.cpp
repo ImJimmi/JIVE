@@ -10,11 +10,11 @@ namespace jive
     }
 
     //==================================================================================================================
-    GuiItem& ViewRenderer::renderView(juce::ValueTree tree)
+    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree)
     {
-        auto& guiItem = addGuiItem(tree);
+        auto guiItem = createGuiItem(tree);
 
-        createAndAddChildren(tree, guiItem);
+        appendChildItems(*guiItem, tree);
 
         return guiItem;
     }
@@ -39,14 +39,15 @@ namespace jive
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
 
-    GuiItem& ViewRenderer::addGuiItem(juce::ValueTree tree)
+    std::unique_ptr<GuiItem> ViewRenderer::createGuiItem(juce::ValueTree tree) const
     {
-        if (auto component = createComponent(tree))
-            return *guiItems.add(std::make_unique<GuiItem>(std::move(component), tree));
+        return std::make_unique<GuiItem>(createComponent(tree), tree);
+    }
 
-        // Failed to create a component for the given tree.
-        jassertfalse;
-        return *guiItems[0];
+    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree)
+    {
+        for (auto childTree : tree)
+            item.addChild(renderView(childTree));
     }
 
     std::unique_ptr<juce::Component> ViewRenderer::createComponent(juce::ValueTree tree) const
@@ -62,14 +63,5 @@ namespace jive
         // No creator for the given ValueTree's type.
         jassertfalse;
         return nullptr;
-    }
-
-    void ViewRenderer::createAndAddChildren(juce::ValueTree tree, GuiItem& guiItem)
-    {
-        for (const auto& childTree : tree)
-        {
-            auto& childComponent = renderView(childTree);
-            guiItem.getComponent().addChildComponent(childComponent.getComponent());
-        }
     }
 } // namespace jive

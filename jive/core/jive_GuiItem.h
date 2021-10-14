@@ -20,11 +20,17 @@ namespace jive
         GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree);
 
         //==============================================================================================================
+        void addChild(std::unique_ptr<GuiItem> child);
+
+        //==============================================================================================================
         juce::Component& getComponent();
         const juce::Component& getComponent() const;
 
+        int getNumChildren() const;
+        GuiItem& getChild(int index);
+
+        juce::String getID() const;
         Display getDisplay() const;
-        void setDisplay(Display newDisplay);
 
     private:
         //==============================================================================================================
@@ -36,6 +42,7 @@ namespace jive
         //==============================================================================================================
         const std::unique_ptr<juce::Component> component;
         juce::ValueTree tree;
+        juce::OwnedArray<GuiItem> children;
 
         juce::CachedValue<Display> display;
 

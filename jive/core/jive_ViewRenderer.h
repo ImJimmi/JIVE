@@ -22,19 +22,17 @@ namespace jive
         void resetComponentCreators();
 
         //==============================================================================================================
-        GuiItem& renderView(juce::ValueTree tree);
+        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree);
 
     private:
         //==============================================================================================================
-        GuiItem& addGuiItem(juce::ValueTree tree);
+        std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree) const;
+        void appendChildItems(GuiItem& item, juce::ValueTree tree);
 
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
-        void applyProperties(juce::ValueTree tree, GuiItem& guiItem) const;
-        void createAndAddChildren(juce::ValueTree tree, GuiItem& guiItem);
 
         //==============================================================================================================
         juce::HashMap<juce::String, ComponentCreator> componentCreators;
-        juce::OwnedArray<GuiItem> guiItems;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ViewRenderer)

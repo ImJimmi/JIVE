@@ -17,6 +17,13 @@ namespace jive
     }
 
     //==================================================================================================================
+    void GuiItem::addChild(std::unique_ptr<GuiItem> child)
+    {
+        auto* newlyAddedChild = children.add(std::move(child));
+        component->addAndMakeVisible(newlyAddedChild->getComponent());
+    }
+
+    //==================================================================================================================
     juce::Component& GuiItem::getComponent()
     {
         return *component;
@@ -25,6 +32,22 @@ namespace jive
     const juce::Component& GuiItem::getComponent() const
     {
         return *component;
+    }
+
+    int GuiItem::getNumChildren() const
+    {
+        return children.size();
+    }
+
+    GuiItem& GuiItem::getChild(int index)
+    {
+        jassert(index < children.size());
+        return *children[index];
+    }
+
+    juce::String GuiItem::getID() const
+    {
+        return component->getComponentID();
     }
 
     GuiItem::Display GuiItem::getDisplay() const
