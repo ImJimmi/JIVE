@@ -11,7 +11,7 @@ namespace jive
     public:
         //==============================================================================================================
         explicit UnitTest(const juce::String& testName)
-            : juce::UnitTest{ testName }
+            : juce::UnitTest{ testName, "JIVE" }
         {
         }
 
