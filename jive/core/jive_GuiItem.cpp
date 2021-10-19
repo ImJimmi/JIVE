@@ -11,6 +11,7 @@ namespace jive
         , height{ tree, "height", nullptr, -1 }
         , display{ tree, "display", nullptr, Display::flex }
         , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
+        , flexWrap{ tree, "flex-wrap", nullptr }
     {
         jassert(component != nullptr);
 
@@ -59,6 +60,7 @@ namespace jive
     {
         juce::FlexBox flex;
         flex.flexDirection = flexDirection;
+        flex.flexWrap = flexWrap;
 
         for (auto* child : children)
             flex.items.add(*child);

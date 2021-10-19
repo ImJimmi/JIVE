@@ -56,6 +56,7 @@ namespace jive
         juce::CachedValue<int> height;
         juce::CachedValue<Display> display;
         juce::CachedValue<juce::FlexBox::Direction> flexDirection;
+        juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
