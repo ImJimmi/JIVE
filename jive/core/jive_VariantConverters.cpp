@@ -44,4 +44,25 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::FlexBox::Wrap>::varArray = {
+        "nowrap",
+        "wrap",
+        "wrap-reverse"
+    };
+
+    juce::FlexBox::Wrap VariantConverter<juce::FlexBox::Wrap>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::FlexBox::Wrap>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap direction)
+    {
+        const auto index = static_cast<int>(direction);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce
