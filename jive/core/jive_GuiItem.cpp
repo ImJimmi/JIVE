@@ -7,12 +7,16 @@ namespace jive
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree)
         : component{ std::move(comp) }
         , tree{ valueTree }
+        , width{ tree, "width", nullptr, -1 }
+        , height{ tree, "height", nullptr, -1 }
         , display{ tree, "display", nullptr, Display::flex }
+        , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
     {
         jassert(component != nullptr);
 
         componentIdChanged();
 
+        component->addComponentListener(this);
         tree.addListener(this);
     }
 
@@ -45,14 +49,31 @@ namespace jive
         return *children[index];
     }
 
-    juce::String GuiItem::getID() const
-    {
-        return component->getComponentID();
-    }
-
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;
+    }
+
+    //==================================================================================================================
+    GuiItem::operator juce::FlexBox()
+    {
+        juce::FlexBox flex;
+        flex.flexDirection = flexDirection;
+
+        for (auto* child : children)
+            flex.items.add(*child);
+
+        return flex;
+    }
+
+    GuiItem::operator juce::FlexItem()
+    {
+        juce::FlexItem item{ *component };
+
+        item.width = static_cast<float>(width);
+        item.height = static_cast<float>(height);
+
+        return item;
     }
 
     //==================================================================================================================
@@ -65,9 +86,40 @@ namespace jive
             componentIdChanged();
     }
 
+    void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                          bool /*wasMoved*/,
+                                          bool wasResized)
+    {
+        jassert(&componentThatWasMovedOrResized == component.get());
+
+        if (! wasResized)
+            return;
+
+        updateLayout();
+    }
+
     //==================================================================================================================
     void GuiItem::componentIdChanged()
     {
         component->setComponentID(tree["id"]);
+    }
+
+    void performFlexLayout(GuiItem& item)
+    {
+        auto flex = static_cast<juce::FlexBox>(item);
+        flex.performLayout(item.getComponent().getLocalBounds());
+    }
+
+    void GuiItem::updateLayout()
+    {
+        switch (display)
+        {
+            case Display::flex:
+                performFlexLayout(*this);
+                break;
+            default:
+                // Unhandled display type
+                jassertfalse;
+        }
     }
 } // namespace jive
