@@ -6,7 +6,9 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiItem : private juce::ValueTree::Listener
+    class GuiItem
+        : private juce::ValueTree::Listener
+        , private juce::ComponentListener
     {
     public:
         //==============================================================================================================
@@ -29,22 +31,31 @@ namespace jive
         int getNumChildren() const;
         GuiItem& getChild(int index);
 
-        juce::String getID() const;
         Display getDisplay() const;
+
+        //==============================================================================================================
+        operator juce::FlexBox();
+        operator juce::FlexItem();
 
     private:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) final;
 
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) final;
+
         //==============================================================================================================
         void componentIdChanged();
+        void updateLayout();
 
         //==============================================================================================================
         const std::unique_ptr<juce::Component> component;
         juce::ValueTree tree;
         juce::OwnedArray<GuiItem> children;
 
+        juce::CachedValue<int> width;
+        juce::CachedValue<int> height;
         juce::CachedValue<Display> display;
+        juce::CachedValue<juce::FlexBox::Direction> flexDirection;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
