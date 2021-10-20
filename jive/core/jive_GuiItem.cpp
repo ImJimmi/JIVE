@@ -13,6 +13,7 @@ namespace jive
         , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
         , flexWrap{ tree, "flex-wrap", nullptr }
         , flexJustifyContent{ tree, "justify-content", nullptr }
+        , flexAlignContent{ tree, "align-content", nullptr }
     {
         jassert(component != nullptr);
 
@@ -63,6 +64,7 @@ namespace jive
         flex.flexDirection = flexDirection;
         flex.flexWrap = flexWrap;
         flex.justifyContent = flexJustifyContent;
+        flex.alignContent = flexAlignContent;
 
         for (auto* child : children)
             flex.items.add(*child);
@@ -90,6 +92,8 @@ namespace jive
             componentIdChanged();
         else if (propertyID == flexJustifyContent.getPropertyID())
             flexJustifyContentChanged();
+        else if (propertyID == flexAlignContent.getPropertyID())
+            flexAlignContentChanged();
     }
 
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -113,6 +117,12 @@ namespace jive
     void GuiItem::flexJustifyContentChanged()
     {
         flexJustifyContent.forceUpdateOfCachedValue();
+        updateLayout();
+    }
+
+    void GuiItem::flexAlignContentChanged()
+    {
+        flexAlignContent.forceUpdateOfCachedValue();
         updateLayout();
     }
 

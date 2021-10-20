@@ -88,4 +88,28 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::FlexBox::AlignContent>::varArray = {
+        "stretch",
+        "flex-start",
+        "flex-end",
+        "centre",
+        "space-between",
+        "space-around"
+    };
+
+    juce::FlexBox::AlignContent VariantConverter<juce::FlexBox::AlignContent>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::FlexBox::AlignContent>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent justification)
+    {
+        const auto index = static_cast<int>(justification);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce

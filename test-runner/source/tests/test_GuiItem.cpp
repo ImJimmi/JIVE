@@ -22,6 +22,7 @@ public:
         testFlexDirection();
         testFlexWrap();
         testFlexJustifyContent();
+        testFlexAlignContent();
         testFlexItemSize();
     }
 
@@ -398,6 +399,89 @@ private:
 
                 THEN("the Y position of the first child's component is 125");
                 expectEquals(item.getChild(1).getComponent().getY(), 125);
+            }
+        }
+    }
+
+    void testFlexAlignContent()
+    {
+        beginTest("Test flex align-content");
+
+        {
+            GIVEN("a GUI item with two children each with a size of 50x50, a flex layout, and its 'flex-wrap' property "
+                  "set to 'wrap'");
+            juce::ValueTree tree{ "Component" };
+            tree.setProperty("display", "flex", nullptr);
+            tree.setProperty("flex-wrap", "wrap", nullptr);
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            juce::ValueTree childTree{ "Child" };
+            childTree.setProperty("width", 50, nullptr);
+            childTree.setProperty("height", 50, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
+
+            {
+                WHEN("the parent's 'align-content' property is set to 'stretch', and its component is given a size of "
+                     "[200, 90]");
+                tree.setProperty("align-content", "stretch", nullptr);
+                item.getComponent().setSize(200, 90);
+
+                THEN("the X position of the first child's component is 0");
+                expectEquals(item.getChild(0).getComponent().getX(), 0);
+
+                THEN("the X position of the second child's component is 100");
+                expectEquals(item.getChild(1).getComponent().getX(), 100);
+            }
+            {
+                WHEN("the parent's 'align-content' property is set to 'flex-start'");
+                tree.setProperty("align-content", "flex-start", nullptr);
+
+                THEN("the X position of the first child's component is 0");
+                expectEquals(item.getChild(0).getComponent().getX(), 0);
+
+                THEN("the X position of the second child's component is 50");
+                expectEquals(item.getChild(1).getComponent().getX(), 50);
+            }
+            {
+                WHEN("the parent's 'align-content' property is set to 'flex-end'");
+                tree.setProperty("align-content", "flex-end", nullptr);
+
+                THEN("the X position of the first child's component is 100");
+                expectEquals(item.getChild(0).getComponent().getX(), 100);
+
+                THEN("the X position of the second child's component is 150");
+                expectEquals(item.getChild(1).getComponent().getX(), 150);
+            }
+            {
+                WHEN("the parent's 'align-content' property is set to 'centre'");
+                tree.setProperty("align-content", "centre", nullptr);
+
+                THEN("the X position of the first child's component is 50");
+                expectEquals(item.getChild(0).getComponent().getX(), 50);
+
+                THEN("the X position of the second child's component is 100");
+                expectEquals(item.getChild(1).getComponent().getX(), 100);
+            }
+            {
+                WHEN("the parent's 'align-content' property is set to 'space-between'");
+                tree.setProperty("align-content", "space-between", nullptr);
+
+                THEN("the X position of the first child's component is 0");
+                expectEquals(item.getChild(0).getComponent().getX(), 0);
+
+                THEN("the X position of the second child's component is 150");
+                expectEquals(item.getChild(1).getComponent().getX(), 150);
+            }
+            {
+                WHEN("the parent's 'align-content' property is set to 'space-around'");
+                tree.setProperty("align-content", "space-around", nullptr);
+
+                THEN("the X position of the first child's component is 25");
+                expectEquals(item.getChild(0).getComponent().getX(), 25);
+
+                THEN("the X position of the second child's component is 125");
+                expectEquals(item.getChild(1).getComponent().getX(), 125);
             }
         }
     }
