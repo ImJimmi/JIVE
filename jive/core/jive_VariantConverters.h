@@ -45,4 +45,17 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template<>
+    struct VariantConverter<juce::FlexBox::JustifyContent>
+    {
+        //==============================================================================================================
+        static juce::FlexBox::JustifyContent fromVar(const var& v);
+        static var toVar (juce::FlexBox::JustifyContent direction);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce
