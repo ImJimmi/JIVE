@@ -58,9 +58,32 @@ namespace juce
         return static_cast<juce::FlexBox::Wrap>(varArray.indexOf(v));
     }
 
-    var VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap direction)
+    var VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap wrap)
     {
-        const auto index = static_cast<int>(direction);
+        const auto index = static_cast<int>(wrap);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::FlexBox::JustifyContent>::varArray = {
+        "flex-start",
+        "flex-end",
+        "centre",
+        "space-between",
+        "space-around"
+    };
+
+    juce::FlexBox::JustifyContent VariantConverter<juce::FlexBox::JustifyContent>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::FlexBox::JustifyContent>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::FlexBox::JustifyContent>::toVar(juce::FlexBox::JustifyContent justification)
+    {
+        const auto index = static_cast<int>(justification);
 
         jassert(varArray.size() >= index);
         return varArray[index];

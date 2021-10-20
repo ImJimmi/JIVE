@@ -45,6 +45,8 @@ namespace jive
 
         //==============================================================================================================
         void componentIdChanged();
+        void flexJustifyContentChanged();
+
         void updateLayout();
 
         //==============================================================================================================
@@ -57,6 +59,7 @@ namespace jive
         juce::CachedValue<Display> display;
         juce::CachedValue<juce::FlexBox::Direction> flexDirection;
         juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
+        juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

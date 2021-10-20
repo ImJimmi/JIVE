@@ -21,6 +21,7 @@ public:
 
         testFlexDirection();
         testFlexWrap();
+        testFlexJustifyContent();
         testFlexItemSize();
     }
 
@@ -325,6 +326,78 @@ private:
 
                 THEN("the last child's component is positioned above the first two");
                 expectGreaterOrEqual(item.getChild(0).getComponent().getY(), item.getChild(2).getComponent().getBottom());
+            }
+        }
+    }
+
+    void testFlexJustifyContent()
+    {
+        beginTest("Test flex justify-content");
+
+        {
+            GIVEN("a GUI item with two children each with a height of 50, and a flex layout");
+            juce::ValueTree tree{ "Component" };
+            tree.setProperty("display", "flex", nullptr);
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            juce::ValueTree childTree{ "Child" };
+            childTree.setProperty("height", 50, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
+
+            {
+                WHEN("the parent item's 'justify-content' property is set to 'flex-start', and its component is given "
+                     "a size of [200, 200]");
+                tree.setProperty("justify-content", "flex-start", nullptr);
+                item.getComponent().setSize(200, 200);
+
+                THEN("the Y position of the first child's component is 0");
+                expectEquals(item.getChild(0).getComponent().getY(), 0);
+
+                THEN("the Y position of the second child's component is equal to the Y position of the bottom edge of "
+                     "the first child's component");
+                expectEquals(item.getChild(1).getComponent().getY(), item.getChild(0).getComponent().getBottom());
+            }
+            {
+                WHEN("the parent item's 'justify-content' property is set to 'flex-end'");
+                tree.setProperty("justify-content", "flex-end", nullptr);
+
+                THEN("the Y position of the bottom edge of the second child's component is 150");
+                expectEquals(item.getChild(1).getComponent().getBottom(), 200);
+
+                THEN("the Y position of the bottom edge of the first child's component is equal to the Y position of "
+                     "the second child");
+                expectEquals(item.getChild(0).getComponent().getBottom(), item.getChild(1).getComponent().getY());
+            }
+            {
+                WHEN("the parent item's 'justify-content' property is set to 'centre'");
+                tree.setProperty("justify-content", "centre", nullptr);
+
+                THEN("the Y position of the bottom edge of the first child's component is 75");
+                expectEquals(item.getChild(0).getComponent().getBottom(), 100);
+
+                THEN("the Y position of the second child's component is 75");
+                expectEquals(item.getChild(1).getComponent().getY(), 100);
+            }
+            {
+                WHEN("the parent item's 'justify-content' property is set to 'space-between'");
+                tree.setProperty("justify-content", "space-between", nullptr);
+
+                THEN("the Y position of the first child's component is 0");
+                expectEquals(item.getChild(0).getComponent().getY(), 0);
+
+                THEN("the Y position of the bottom edge of the second child's component is 150");
+                expectEquals(item.getChild(1).getComponent().getBottom(), 200);
+            }
+            {
+                WHEN("the parent item's 'justify-content' property is set to 'space-around'");
+                tree.setProperty("justify-content", "space-around", nullptr);
+
+                THEN("the Y position of the first child's component is 25");
+                expectEquals(item.getChild(0).getComponent().getY(), 25);
+
+                THEN("the Y position of the first child's component is 125");
+                expectEquals(item.getChild(1).getComponent().getY(), 125);
             }
         }
     }
