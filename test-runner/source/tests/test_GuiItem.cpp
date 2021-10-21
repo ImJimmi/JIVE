@@ -23,6 +23,7 @@ public:
         testFlexWrap();
         testFlexJustifyContent();
         testFlexAlignContent();
+        testFlexItemOrder();
         testFlexItemSize();
     }
 
@@ -482,6 +483,53 @@ private:
 
                 THEN("the X position of the second child's component is 125");
                 expectEquals(item.getChild(1).getComponent().getX(), 125);
+            }
+        }
+    }
+
+    void testFlexItemOrder()
+    {
+        beginTest("Test flex-item order");
+
+        {
+            GIVEN("a GUI item with 2 children, a flex layout, and a flex-direction of 'row'");
+            juce::ValueTree tree{ "Component" };
+            tree.setProperty("display", "flex", nullptr);
+            tree.setProperty("flex-direction", "row", nullptr);
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            juce::ValueTree childTree1{ "Component" };
+            childTree1.setProperty("width", 50, nullptr);
+            childTree1.setProperty("height", 50, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree1, &item));
+
+            juce::ValueTree childTree2{ "Component" };
+            childTree2.setProperty("width", 50, nullptr);
+            childTree2.setProperty("height", 50, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree2, &item));
+
+            {
+                WHEN("the first child is given an order of 1, the second child an order of 2, and the item is resized");
+                childTree1.setProperty("order", 1, nullptr);
+                childTree2.setProperty("order", 2, nullptr);
+                item.getComponent().setSize(200, 200);
+
+                THEN("the first child's component is positioned on the left");
+                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 50 });
+
+                THEN("the second child's component is position to the right of the first");
+                expect(item.getChild(1).getComponent().getBounds() == juce::Rectangle<int>{ 50, 0, 50, 50 });
+            }
+            {
+                WHEN("the first child is given an order of 7, and the second child an order of 4");
+                childTree1.setProperty("order", 7, nullptr);
+                childTree2.setProperty("order", 4, nullptr);
+
+                THEN("the first child's component is positioned to the right of the second");
+                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 50, 0, 50, 50 });
+
+                THEN("the second child's component is position on the left");
+                expect(item.getChild(1).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 50 });
             }
         }
     }

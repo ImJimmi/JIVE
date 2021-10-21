@@ -26,8 +26,10 @@ namespace jive
 
     private:
         //==============================================================================================================
-        std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree) const;
-        void appendChildItems(GuiItem& item, juce::ValueTree tree);
+        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree, GuiItem* const parent);
+
+        std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree, GuiItem* const parent) const;
+        void appendChildItems(GuiItem& item, juce::ValueTree tree, GuiItem* const parent);
 
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
 

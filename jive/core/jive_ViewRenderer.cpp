@@ -12,11 +12,7 @@ namespace jive
     //==================================================================================================================
     std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree)
     {
-        auto guiItem = createGuiItem(tree);
-
-        appendChildItems(*guiItem, tree);
-
-        return guiItem;
+        return renderView(tree, nullptr);
     }
 
     //==================================================================================================================
@@ -34,20 +30,29 @@ namespace jive
     }
 
     //==================================================================================================================
+    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree, GuiItem* const parent)
+    {
+        auto guiItem = createGuiItem(tree, parent);
+
+        appendChildItems(*guiItem, tree, guiItem.get());
+
+        return guiItem;
+    }
+
     bool treeHasMatchingTypeIgnoringCase(const juce::ValueTree& tree, const juce::String& expectedType)
     {
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
 
-    std::unique_ptr<GuiItem> ViewRenderer::createGuiItem(juce::ValueTree tree) const
+    std::unique_ptr<GuiItem> ViewRenderer::createGuiItem(juce::ValueTree tree, GuiItem* const parent) const
     {
-        return std::make_unique<GuiItem>(createComponent(tree), tree);
+        return std::make_unique<GuiItem>(createComponent(tree), tree, parent);
     }
 
-    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree)
+    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree, GuiItem* const parent)
     {
         for (auto childTree : tree)
-            item.addChild(renderView(childTree));
+            item.addChild(renderView(childTree, parent));
     }
 
     std::unique_ptr<juce::Component> ViewRenderer::createComponent(juce::ValueTree tree) const

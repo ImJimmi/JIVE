@@ -77,6 +77,9 @@ private:
 
             THEN("the item's component should have a single child which has the ID '123'");
             expectEquals(item->getComponent().getNumChildComponents(), 1);
+
+            THEN("the parent of the item's first child should be the item");
+            expect(item->getChild(0).getParent() == item.get());
         }
 
         {
