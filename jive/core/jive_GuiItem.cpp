@@ -4,9 +4,10 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree)
+    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree, GuiItem* parentItem)
         : component{ std::move(comp) }
         , tree{ valueTree }
+        , parent{ parentItem }
         , width{ tree, "width", nullptr, -1 }
         , height{ tree, "height", nullptr, -1 }
         , display{ tree, "display", nullptr, Display::flex }
@@ -14,6 +15,7 @@ namespace jive
         , flexWrap{ tree, "flex-wrap", nullptr }
         , flexJustifyContent{ tree, "justify-content", nullptr }
         , flexAlignContent{ tree, "align-content", nullptr }
+        , flexItemOrder{ tree, "order", nullptr }
     {
         jassert(component != nullptr);
 
@@ -52,6 +54,11 @@ namespace jive
         return *children[index];
     }
 
+    const GuiItem* GuiItem::getParent()
+    {
+        return parent;
+    }
+
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;
@@ -79,6 +86,8 @@ namespace jive
         item.width = static_cast<float>(width);
         item.height = static_cast<float>(height);
 
+        item.order = flexItemOrder;
+
         return item;
     }
 
@@ -94,6 +103,8 @@ namespace jive
             flexJustifyContentChanged();
         else if (propertyID == flexAlignContent.getPropertyID())
             flexAlignContentChanged();
+        else if (propertyID == flexItemOrder.getPropertyID())
+            flexItemOrderChanged();
     }
 
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -124,6 +135,14 @@ namespace jive
     {
         flexAlignContent.forceUpdateOfCachedValue();
         updateLayout();
+    }
+
+    void GuiItem::flexItemOrderChanged()
+    {
+        flexItemOrder.forceUpdateOfCachedValue();
+
+        if (parent != nullptr)
+            parent->updateLayout();
     }
 
     void performFlexLayout(GuiItem& item)

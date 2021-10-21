@@ -19,7 +19,7 @@ namespace jive
         };
 
         //==============================================================================================================
-        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree);
+        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent = nullptr);
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child);
@@ -30,6 +30,7 @@ namespace jive
 
         int getNumChildren() const;
         GuiItem& getChild(int index);
+        const GuiItem* getParent();
 
         Display getDisplay() const;
 
@@ -47,6 +48,7 @@ namespace jive
         void componentIdChanged();
         void flexJustifyContentChanged();
         void flexAlignContentChanged();
+        void flexItemOrderChanged();
 
         void updateLayout();
 
@@ -54,6 +56,7 @@ namespace jive
         const std::unique_ptr<juce::Component> component;
         juce::ValueTree tree;
         juce::OwnedArray<GuiItem> children;
+        GuiItem* const parent;
 
         juce::CachedValue<int> width;
         juce::CachedValue<int> height;
@@ -62,6 +65,7 @@ namespace jive
         juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
         juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
         juce::CachedValue<juce::FlexBox::AlignContent> flexAlignContent;
+        juce::CachedValue<int> flexItemOrder;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
