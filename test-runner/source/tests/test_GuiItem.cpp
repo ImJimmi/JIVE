@@ -24,6 +24,7 @@ public:
         testFlexJustifyContent();
         testFlexAlignContent();
         testFlexItemOrder();
+        testFlexItemGrow();
         testFlexItemSize();
     }
 
@@ -530,6 +531,50 @@ private:
 
                 THEN("the second child's component is position on the left");
                 expect(item.getChild(1).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 50 });
+            }
+        }
+    }
+
+    void testFlexItemGrow()
+    {
+        beginTest("Test flex-item grow");
+
+        {
+            GIVEN("a GUI item with 2 children each with a fixed height and a flex-grow of 1, a flex layout, and a flex-direction of 'row'");
+            juce::ValueTree tree{ "Component" };
+            tree.setProperty("display", "flex", nullptr);
+            tree.setProperty("flex-direction", "row", nullptr);
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            juce::ValueTree childTree1{ "Component" };
+            childTree1.setProperty("height", 50, nullptr);
+            childTree1.setProperty("flex-grow", 1, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree1, &item));
+
+            juce::ValueTree childTree2{ "Component" };
+            childTree2.setProperty("height", 50, nullptr);
+            childTree2.setProperty("flex-grow", 1, nullptr);
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree2));
+
+            {
+                WHEN("the item is resized");
+                item.getComponent().setSize(300, 100);
+
+                THEN("the first child's component covers the left half of the parent's width");
+                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 150, 50 });
+
+                THEN("the second child's component covers the right half of the parent's width");
+                expect(item.getChild(1).getComponent().getBounds() == juce::Rectangle<int>{ 150, 0, 150, 50 });
+            }
+            {
+                WHEN("the first child's flex-grow is set to 2");
+                childTree1.setProperty("flex-grow", 2, nullptr);
+
+                THEN("the first child's component covers the left 2 thirds of the parent's width");
+                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 200, 50 });
+
+                THEN("the second child's component covers the right third of the parent's width");
+                expect(item.getChild(1).getComponent().getBounds() == juce::Rectangle<int>{ 200, 0, 100, 50 });
             }
         }
     }
