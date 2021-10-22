@@ -16,6 +16,7 @@ namespace jive
         , flexJustifyContent{ tree, "justify-content", nullptr }
         , flexAlignContent{ tree, "align-content", nullptr }
         , flexItemOrder{ tree, "order", nullptr }
+        , flexItemGrow{ tree, "flex-grow", nullptr }
     {
         jassert(component != nullptr);
 
@@ -87,6 +88,7 @@ namespace jive
         item.height = static_cast<float>(height);
 
         item.order = flexItemOrder;
+        item.flexGrow = flexItemGrow;
 
         return item;
     }
@@ -105,6 +107,8 @@ namespace jive
             flexAlignContentChanged();
         else if (propertyID == flexItemOrder.getPropertyID())
             flexItemOrderChanged();
+        else if (propertyID == flexItemGrow.getPropertyID())
+            flexItemGrowChanged();
     }
 
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -139,10 +143,20 @@ namespace jive
 
     void GuiItem::flexItemOrderChanged()
     {
-        flexItemOrder.forceUpdateOfCachedValue();
+        // You can only set a flex-item property on an item that has a parent!
+        jassert (parent != nullptr);
 
-        if (parent != nullptr)
-            parent->updateLayout();
+        flexItemOrder.forceUpdateOfCachedValue();
+        parent->updateLayout();
+    }
+
+    void GuiItem::flexItemGrowChanged()
+    {
+        // You can only set a flex-item property on an item that has a parent!
+        jassert (parent != nullptr);
+
+        flexItemGrow.forceUpdateOfCachedValue();
+        parent->updateLayout();
     }
 
     void performFlexLayout(GuiItem& item)
