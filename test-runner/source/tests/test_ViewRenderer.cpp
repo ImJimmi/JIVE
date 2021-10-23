@@ -133,8 +133,12 @@ private:
         {
             WHEN("the renderer is given a component creator for trees with the type 'MyCustomComponent' and a view is "
                  "rendered from such a tree");
-            struct MyCustomComponent : public juce::Component{};
-            renderer.setFactory("MyCustomComponent", []() { return std::make_unique<MyCustomComponent>(); });
+            struct MyCustomComponent : public juce::Component
+            {
+            };
+            renderer.setFactory("MyCustomComponent", []() {
+                return std::make_unique<MyCustomComponent>();
+            });
 
             const auto item = renderer.renderView(juce::ValueTree{ "MyCustomComponent" });
 
@@ -146,8 +150,12 @@ private:
             WHEN("the renderer is given a component creator to override its default one for trees with the type "
                  "'ToggleButton' which returns a component of the type 'AnotherCustomComponent' and a view is rendered "
                  "from such a tree");
-            struct AnotherCustomComponent : public juce::Component{};
-            renderer.setFactory("ToggleButton", []() { return std::make_unique<AnotherCustomComponent>(); });
+            struct AnotherCustomComponent : public juce::Component
+            {
+            };
+            renderer.setFactory("ToggleButton", []() {
+                return std::make_unique<AnotherCustomComponent>();
+            });
 
             const auto item = renderer.renderView(juce::ValueTree{ "ToggleButton" });
 
@@ -159,8 +167,12 @@ private:
             WHEN("the renderer is given a component creator to override its default one for trees with the type "
                  "'TextButton' but then the renderer's creators are reset to their defaults, and a view is rendered "
                  "from such a tree");
-            struct YetAnotherComponent : public juce::Component{};
-            renderer.setFactory("TextButton", []() { return std::make_unique<YetAnotherComponent>(); });
+            struct YetAnotherComponent : public juce::Component
+            {
+            };
+            renderer.setFactory("TextButton", []() {
+                return std::make_unique<YetAnotherComponent>();
+            });
             renderer.resetFactories();
 
             const auto item = renderer.renderView(juce::ValueTree{ "TextButton" });

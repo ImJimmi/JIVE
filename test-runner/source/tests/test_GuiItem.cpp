@@ -299,7 +299,8 @@ private:
                 expectEquals(item.getChild(0).getComponent().getY(), item.getChild(1).getComponent().getY());
 
                 THEN("the last child's component is positioned below the first two");
-                expectGreaterOrEqual(item.getChild(2).getComponent().getY(), item.getChild(0).getComponent().getBottom());
+                expectGreaterOrEqual(item.getChild(2).getComponent().getY(),
+                                     item.getChild(0).getComponent().getBottom());
             }
         }
         {
@@ -328,7 +329,8 @@ private:
                 expectEquals(item.getChild(0).getComponent().getY(), item.getChild(1).getComponent().getY());
 
                 THEN("the last child's component is positioned above the first two");
-                expectGreaterOrEqual(item.getChild(0).getComponent().getY(), item.getChild(2).getComponent().getBottom());
+                expectGreaterOrEqual(item.getChild(0).getComponent().getY(),
+                                     item.getChild(2).getComponent().getBottom());
             }
         }
     }
@@ -540,7 +542,8 @@ private:
         beginTest("Test flex-item grow");
 
         {
-            GIVEN("a GUI item with 2 children each with a fixed height and a flex-grow of 1, a flex layout, and a flex-direction of 'row'");
+            GIVEN("a GUI item with 2 children each with a fixed height and a flex-grow of 1, a flex layout, and a "
+                  "flex-direction of 'row'");
             juce::ValueTree tree{ "Component" };
             tree.setProperty("display", "flex", nullptr);
             tree.setProperty("flex-direction", "row", nullptr);

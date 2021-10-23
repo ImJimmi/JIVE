@@ -16,7 +16,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    void ViewRenderer::setFactory (const juce::Identifier& treeType, ComponentFactory factory)
+    void ViewRenderer::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
     {
         factories.set(treeType.toString(), factory);
     }
@@ -25,8 +25,12 @@ namespace jive
     {
         factories.clear();
 
-        setFactory("TextButton", []() { return std::make_unique<juce::TextButton>(); });
-        setFactory("ToggleButton", []() { return std::make_unique<juce::ToggleButton>(); });
+        setFactory("TextButton", []() {
+            return std::make_unique<juce::TextButton>();
+        });
+        setFactory("ToggleButton", []() {
+            return std::make_unique<juce::ToggleButton>();
+        });
     }
 
     //==================================================================================================================

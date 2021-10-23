@@ -117,7 +117,7 @@ namespace jive
     {
         jassert(&componentThatWasMovedOrResized == component.get());
 
-        if (! wasResized)
+        if (!wasResized)
             return;
 
         updateLayout();
@@ -144,7 +144,7 @@ namespace jive
     void GuiItem::flexItemOrderChanged()
     {
         // You can only set a flex-item property on an item that has a parent!
-        jassert (parent != nullptr);
+        jassert(parent != nullptr);
 
         flexItemOrder.forceUpdateOfCachedValue();
         parent->updateLayout();
@@ -153,7 +153,7 @@ namespace jive
     void GuiItem::flexItemGrowChanged()
     {
         // You can only set a flex-item property on an item that has a parent!
-        jassert (parent != nullptr);
+        jassert(parent != nullptr);
 
         flexItemGrow.forceUpdateOfCachedValue();
         parent->updateLayout();
@@ -169,12 +169,12 @@ namespace jive
     {
         switch (display)
         {
-            case Display::flex:
-                performFlexLayout(*this);
-                break;
-            default:
-                // Unhandled display type
-                jassertfalse;
+        case Display::flex:
+            performFlexLayout(*this);
+            break;
+        default:
+            // Unhandled display type
+            jassertfalse;
         }
     }
 } // namespace jive
