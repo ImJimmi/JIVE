@@ -18,7 +18,7 @@ namespace jive
         ViewRenderer();
 
         //==============================================================================================================
-        void setFactory (const juce::Identifier& treeType, ComponentFactory factory);
+        void setFactory(const juce::Identifier& treeType, ComponentFactory factory);
         void resetFactories();
 
         //==============================================================================================================
