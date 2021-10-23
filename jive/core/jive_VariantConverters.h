@@ -61,11 +61,37 @@ namespace juce
 
     //==================================================================================================================
     template <>
+    struct VariantConverter<juce::FlexBox::AlignItems>
+    {
+        //==============================================================================================================
+        static juce::FlexBox::AlignItems fromVar(const var& v);
+        static var toVar(juce::FlexBox::AlignItems direction);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
+
+    //==================================================================================================================
+    template <>
     struct VariantConverter<juce::FlexBox::AlignContent>
     {
         //==============================================================================================================
         static juce::FlexBox::AlignContent fromVar(const var& v);
         static var toVar(juce::FlexBox::AlignContent direction);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::FlexItem::AlignSelf>
+    {
+        //==============================================================================================================
+        static juce::FlexItem::AlignSelf fromVar(const var& v);
+        static var toVar(juce::FlexItem::AlignSelf alignSelf);
 
     private:
         //==============================================================================================================

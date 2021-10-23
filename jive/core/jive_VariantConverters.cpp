@@ -90,6 +90,28 @@ namespace juce
     }
 
     //==================================================================================================================
+    const Array<var> VariantConverter<juce::FlexBox::AlignItems>::varArray = {
+        "stretch",
+        "flex-start",
+        "flex-end",
+        "centre"
+    };
+
+    juce::FlexBox::AlignItems VariantConverter<juce::FlexBox::AlignItems>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::FlexBox::AlignItems>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems alignment)
+    {
+        const auto index = static_cast<int>(alignment);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
+
+    //==================================================================================================================
     const Array<var> VariantConverter<juce::FlexBox::AlignContent>::varArray = {
         "stretch",
         "flex-start",
@@ -108,6 +130,29 @@ namespace juce
     var VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent justification)
     {
         const auto index = static_cast<int>(justification);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::FlexItem::AlignSelf>::varArray = {
+        "auto",
+        "flex-start",
+        "flex-end",
+        "centre",
+        "stretch"
+    };
+
+    juce::FlexItem::AlignSelf VariantConverter<juce::FlexItem::AlignSelf>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::FlexItem::AlignSelf>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::FlexItem::AlignSelf>::toVar(juce::FlexItem::AlignSelf alignSelf)
+    {
+        const auto index = static_cast<int>(alignSelf);
 
         jassert(varArray.size() >= index);
         return varArray[index];
