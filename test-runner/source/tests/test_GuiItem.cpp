@@ -1,697 +1,648 @@
-#include <utilities/jive_UnitTest.h>
+#include <utilities/test_ComponentUtilities.h>
 
+#include <catch2/catch_test_macros.hpp>
 #include <jive/jive.h>
 
 //======================================================================================================================
-class GuiItemTests : public jive::UnitTest
+SCENARIO("GUI items can have children")
 {
-public:
-    //==================================================================================================================
-    GuiItemTests()
-        : jive::UnitTest{ "jive::GuiItem" }
+    GIVEN("a GUI item")
     {
-    }
+        jive::GuiItem item{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
 
-    //==================================================================================================================
-    void runTest() final
-    {
-        testChildren();
-        testComponentIDs();
-        testDisplayProperty();
-
-        testFlexDirection();
-        testFlexWrap();
-        testFlexJustifyContent();
-        testFlexAlignItems();
-        testFlexAlignContent();
-        testFlexItemOrder();
-        testFlexItemGrow();
-        testFlexItemAlignSelf();
-    }
-
-private:
-    //==================================================================================================================
-    void testChildren()
-    {
-        beginTest("Test children");
-
-        GIVEN("a GUI item created from a value tree with no children");
-        jive::GuiItem item{ std::make_unique<juce::Component>(), juce::ValueTree{ "Dummy" } };
-
+        THEN("the item has no children")
         {
-            THEN("the item should have no children");
-            expectEquals(item.getNumChildren(), 0);
-
-            THEN("the item's component should have no children");
-            expectEquals(item.getComponent().getNumChildComponents(), 0);
+            REQUIRE(item.getNumChildren() == 0);
+        }
+        THEN("the item's component has no children")
+        {
+            REQUIRE(item.getComponent().getNumChildComponents() == 0);
         }
 
+        WHEN("a child is added to the item")
         {
-            WHEN("a child is added to the item");
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "AlsoADummy" }));
-
-            THEN("the item should have a single child");
-            expectEquals(item.getNumChildren(), 1);
-
-            THEN("the item's component should have a single child");
-            expectEquals(item.getComponent().getNumChildComponents(), 1);
-        }
-
-        {
-            WHEN("a second child is added to the item");
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "YetAnotherDummy" }));
-
-            THEN("the item should have 2 children");
-            expectEquals(item.getNumChildren(), 2);
-
-            THEN("the item's component should have 2 children");
-            expectEquals(item.getComponent().getNumChildComponents(), 2);
-        }
-    }
-
-    void testComponentIDs()
-    {
-        beginTest("Test Component IDs");
-
-        GIVEN("a GUI item");
-        juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-        {
-            THEN("the item's ID is blank");
-            expectEquals(item.getComponent().getComponentID(), juce::String{});
-        }
-
-        {
-            WHEN("the value-tree being used by the item has its 'id' property set to '123'");
-            tree.setProperty("id", "123", nullptr);
-
-            THEN("the item's ID is '123'.");
-            expectEquals(item.getComponent().getComponentID(), juce::String{ "123" });
-        }
-        {
-            WHEN("the value-tree begin used by the item has its 'id' property set to '456'");
-            tree.setProperty("id", "456", nullptr);
-
-            THEN("the item's ID is '456'.");
-            expectEquals(item.getComponent().getComponentID(), juce::String{ "456" });
-        }
-    }
-
-    void testDisplayProperty()
-    {
-        beginTest("Test display types");
-
-        GIVEN("a GUI item");
-        juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-        {
-            WHEN("the value-tree being used by the item has its 'display' property set to 'flex'");
-            tree.setProperty("display", "flex", nullptr);
-
-            THEN("the item's display type is 'flex'");
-            expect(item.getDisplay() == jive::GuiItem::Display::flex);
-        }
-        {
-            WHEN("the value-tree being used by the item has its 'display' property set to 'grid'");
-            tree.setProperty("display", "grid", nullptr);
-
-            THEN("the item's display type is 'grid'");
-            expect(item.getDisplay() == jive::GuiItem::Display::grid);
-        }
-    }
-
-    void testFlexDirection()
-    {
-        beginTest("Test flex direction");
-
-        {
-            GIVEN("a GUI item with 2 children, a flex layout, and its 'flex-direction' property set to 'column'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "column", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
                                                           juce::ValueTree{ "Component" }));
 
+            THEN("the item has a single child")
             {
-                WHEN("the parent item's component is given a size of [50, 75]");
-                item.getComponent().setSize(50, 75);
-
-                THEN("the width of the first child's component should match the width of the parent component");
-                expectEquals(item.getChild(0).getComponent().getWidth(), 50);
-
-                THEN("the width of the second child's component should match the width of the parent component");
-                expectEquals(item.getChild(1).getComponent().getWidth(), 50);
-
-                THEN("the second child's component is positioned below the first child's component");
-                expectGreaterOrEqual(item.getChild(1).getComponent().getY(),
-                                     item.getChild(0).getComponent().getBottom());
+                REQUIRE(item.getNumChildren() == 1);
+            }
+            THEN("the item's component has a single child")
+            {
+                REQUIRE(item.getComponent().getNumChildComponents() == 1);
             }
         }
+        WHEN("multiple children are added to the item")
         {
-            GIVEN("a GUI item with 2 children, a flex layout, and its 'flex-direction' property set to 'row'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
                                                           juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                          juce::ValueTree{ "Component" }));
+            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
                                                           juce::ValueTree{ "Component" }));
 
+            THEN("the item has the expected number of children")
             {
-                WHEN("the parent item's component is given a size of [80, 120]");
-                item.getComponent().setSize(80, 120);
-
-                THEN("the height of the first child's component should match the height of the parent component");
-                expectEquals(item.getChild(0).getComponent().getHeight(), 120);
-
-                THEN("the height of the second child's component should match the height of the parent component");
-                expectEquals(item.getChild(1).getComponent().getHeight(), 120);
-
-                THEN("the second child's component is positioned to the right of the first child's component");
-                expectGreaterOrEqual(item.getChild(1).getComponent().getX(),
-                                     item.getChild(0).getComponent().getRight());
+                REQUIRE(item.getNumChildren() == 3);
             }
-        }
-        {
-            GIVEN("a GUI item with 2 children, a flex layout, and its 'flex-direction' property set to "
-                  "'column-reverse'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "column-reverse", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "Component" }));
-
+            THEN("the item's component has the same number of children")
             {
-                WHEN("the parent item's component is given a size of [20, 40]");
-                item.getComponent().setSize(20, 40);
-
-                THEN("the width of the first child's component should match the width of the parent component");
-                expectEquals(item.getChild(0).getComponent().getWidth(), 20);
-
-                THEN("the width of the second child's component should match the width of the parent component");
-                expectEquals(item.getChild(1).getComponent().getWidth(), 20);
-
-                THEN("the second child's component is positioned above the first child's component");
-                expectLessOrEqual(item.getChild(1).getComponent().getBottom(),
-                                  item.getChild(0).getComponent().getY());
-            }
-        }
-        {
-            GIVEN("a GUI item with 2 children, a flex layout, and its 'flex-direction' property set to 'row-reverse'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row-reverse", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          juce::ValueTree{ "Component" }));
-
-            {
-                WHEN("the parent item's component is given a size of [20, 40]");
-                item.getComponent().setSize(150, 200);
-
-                THEN("the height of the first child's component should match the height of the parent component");
-                expectEquals(item.getChild(0).getComponent().getHeight(), 200);
-
-                THEN("the height of the second child's component should match the height of the parent component");
-                expectEquals(item.getChild(1).getComponent().getHeight(), 200);
-
-                THEN("the second child's component is positioned to the left of the first child's component");
-                expectLessOrEqual(item.getChild(1).getComponent().getRight(),
-                                  item.getChild(0).getComponent().getX());
+                REQUIRE(item.getComponent().getNumChildComponents() == 3);
             }
         }
     }
-
-    void testFlexWrap()
-    {
-        beginTest("Test flex wrap");
-
-        {
-            GIVEN("a GUI item with 3 children each with a width of 30, a flex layout, and its 'flex-wrap' property set "
-                  "to 'no-wrap' and its 'flex-direction' property set to 'row'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-wrap", "nowrap", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Component" };
-            childTree.setProperty("width", 30, nullptr);
-            childTree.setProperty("height", 10, nullptr);
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the parent item's component is given a size of [80, 80]");
-                item.getComponent().setSize(80, 80);
-
-                THEN("all three children have the same Y position");
-                expectEquals(item.getChild(0).getComponent().getY(), item.getChild(1).getComponent().getY());
-                expectEquals(item.getChild(1).getComponent().getY(), item.getChild(2).getComponent().getY());
-            }
-        }
-        {
-            GIVEN("a GUI item with 3 children each with a width of 30, a flex layout, and its 'flex-wrap' property set "
-                  "to 'no-wrap'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-wrap", "wrap", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Component" };
-            childTree.setProperty("width", 30, nullptr);
-            childTree.setProperty("height", 10, nullptr);
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the parent item's component is given a size of [80, 80]");
-                item.getComponent().setSize(80, 80);
-
-                THEN("the first two children's components have the same Y position");
-                expectEquals(item.getChild(0).getComponent().getY(), item.getChild(1).getComponent().getY());
-
-                THEN("the last child's component is positioned below the first two");
-                expectGreaterOrEqual(item.getChild(2).getComponent().getY(),
-                                     item.getChild(0).getComponent().getBottom());
-            }
-        }
-        {
-            GIVEN("a GUI item with 3 children each with a width of 30, a flex layout, and its 'flex-wrap' property set "
-                  "to 'no-wrap'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-wrap", "wrap-reverse", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Component" };
-            childTree.setProperty("width", 30, nullptr);
-            childTree.setProperty("height", 10, nullptr);
-
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the parent item's component is given a size of [80, 80]");
-                item.getComponent().setSize(80, 80);
-
-                THEN("the first two children's components have the same Y position");
-                expectEquals(item.getChild(0).getComponent().getY(), item.getChild(1).getComponent().getY());
-
-                THEN("the last child's component is positioned above the first two");
-                expectGreaterOrEqual(item.getChild(0).getComponent().getY(),
-                                     item.getChild(2).getComponent().getBottom());
-            }
-        }
-    }
-
-    void testFlexJustifyContent()
-    {
-        beginTest("Test flex justify-content");
-
-        {
-            GIVEN("a GUI item with two children each with a height of 50, and a flex layout");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Child" };
-            childTree.setProperty("height", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the parent item's 'justify-content' property is set to 'flex-start', and its component is given "
-                     "a size of [200, 200]");
-                tree.setProperty("justify-content", "flex-start", nullptr);
-                item.getComponent().setSize(200, 200);
-
-                THEN("the Y position of the first child's component is 0");
-                expectEquals(item.getChild(0).getComponent().getY(), 0);
-
-                THEN("the Y position of the second child's component is equal to the Y position of the bottom edge of "
-                     "the first child's component");
-                expectEquals(item.getChild(1).getComponent().getY(), item.getChild(0).getComponent().getBottom());
-            }
-            {
-                WHEN("the parent item's 'justify-content' property is set to 'flex-end'");
-                tree.setProperty("justify-content", "flex-end", nullptr);
-
-                THEN("the Y position of the bottom edge of the second child's component is 150");
-                expectEquals(item.getChild(1).getComponent().getBottom(), 200);
-
-                THEN("the Y position of the bottom edge of the first child's component is equal to the Y position of "
-                     "the second child");
-                expectEquals(item.getChild(0).getComponent().getBottom(), item.getChild(1).getComponent().getY());
-            }
-            {
-                WHEN("the parent item's 'justify-content' property is set to 'centre'");
-                tree.setProperty("justify-content", "centre", nullptr);
-
-                THEN("the Y position of the bottom edge of the first child's component is 75");
-                expectEquals(item.getChild(0).getComponent().getBottom(), 100);
-
-                THEN("the Y position of the second child's component is 75");
-                expectEquals(item.getChild(1).getComponent().getY(), 100);
-            }
-            {
-                WHEN("the parent item's 'justify-content' property is set to 'space-between'");
-                tree.setProperty("justify-content", "space-between", nullptr);
-
-                THEN("the Y position of the first child's component is 0");
-                expectEquals(item.getChild(0).getComponent().getY(), 0);
-
-                THEN("the Y position of the bottom edge of the second child's component is 150");
-                expectEquals(item.getChild(1).getComponent().getBottom(), 200);
-            }
-            {
-                WHEN("the parent item's 'justify-content' property is set to 'space-around'");
-                tree.setProperty("justify-content", "space-around", nullptr);
-
-                THEN("the Y position of the first child's component is 25");
-                expectEquals(item.getChild(0).getComponent().getY(), 25);
-
-                THEN("the Y position of the first child's component is 125");
-                expectEquals(item.getChild(1).getComponent().getY(), 125);
-            }
-        }
-    }
-
-    void testFlexAlignItems()
-    {
-        beginTest("Test flex align-items");
-
-        {
-            GIVEN("a GUI item with with a single child, a flex layout, and a flex-direction property of 'row'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Component" };
-            childTree.setProperty("width", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the item has an 'align-items' property of 'stretch', and the item's component is resized");
-                tree.setProperty("align-items", "stretch", nullptr);
-                item.getComponent().setSize(100, 150);
-
-                THEN("the height of the child's component matches the height of the parent's component");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 150 });
-            }
-            {
-                WHEN("the child is given a fixed height, the item has an 'align-items' property of 'flex-start'");
-                childTree.setProperty("height", 50, nullptr);
-                tree.setProperty("align-items", "flex-start", nullptr);
-
-                THEN("the child is at the top of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 50 });
-            }
-            {
-                WHEN("the item has an 'align-items' property of 'flex-end'");
-                tree.setProperty("align-items", "flex-end", nullptr);
-
-                THEN("the child is at the bottom of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 100, 50, 50 });
-            }
-            {
-                WHEN("the item has an 'align-items' property of 'centre'");
-                tree.setProperty("align-items", "centre", nullptr);
-
-                THEN("the child is at the bottom of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 50, 50, 50 });
-            }
-        }
-    }
-
-    void testFlexAlignContent()
-    {
-        beginTest("Test flex align-content");
-
-        {
-            GIVEN("a GUI item with two children each with a size of 50x50, a flex layout, and its 'flex-wrap' property "
-                  "set to 'wrap'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-wrap", "wrap", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Child" };
-            childTree.setProperty("width", 50, nullptr);
-            childTree.setProperty("height", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree));
-
-            {
-                WHEN("the parent's 'align-content' property is set to 'stretch', and its component is given a size of "
-                     "[200, 90]");
-                tree.setProperty("align-content", "stretch", nullptr);
-                item.getComponent().setSize(200, 90);
-
-                THEN("the X position of the first child's component is 0");
-                expectEquals(item.getChild(0).getComponent().getX(), 0);
-
-                THEN("the X position of the second child's component is 100");
-                expectEquals(item.getChild(1).getComponent().getX(), 100);
-            }
-            {
-                WHEN("the parent's 'align-content' property is set to 'flex-start'");
-                tree.setProperty("align-content", "flex-start", nullptr);
-
-                THEN("the X position of the first child's component is 0");
-                expectEquals(item.getChild(0).getComponent().getX(), 0);
-
-                THEN("the X position of the second child's component is 50");
-                expectEquals(item.getChild(1).getComponent().getX(), 50);
-            }
-            {
-                WHEN("the parent's 'align-content' property is set to 'flex-end'");
-                tree.setProperty("align-content", "flex-end", nullptr);
-
-                THEN("the X position of the first child's component is 100");
-                expectEquals(item.getChild(0).getComponent().getX(), 100);
-
-                THEN("the X position of the second child's component is 150");
-                expectEquals(item.getChild(1).getComponent().getX(), 150);
-            }
-            {
-                WHEN("the parent's 'align-content' property is set to 'centre'");
-                tree.setProperty("align-content", "centre", nullptr);
-
-                THEN("the X position of the first child's component is 50");
-                expectEquals(item.getChild(0).getComponent().getX(), 50);
-
-                THEN("the X position of the second child's component is 100");
-                expectEquals(item.getChild(1).getComponent().getX(), 100);
-            }
-            {
-                WHEN("the parent's 'align-content' property is set to 'space-between'");
-                tree.setProperty("align-content", "space-between", nullptr);
-
-                THEN("the X position of the first child's component is 0");
-                expectEquals(item.getChild(0).getComponent().getX(), 0);
-
-                THEN("the X position of the second child's component is 150");
-                expectEquals(item.getChild(1).getComponent().getX(), 150);
-            }
-            {
-                WHEN("the parent's 'align-content' property is set to 'space-around'");
-                tree.setProperty("align-content", "space-around", nullptr);
-
-                THEN("the X position of the first child's component is 25");
-                expectEquals(item.getChild(0).getComponent().getX(), 25);
-
-                THEN("the X position of the second child's component is 125");
-                expectEquals(item.getChild(1).getComponent().getX(), 125);
-            }
-        }
-    }
-
-    void testFlexItemOrder()
-    {
-        beginTest("Test flex-item order");
-
-        {
-            GIVEN("a GUI item with 2 children, a flex layout, and a flex-direction of 'row'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree1{ "Component" };
-            childTree1.setProperty("width", 50, nullptr);
-            childTree1.setProperty("height", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree1, &item));
-
-            juce::ValueTree childTree2{ "Component" };
-            childTree2.setProperty("width", 50, nullptr);
-            childTree2.setProperty("height", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree2, &item));
-
-            {
-                WHEN("the first child is given an order of 1, the second child an order of 2, and the item is resized");
-                childTree1.setProperty("order", 1, nullptr);
-                childTree2.setProperty("order", 2, nullptr);
-                item.getComponent().setSize(200, 200);
-
-                THEN("the first child's component is positioned on the left");
-                expect(item.getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
-
-                THEN("the second child's component is position to the right of the first");
-                expect(item.getChild(1).getComponent().getPosition() == juce::Point<int>{ 50, 0 });
-            }
-            {
-                WHEN("the first child is given an order of 7, and the second child an order of 4");
-                childTree1.setProperty("order", 7, nullptr);
-                childTree2.setProperty("order", 4, nullptr);
-
-                THEN("the first child's component is positioned to the right of the second");
-                expect(item.getChild(0).getComponent().getPosition() == juce::Point<int>{ 50, 0 });
-
-                THEN("the second child's component is position on the left");
-                expect(item.getChild(1).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
-            }
-        }
-    }
-
-    void testFlexItemGrow()
-    {
-        beginTest("Test flex-item grow");
-
-        {
-            GIVEN("a GUI item with 2 children each with a fixed height and a flex-grow of 1, a flex layout, and a "
-                  "flex-direction of 'row'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree1{ "Component" };
-            childTree1.setProperty("height", 50, nullptr);
-            childTree1.setProperty("flex-grow", 1, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree1, &item));
-
-            juce::ValueTree childTree2{ "Component" };
-            childTree2.setProperty("height", 50, nullptr);
-            childTree2.setProperty("flex-grow", 1, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree2));
-
-            {
-                WHEN("the item is resized");
-                item.getComponent().setSize(300, 100);
-
-                THEN("the first child's component covers the left half of the parent's width");
-                expect(item.getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
-                expectEquals(item.getChild(0).getComponent().getWidth(), 150);
-
-                THEN("the second child's component covers the right half of the parent's width");
-                expect(item.getChild(1).getComponent().getPosition() == juce::Point<int>{ 150, 0 });
-                expectEquals(item.getChild(1).getComponent().getWidth(), 150);
-            }
-            {
-                WHEN("the first child's flex-grow is set to 2");
-                childTree1.setProperty("flex-grow", 2, nullptr);
-
-                THEN("the first child's component covers the left 2 thirds of the parent's width");
-                expect(item.getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
-                expectEquals(item.getChild(0).getComponent().getWidth(), 200);
-
-                THEN("the second child's component covers the right third of the parent's width");
-                expect(item.getChild(1).getComponent().getPosition() == juce::Point<int>{ 200, 0 });
-                expectEquals(item.getChild(1).getComponent().getWidth(), 100);
-            }
-        }
-    }
-
-    void testFlexItemAlignSelf()
-    {
-        beginTest("Test flex-item align-self");
-
-        {
-            GIVEN("a GUI item with a single child, with a flex-layout, a flex-direction of 'row', and an align-content "
-                  "property of 'flex-end'");
-            juce::ValueTree tree{ "Component" };
-            tree.setProperty("display", "flex", nullptr);
-            tree.setProperty("flex-direction", "row", nullptr);
-            tree.setProperty("align-items", "flex-end", nullptr);
-            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-
-            juce::ValueTree childTree{ "Component" };
-            childTree.setProperty("width", 50, nullptr);
-            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree, &item));
-
-            {
-                WHEN("the child is given an 'align-self' property of 'stretch', and the parent component is resized");
-                item.getComponent().setSize(100, 150);
-                childTree.setProperty("align-self", "stretch", nullptr);
-
-                THEN("the child's component covers the height of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 150 });
-            }
-            {
-                WHEN("the child is given a fixed height, has its align-self property is set to 'auto'");
-                childTree.setProperty("height", 50, nullptr);
-                childTree.setProperty("align-self", "auto", nullptr);
-
-                THEN("the child's component is positioned at the bottom of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 100, 50, 50 });
-            }
-            {
-                WHEN("the child is given an 'align-self' property of 'flex-start'");
-                childTree.setProperty("align-self", "flex-start", nullptr);
-
-                THEN("the child's component is positioned at the top of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 0, 50, 50 });
-            }
-            {
-                WHEN("the child is given an 'align-self' property of 'flex-end'");
-                childTree.setProperty("align-self", "flex-end", nullptr);
-
-                THEN("the child's component is positioned at the bottom of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 100, 50, 50 });
-            }
-            {
-                WHEN("the child is given an 'align-self' property of 'centre'");
-                childTree.setProperty("align-self", "centre", nullptr);
-
-                THEN("the child's component is positioned in the centre of the parent");
-                expect(item.getChild(0).getComponent().getBounds() == juce::Rectangle<int>{ 0, 50, 50, 50 });
-            }
-        }
-    }
-};
+}
 
 //======================================================================================================================
-static GuiItemTests guiItemTests;
+SCENARIO("GUI items have a flex-direction property")
+{
+    GIVEN("a GUI item with a flex layout and some children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component" }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component" }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component" }));
+
+        WHEN("the item's component is resized such that it is large enough to contain all of its children both "
+             "side-by-side and one above the other")
+        {
+            item.getComponent().setSize(123, 456);
+
+            THEN("the children are positioned vertically in the order they were added")
+            {
+                REQUIRE(item.getChild(0).getComponent().getBottom() == item.getChild(1).getComponent().getY());
+                REQUIRE(item.getChild(1).getComponent().getBottom() == item.getChild(2).getComponent().getY());
+            }
+
+            WHEN("the item has a row flex-direction")
+            {
+                tree.setProperty("flex-direction",
+                                 juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row),
+                                 nullptr);
+
+                THEN("the children are positioned horizontally in the order they were added")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getRight() == item.getChild(1).getComponent().getX());
+                    REQUIRE(item.getChild(1).getComponent().getRight() == item.getChild(2).getComponent().getX());
+                }
+            }
+            WHEN("the item has a column-reverse flex-direction")
+            {
+                tree.setProperty("flex-direction",
+                                 juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::columnReverse),
+                                 nullptr);
+
+                THEN("the children are positioned vertically with in the reverse order to how they were added")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getY() == item.getChild(1).getComponent().getBottom());
+                    REQUIRE(item.getChild(1).getComponent().getY() == item.getChild(2).getComponent().getBottom());
+                }
+            }
+            WHEN("the item has a row-reverse flex-direction")
+            {
+                tree.setProperty("flex-direction",
+                                 juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::rowReverse),
+                                 nullptr);
+
+                THEN("the children are positioned horizontally in the reverse order to how they were added")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getX() == item.getChild(1).getComponent().getRight());
+                    REQUIRE(item.getChild(1).getComponent().getX() == item.getChild(2).getComponent().getRight());
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have a flex-wrap property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, and some children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 120 } } }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 120 } } }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 120 } } }));
+
+        WHEN("the item's component is resized such that it's not wide enough to contain all of the children at their "
+              "desired widths")
+        {
+            item.getComponent().setSize(300, 400);
+
+            THEN("the children are squashed to fit side-by-side")
+            {
+                REQUIRE(item.getChild(0).getComponent().getWidth() == 100);
+                REQUIRE(item.getChild(1).getComponent().getWidth() == 100);
+                REQUIRE(item.getChild(2).getComponent().getWidth() == 100);
+            }
+
+            WHEN("the item has wrapping enabled")
+            {
+                tree.setProperty("flex-wrap",
+                                 juce::VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap::wrap),
+                                 nullptr);
+
+                THEN("the children have their desired widths and any that wouldn't otherwise have fit are dropped to "
+                     "the next row")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getWidth() == 120);
+                    REQUIRE(item.getChild(1).getComponent().getWidth() == 120);
+                    REQUIRE(item.getChild(2).getComponent().getWidth() == 120);
+
+                    REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                    REQUIRE(item.getChild(1).getComponent().getY() == 0);
+                    REQUIRE(item.getChild(2).getComponent().getY() == 200);
+                }
+            }
+            WHEN("the item has wrap-reverse enabled")
+            {
+                tree.setProperty("flex-wrap",
+                                 juce::VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap::wrapReverse),
+                                 nullptr);
+
+                THEN("the children have their designed widths and any that wouldn't otherwise have fit are raised to the "
+                     "row above")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getWidth() == 120);
+                    REQUIRE(item.getChild(1).getComponent().getWidth() == 120);
+                    REQUIRE(item.getChild(2).getComponent().getWidth() == 120);
+
+                    REQUIRE(item.getChild(0).getComponent().getY() == 200);
+                    REQUIRE(item.getChild(1).getComponent().getY() == 200);
+                    REQUIRE(item.getChild(2).getComponent().getY() == 0);
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have a justify-content property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, and some children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 10 } } }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 10 } } }));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                      juce::ValueTree{ "Component", { { "width", 10 } } }));
+
+        WHEN("the item is resized such that it was wider than the total width of all its children")
+        {
+            item.getComponent().setSize(90, 100);
+
+            THEN("the children are placed on the left")
+            {
+                REQUIRE(item.getChild(0).getComponent().getX() == 0);
+                REQUIRE(item.getChild(1).getComponent().getX() == item.getChild(0).getComponent().getRight());
+                REQUIRE(item.getChild(2).getComponent().getX() == item.getChild(1).getComponent().getRight());
+            }
+
+            WHEN("the item has a flex-end justify-content")
+            {
+                tree.setProperty("justify-content",
+                                 juce::VariantConverter<juce::FlexBox::JustifyContent>::toVar(juce::FlexBox::JustifyContent::flexEnd),
+                                 nullptr);
+
+                THEN("the children are placed on the right")
+                {
+                    REQUIRE(item.getChild(2).getComponent().getRight() == 90);
+                    REQUIRE(item.getChild(1).getComponent().getRight() == item.getChild(2).getComponent().getX());
+                    REQUIRE(item.getChild(0).getComponent().getRight() == item.getChild(1).getComponent().getX());
+                }
+            }
+            WHEN("the item has a centre justify-content")
+            {
+                tree.setProperty("justify-content",
+                                 juce::VariantConverter<juce::FlexBox::JustifyContent>::toVar(juce::FlexBox::JustifyContent::center),
+                                 nullptr);
+
+                THEN("the children are placed in the centre")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getBounds().getCentreX() == 35);
+                    REQUIRE(item.getChild(1).getComponent().getBounds().getCentreX() == 45);
+                    REQUIRE(item.getChild(2).getComponent().getBounds().getCentreX() == 55);
+                }
+            }
+            WHEN("the item has a space-between justify-content")
+            {
+                tree.setProperty("justify-content",
+                                 juce::VariantConverter<juce::FlexBox::JustifyContent>::toVar(juce::FlexBox::JustifyContent::spaceBetween),
+                                 nullptr);
+
+                THEN("the children are spaced with the maximum amount of space between them")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getX() == 0);
+                    REQUIRE(item.getChild(1).getComponent().getBounds().getCentreX() == 45);
+                    REQUIRE(item.getChild(2).getComponent().getRight() == 90);
+                }
+            }
+            WHEN("the item has a space-between justify-content")
+            {
+                tree.setProperty("justify-content",
+                                 juce::VariantConverter<juce::FlexBox::JustifyContent>::toVar(juce::FlexBox::JustifyContent::spaceAround),
+                                 nullptr);
+
+                THEN("the children are spaced with an equal space on either side of them")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getX() == 10);
+                    REQUIRE(item.getChild(1).getComponent().getBounds().getCentreX() == 45);
+                    REQUIRE(item.getChild(2).getComponent().getRight() == 80);
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have an align-items property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, and a child")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree{ "Component", { { "width", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree));
+
+        WHEN("the item is resized")
+        {
+            item.getComponent().setSize(100, 150);
+
+            THEN("the height of the child's component matches the height of the parent's component")
+            {
+                REQUIRE(item.getChild(0).getComponent().getHeight() == 150);
+            }
+
+            WHEN("the child is given a fixed height")
+            {
+                childTree.setProperty("height", 50, nullptr);
+
+                WHEN("the item has a flex-start item alignment")
+                {
+                    tree.setProperty("align-items",
+                                     juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexStart),
+                                     nullptr);
+
+                    THEN("the child is aligned at the top of the parent")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getHeight() == 50);
+                        REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                    }
+                }
+                WHEN("the item has a flex-end item alignment")
+                {
+                    tree.setProperty("align-items",
+                                     juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexEnd),
+                                     nullptr);
+
+                    THEN("the child is aligned at the bottom of the parent")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getHeight() == 50);
+                        REQUIRE(item.getChild(0).getComponent().getBottom() == 150);
+                    }
+                }
+                WHEN("the item has a flex-end item alignment")
+                {
+                    tree.setProperty("align-items",
+                                     juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::center),
+                                     nullptr);
+
+                    THEN("the child is aligned in the centre of the parent")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getHeight() == 50);
+                        REQUIRE(item.getChild(0).getComponent().getBounds().getCentreY() == 75);
+                    }
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have an align-content property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, a wrap flex-wrap, and two children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) },
+                { "flex-wrap", juce::VariantConverter<juce::FlexBox::Wrap>::toVar(juce::FlexBox::Wrap::wrap) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree{ "Component", { { "width", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree));
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree));
+
+        WHEN("the item's component is resized such that it isn't wide enough to contain both its children, but more "
+             "than tall enough to contain them")
+        {
+            item.getComponent().setSize(90, 200);
+
+            THEN("the children are aligned at the top of the parent")
+            {
+                REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                REQUIRE(item.getChild(1).getComponent().getY() == 100);
+            }
+
+            WHEN("the item's align-content property is set to 'flex-end', and the children are given a fixed height")
+            {
+                childTree.setProperty("height", 50, nullptr);
+                tree.setProperty("align-content",
+                                 juce::VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent::flexEnd),
+                                 nullptr);
+
+                THEN("the children are aligned at the bottom of the parent")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getBottom() == 150);
+                    REQUIRE(item.getChild(1).getComponent().getBottom() == 200);
+                }
+
+                WHEN("the item's align-content property is set to 'centre'")
+                {
+                    tree.setProperty("align-content",
+                                     juce::VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent::center),
+                                     nullptr);
+
+                    THEN("the children are aligned in the centre of the parent")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getBottom() == 100);
+                        REQUIRE(item.getChild(1).getComponent().getY() == 100);
+                    }
+                }
+                WHEN("the item's align-content property is set to 'space-between'")
+                {
+                    tree.setProperty("align-content",
+                                     juce::VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent::spaceBetween),
+                                     nullptr);
+
+                    THEN("the children are aligned with the maximum space between them")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                        REQUIRE(item.getChild(1).getComponent().getBottom() == 200);
+                    }
+                }
+                WHEN("the item's align-content property is set to 'space-around'")
+                {
+                    tree.setProperty("align-content",
+                                     juce::VariantConverter<juce::FlexBox::AlignContent>::toVar(juce::FlexBox::AlignContent::spaceAround),
+                                     nullptr);
+
+                    THEN("the children are aligned with the same amount of space around them")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getY() == 25);
+                        REQUIRE(item.getChild(1).getComponent().getBottom() == 175);
+                    }
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have an 'order' property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, and two children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree1{ "Component", { { "width", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree1, &item));
+
+        juce::ValueTree childTree2{ "Component", { { "width", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree2, &item));
+
+        WHEN("the item's component resized such that it can contain both children side-by-side")
+        {
+            item.getComponent().setSize(150, 150);
+
+            THEN("the first child's component is the the left of the second")
+            {
+                REQUIRE(item.getChild(0).getComponent().getRight() <= item.getChild(1).getComponent().getX());
+            }
+
+            WHEN("the first item's order is changed to be larger than the second's order")
+            {
+                childTree1.setProperty("order", 4, nullptr);
+
+                THEN("the first child's component is to the right of the second")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getX() >= item.getChild(1).getComponent().getRight());
+                }
+
+                WHEN("the second item;s order is changed to be large than the first's order")
+                {
+                    childTree2.setProperty("order", 7, nullptr);
+
+                    THEN("the first child's component is to the left of the second")
+                    {
+                        REQUIRE(item.getChild(0).getComponent().getRight() <= item.getChild(1).getComponent().getX());
+                    }
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have a 'flex-grow' property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, and two children with a flex-grow of 1")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree1{ "Component", { { "flex-grow", 1 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree1, &item));
+
+        juce::ValueTree childTree2{ "Component", { { "flex-grow", 1 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree2, &item));
+
+        WHEN("the item's component is resized")
+        {
+            item.getComponent().setSize(300, 100);
+
+            THEN("the children have the same width")
+            {
+                REQUIRE(item.getChild(0).getComponent().getWidth() == item.getChild(1).getComponent().getWidth());
+            }
+
+            WHEN("the first child's flex-grow is set to double that of the second")
+            {
+                childTree1.setProperty("flex-grow", 2, nullptr);
+
+                THEN("the first child's component is twice the width of the first")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getWidth() == item.getChild(1).getComponent().getWidth() * 2);
+                }
+
+                WHEN("the second child's flex-grow is set to 1.5x that of the first")
+                {
+                    childTree2.setProperty("flex-grow", 3, nullptr);
+
+                    THEN("the second child'c component is 1.5x the width of the second")
+                    {
+                        REQUIRE(item.getChild(1).getComponent().getWidth() == item.getChild(0).getComponent().getWidth() * 1.5);
+                    }
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have an align-self property")
+{
+    GIVEN("a GUI item with a flex layout, a row flex-direction, a flex-end item alignment, and a child")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) },
+                { "align-items", juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexEnd) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree1{ "Component", { { "height", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree1, &item));
+
+        WHEN("the item's component is resized such that it's more than tall enough to contain its child")
+        {
+            item.getComponent().setSize(100, 200);
+
+            THEN("the child's component is aligned at the bottom of the parent")
+            {
+                REQUIRE(item.getChild(0).getComponent().getY() == 150);
+            }
+
+            WHEN("the child's align-self is set to 'flex-start'")
+            {
+                childTree1.setProperty("align-self",
+                                       juce::VariantConverter<juce::FlexItem::AlignSelf>::toVar(juce::FlexItem::AlignSelf::flexStart),
+                                       nullptr);
+
+                THEN("the child's component is aligned at the top of the parent")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                }
+            }
+            WHEN("the child's align-self is set to 'centre'")
+            {
+                childTree1.setProperty("align-self",
+                                       juce::VariantConverter<juce::FlexItem::AlignSelf>::toVar(juce::FlexItem::AlignSelf::center),
+                                       nullptr);
+
+                THEN("the child's component is aligned in the centre of the parent")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getBounds().getCentreY() == 100);
+                }
+            }
+            WHEN("the child's align-self is set to 'stretch'")
+            {
+                childTree1.setProperty("align-self",
+                                       juce::VariantConverter<juce::FlexItem::AlignSelf>::toVar(juce::FlexItem::AlignSelf::stretch),
+                                       nullptr);
+
+                THEN("the child's component is aligned at the top of the parent")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getY() == 0);
+                }
+            }
+        }
+    }
+    GIVEN("a GUI item with a flex layout, a row flex-direction, a flex-start item alignment, and a child")
+    {
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) },
+                { "align-items", juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexEnd) }
+            },
+            {}
+        };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        juce::ValueTree childTree1{ "Component", { { "height", 50 } } };
+        item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(), childTree1, &item));
+
+        WHEN("the item's component is resized such that it's more than tall enough to contain its child")
+        {
+            item.getComponent().setSize(100, 200);
+
+            WHEN("the child's align-self is set to 'flex-end'")
+            {
+                childTree1.setProperty("align-self",
+                                       juce::VariantConverter<juce::FlexItem::AlignSelf>::toVar(juce::FlexItem::AlignSelf::flexEnd),
+                                       nullptr);
+
+                THEN("the child's component is aligned at the bottom of the parent")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getBottom() == item.getComponent().getBottom());
+                }
+            }
+        }
+    }
+}

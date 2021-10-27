@@ -18,11 +18,9 @@ namespace jive
         , flexAlignContent{ tree, "align-content", nullptr }
         , flexItemOrder{ tree, "order", nullptr }
         , flexItemGrow{ tree, "flex-grow", nullptr }
-        , flexItemAlignSelf{ tree, "align-self", nullptr }
+        , flexItemAlignSelf{ tree, "align-self", nullptr, juce::FlexItem::AlignSelf::autoAlign }
     {
         jassert(component != nullptr);
-
-        componentIdChanged();
 
         component->addComponentListener(this);
         tree.addListener(this);
@@ -62,11 +60,6 @@ namespace jive
         return parent;
     }
 
-    GuiItem::Display GuiItem::getDisplay() const
-    {
-        return display;
-    }
-
     //==================================================================================================================
     GuiItem::operator juce::FlexBox()
     {
@@ -103,8 +96,10 @@ namespace jive
     {
         jassert(treeWhosePropertyChanged == tree);
 
-        if (propertyID == juce::Identifier{ "id" })
-            componentIdChanged();
+        if (propertyID == flexDirection.getPropertyID())
+            flexDirectionChanged();
+        else if (propertyID == flexWrap.getPropertyID())
+            flexWrapChanged();
         else if (propertyID == flexJustifyContent.getPropertyID())
             flexJustifyContentChanged();
         else if (propertyID == flexAlignItems.getPropertyID())
@@ -132,9 +127,16 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItem::componentIdChanged()
+    void GuiItem::flexDirectionChanged()
     {
-        component->setComponentID(tree["id"]);
+        flexDirection.forceUpdateOfCachedValue();
+        updateLayout();
+    }
+
+    void GuiItem::flexWrapChanged()
+    {
+        flexWrap.forceUpdateOfCachedValue();
+        updateLayout();
     }
 
     void GuiItem::flexJustifyContentChanged()
@@ -201,3 +203,14 @@ namespace jive
         }
     }
 } // namespace jive
+
+//======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    String& operator<<(String& text, jive::GuiItem::Display display)
+    {
+        text << juce::VariantConverter<jive::GuiItem::Display>::toVar(display).toString();
+        return text;
+    }
+} // namespace juce

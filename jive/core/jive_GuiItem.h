@@ -14,8 +14,7 @@ namespace jive
         //==============================================================================================================
         enum class Display
         {
-            flex,
-            grid
+            flex
         };
 
         //==============================================================================================================
@@ -32,8 +31,6 @@ namespace jive
         GuiItem& getChild(int index);
         const GuiItem* getParent();
 
-        Display getDisplay() const;
-
         //==============================================================================================================
         operator juce::FlexBox();
         operator juce::FlexItem();
@@ -45,7 +42,8 @@ namespace jive
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) final;
 
         //==============================================================================================================
-        void componentIdChanged();
+        void flexDirectionChanged();
+        void flexWrapChanged();
         void flexJustifyContentChanged();
         void flexAlignItemsChanged();
         void flexAlignContentChanged();
@@ -77,3 +75,10 @@ namespace jive
         JUCE_LEAK_DETECTOR(GuiItem)
     };
 } // namespace jive
+
+//======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    String& operator<<(String& text, jive::GuiItem::Display display);
+} // namespace juce
