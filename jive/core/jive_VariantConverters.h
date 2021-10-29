@@ -1,9 +1,5 @@
 #pragma once
 
-#include "jive_GuiItem.h"
-
-#include <juce_core/juce_core.h>
-
 //======================================================================================================================
 namespace juce
 {

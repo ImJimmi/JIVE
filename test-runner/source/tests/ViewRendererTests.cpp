@@ -2,7 +2,7 @@
 #include <jive/jive.h>
 
 //======================================================================================================================
-SCENARIO("view renderers should support multiple component types")
+SCENARIO("view renderers can render different components")
 {
     GIVEN("a view renderer")
     {
@@ -30,7 +30,7 @@ SCENARIO("view renderers should support multiple component types")
 }
 
 //======================================================================================================================
-SCENARIO("view renderers should support nested components")
+SCENARIO("view renderers can render nested components")
 {
     GIVEN("a view renderer")
     {
@@ -55,10 +55,8 @@ SCENARIO("view renderers should support nested components")
             juce::ValueTree tree{
                 "ToggleButton",
                 {},
-                {
-                    juce::ValueTree{ "ToggleButton" },
-                    juce::ValueTree{ "ToggleButton" }
-                }
+                { juce::ValueTree{ "ToggleButton" },
+                  juce::ValueTree{ "ToggleButton" } }
             };
             auto view = renderer.renderView(tree);
 
@@ -76,17 +74,12 @@ SCENARIO("view renderers should support nested components")
             juce::ValueTree tree{
                 "ToggleButton",
                 {},
-                {
-                    juce::ValueTree{
-                        "ToggleButton",
-                        {},
-                        {
-                            juce::ValueTree{ "ToggleButton" },
-                            juce::ValueTree{ "ToggleButton" },
-                            juce::ValueTree{ "ToggleButton" }
-                        }
-                    }
-                }
+                { juce::ValueTree{
+                    "ToggleButton",
+                    {},
+                    { juce::ValueTree{ "ToggleButton" },
+                      juce::ValueTree{ "ToggleButton" },
+                      juce::ValueTree{ "ToggleButton" } } } }
             };
             auto view = renderer.renderView(tree);
 
@@ -112,7 +105,7 @@ SCENARIO("view renderers should support nested components")
 }
 
 //======================================================================================================================
-SCENARIO("view renderers should support custom component factories")
+SCENARIO("view renderers can render custom components")
 {
     GIVEN("a view renderer")
     {
@@ -170,6 +163,44 @@ SCENARIO("view renderers should support custom component factories")
                         REQUIRE(dynamic_cast<juce::TextButton*>(&view->getComponent()) != nullptr);
                     }
                 }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("view renderers can render items with different display types")
+{
+    GIVEN("a view renderer")
+    {
+        jive::ViewRenderer renderer;
+
+        WHEN("a view is rendered from a value-tree with no display type specified")
+        {
+            auto item = renderer.renderView(juce::ValueTree{ "TextButton" });
+
+            THEN("the rendered item is a basic GUI item")
+            {
+                REQUIRE(juce::String{ typeid(item).name() }.contains("GuiItem"));
+            }
+        }
+        WHEN("a view is rendered from a value-tree with a flex display type, and a child")
+        {
+            juce::ValueTree tree{
+                "TextButton",
+                { { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) } },
+                { juce::ValueTree{ "ToggleButton" } }
+            };
+            auto item = renderer.renderView(tree);
+
+            THEN("the rendered item is a flex container")
+            {
+                REQUIRE(dynamic_cast<jive::GuiFlexContainer*>(item.get()) != nullptr);
+            }
+            THEN("the first child is a flex item")
+            {
+                auto& child = item->getChild(0);
+                REQUIRE(dynamic_cast<jive::GuiFlexItem*>(&child) != nullptr);
             }
         }
     }
