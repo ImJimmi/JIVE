@@ -7,8 +7,8 @@ namespace jive
 {
     //==================================================================================================================
     class GuiItem
-        : private juce::ValueTree::Listener
-        , private juce::ComponentListener
+        : protected juce::ValueTree::Listener
+        , protected juce::ComponentListener
     {
     public:
         //==============================================================================================================
@@ -19,66 +19,54 @@ namespace jive
 
         //==============================================================================================================
         GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent = nullptr);
+        GuiItem(const GuiItem& other);
+        ~GuiItem();
 
         //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child);
+        virtual void updateLayout();
 
         //==============================================================================================================
-        juce::Component& getComponent();
         const juce::Component& getComponent() const;
+        juce::Component& getComponent();
 
-        int getNumChildren() const;
-        GuiItem& getChild(int index);
-        const GuiItem* getParent();
+        virtual void addChild(std::unique_ptr<GuiItem> child);
+        virtual int getNumChildren() const;
+        virtual GuiItem& getChild(int index);
+        const GuiItem* getParent() const;
+        GuiItem* getParent();
+
+        float getWidth() const;
+        float getHeight() const;
+
+        Display getDisplay() const;
+
+    protected:
+        //==============================================================================================================
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
         //==============================================================================================================
-        operator juce::FlexBox();
-        operator juce::FlexItem();
+        juce::ValueTree tree;
+
+        const std::shared_ptr<juce::Component> component;
+        GuiItem* const parent;
 
     private:
         //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) final;
-
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) final;
-
-        //==============================================================================================================
-        void flexDirectionChanged();
-        void flexWrapChanged();
-        void flexJustifyContentChanged();
-        void flexAlignItemsChanged();
-        void flexAlignContentChanged();
-        void flexItemOrderChanged();
-        void flexItemGrowChanged();
-        void flexItemAlignSelfChanged();
-
-        void updateLayout();
+        friend class GuiFlexItem;
+        friend class GuiFlexContainer;
 
         //==============================================================================================================
-        const std::unique_ptr<juce::Component> component;
-        juce::ValueTree tree;
+        GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
+
+        //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
-        GuiItem* const parent;
 
         juce::CachedValue<int> width;
         juce::CachedValue<int> height;
         juce::CachedValue<Display> display;
-        juce::CachedValue<juce::FlexBox::Direction> flexDirection;
-        juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
-        juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
-        juce::CachedValue<juce::FlexBox::AlignItems> flexAlignItems;
-        juce::CachedValue<juce::FlexBox::AlignContent> flexAlignContent;
-        juce::CachedValue<int> flexItemOrder;
-        juce::CachedValue<float> flexItemGrow;
-        juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
     };
 } // namespace jive
-
-//======================================================================================================================
-namespace juce
-{
-    //==================================================================================================================
-    String& operator<<(String& text, jive::GuiItem::Display display);
-} // namespace juce

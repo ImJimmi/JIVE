@@ -4,35 +4,33 @@
 namespace jive
 {
     //==================================================================================================================
-    class ViewRenderer
+    class GuiFlexItem : public GuiItem
     {
     public:
         //==============================================================================================================
-        using ComponentFactory = std::function<std::unique_ptr<juce::Component>()>;
+        explicit GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        ViewRenderer();
+        operator juce::FlexItem();
 
+    protected:
         //==============================================================================================================
-        void setFactory(const juce::Identifier& treeType, ComponentFactory factory);
-        void resetFactories();
-
-        //==============================================================================================================
-        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree);
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
 
     private:
         //==============================================================================================================
-        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree, GuiItem* const parent);
-
-        std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree, GuiItem* const parent) const;
-        void appendChildItems(GuiItem& item, juce::ValueTree tree);
-
-        std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
+        void flexItemOrderChanged();
+        void flexItemGrowChanged();
+        void flexItemAlignSelfChanged();
 
         //==============================================================================================================
-        juce::HashMap<juce::String, ComponentFactory> factories;
+        std::unique_ptr<GuiItem> item;
+
+        juce::CachedValue<int> flexItemOrder;
+        juce::CachedValue<float> flexItemGrow;
+        juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ViewRenderer)
+        JUCE_LEAK_DETECTOR(GuiFlexItem)
     };
 } // namespace jive
