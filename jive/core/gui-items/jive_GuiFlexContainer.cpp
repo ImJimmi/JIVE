@@ -97,13 +97,7 @@ namespace jive
                                                    bool wasResized)
     {
         item->componentMovedOrResized (componentThatWasMovedOrResized, wasMoved, wasResized);
-
-        jassert(&componentThatWasMovedOrResized == component.get());
-
-        if (!wasResized)
-            return;
-
-        updateLayout();
+        GuiItem::componentMovedOrResized (componentThatWasMovedOrResized, wasMoved, wasResized);
     }
 
     //==================================================================================================================

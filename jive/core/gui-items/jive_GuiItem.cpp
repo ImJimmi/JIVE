@@ -99,9 +99,15 @@ namespace jive
     {
     }
 
-    void GuiItem::componentMovedOrResized(juce::Component& /*componentThatWasMovedOrResized*/,
+    void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                           bool /*wasMoved*/,
-                                          bool /*wasResized*/)
+                                          bool wasResized)
     {
+        jassert(&componentThatWasMovedOrResized == component.get());
+
+        if (!wasResized)
+            return;
+
+        updateLayout();
     }
 } // namespace jive
