@@ -35,7 +35,7 @@ namespace jive
         void flexAlignContentChanged();
 
         //==============================================================================================================
-        std::unique_ptr<GuiItem> item;
+        const std::unique_ptr<GuiItem> item;
 
         juce::CachedValue<juce::FlexBox::Direction> flexDirection;
         juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
