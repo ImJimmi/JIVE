@@ -1,52 +1,45 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
 //======================================================================================================================
 namespace jive
 {
     //==================================================================================================================
-    class GuiItem : private juce::ValueTree::Listener
+    class GuiFlexContainer : public GuiItem
     {
     public:
         //==============================================================================================================
-        enum class Display
-        {
-            flex,
-            grid
-        };
+        explicit GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree);
+        void addChild(std::unique_ptr<GuiItem> child) override;
+        int getNumChildren() const override;
+        GuiItem& getChild(int index) override;
 
         //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child);
+        void updateLayout() override;
 
         //==============================================================================================================
-        juce::Component& getComponent();
-        const juce::Component& getComponent() const;
+        operator juce::FlexBox();
 
-        int getNumChildren() const;
-        GuiItem& getChild(int index);
-
-        juce::String getID() const;
-        Display getDisplay() const;
+    protected:
+        //==============================================================================================================
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
     private:
         //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) final;
+        void forceUpdateOfAllCachedValues();
 
         //==============================================================================================================
-        void componentIdChanged();
+        const std::unique_ptr<GuiItem> item;
+
+        juce::CachedValue<juce::FlexBox::Direction> flexDirection;
+        juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
+        juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
+        juce::CachedValue<juce::FlexBox::AlignItems> flexAlignItems;
+        juce::CachedValue<juce::FlexBox::AlignContent> flexAlignContent;
 
         //==============================================================================================================
-        const std::unique_ptr<juce::Component> component;
-        juce::ValueTree tree;
-        juce::OwnedArray<GuiItem> children;
-
-        juce::CachedValue<Display> display;
-
-        //==============================================================================================================
-        JUCE_LEAK_DETECTOR(GuiItem)
+        JUCE_LEAK_DETECTOR(GuiFlexContainer)
     };
 } // namespace jive

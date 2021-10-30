@@ -10,7 +10,7 @@ if (JIVE_BUILD_TEST_RUNNER)
     set(CMAKE_XCODE_GENERATE_SCHEME OFF)
     set(JUCE_ENABLE_MODULE_SOURCE_GROUPS ON CACHE BOOL "" FORCE)
 
-    add_subdirectory(test-runner/libraries/JUCE)
+    add_subdirectory(test-runner/libraries)
 
     set(CMAKE_XCODE_GENERATE_SCHEME ${DEFAULT_XCODE_GENERATE_SCHEME})
 

@@ -1,19 +1,5 @@
+#include <catch2/catch_session.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
-
-//======================================================================================================================
-auto getNumFailures(const juce::UnitTestRunner& runner)
-{
-    auto numFails = 0;
-
-    for (auto i = 0; i < runner.getNumResults(); i++)
-    {
-        if (auto* result = runner.getResult(i))
-            numFails += result->failures;
-    }
-
-    return numFails;
-    ;
-}
 
 //======================================================================================================================
 class TestRunner : public juce::JUCEApplication
@@ -35,12 +21,11 @@ public:
 
     void initialise(const juce::String&) final
     {
-        juce::UnitTestRunner runner;
-        runner.setAssertOnFailure(false);
+        Catch::Session session;
 
-        runner.runTestsInCategory("JIVE");
+        const auto returnValue = session.run();
 
-        setApplicationReturnValue(getNumFailures(runner));
+        setApplicationReturnValue(returnValue);
         quit();
     }
 
