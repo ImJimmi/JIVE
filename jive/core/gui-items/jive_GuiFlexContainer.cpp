@@ -46,17 +46,7 @@ namespace jive
     void appendChildren (GuiFlexContainer& container, juce::FlexBox& flex)
     {
         for (auto i = 0; i < container.getNumChildren(); i++)
-        {
-            if (auto* flexItem = dynamic_cast<GuiFlexItem*>(&container.getChild(i)))
-            {
-                flex.items.add(*flexItem);
-            }
-            else
-            {
-                // Each child of a GuiFlexContainer should be a GuiFlexItem!
-                jassertfalse;
-            }
-        }
+            flex.items.add(container.getChild(i));
     }
 
     GuiFlexContainer::operator juce::FlexBox()
@@ -74,13 +64,20 @@ namespace jive
         return flex;
     }
 
+    GuiFlexContainer::operator juce::FlexItem()
+    {
+        return { *item };
+    }
+
     //==================================================================================================================
     void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                     const juce::Identifier& propertyID)
     {
-        jassert(treeWhosePropertyChanged == tree);
-
         item->valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
+
+        if (treeWhosePropertyChanged != tree)
+            return;
+
         updateLayout();
     }
 

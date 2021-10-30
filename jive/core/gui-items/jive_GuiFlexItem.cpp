@@ -14,6 +14,11 @@ namespace jive
     }
 
     //==================================================================================================================
+    GuiFlexItem::operator juce::FlexBox()
+    {
+        return { *item };
+    }
+
     GuiFlexItem::operator juce::FlexItem()
     {
         juce::FlexItem flexItem{ *component };

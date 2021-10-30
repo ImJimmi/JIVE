@@ -93,4 +93,13 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<Justification>
+    {
+        //==============================================================================================================
+        static Justification fromVar(const var& v);
+        static var toVar(Justification justification);
+    };
 } // namespace juce

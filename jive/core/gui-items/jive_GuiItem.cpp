@@ -78,6 +78,11 @@ namespace jive
         return parent;
     }
 
+    bool GuiItem::isContainer() const
+    {
+        return true;
+    }
+
     float GuiItem::getWidth() const
     {
         return width;
@@ -91,6 +96,23 @@ namespace jive
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;
+    }
+
+    //==================================================================================================================
+    GuiItem::operator juce::FlexBox()
+    {
+        // This item isn't a flex container!
+        jassertfalse;
+
+        return {};
+    }
+
+    GuiItem::operator juce::FlexItem()
+    {
+        // This item isn't a flex item!
+        jassertfalse;
+
+        return {};
     }
 
     //==================================================================================================================
