@@ -12,6 +12,9 @@ namespace jive
     //==================================================================================================================
     std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree)
     {
+        // Can't render a view from an invalid tree!
+        jassert(tree.isValid());
+
         return renderView(tree, nullptr);
     }
 
@@ -25,6 +28,9 @@ namespace jive
     {
         factories.clear();
 
+        setFactory("ComboBox", []() {
+            return std::make_unique<juce::ComboBox>();
+        });
         setFactory("TextButton", []() {
             return std::make_unique<juce::TextButton>();
         });
@@ -55,14 +61,24 @@ namespace jive
         }
     }
 
+    std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)
+    {
+        if (tree.hasType("ComboBox"))
+            return std::make_unique<ComboBox>(std::move(item));
+
+        return item;
+    }
+
     std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree, GuiItem* const parent)
     {
         auto guiItem = createGuiItem(tree, parent);
 
         guiItem = decorateWithDisplayBehaviour(std::move(guiItem));
         guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
+        guiItem = decorateWithWidgetBehaviour(std::move(guiItem), tree);
 
-        appendChildItems(*guiItem, tree);
+        if (guiItem->isContainer())
+            appendChildItems(*guiItem, tree);
 
         return guiItem;
     }
