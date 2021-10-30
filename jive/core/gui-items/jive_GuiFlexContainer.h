@@ -28,11 +28,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        void flexDirectionChanged();
-        void flexWrapChanged();
-        void flexJustifyContentChanged();
-        void flexAlignItemsChanged();
-        void flexAlignContentChanged();
+        void forceUpdateOfAllCachedValues();
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

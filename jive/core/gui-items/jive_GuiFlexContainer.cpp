@@ -36,6 +36,8 @@ namespace jive
     //==================================================================================================================
     void GuiFlexContainer::updateLayout()
     {
+        forceUpdateOfAllCachedValues();
+
         auto flex = static_cast<juce::FlexBox>(*this);
         flex.performLayout(getComponent().getLocalBounds());
     }
@@ -76,20 +78,10 @@ namespace jive
     void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                     const juce::Identifier& propertyID)
     {
-        item->valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
-
         jassert(treeWhosePropertyChanged == tree);
 
-        if (propertyID == flexDirection.getPropertyID())
-            flexDirectionChanged();
-        else if (propertyID == flexWrap.getPropertyID())
-            flexWrapChanged();
-        else if (propertyID == flexJustifyContent.getPropertyID())
-            flexJustifyContentChanged();
-        else if (propertyID == flexAlignItems.getPropertyID())
-            flexAlignItemsChanged();
-        else if (propertyID == flexAlignContent.getPropertyID())
-            flexAlignContentChanged();
+        item->valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
+        updateLayout();
     }
 
     void GuiFlexContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -101,33 +93,12 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexContainer::flexDirectionChanged()
+    void GuiFlexContainer::forceUpdateOfAllCachedValues()
     {
         flexDirection.forceUpdateOfCachedValue();
-        updateLayout();
-    }
-
-    void GuiFlexContainer::flexWrapChanged()
-    {
         flexWrap.forceUpdateOfCachedValue();
-        updateLayout();
-    }
-
-    void GuiFlexContainer::flexJustifyContentChanged()
-    {
         flexJustifyContent.forceUpdateOfCachedValue();
-        updateLayout();
-    }
-
-    void GuiFlexContainer::flexAlignItemsChanged()
-    {
         flexAlignItems.forceUpdateOfCachedValue();
-        updateLayout();
-    }
-
-    void GuiFlexContainer::flexAlignContentChanged()
-    {
         flexAlignContent.forceUpdateOfCachedValue();
-        updateLayout();
     }
 } // namespace jive
