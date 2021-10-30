@@ -24,7 +24,7 @@ namespace jive
         void flexItemAlignSelfChanged();
 
         //==============================================================================================================
-        std::unique_ptr<GuiItem> item;
+        const std::unique_ptr<GuiItem> item;
 
         juce::CachedValue<int> flexItemOrder;
         juce::CachedValue<float> flexItemGrow;
