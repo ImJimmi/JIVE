@@ -19,9 +19,8 @@ namespace jive
 
     private:
         //==============================================================================================================
-        void flexItemOrderChanged();
-        void flexItemGrowChanged();
-        void flexItemAlignSelfChanged();
+        void forceUpdateOfAllCachedValues();
+        void updateParentLayout();
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

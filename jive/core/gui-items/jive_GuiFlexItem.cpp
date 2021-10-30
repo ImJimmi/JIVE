@@ -32,43 +32,24 @@ namespace jive
     void GuiFlexItem::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                const juce::Identifier& propertyID)
     {
-        item->valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
-
         jassert(treeWhosePropertyChanged == tree);
 
-        if (propertyID == flexItemOrder.getPropertyID())
-            flexItemOrderChanged();
-        else if (propertyID == flexItemGrow.getPropertyID())
-            flexItemGrowChanged();
-        else if (propertyID == flexItemAlignSelf.getPropertyID())
-            flexItemAlignSelfChanged();
+        item->valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+
+        forceUpdateOfAllCachedValues();
+        updateParentLayout();
     }
 
     //==================================================================================================================
-    void GuiFlexItem::flexItemOrderChanged()
+    void GuiFlexItem::forceUpdateOfAllCachedValues()
     {
         flexItemOrder.forceUpdateOfCachedValue();
-
-        if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
-            container->updateLayout();
-        else
-            jassertfalse;
-    }
-
-    void GuiFlexItem::flexItemGrowChanged()
-    {
         flexItemGrow.forceUpdateOfCachedValue();
-
-        if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
-            container->updateLayout();
-        else
-            jassertfalse;
+        flexItemAlignSelf.forceUpdateOfCachedValue();
     }
 
-    void GuiFlexItem::flexItemAlignSelfChanged()
+    void GuiFlexItem::updateParentLayout()
     {
-        flexItemAlignSelf.forceUpdateOfCachedValue();
-
         if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
             container->updateLayout();
         else
