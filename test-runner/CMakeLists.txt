@@ -6,14 +6,18 @@ target_sources(jive-test-runner
 PRIVATE
     source/main.cpp
 
-    source/tests/test_GuiItem.cpp
-    source/tests/test_ViewRenderer.cpp
+    source/tests/GuiFlexContainerTests.cpp
+    source/tests/GuiFlexItemTests.cpp
+    source/tests/GuiItemTests.cpp
+    source/tests/ViewRendererTests.cpp
 
-    source/utilities/jive_UnitTest.h
+    source/utilities/test_ComponentUtilities.cpp
+    source/utilities/test_ComponentUtilities.h
 )
 
 target_link_libraries(jive-test-runner
 PRIVATE
+    Catch2
     jive::jive
     juce::juce_gui_basics
 )
