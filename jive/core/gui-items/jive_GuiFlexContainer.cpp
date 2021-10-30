@@ -41,6 +41,22 @@ namespace jive
     }
 
     //==================================================================================================================
+    void appendChildren (GuiFlexContainer& container, juce::FlexBox& flex)
+    {
+        for (auto i = 0; i < container.getNumChildren(); i++)
+        {
+            if (auto* flexItem = dynamic_cast<GuiFlexItem*>(&container.getChild(i)))
+            {
+                flex.items.add(*flexItem);
+            }
+            else
+            {
+                // Each child of a GuiFlexContainer should be a GuiFlexItem!
+                jassertfalse;
+            }
+        }
+    }
+
     GuiFlexContainer::operator juce::FlexBox()
     {
         juce::FlexBox flex;
@@ -51,11 +67,7 @@ namespace jive
         flex.alignItems = flexAlignItems;
         flex.alignContent = flexAlignContent;
 
-        for (auto i = 0; i < getNumChildren(); i++)
-        {
-            if (auto* flexItem = dynamic_cast<GuiFlexItem*>(&getChild(i)))
-                flex.items.add(*flexItem);
-        }
+        appendChildren (*this, flex);
 
         return flex;
     }
