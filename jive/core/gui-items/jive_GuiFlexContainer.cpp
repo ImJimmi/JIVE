@@ -42,7 +42,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    void appendChildren (GuiFlexContainer& container, juce::FlexBox& flex)
+    void appendChildren(GuiFlexContainer& container, juce::FlexBox& flex)
     {
         for (auto i = 0; i < container.getNumChildren(); i++)
             flex.items.add(container.getChild(i));
@@ -58,7 +58,7 @@ namespace jive
         flex.alignItems = flexAlignItems;
         flex.alignContent = flexAlignContent;
 
-        appendChildren (*this, flex);
+        appendChildren(*this, flex);
 
         return flex;
     }
@@ -67,7 +67,7 @@ namespace jive
     void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                     const juce::Identifier& propertyID)
     {
-        GuiItemDecorator::valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
+        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
 
         if (treeWhosePropertyChanged != tree)
             return;

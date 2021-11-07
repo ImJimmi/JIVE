@@ -8,6 +8,15 @@ SCENARIO("view renderers can render different components")
     {
         jive::ViewRenderer renderer;
 
+        WHEN("a view is rendered from a value-tree with a 'Component' type")
+        {
+            auto view = renderer.renderView(juce::ValueTree{ "Component" });
+
+            THEN("the view should be of the type `jive::GuiItem`")
+            {
+                REQUIRE(dynamic_cast<jive::GuiItem*>(view.get()) != nullptr);
+            }
+        }
         WHEN("a view is rendered from a value-tree with a 'ComboBox' type")
         {
             auto view = renderer.renderView(juce::ValueTree{ "ComboBox" });
@@ -207,6 +216,21 @@ SCENARIO("view renderers can render items with different display types")
                 REQUIRE(dynamic_cast<jive::GuiFlexContainer*>(item.get()) != nullptr);
             }
             THEN("the first child is a flex item")
+            {
+                auto& child = item->getChild(0);
+                REQUIRE(dynamic_cast<jive::GuiFlexItem*>(&child) != nullptr);
+            }
+        }
+        WHEN("a view is rendered from a value-tree with a flex display type, that contains a widget node")
+        {
+            juce::ValueTree tree{
+                "Component",
+                { { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) } },
+                { juce::ValueTree{ "Label" } }
+            };
+            auto item = renderer.renderView(tree);
+
+            THEN("the item's first child is a flex item")
             {
                 auto& child = item->getChild(0);
                 REQUIRE(dynamic_cast<jive::GuiFlexItem*>(&child) != nullptr);

@@ -273,9 +273,7 @@ SCENARIO("combo boxes can justify their text")
     {
         juce::ValueTree tree{
             "ComboBox",
-            {
-                { "justification", juce::VariantConverter<juce::Justification>::toVar(juce::Justification::bottomRight) }
-            }
+            { { "justification", juce::VariantConverter<juce::Justification>::toVar(juce::Justification::bottomRight) } }
         };
 
         WHEN("a combo box GUI item is created from the tree")
@@ -329,13 +327,10 @@ SCENARIO("combo boxes can have multiple options in their drop-down menus")
     {
         juce::ValueTree tree{
             "ComboBox",
-            {
-            },
-            {
-                juce::ValueTree{ "Option", { { "text", "One" } } },
-                juce::ValueTree{ "Option", { { "text", "Two" } } },
-                juce::ValueTree{ "Option", { { "text", "Three" } } }
-            }
+            {},
+            { juce::ValueTree{ "Option", { { "text", "One" } } },
+              juce::ValueTree{ "Option", { { "text", "Two" } } },
+              juce::ValueTree{ "Option", { { "text", "Three" } } } }
         };
 
         WHEN("a combo box GUI item is created from the value-tree")
@@ -357,7 +352,7 @@ SCENARIO("a combo box's options can be selected")
     {
         juce::ValueTree option1{ "Option", { { "text", "one" } } };
         juce::ValueTree option2{ "Option", { { "text", "two" } } };
-        juce::ValueTree tree { "ComboBox", {}, { option1, option2 } };
+        juce::ValueTree tree{ "ComboBox", {}, { option1, option2 } };
         jive::ComboBox item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::ComboBox>(), tree) };
 
         THEN("the box has no options selected")
@@ -384,12 +379,9 @@ SCENARIO("a combo box's options can be disabled")
     {
         juce::ValueTree tree{
             "ComboBox",
-            {
-            },
-            {
-                juce::ValueTree{ "Option", { { "text", "One" } } },
-                juce::ValueTree{ "Option", { { "text", "Two" } } }
-            }
+            {},
+            { juce::ValueTree{ "Option", { { "text", "One" } } },
+              juce::ValueTree{ "Option", { { "text", "Two" } } } }
         };
         jive::ComboBox item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::ComboBox>(), tree) };
 

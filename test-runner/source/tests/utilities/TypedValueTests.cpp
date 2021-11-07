@@ -83,7 +83,9 @@ SCENARIO("typed-values have a callback that's called when the referenced value c
         {
             auto callbackCalled = false;
             jive::TypedValue<float> value{ tree, "value" };
-            value.onValueChange = [&callbackCalled]() { callbackCalled = true; };
+            value.onValueChange = [&callbackCalled]() {
+                callbackCalled = true;
+            };
 
             AND_WHEN("the tree's float property is changed")
             {

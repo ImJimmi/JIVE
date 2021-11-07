@@ -21,6 +21,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "core/gui-items/jive_GuiFlexContainer.h"
 #include "core/gui-items/jive_GuiFlexItem.h"
 #include "core/gui-items/widgets/jive_ComboBox.h"
+#include "core/gui-items/widgets/jive_Label.h"
 
 #include "core/jive_VariantConverters.h"
 #include "core/jive_ViewRenderer.h"
