@@ -31,6 +31,12 @@ namespace jive
         setFactory("ComboBox", []() {
             return std::make_unique<juce::ComboBox>();
         });
+        setFactory("Component", []() {
+            return std::make_unique<juce::Component>();
+        });
+        setFactory("Label", []() {
+            return std::make_unique<juce::Label>();
+        });
         setFactory("TextButton", []() {
             return std::make_unique<juce::TextButton>();
         });
@@ -65,6 +71,8 @@ namespace jive
     {
         if (tree.hasType("ComboBox"))
             return std::make_unique<ComboBox>(std::move(item));
+        if (tree.hasType("Label"))
+            return std::make_unique<Label>(std::move(item));
 
         return item;
     }
@@ -74,8 +82,8 @@ namespace jive
         auto guiItem = createGuiItem(tree, parent);
 
         guiItem = decorateWithDisplayBehaviour(std::move(guiItem));
-        guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
         guiItem = decorateWithWidgetBehaviour(std::move(guiItem), tree);
+        guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
 
         if (guiItem->isContainer())
             appendChildItems(*guiItem, tree);

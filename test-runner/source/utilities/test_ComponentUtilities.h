@@ -8,6 +8,6 @@ namespace test
     //==================================================================================================================
     std::unique_ptr<juce::Component> createDummyComponent();
 
-    int getPopupMenuNumSeparators (const juce::PopupMenu& menu);
-    int getPopupMenuNumHeaders (const juce::PopupMenu& menu);
+    int getPopupMenuNumSeparators(const juce::PopupMenu& menu);
+    int getPopupMenuNumHeaders(const juce::PopupMenu& menu);
 } // namespace test
