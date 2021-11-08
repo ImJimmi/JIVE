@@ -18,6 +18,31 @@ namespace jive
         return renderView(tree, nullptr);
     }
 
+    void replaceTextElementWithTextProperty(juce::XmlElement& parentXML, juce::XmlElement& textChild)
+    {
+        parentXML.setAttribute("text", textChild.getText());
+        parentXML.removeChildElement(&textChild, true);
+    }
+
+    void recursivelyReplaceSubTextElementsWithTextProperties(juce::XmlElement& xml)
+    {
+        for (auto* child = xml.getFirstChildElement(); child != nullptr; child = child->getNextElement())
+        {
+            recursivelyReplaceSubTextElementsWithTextProperties(*child);
+
+            if (child->getTagName().isEmpty())
+                replaceTextElementWithTextProperty(xml, *child);
+        }
+    }
+
+    std::unique_ptr<GuiItem> ViewRenderer::renderView(const juce::String& xmlString) const
+    {
+        auto xml = juce::parseXML(xmlString);
+        recursivelyReplaceSubTextElementsWithTextProperties(*xml);
+
+        return renderView(juce::ValueTree::fromXml(*xml));
+    }
+
     //==================================================================================================================
     void ViewRenderer::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
     {

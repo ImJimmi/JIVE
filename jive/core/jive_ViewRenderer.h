@@ -19,6 +19,7 @@ namespace jive
 
         //==============================================================================================================
         std::unique_ptr<GuiItem> renderView(juce::ValueTree tree) const;
+        std::unique_ptr<GuiItem> renderView(const juce::String& xmlString) const;
 
     private:
         //==============================================================================================================
