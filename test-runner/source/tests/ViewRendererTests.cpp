@@ -6,7 +6,7 @@ SCENARIO("view renderers can render different components")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with a 'Component' type")
         {
@@ -52,7 +52,7 @@ SCENARIO("view renderers can render nested components")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with no children")
         {
@@ -191,7 +191,7 @@ SCENARIO("view renderers can render items with different display types")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with no display type specified")
         {
