@@ -10,7 +10,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree)
+    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree) const
     {
         // Can't render a view from an invalid tree!
         jassert(tree.isValid());
@@ -77,7 +77,7 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree, GuiItem* const parent)
+    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree, GuiItem* const parent) const
     {
         auto guiItem = createGuiItem(tree, parent);
 
@@ -101,7 +101,7 @@ namespace jive
         return std::make_unique<GuiItem>(createComponent(tree), tree, parent);
     }
 
-    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree)
+    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree) const
     {
         for (auto childTree : tree)
             item.addChild(renderView(childTree, &item));
