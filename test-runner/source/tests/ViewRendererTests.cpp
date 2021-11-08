@@ -238,3 +238,51 @@ SCENARIO("view renderers can render items with different display types")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("view renderers can render views from XML strings")
+{
+    GIVEN("a view renderer")
+    {
+        const jive::ViewRenderer renderer;
+
+        WHEN("a view is rendered from an XML string")
+        {
+            const auto xml = R"(
+                <Component>
+                    <Label text="Some text"/>
+                </Component>
+            )";
+            const auto view = renderer.renderView(xml);
+
+            THEN("the view was rendered successfully")
+            {
+                REQUIRE(view != nullptr);
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("view renderers support XML text elements")
+{
+    GIVEN("a view renderer")
+    {
+        const jive::ViewRenderer renderer;
+
+        WHEN("a view is rendered from an XML string containing a label with sub-text")
+        {
+            const auto xml = R"(
+                <Component>
+                    <Label>This is some sub-text</Label>
+                </Component>
+            )";
+            const auto view = renderer.renderView(xml);
+
+            THEN("the view was rendered successfully")
+            {
+                REQUIRE(view != nullptr);
+            }
+        }
+    }
+}
