@@ -10,6 +10,7 @@ PRIVATE
     source/tests/GuiFlexItemTests.cpp
     source/tests/GuiItemTests.cpp
     source/tests/ViewRendererTests.cpp
+    source/tests/utilities/TypedValueTests.cpp
 
     source/utilities/test_ComponentUtilities.cpp
     source/utilities/test_ComponentUtilities.h

@@ -21,3 +21,5 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "core/jive_VariantConverters.h"
 #include "core/jive_ViewRenderer.h"
+
+#include "utilities/jive_TypedValue.h"
