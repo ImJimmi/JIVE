@@ -4,33 +4,38 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiFlexItem : public GuiItem
+    class ComboBox : public GuiItem
     {
     public:
         //==============================================================================================================
-        explicit GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate);
+        explicit ComboBox(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        bool isContainer() const override;
+
         operator juce::FlexBox() override;
         operator juce::FlexItem() override;
+
+        //==============================================================================================================
+        juce::ComboBox& getComboBox();
 
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
+        void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
+        void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex) override;
 
     private:
         //==============================================================================================================
-        void forceUpdateOfAllCachedValues();
-        void updateParentLayout();
+        void resetComboBoxOptions();
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;
 
-        juce::CachedValue<int> flexItemOrder;
-        juce::CachedValue<float> flexItemGrow;
-        juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
-
-        //==============================================================================================================
-        JUCE_LEAK_DETECTOR(GuiFlexItem)
+        TypedValue<juce::String> text;
+        TypedValue<juce::String> nothingSelectedText;
+        TypedValue<juce::String> noOptionsText;
+        TypedValue<bool> editable;
+        TypedValue<juce::Justification> justification;
     };
 } // namespace jive

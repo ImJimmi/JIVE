@@ -157,4 +157,53 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    Justification VariantConverter<Justification>::fromVar(const var& v)
+    {
+        if (v == "centred-left")
+            return Justification::centredLeft;
+        else if (v == "top-left")
+            return Justification::topLeft;
+        else if (v == "centred-top")
+            return Justification::centredTop;
+        else if (v == "top-right")
+            return Justification::topRight;
+        else if (v == "centred-right")
+            return Justification::centredRight;
+        else if (v == "bottom-right")
+            return Justification::bottomRight;
+        else if (v == "centred-bottom")
+            return Justification::centredBottom;
+        else if (v == "bottom-left")
+            return Justification::bottomLeft;
+        else if (v == "centred")
+            return Justification::centred;
+
+        return Justification::centred;
+    }
+
+    var VariantConverter<Justification>::toVar(Justification justification)
+    {
+        if (justification == Justification::centredLeft)
+            return "centred-left";
+        else if (justification == Justification::topLeft)
+            return "top-left";
+        else if (justification == Justification::centredTop)
+            return "centred-top";
+        else if (justification == Justification::topRight)
+            return "top-right";
+        else if (justification == Justification::centredRight)
+            return "centred-right";
+        else if (justification == Justification::bottomRight)
+            return "bottom-right";
+        else if (justification == Justification::centredBottom)
+            return "centred-bottom";
+        else if (justification == Justification::bottomLeft)
+            return "bottom-left";
+        else if (justification == Justification::centred)
+            return "centred";
+
+        return {};
+    }
 } // namespace juce

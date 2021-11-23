@@ -8,6 +8,15 @@ SCENARIO("view renderers can render different components")
     {
         jive::ViewRenderer renderer;
 
+        WHEN("a view is rendered from a value-tree with a 'ComboBox' type")
+        {
+            auto view = renderer.renderView(juce::ValueTree{ "ComboBox" });
+
+            THEN("the view should be of the type `jive::ComboBox`")
+            {
+                REQUIRE(dynamic_cast<jive::ComboBox*>(view.get()) != nullptr);
+            }
+        }
         WHEN("a view is rendered from a value-tree with a 'ToggleButton' type")
         {
             auto view = renderer.renderView(juce::ValueTree{ "ToggleButton" });

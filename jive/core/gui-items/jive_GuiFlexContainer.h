@@ -19,7 +19,8 @@ namespace jive
         void updateLayout() override;
 
         //==============================================================================================================
-        operator juce::FlexBox();
+        operator juce::FlexBox() override;
+        operator juce::FlexItem() override;
 
     protected:
         //==============================================================================================================
