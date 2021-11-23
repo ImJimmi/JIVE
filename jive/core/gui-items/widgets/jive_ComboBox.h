@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    class ComboBox : public GuiItem
+    class ComboBox : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
@@ -12,9 +12,6 @@ namespace jive
 
         //==============================================================================================================
         bool isContainer() const override;
-
-        operator juce::FlexBox() override;
-        operator juce::FlexItem() override;
 
         //==============================================================================================================
         juce::ComboBox& getComboBox();
@@ -30,12 +27,13 @@ namespace jive
         void resetComboBoxOptions();
 
         //==============================================================================================================
-        const std::unique_ptr<GuiItem> item;
-
         TypedValue<juce::String> text;
         TypedValue<juce::String> nothingSelectedText;
         TypedValue<juce::String> noOptionsText;
         TypedValue<bool> editable;
         TypedValue<juce::Justification> justification;
+
+        //==============================================================================================================
+        JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
 } // namespace jive

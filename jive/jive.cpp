@@ -2,6 +2,7 @@
 
 //======================================================================================================================
 #include "core/gui-items/jive_GuiItem.cpp"
+#include "core/gui-items/jive_GuiItemDecorator.cpp"
 
 #include "core/gui-items/jive_GuiFlexContainer.cpp"
 #include "core/gui-items/jive_GuiFlexItem.cpp"
