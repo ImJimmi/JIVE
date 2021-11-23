@@ -35,10 +35,16 @@ namespace jive
         const GuiItem* getParent() const;
         GuiItem* getParent();
 
+        virtual bool isContainer() const;
+
         float getWidth() const;
         float getHeight() const;
 
         Display getDisplay() const;
+
+        //==============================================================================================================
+        virtual operator juce::FlexBox();
+        virtual operator juce::FlexItem();
 
     protected:
         //==============================================================================================================
@@ -53,8 +59,9 @@ namespace jive
 
     private:
         //==============================================================================================================
-        friend class GuiFlexItem;
+        friend class ComboBox;
         friend class GuiFlexContainer;
+        friend class GuiFlexItem;
 
         //==============================================================================================================
         GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
