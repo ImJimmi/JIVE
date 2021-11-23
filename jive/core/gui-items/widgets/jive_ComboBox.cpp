@@ -5,8 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItem{ *itemToDecorate }
-        , item{ std::move(itemToDecorate) }
+        : GuiItemDecorator{ std::move(itemToDecorate) }
         , text{ tree, "text" }
         , nothingSelectedText{ tree, "text-nothing-selected" }
         , noOptionsText{ tree, "text-no-options" }
@@ -47,16 +46,6 @@ namespace jive
         return false;
     }
 
-    ComboBox::operator juce::FlexBox()
-    {
-        return { *item };
-    }
-
-    ComboBox::operator juce::FlexItem()
-    {
-        return { *item };
-    }
-
     //==================================================================================================================
     juce::ComboBox& ComboBox::getComboBox()
     {
@@ -70,7 +59,7 @@ namespace jive
     void ComboBox::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                             const juce::Identifier& propertyID)
     {
-        item->valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
 
         if (treeWhosePropertyChanged.isAChildOf(tree))
             resetComboBoxOptions();
@@ -78,19 +67,17 @@ namespace jive
 
     void ComboBox::valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child)
     {
+        GuiItemDecorator::valueTreeChildAdded(parent, child);
+
         jassert(parent == tree);
-
-        item->valueTreeChildAdded(parent, child);
-
         resetComboBoxOptions();
     }
 
     void ComboBox::valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex)
     {
+        GuiItemDecorator::valueTreeChildRemoved(parent, child, childIndex);
+
         jassert(parent == tree);
-
-        item->valueTreeChildRemoved(parent, child, childIndex);
-
         resetComboBoxOptions();
     }
 

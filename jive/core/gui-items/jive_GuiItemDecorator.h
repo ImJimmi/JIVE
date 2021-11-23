@@ -4,30 +4,29 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiFlexItem : public GuiItemDecorator
+    class GuiItemDecorator : public GuiItem
     {
     public:
         //==============================================================================================================
-        explicit GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate);
+        explicit GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        operator juce::FlexBox() override;
         operator juce::FlexItem() override;
 
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
+        void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
+        void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex) override;
+
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+
+        //==============================================================================================================
+        const std::unique_ptr<GuiItem> item;
 
     private:
         //==============================================================================================================
-        void forceUpdateOfAllCachedValues();
-        void updateParentLayout();
-
-        //==============================================================================================================
-        juce::CachedValue<int> flexItemOrder;
-        juce::CachedValue<float> flexItemGrow;
-        juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
-
-        //==============================================================================================================
-        JUCE_LEAK_DETECTOR(GuiFlexItem)
+        JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
 } // namespace jive
