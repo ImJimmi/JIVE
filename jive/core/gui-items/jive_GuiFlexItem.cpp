@@ -5,8 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     GuiFlexItem::GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItem{ *itemToDecorate }
-        , item{ std::move(itemToDecorate) }
+        : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexItemOrder{ tree, "order", nullptr }
         , flexItemGrow{ tree, "flex-grow", nullptr }
         , flexItemAlignSelf{ tree, "align-self", nullptr, juce::FlexItem::AlignSelf::autoAlign }
@@ -14,11 +13,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    GuiFlexItem::operator juce::FlexBox()
-    {
-        return { *item };
-    }
-
     GuiFlexItem::operator juce::FlexItem()
     {
         juce::FlexItem flexItem{ *component };
@@ -37,9 +31,9 @@ namespace jive
     void GuiFlexItem::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                const juce::Identifier& propertyID)
     {
-        jassert(treeWhosePropertyChanged == tree);
+        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
 
-        item->valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+        jassert(treeWhosePropertyChanged == tree);
 
         forceUpdateOfAllCachedValues();
         updateParentLayout();

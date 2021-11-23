@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiFlexContainer : public GuiItem
+    class GuiFlexContainer : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
@@ -20,20 +20,16 @@ namespace jive
 
         //==============================================================================================================
         operator juce::FlexBox() override;
-        operator juce::FlexItem() override;
 
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
     private:
         //==============================================================================================================
         void forceUpdateOfAllCachedValues();
 
         //==============================================================================================================
-        const std::unique_ptr<GuiItem> item;
-
         juce::CachedValue<juce::FlexBox::Direction> flexDirection;
         juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
         juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;

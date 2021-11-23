@@ -15,6 +15,7 @@ END_JUCE_MODULE_DECLARATION */
 
 //======================================================================================================================
 #include "core/gui-items/jive_GuiItem.h"
+#include "core/gui-items/jive_GuiItemDecorator.h"
 #include "utilities/jive_TypedValue.h"
 
 #include "core/gui-items/jive_GuiFlexContainer.h"

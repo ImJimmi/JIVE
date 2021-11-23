@@ -7,8 +7,7 @@ namespace jive
 {
     //==================================================================================================================
     GuiFlexContainer::GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItem{ *itemToDecorate }
-        , item{ std::move(itemToDecorate) }
+        : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
         , flexWrap{ tree, "flex-wrap", nullptr }
         , flexJustifyContent{ tree, "justify-content", nullptr }
@@ -64,29 +63,16 @@ namespace jive
         return flex;
     }
 
-    GuiFlexContainer::operator juce::FlexItem()
-    {
-        return { *item };
-    }
-
     //==================================================================================================================
     void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                                     const juce::Identifier& propertyID)
     {
-        item->valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
+        GuiItemDecorator::valueTreePropertyChanged (treeWhosePropertyChanged, propertyID);
 
         if (treeWhosePropertyChanged != tree)
             return;
 
         updateLayout();
-    }
-
-    void GuiFlexContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                                   bool wasMoved,
-                                                   bool wasResized)
-    {
-        item->componentMovedOrResized (componentThatWasMovedOrResized, wasMoved, wasResized);
-        GuiItem::componentMovedOrResized (componentThatWasMovedOrResized, wasMoved, wasResized);
     }
 
     //==================================================================================================================

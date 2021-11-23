@@ -59,9 +59,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        friend class ComboBox;
-        friend class GuiFlexContainer;
-        friend class GuiFlexItem;
+        friend class GuiItemDecorator;
 
         //==============================================================================================================
         GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
