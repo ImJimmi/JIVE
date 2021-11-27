@@ -18,14 +18,15 @@ namespace jive
         void resetFactories();
 
         //==============================================================================================================
-        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree);
+        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree) const;
+        std::unique_ptr<GuiItem> renderView(const juce::String& xmlString) const;
 
     private:
         //==============================================================================================================
-        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree, GuiItem* const parent);
+        std::unique_ptr<GuiItem> renderView(juce::ValueTree tree, GuiItem* const parent) const;
 
         std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree, GuiItem* const parent) const;
-        void appendChildItems(GuiItem& item, juce::ValueTree tree);
+        void appendChildItems(GuiItem& item, juce::ValueTree tree) const;
 
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
 

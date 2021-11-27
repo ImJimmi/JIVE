@@ -6,7 +6,7 @@ SCENARIO("view renderers can render different components")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with a 'Component' type")
         {
@@ -52,7 +52,7 @@ SCENARIO("view renderers can render nested components")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with no children")
         {
@@ -191,7 +191,7 @@ SCENARIO("view renderers can render items with different display types")
 {
     GIVEN("a view renderer")
     {
-        jive::ViewRenderer renderer;
+        const jive::ViewRenderer renderer;
 
         WHEN("a view is rendered from a value-tree with no display type specified")
         {
@@ -234,6 +234,54 @@ SCENARIO("view renderers can render items with different display types")
             {
                 auto& child = item->getChild(0);
                 REQUIRE(dynamic_cast<jive::GuiFlexItem*>(&child) != nullptr);
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("view renderers can render views from XML strings")
+{
+    GIVEN("a view renderer")
+    {
+        const jive::ViewRenderer renderer;
+
+        WHEN("a view is rendered from an XML string")
+        {
+            const auto xml = R"(
+                <Component>
+                    <Label text="Some text"/>
+                </Component>
+            )";
+            const auto view = renderer.renderView(xml);
+
+            THEN("the view was rendered successfully")
+            {
+                REQUIRE(view != nullptr);
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("view renderers support XML text elements")
+{
+    GIVEN("a view renderer")
+    {
+        const jive::ViewRenderer renderer;
+
+        WHEN("a view is rendered from an XML string containing a label with sub-text")
+        {
+            const auto xml = R"(
+                <Component>
+                    <Label>This is some sub-text</Label>
+                </Component>
+            )";
+            const auto view = renderer.renderView(xml);
+
+            THEN("the view was rendered successfully")
+            {
+                REQUIRE(view != nullptr);
             }
         }
     }
