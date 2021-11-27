@@ -208,3 +208,44 @@ SCENARIO("GUI flex items can align themselves along their parent's cross-axis")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI flex items should use the size of the item they decorate")
+{
+    GIVEN("a custom GUI item with a specific size")
+    {
+        struct StubGuiItem : public jive::GuiItem
+        {
+            StubGuiItem()
+                : GuiItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } }
+            {
+            }
+
+            float getWidth() const override
+            {
+                return 123.f;
+            }
+
+            float getHeight() const override
+            {
+                return 987.f;
+            }
+        };
+
+        auto item = std::make_unique<StubGuiItem>();
+
+        WHEN("the item is decorated with a GUI flex item")
+        {
+            jive::GuiFlexItem flexItem{ std::move(item) };
+
+            THEN("the flex item's width matches the width of the item it's decorating")
+            {
+                REQUIRE(flexItem.getWidth() == 123.f);
+            }
+            THEN("the flex item's height matches the height of the item it's decorating")
+            {
+                REQUIRE(flexItem.getHeight() == 987.f);
+            }
+        }
+    }
+}

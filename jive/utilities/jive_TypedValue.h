@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    template<typename ValueType>
+    template <typename ValueType>
     class TypedValue : private juce::Value::Listener
     {
     public:
@@ -21,9 +21,14 @@ namespace jive
             value.addListener(this);
         }
 
-        operator ValueType() const
+        ValueType get() const
         {
             return VariantConverter::fromVar(value);
+        }
+
+        operator ValueType() const
+        {
+            return get();
         }
 
         TypedValue<ValueType>& operator=(const ValueType& newValue)

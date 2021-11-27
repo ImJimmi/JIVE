@@ -37,8 +37,8 @@ namespace jive
 
         virtual bool isContainer() const;
 
-        float getWidth() const;
-        float getHeight() const;
+        virtual float getWidth() const;
+        virtual float getHeight() const;
 
         Display getDisplay() const;
 

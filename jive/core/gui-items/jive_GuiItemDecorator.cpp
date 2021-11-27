@@ -11,6 +11,16 @@ namespace jive
     }
 
     //==================================================================================================================
+    float GuiItemDecorator::getWidth() const
+    {
+        return item->getWidth();
+    }
+
+    float GuiItemDecorator::getHeight() const
+    {
+        return item->getHeight();
+    }
+
     GuiItemDecorator::operator juce::FlexBox()
     {
         return { *item };
@@ -40,7 +50,7 @@ namespace jive
         item->valueTreeChildRemoved(parent, child, childIndex);
     }
 
-    void GuiItemDecorator::componentMovedOrResized(juce::Component &component, bool wasMoved, bool wasResized)
+    void GuiItemDecorator::componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized)
     {
         GuiItem::componentMovedOrResized(component, wasMoved, wasResized);
         item->componentMovedOrResized(component, wasMoved, wasResized);
