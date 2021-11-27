@@ -9,7 +9,7 @@ namespace test
         return std::make_unique<juce::Component>();
     }
 
-    int getPopupMenuNumSeparators (const juce::PopupMenu& menu)
+    int getPopupMenuNumSeparators(const juce::PopupMenu& menu)
     {
         auto numSeparators = 0;
         juce::PopupMenu::MenuItemIterator iterator{ menu };
@@ -23,7 +23,7 @@ namespace test
         return numSeparators;
     }
 
-    int getPopupMenuNumHeaders (const juce::PopupMenu& menu)
+    int getPopupMenuNumHeaders(const juce::PopupMenu& menu)
     {
         auto numHeaders = 0;
         juce::PopupMenu::MenuItemIterator iterator{ menu };
