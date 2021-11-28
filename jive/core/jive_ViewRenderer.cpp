@@ -26,8 +26,10 @@ namespace jive
 
     void recursivelyReplaceSubTextElementsWithTextProperties(juce::XmlElement& xml)
     {
-        for (auto* child = xml.getFirstChildElement(); child != nullptr; child = child->getNextElement())
+        for (auto i = xml.getNumChildElements() - 1; i >= 0; i--)
         {
+            auto* child = xml.getChildElement(i);
+
             recursivelyReplaceSubTextElementsWithTextProperties(*child);
 
             if (child->getTagName().isEmpty())
