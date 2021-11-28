@@ -39,6 +39,15 @@ target_compile_options(jive-test-runner
 PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+
+    -fsanitize=address
+    -fsanitize=undefined
+)
+
+target_link_options(jive-test-runner
+PRIVATE
+    -fsanitize=address
+    -fsanitize=undefined
 )
 
 get_target_property(JIVE_TEST_RUNNER_SOURCES jive-test-runner SOURCES)
