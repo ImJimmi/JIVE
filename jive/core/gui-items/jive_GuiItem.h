@@ -41,6 +41,8 @@ namespace jive
         virtual float getHeight() const;
         virtual juce::BorderSize<float> getPadding() const;
 
+        virtual juce::Rectangle<float> getContentBounds() const;
+
         Display getDisplay() const;
 
         //==============================================================================================================

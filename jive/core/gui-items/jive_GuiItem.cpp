@@ -97,6 +97,14 @@ namespace jive
         return padding;
     }
 
+    juce::Rectangle<float> GuiItem::getContentBounds() const
+    {
+        const auto bounds = getComponent().getLocalBounds().toFloat();
+        const auto padding = getPadding();
+
+        return padding.subtractedFrom(bounds);
+    }
+
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;

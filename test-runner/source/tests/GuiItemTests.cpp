@@ -61,10 +61,15 @@ SCENARIO("GUI items can have a padding")
     {
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ test::createDummyComponent(), tree };
+        item.getComponent().setSize(100, 100);
 
         THEN("the item has no padding")
         {
             REQUIRE(item.getPadding() == juce::BorderSize<float>{ 0.f });
+        }
+        THEN("the item's content bounds has no padding applied")
+        {
+            REQUIRE(item.getContentBounds() == juce::Rectangle<float>{ 0, 0, 100, 100 });
         }
 
         WHEN("the item's padding is set to a single numeric value")
@@ -74,6 +79,10 @@ SCENARIO("GUI items can have a padding")
             THEN("the item's padding has the specified value on all sides")
             {
                 REQUIRE(item.getPadding() == juce::BorderSize<float>{ 5.f });
+            }
+            THEN("the item's content bounds have the padding applied")
+            {
+                REQUIRE(item.getContentBounds() == juce::Rectangle<float>{ 5, 5, 90, 90 });
             }
         }
         WHEN("the item's padding is set to two numeric values")
@@ -89,6 +98,10 @@ SCENARIO("GUI items can have a padding")
             {
                 REQUIRE(item.getPadding().getLeft() == 10.f);
                 REQUIRE(item.getPadding().getRight() == 10.f);
+            }
+            THEN("the item's content bounds have the padding applied")
+            {
+                REQUIRE(item.getContentBounds() == juce::Rectangle<float>{ 10, 5, 80, 90 });
             }
         }
         WHEN("the item's padding is set to three numeric values")
@@ -107,6 +120,10 @@ SCENARIO("GUI items can have a padding")
             THEN("the item's padding matches the third value for its bottom value")
             {
                 REQUIRE(item.getPadding().getBottom() == 9.f);
+            }
+            THEN("the item's content bounds have the padding applied")
+            {
+                REQUIRE(item.getContentBounds() == juce::Rectangle<float>{ 6, 3, 88, 88 });
             }
         }
         WHEN("the item's padding is set to four numeric values")
@@ -128,6 +145,10 @@ SCENARIO("GUI items can have a padding")
             THEN("the item's padding matches the forth value for its left value")
             {
                 REQUIRE(item.getPadding().getLeft() == 8.f);
+            }
+            THEN("the item's content bounds have the padding applied")
+            {
+                REQUIRE(item.getContentBounds() == juce::Rectangle<float>{ 8, 2, 88, 92 });
             }
         }
     }
