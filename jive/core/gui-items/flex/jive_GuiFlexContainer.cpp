@@ -38,7 +38,7 @@ namespace jive
         forceUpdateOfAllCachedValues();
 
         auto flex = static_cast<juce::FlexBox>(*this);
-        flex.performLayout(getComponent().getLocalBounds());
+        flex.performLayout(getContentBounds());
     }
 
     //==================================================================================================================
