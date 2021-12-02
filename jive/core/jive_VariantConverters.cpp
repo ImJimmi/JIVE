@@ -206,4 +206,55 @@ namespace juce
 
         return {};
     }
+
+    //==================================================================================================================
+    template <typename ValueType>
+    BorderSize<ValueType> VariantConverter<BorderSize<ValueType>>::fromVar(const var& v)
+    {
+        const auto tokens = juce::StringArray::fromTokens(v.toString(), false);
+
+        if (tokens.size() == 1)
+        {
+            return BorderSize<ValueType>{ static_cast<float>(v) };
+        }
+        if (tokens.size() == 2)
+        {
+            const auto topAndBottom = static_cast<ValueType>(tokens[0].getDoubleValue());
+            const auto leftAndRight = static_cast<ValueType>(tokens[1].getDoubleValue());
+
+            return BorderSize<ValueType>{ topAndBottom, leftAndRight, topAndBottom, leftAndRight };
+        }
+        if (tokens.size() == 3)
+        {
+            const auto top = static_cast<ValueType>(tokens[0].getDoubleValue());
+            const auto leftAndRight = static_cast<ValueType>(tokens[1].getDoubleValue());
+            const auto bottom = static_cast<ValueType>(tokens[2].getDoubleValue());
+
+            return BorderSize<ValueType>{ top, leftAndRight, bottom, leftAndRight };
+        }
+        if (tokens.size() == 4)
+        {
+            const auto top = static_cast<ValueType>(tokens[0].getDoubleValue());
+            const auto right = static_cast<ValueType>(tokens[1].getDoubleValue());
+            const auto bottom = static_cast<ValueType>(tokens[2].getDoubleValue());
+            const auto left = static_cast<ValueType>(tokens[3].getDoubleValue());
+
+            return BorderSize<ValueType>{ top, left, bottom, right };
+        }
+
+        return BorderSize<ValueType>{};
+    }
+
+    template <typename ValueType>
+    var VariantConverter<BorderSize<ValueType>>::toVar(BorderSize<ValueType> border)
+    {
+        juce::StringArray tokens;
+
+        tokens.add(String{ static_cast<double>(border.getTop()) });
+        tokens.add(String{ static_cast<double>(border.getRight()) });
+        tokens.add(String{ static_cast<double>(border.getBottom()) });
+        tokens.add(String{ static_cast<double>(border.getLeft()) });
+
+        return tokens.joinIntoString(" ");
+    }
 } // namespace juce
