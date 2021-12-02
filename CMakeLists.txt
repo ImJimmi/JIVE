@@ -10,7 +10,7 @@ if (JIVE_BUILD_TEST_RUNNER)
     set(CMAKE_XCODE_GENERATE_SCHEME OFF)
     set(JUCE_ENABLE_MODULE_SOURCE_GROUPS ON CACHE BOOL "" FORCE)
 
-    add_subdirectory(test-runner/libraries)
+    add_subdirectory(runners/libraries)
 
     set(CMAKE_XCODE_GENERATE_SCHEME ${DEFAULT_XCODE_GENERATE_SCHEME})
 
@@ -18,6 +18,4 @@ endif()
 
 juce_add_module(jive ALIAS_NAMESPACE jive)
 
-if (JIVE_BUILD_TEST_RUNNER)
-    add_subdirectory(test-runner)
-endif()
+add_subdirectory(runners)
