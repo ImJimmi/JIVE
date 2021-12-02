@@ -10,6 +10,7 @@ namespace jive
         , parent{ parentItem }
         , width{ tree, "width", nullptr, -1 }
         , height{ tree, "height", nullptr, -1 }
+        , padding{ tree, "padding", nullptr }
         , display{ tree, "display", nullptr, Display::flex }
     {
         jassert(component != nullptr);
@@ -89,6 +90,11 @@ namespace jive
     float GuiItem::getHeight() const
     {
         return height;
+    }
+
+    juce::BorderSize<float> GuiItem::getPadding() const
+    {
+        return padding;
     }
 
     GuiItem::Display GuiItem::getDisplay() const
