@@ -396,3 +396,51 @@ SCENARIO("GUI flex containers can align lines of their items along their cross-a
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI flex items implement padding")
+{
+    GIVEN("a GUI flex item with a child item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
+
+        juce::ValueTree childTree{ "Component" };
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+                                                                                          childTree,
+                                                                                          &item)));
+
+        WHEN("the item's component is resized")
+        {
+            item.getComponent().setSize(100, 100);
+
+            THEN("the first child of the item's component has no padding applied")
+            {
+                const auto childBounds = item.getComponent().getChildComponent(0)->getBounds();
+
+                REQUIRE(childBounds.getX() == 0);
+                REQUIRE(childBounds.getY() == 0);
+                REQUIRE(childBounds.getWidth() == 100);
+            }
+        }
+
+        WHEN("the item's padding is changed")
+        {
+            tree.setProperty("padding", "10 20 30 40", nullptr);
+
+            AND_WHEN("the item's component is resized")
+            {
+                item.getComponent().setSize(220, 330);
+
+                THEN("the first child of the item's component has the padding applied")
+                {
+                    const auto childBounds = item.getComponent().getChildComponent(0)->getBounds();
+
+                    REQUIRE(childBounds.getX() == 40);
+                    REQUIRE(childBounds.getY() == 10);
+                    REQUIRE(childBounds.getWidth() == 160);
+                }
+            }
+        }
+    }
+}

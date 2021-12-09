@@ -1,5 +1,7 @@
 #pragma once
 
+#include <juce_core/juce_core.h>
+
 //======================================================================================================================
 namespace juce
 {
@@ -101,5 +103,14 @@ namespace juce
         //==============================================================================================================
         static Justification fromVar(const var& v);
         static var toVar(Justification justification);
+    };
+
+    //==================================================================================================================
+    template <typename ValueType>
+    struct VariantConverter<BorderSize<ValueType>>
+    {
+        //==============================================================================================================
+        static BorderSize<ValueType> fromVar(const var& v);
+        static var toVar(BorderSize<ValueType> border);
     };
 } // namespace juce

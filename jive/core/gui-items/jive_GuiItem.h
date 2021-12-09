@@ -39,6 +39,9 @@ namespace jive
 
         virtual float getWidth() const;
         virtual float getHeight() const;
+        virtual juce::BorderSize<float> getPadding() const;
+
+        virtual juce::Rectangle<float> getContentBounds() const;
 
         Display getDisplay() const;
 
@@ -69,6 +72,7 @@ namespace jive
 
         juce::CachedValue<int> width;
         juce::CachedValue<int> height;
+        juce::CachedValue<juce::BorderSize<float>> padding;
         juce::CachedValue<Display> display;
 
         //==============================================================================================================
