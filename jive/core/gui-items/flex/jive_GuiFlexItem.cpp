@@ -33,7 +33,8 @@ namespace jive
     {
         GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
 
-        jassert(treeWhosePropertyChanged == tree);
+        if (treeWhosePropertyChanged != tree)
+            return;
 
         forceUpdateOfAllCachedValues();
         updateParentLayout();

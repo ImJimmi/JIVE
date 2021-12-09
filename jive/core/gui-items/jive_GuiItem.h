@@ -37,6 +37,7 @@ namespace jive
 
         virtual bool isContainer() const;
 
+        juce::Identifier getID() const;
         virtual float getWidth() const;
         virtual float getHeight() const;
         virtual juce::BorderSize<float> getPadding() const;
@@ -70,6 +71,7 @@ namespace jive
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
+        TypedValue<juce::Identifier> id;
         juce::CachedValue<int> width;
         juce::CachedValue<int> height;
         juce::CachedValue<juce::BorderSize<float>> padding;

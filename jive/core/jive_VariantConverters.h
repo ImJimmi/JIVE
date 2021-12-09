@@ -113,4 +113,13 @@ namespace juce
         static BorderSize<ValueType> fromVar(const var& v);
         static var toVar(BorderSize<ValueType> border);
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::Identifier>
+    {
+        //==============================================================================================================
+        static juce::Identifier fromVar(const var& v);
+        static var toVar(juce::Identifier id);
+    };
 } // namespace juce

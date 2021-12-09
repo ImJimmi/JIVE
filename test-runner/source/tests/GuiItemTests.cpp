@@ -55,6 +55,60 @@ SCENARIO("GUI items can have children")
 }
 
 //======================================================================================================================
+SCENARIO("GUI items can have an ID")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ test::createDummyComponent(), tree };
+
+        THEN("the item's ID is empty")
+        {
+            REQUIRE(item.getID().isNull());
+        }
+        AND_THEN("the ID of the item's component is empty")
+        {
+            REQUIRE(item.getComponent().getComponentID().isEmpty());
+        }
+
+        WHEN("the item's ID is changed")
+        {
+            tree.setProperty("id", "comp123", nullptr);
+
+            THEN("the item's ID matches the one specified")
+            {
+                REQUIRE(item.getID() == juce::Identifier{ "comp123" });
+            }
+            AND_THEN("the ID of the item's component matches the one specified")
+            {
+                REQUIRE(item.getComponent().getComponentID() == "comp123");
+            }
+        }
+    }
+    GIVEN("a value-tree with a specified 'id' property")
+    {
+        juce::ValueTree tree{
+            "Component",
+            { { "id", "specified" } }
+        };
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ test::createDummyComponent(), tree };
+
+            THEN("the item's ID matches the one in the tree")
+            {
+                REQUIRE(item.getID() == juce::Identifier{ tree["id"] });
+            }
+            AND_THEN("the ID of the item's component matches the one in the tree")
+            {
+                REQUIRE(item.getComponent().getComponentID() == tree["id"].toString());
+            }
+        }
+    }
+}
+
+//======================================================================================================================
 SCENARIO("GUI items can have a padding")
 {
     GIVEN("a GUI item")

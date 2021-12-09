@@ -8,12 +8,18 @@ namespace jive
         : tree{ valueTree }
         , component{ std::move(comp) }
         , parent{ parentItem }
+        , id{ tree, "id" }
         , width{ tree, "width", nullptr, -1 }
         , height{ tree, "height", nullptr, -1 }
         , padding{ tree, "padding", nullptr }
         , display{ tree, "display", nullptr, Display::flex }
     {
         jassert(component != nullptr);
+
+        id.onValueChange = [this]() {
+            getComponent().setComponentID(id.get().toString());
+        };
+        getComponent().setComponentID(id.get().toString());
 
         component->addComponentListener(this);
         tree.addListener(this);
@@ -80,6 +86,11 @@ namespace jive
     bool GuiItem::isContainer() const
     {
         return true;
+    }
+
+    juce::Identifier GuiItem::getID() const
+    {
+        return id;
     }
 
     float GuiItem::getWidth() const

@@ -257,4 +257,18 @@ namespace juce
 
         return tokens.joinIntoString(" ");
     }
+
+    //==================================================================================================================
+    juce::Identifier VariantConverter<juce::Identifier>::fromVar(const var& v)
+    {
+        if (v.toString().isEmpty())
+            return {};
+
+        return { v.toString() };
+    }
+
+    var VariantConverter<juce::Identifier>::toVar(juce::Identifier id)
+    {
+        return { id.toString() };
+    }
 } // namespace juce
