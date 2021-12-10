@@ -1,6 +1,6 @@
-[submodule "test-runner/libraries/JUCE"]
-	path = test-runner/libraries/JUCE
+[submodule "runners/libraries/JUCE"]
+	path = runners/libraries/JUCE
 	url = https://github.com/juce-framework/JUCE
-[submodule "test-runner/libraries/Catch2"]
-	path = test-runner/libraries/Catch2
+[submodule "runners/libraries/Catch2"]
+	path = runners/libraries/Catch2
 	url = https://github.com/catchorg/Catch2.git
