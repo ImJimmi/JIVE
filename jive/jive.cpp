@@ -1,6 +1,8 @@
 #include "jive.h"
 
 //======================================================================================================================
+#include "utilities/jive_BoxModel.cpp"
+
 #include "core/gui-items/jive_GuiItem.cpp"
 #include "core/gui-items/jive_GuiItemDecorator.cpp"
 
