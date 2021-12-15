@@ -148,7 +148,7 @@ namespace jive
                                           bool /*wasMoved*/,
                                           bool wasResized)
     {
-        jassert(&componentThatWasMovedOrResized == component.get());
+        jassertquiet(&componentThatWasMovedOrResized == component.get());
 
         if (!wasResized)
             return;
