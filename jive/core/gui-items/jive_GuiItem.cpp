@@ -9,10 +9,9 @@ namespace jive
         , component{ std::move(comp) }
         , parent{ parentItem }
         , id{ tree, "id" }
-        , width{ tree, "width", nullptr, -1 }
-        , height{ tree, "height", nullptr, -1 }
-        , padding{ tree, "padding", nullptr }
         , display{ tree, "display", nullptr, Display::flex }
+        , width{ tree, "width", -1 }
+        , height{ tree, "height", -1 }
     {
         jassert(component != nullptr);
 
@@ -88,6 +87,11 @@ namespace jive
         return true;
     }
 
+    BoxModel GuiItem::getBoxModel() const
+    {
+        return boxModel;
+    }
+
     juce::Identifier GuiItem::getID() const
     {
         return id;
@@ -103,22 +107,19 @@ namespace jive
         return height;
     }
 
-    juce::BorderSize<float> GuiItem::getPadding() const
-    {
-        return padding;
-    }
-
-    juce::Rectangle<float> GuiItem::getContentBounds() const
-    {
-        const auto bounds = getComponent().getLocalBounds().toFloat();
-        const auto padding = getPadding();
-
-        return padding.subtractedFrom(bounds);
-    }
-
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;
+    }
+
+    bool GuiItem::hasAutoWidth() const
+    {
+        return static_cast<int>(width.get()) == -1;
+    }
+
+    bool GuiItem::hasAutoHeight() const
+    {
+        return static_cast<int>(height.get()) == -1;
     }
 
     //==================================================================================================================

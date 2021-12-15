@@ -14,6 +14,12 @@ END_JUCE_MODULE_DECLARATION */
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //======================================================================================================================
+namespace jive
+{
+    class GuiItem;
+} // namespace jive
+
+//======================================================================================================================
 #include "utilities/jive_TypedValue.h"
 
 #include "utilities/jive_BoxModel.h"

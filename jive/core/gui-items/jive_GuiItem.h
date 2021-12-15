@@ -37,14 +37,16 @@ namespace jive
 
         virtual bool isContainer() const;
 
+        BoxModel getBoxModel() const;
+
         juce::Identifier getID() const;
         virtual float getWidth() const;
         virtual float getHeight() const;
-        virtual juce::BorderSize<float> getPadding() const;
-
-        virtual juce::Rectangle<float> getContentBounds() const;
 
         Display getDisplay() const;
+
+        bool hasAutoWidth() const;
+        bool hasAutoHeight() const;
 
         //==============================================================================================================
         virtual operator juce::FlexBox();
@@ -71,11 +73,12 @@ namespace jive
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
+        BoxModel boxModel{ *this, tree };
+
         TypedValue<juce::Identifier> id;
-        juce::CachedValue<int> width;
-        juce::CachedValue<int> height;
-        juce::CachedValue<juce::BorderSize<float>> padding;
         juce::CachedValue<Display> display;
+        TypedValue<float> width;
+        TypedValue<float> height;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

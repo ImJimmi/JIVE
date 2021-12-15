@@ -94,7 +94,7 @@ SCENARIO("GUI flex items can grow to fill available space")
             {
                 childTree1.setProperty("flex-grow", 2, nullptr);
 
-                THEN("the first child's component is twice the width of the first")
+                THEN("the first child's component is twice the width of the second")
                 {
                     REQUIRE(item.getChild(0).getComponent().getWidth() == item.getChild(1).getComponent().getWidth() * 2);
                 }

@@ -84,7 +84,7 @@ SCENARIO("GUI flex containers can wrap items to multiple lines if needed")
         };
         jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
 
-        juce::ValueTree childTree{ "Component", { { "width", 120 } } };
+        juce::ValueTree childTree{ "Component", { { "width", 120 }, { "height", 100 } } };
         item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
                                                                                           childTree,
                                                                                           &item)));
@@ -137,9 +137,9 @@ SCENARIO("GUI flex containers can wrap items to multiple lines if needed")
                     REQUIRE(item.getChild(1).getComponent().getWidth() == 120);
                     REQUIRE(item.getChild(2).getComponent().getWidth() == 120);
 
-                    REQUIRE(item.getChild(0).getComponent().getY() == 200);
-                    REQUIRE(item.getChild(1).getComponent().getY() == 200);
-                    REQUIRE(item.getChild(2).getComponent().getY() == 0);
+                    REQUIRE(item.getChild(0).getComponent().getY() == 300);
+                    REQUIRE(item.getChild(1).getComponent().getY() == 300);
+                    REQUIRE(item.getChild(2).getComponent().getY() == 100);
                 }
             }
         }

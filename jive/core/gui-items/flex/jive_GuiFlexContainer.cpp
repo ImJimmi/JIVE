@@ -32,13 +32,23 @@ namespace jive
         return item->getChild(index);
     }
 
+    float GuiFlexContainer::getWidth() const
+    {
+        return getComponent().getWidth();
+    }
+
+    float GuiFlexContainer::getHeight() const
+    {
+        return getComponent().getHeight();
+    }
+
     //==================================================================================================================
     void GuiFlexContainer::updateLayout()
     {
         forceUpdateOfAllCachedValues();
 
         auto flex = static_cast<juce::FlexBox>(*this);
-        flex.performLayout(getContentBounds());
+        flex.performLayout(getBoxModel().getContentBounds());
     }
 
     //==================================================================================================================
