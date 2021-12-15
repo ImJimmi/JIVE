@@ -36,7 +36,7 @@ namespace jive
         getComboBox().setEditableText(editable);
         getComboBox().setJustificationType(justification);
 
-        if (!tree.hasProperty("height"))
+        if (hasAutoHeight())
             tree.setProperty("height", 25, nullptr);
     }
 

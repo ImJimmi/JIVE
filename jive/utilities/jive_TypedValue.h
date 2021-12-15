@@ -42,7 +42,7 @@ namespace jive
     private:
         void valueChanged(juce::Value& valueThatChanged) override
         {
-            jassert(valueThatChanged.refersToSameSourceAs(value));
+            jassertquiet(valueThatChanged.refersToSameSourceAs(value));
 
             if (onValueChange != nullptr)
                 onValueChange();
