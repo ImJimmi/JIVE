@@ -190,7 +190,7 @@ SCENARIO("box models can have a margin")
 //======================================================================================================================
 SCENARIO("box models have a border bounds")
 {
-    GIVEN("a box model with non-zero padding, border, and size properties")
+    GIVEN("a box model for a GUI item with a parent, with non-zero padding, border, and size properties")
     {
         juce::ValueTree tree{
             "Component",
@@ -199,7 +199,8 @@ SCENARIO("box models have a border bounds")
               { "padding", "10 20" },
               { "border-width", "5" } }
         };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the box's border bounds has position (0, 0)")
@@ -226,7 +227,8 @@ SCENARIO("box models have a padding bounds")
               { "padding", "15 5" },
               { "border-width", "10" } }
         };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the position of the box's padding bounds takes into account the border width")
@@ -253,7 +255,8 @@ SCENARIO("box models have a content bounds")
               { "padding", "30" },
               { "border-width", "5 10 15 20" } }
         };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the position of the box's padding bounds takes into account the border width and the padding")
@@ -264,6 +267,28 @@ SCENARIO("box models have a content bounds")
         {
             REQUIRE(box.getContentBounds().getWidth() == 75.f);
             REQUIRE(box.getContentBounds().getHeight() == 55.f);
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("box models for top-level components don't expand their bounds")
+{
+    GIVEN("a GUI item with no parent, and its width, height, padding, and border-width properties specified")
+    {
+        juce::ValueTree tree{
+            "Component",
+            { { "width", 100 },
+              { "height", 100 },
+              { "padding", "25" },
+              { "border-width", "5 10 15 20" } }
+        };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the size of the item's border bounds match its width and height")
+        {
+            REQUIRE(item.getBoxModel().getBorderBounds().getWidth() == 100.f);
+            REQUIRE(item.getBoxModel().getBorderBounds().getHeight() == 100.f);
         }
     }
 }
