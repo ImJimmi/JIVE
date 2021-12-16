@@ -20,6 +20,14 @@ namespace jive
         };
         getComponent().setComponentID(id.get().toString());
 
+        width.onValueChange = [this]() {
+            updateComponentSize();
+        };
+        height.onValueChange = [this]() {
+            updateComponentSize();
+        };
+        updateComponentSize();
+
         component->addComponentListener(this);
         tree.addListener(this);
     }
@@ -155,5 +163,12 @@ namespace jive
             return;
 
         updateLayout();
+    }
+
+    //==================================================================================================================
+    void GuiItem::updateComponentSize()
+    {
+        const auto borderBounds = boxModel.getBorderBounds();
+        component->setSize(juce::roundToInt(borderBounds.getWidth()), juce::roundToInt(borderBounds.getHeight()));
     }
 } // namespace jive

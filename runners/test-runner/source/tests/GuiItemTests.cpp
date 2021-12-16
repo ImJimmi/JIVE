@@ -107,3 +107,63 @@ SCENARIO("GUI items can have an ID")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items have a width and height")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item has an auto width and height")
+        {
+            REQUIRE(item.hasAutoWidth());
+            REQUIRE(item.hasAutoHeight());
+        }
+        THEN("the item's component should have a size of 0x0")
+        {
+            REQUIRE(item.getComponent().getWidth() == 0.f);
+            REQUIRE(item.getComponent().getHeight() == 0.f);
+        }
+
+        WHEN("the item's size is changed")
+        {
+            tree.setProperty("width", 100.11f, nullptr);
+            tree.setProperty("height", 50.55f, nullptr);
+
+            THEN("the item has the specified size")
+            {
+                REQUIRE(item.getWidth() == 100.11f);
+                REQUIRE(item.getHeight() == 50.55f);
+            }
+            THEN("the item's component has the specified size (rounded to the nearest whole-number)")
+            {
+                REQUIRE(item.getComponent().getWidth() == 100);
+                REQUIRE(item.getComponent().getHeight() == 51);
+            }
+        }
+        WHEN("the item's padding and border width are changed")
+        {
+            tree.setProperty("padding", 10, nullptr);
+            tree.setProperty("border-width", 5, nullptr);
+
+            AND_WHEN("the item's size is changed")
+            {
+                tree.setProperty("width", 150, nullptr);
+                tree.setProperty("height", 100, nullptr);
+
+                THEN("the item has the specified size")
+                {
+                    REQUIRE(item.getWidth() == 150.f);
+                    REQUIRE(item.getHeight() == 100.f);
+                }
+                THEN("the item's component has the specified size plus the size of the padding and border")
+                {
+                    REQUIRE(item.getComponent().getWidth() == 180);
+                    REQUIRE(item.getComponent().getHeight() == 130);
+                }
+            }
+        }
+    }
+}

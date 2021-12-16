@@ -15,9 +15,6 @@ namespace jive
         int getNumChildren() const override;
         GuiItem& getChild(int index) override;
 
-        float getWidth() const override;
-        float getHeight() const override;
-
         //==============================================================================================================
         void updateLayout() override;
 

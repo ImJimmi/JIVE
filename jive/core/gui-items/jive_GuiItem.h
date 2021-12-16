@@ -71,6 +71,9 @@ namespace jive
         GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
 
         //==============================================================================================================
+        void updateComponentSize();
+
+        //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
         BoxModel boxModel{ *this, tree };
