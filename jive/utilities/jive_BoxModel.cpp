@@ -60,11 +60,17 @@ namespace jive
     //==================================================================================================================
     float BoxModel::calculateBorderBoundsWidth() const
     {
+        if (item.getParent() == nullptr)
+            return getWidth();
+
         return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
     }
 
     float BoxModel::calculateBorderBoundsHeight() const
     {
+        if (item.getParent() == nullptr)
+            return getHeight();
+
         return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();
     }
 } // namespace jive

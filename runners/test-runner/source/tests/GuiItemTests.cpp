@@ -143,27 +143,5 @@ SCENARIO("GUI items have a width and height")
                 REQUIRE(item.getComponent().getHeight() == 51);
             }
         }
-        WHEN("the item's padding and border width are changed")
-        {
-            tree.setProperty("padding", 10, nullptr);
-            tree.setProperty("border-width", 5, nullptr);
-
-            AND_WHEN("the item's size is changed")
-            {
-                tree.setProperty("width", 150, nullptr);
-                tree.setProperty("height", 100, nullptr);
-
-                THEN("the item has the specified size")
-                {
-                    REQUIRE(item.getWidth() == 150.f);
-                    REQUIRE(item.getHeight() == 100.f);
-                }
-                THEN("the item's component has the specified size plus the size of the padding and border")
-                {
-                    REQUIRE(item.getComponent().getWidth() == 180);
-                    REQUIRE(item.getComponent().getHeight() == 130);
-                }
-            }
-        }
     }
 }
