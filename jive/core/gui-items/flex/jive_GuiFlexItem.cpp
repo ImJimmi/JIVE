@@ -13,6 +13,16 @@ namespace jive
     }
 
     //==================================================================================================================
+    juce::FlexItem::Margin boxModelToFlexMargin(const juce::BorderSize<float>& border)
+    {
+        return juce::FlexItem::Margin{
+            border.getTop(),
+            border.getRight(),
+            border.getBottom(),
+            border.getLeft()
+        };
+    }
+
     GuiFlexItem::operator juce::FlexItem()
     {
         juce::FlexItem flexItem{ *component };
@@ -23,6 +33,7 @@ namespace jive
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
         flexItem.alignSelf = flexItemAlignSelf;
+        flexItem.margin = boxModelToFlexMargin(getBoxModel().getMargin());
 
         return flexItem;
     }
@@ -52,7 +63,7 @@ namespace jive
     {
         if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
             container->updateLayout();
-        else
+        else if (getParent() != nullptr)
             jassertfalse;
     }
 } // namespace jive

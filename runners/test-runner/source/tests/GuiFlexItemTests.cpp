@@ -249,3 +249,43 @@ SCENARIO("GUI flex items should use the size of the item they decorate")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI flex items can have a margin")
+{
+    GIVEN("a GUI flex item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiFlexItem item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
+
+        WHEN("the item is converted to a juce::FlexItem")
+        {
+            const auto flexItem = static_cast<juce::FlexItem>(item);
+
+            THEN("the flex-item has no margin")
+            {
+                REQUIRE(flexItem.margin.top == 0.0f);
+                REQUIRE(flexItem.margin.right == 0.0f);
+                REQUIRE(flexItem.margin.bottom == 0.0f);
+                REQUIRE(flexItem.margin.left == 0.0f);
+            }
+        }
+        WHEN("the item's margin changes")
+        {
+            tree.setProperty("margin", "1 2 3 4", nullptr);
+
+            AND_WHEN("the item is converted to a juce::FlexItem")
+            {
+                const auto flexItem = static_cast<juce::FlexItem>(item);
+
+                THEN("the flex-item's margin matches the one specified")
+                {
+                    REQUIRE(flexItem.margin.top == 1.0f);
+                    REQUIRE(flexItem.margin.right == 2.0f);
+                    REQUIRE(flexItem.margin.bottom == 3.0f);
+                    REQUIRE(flexItem.margin.left == 4.0f);
+                }
+            }
+        }
+    }
+}
