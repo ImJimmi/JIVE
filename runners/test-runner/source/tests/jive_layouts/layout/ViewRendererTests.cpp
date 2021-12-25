@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 SCENARIO("view renderers can render different components")

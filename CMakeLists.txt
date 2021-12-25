@@ -16,6 +16,6 @@ if (JIVE_BUILD_TEST_RUNNER)
 
 endif()
 
-juce_add_module(jive ALIAS_NAMESPACE jive)
+juce_add_module(jive_layouts ALIAS_NAMESPACE jive)
 
 add_subdirectory(runners)
