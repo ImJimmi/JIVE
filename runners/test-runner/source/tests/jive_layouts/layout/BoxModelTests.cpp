@@ -1,7 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
-
-#include <utilities/test_ComponentUtilities.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 SCENARIO("box models have a width")
@@ -9,7 +7,7 @@ SCENARIO("box models have a width")
     GIVEN("a box model")
     {
         juce::ValueTree tree{ "Component" };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
         THEN("the box has a default width of -1")
@@ -35,7 +33,7 @@ SCENARIO("box models have a height")
     GIVEN("a box model")
     {
         juce::ValueTree tree{ "Component" };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
         THEN("the box model has a default height of -1")
@@ -61,7 +59,7 @@ SCENARIO("box models can have a padding")
     GIVEN("a box model")
     {
         juce::ValueTree tree{ "Component" };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
         THEN("the box has no padding")
@@ -141,7 +139,7 @@ SCENARIO("box models can have a border")
     GIVEN("a box model")
     {
         juce::ValueTree tree{ "Component" };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
         THEN("the box has a zero-width border")
@@ -167,7 +165,7 @@ SCENARIO("box models can have a margin")
     GIVEN("a box model")
     {
         juce::ValueTree tree{ "Component" };
-        const jive::GuiItem item{ test::createDummyComponent(), tree };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
         THEN("the box has no margin")
@@ -199,8 +197,8 @@ SCENARIO("box models have a border bounds")
               { "padding", "10 20" },
               { "border-width", "5" } }
         };
-        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
-        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
+        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the box's border bounds has position (0, 0)")
@@ -227,8 +225,8 @@ SCENARIO("box models have a padding bounds")
               { "padding", "15 5" },
               { "border-width", "10" } }
         };
-        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
-        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
+        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the position of the box's padding bounds takes into account the border width")
@@ -255,8 +253,8 @@ SCENARIO("box models have a content bounds")
               { "padding", "30" },
               { "border-width", "5 10 15 20" } }
         };
-        jive::GuiItem parentItem{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
-        const jive::GuiItem item{ test::createDummyComponent(), tree, &parentItem };
+        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
+        const jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
         jive::BoxModel box{ item, tree };
 
         THEN("the position of the box's padding bounds takes into account the border width and the padding")

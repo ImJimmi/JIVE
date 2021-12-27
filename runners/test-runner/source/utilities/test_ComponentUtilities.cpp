@@ -4,11 +4,6 @@
 namespace test
 {
     //==================================================================================================================
-    std::unique_ptr<juce::Component> createDummyComponent()
-    {
-        return std::make_unique<juce::Component>();
-    }
-
     int getPopupMenuNumSeparators(const juce::PopupMenu& menu)
     {
         auto numSeparators = 0;

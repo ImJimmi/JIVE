@@ -1,7 +1,7 @@
 #include <utilities/test_ComponentUtilities.h>
 
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 namespace juce

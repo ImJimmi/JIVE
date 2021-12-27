@@ -1,14 +1,12 @@
-#include <utilities/test_ComponentUtilities.h>
-
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 SCENARIO("GUI items can have children")
 {
     GIVEN("a GUI item")
     {
-        jive::GuiItem item{ test::createDummyComponent(), juce::ValueTree{ "Component" } };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
 
         THEN("the item has no children")
         {
@@ -21,7 +19,7 @@ SCENARIO("GUI items can have children")
 
         WHEN("a child is added to the item")
         {
-            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                           juce::ValueTree{ "Component" }));
 
             THEN("the item has a single child")
@@ -35,11 +33,11 @@ SCENARIO("GUI items can have children")
         }
         WHEN("multiple children are added to the item")
         {
-            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                           juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                           juce::ValueTree{ "Component" }));
-            item.addChild(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                           juce::ValueTree{ "Component" }));
 
             THEN("the item has the expected number of children")
@@ -60,7 +58,7 @@ SCENARIO("GUI items can have an ID")
     GIVEN("a GUI item")
     {
         juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ test::createDummyComponent(), tree };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
 
         THEN("the item's ID is empty")
         {
@@ -94,7 +92,7 @@ SCENARIO("GUI items can have an ID")
 
         WHEN("a GUI item is constructed from the tree")
         {
-            jive::GuiItem item{ test::createDummyComponent(), tree };
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
 
             THEN("the item's ID matches the one in the tree")
             {

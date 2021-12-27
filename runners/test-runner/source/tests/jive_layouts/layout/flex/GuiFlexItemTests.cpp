@@ -1,7 +1,5 @@
-#include <utilities/test_ComponentUtilities.h>
-
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 SCENARIO("GUI flex items can be laid-out in different orders")
@@ -13,15 +11,15 @@ SCENARIO("GUI flex items can be laid-out in different orders")
             { { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) } },
             {}
         };
-        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
 
         juce::ValueTree childTree1{ "Component", { { "width", 50 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree1,
                                                                                           &item)));
 
         juce::ValueTree childTree2{ "Component", { { "width", 50 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree2,
                                                                                           &item)));
 
@@ -69,15 +67,15 @@ SCENARIO("GUI flex items can grow to fill available space")
             { { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) } },
             {}
         };
-        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
 
         juce::ValueTree childTree1{ "Component", { { "flex-grow", 1 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree1,
                                                                                           &item)));
 
         juce::ValueTree childTree2{ "Component", { { "flex-grow", 1 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree2,
                                                                                           &item)));
 
@@ -124,10 +122,10 @@ SCENARIO("GUI flex items can align themselves along their parent's cross-axis")
               { "align-items", juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexEnd) } },
             {}
         };
-        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
 
         juce::ValueTree childTree1{ "Component", { { "height", 50 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree1,
                                                                                           &item)));
 
@@ -183,10 +181,10 @@ SCENARIO("GUI flex items can align themselves along their parent's cross-axis")
               { "align-items", juce::VariantConverter<juce::FlexBox::AlignItems>::toVar(juce::FlexBox::AlignItems::flexEnd) } },
             {}
         };
-        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(test::createDummyComponent(), tree) };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
 
         juce::ValueTree childTree1{ "Component", { { "height", 50 } } };
-        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(test::createDummyComponent(),
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                           childTree1,
                                                                                           &item)));
 

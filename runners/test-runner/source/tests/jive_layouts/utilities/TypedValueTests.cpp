@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <jive/jive.h>
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 SCENARIO("typed-values can be used to read a property from a value-tree")

@@ -4,25 +4,25 @@ juce_add_console_app(jive-test-runner
 
 target_sources(jive-test-runner
 PRIVATE
-    source/main.cpp
-
-    source/tests/GuiFlexContainerTests.cpp
-    source/tests/GuiFlexItemTests.cpp
-    source/tests/GuiItemTests.cpp
-    source/tests/ViewRendererTests.cpp
-    source/tests/utilities/BoxModelTests.cpp
-    source/tests/utilities/TypedValueTests.cpp
-    source/tests/widgets/jive_ComboBoxTests.cpp
-    source/tests/widgets/jive_LabelTests.cpp
+    source/tests/jive_layouts/layout/flex/GuiFlexContainerTests.cpp
+    source/tests/jive_layouts/layout/flex/GuiFlexItemTests.cpp
+    source/tests/jive_layouts/layout/widgets/ComboBoxTests.cpp
+    source/tests/jive_layouts/layout/widgets/LabelTests.cpp
+    source/tests/jive_layouts/layout/BoxModelTests.cpp
+    source/tests/jive_layouts/layout/GuiItemTests.cpp
+    source/tests/jive_layouts/layout/ViewRendererTests.cpp
+    source/tests/jive_layouts/utilities/TypedValueTests.cpp
 
     source/utilities/test_ComponentUtilities.cpp
     source/utilities/test_ComponentUtilities.h
+
+    source/main.cpp
 )
 
 target_link_libraries(jive-test-runner
 PRIVATE
     Catch2
-    jive::jive
+    jive::jive_layouts
     juce::juce_gui_basics
 )
 
