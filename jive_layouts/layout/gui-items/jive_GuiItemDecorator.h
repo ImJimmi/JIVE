@@ -14,7 +14,7 @@ namespace jive
         float getWidth() const override;
         float getHeight() const override;
 
-        operator juce::FlexBox() override;
+        operator juce::FlexBox() const override;
         operator juce::FlexItem() override;
 
     protected:

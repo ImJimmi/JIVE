@@ -21,7 +21,7 @@ namespace jive
         return item->getHeight();
     }
 
-    GuiItemDecorator::operator juce::FlexBox()
+    GuiItemDecorator::operator juce::FlexBox() const
     {
         return { *item };
     }

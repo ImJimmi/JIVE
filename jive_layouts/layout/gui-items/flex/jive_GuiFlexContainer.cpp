@@ -27,9 +27,22 @@ namespace jive
         return item->getNumChildren();
     }
 
-    GuiItem& GuiFlexContainer::getChild(int index)
+    GuiItem& GuiFlexContainer::getChild(int index) const
     {
         return item->getChild(index);
+    }
+
+    float GuiFlexContainer::getHeight() const
+    {
+        if (hasAutoHeight())
+        {
+            const auto contentHeight = getMinimumContentHeight();
+            const auto boxModel = getBoxModel();
+
+            return contentHeight + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom();
+        }
+
+        return item->getHeight();
     }
 
     //==================================================================================================================
@@ -42,13 +55,31 @@ namespace jive
     }
 
     //==================================================================================================================
-    void appendChildren(GuiFlexContainer& container, juce::FlexBox& flex)
+    GuiFlexContainer::operator juce::FlexBox() const
+    {
+        return getFlexBox();
+    }
+
+    //==================================================================================================================
+    void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
+                                                    const juce::Identifier& propertyID)
+    {
+        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+
+        if (treeWhosePropertyChanged != tree)
+            return;
+
+        updateLayout();
+    }
+
+    //==================================================================================================================
+    void appendChildren(const GuiFlexContainer& container, juce::FlexBox& flex)
     {
         for (auto i = 0; i < container.getNumChildren(); i++)
             flex.items.add(container.getChild(i));
     }
 
-    GuiFlexContainer::operator juce::FlexBox()
+    juce::FlexBox GuiFlexContainer::getFlexBox() const
     {
         juce::FlexBox flex;
 
@@ -63,16 +94,30 @@ namespace jive
         return flex;
     }
 
-    //==================================================================================================================
-    void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
-                                                    const juce::Identifier& propertyID)
+    juce::FlexBox GuiFlexContainer::getFlexBoxWithDummyItems() const
     {
-        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+        auto flex = getFlexBox();
 
-        if (treeWhosePropertyChanged != tree)
-            return;
+        for (auto& item : flex.items)
+            item.associatedComponent = nullptr;
 
-        updateLayout();
+        return flex;
+    }
+
+    float GuiFlexContainer::getMinimumContentHeight() const
+    {
+        auto flex = getFlexBoxWithDummyItems();
+        flex.performLayout(juce::Rectangle<float>{ 0.f, 0.f, getWidth(), std::numeric_limits<float>::max() });
+
+        auto contentHeight = 0.f;
+
+        for (const auto& item : flex.items)
+        {
+            if (item.currentBounds.getBottom() > contentHeight)
+                contentHeight = item.currentBounds.getBottom();
+        }
+
+        return contentHeight;
     }
 
     //==================================================================================================================
