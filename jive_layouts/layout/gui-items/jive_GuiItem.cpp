@@ -74,7 +74,7 @@ namespace jive
         return children.size();
     }
 
-    GuiItem& GuiItem::getChild(int index)
+    GuiItem& GuiItem::getChild(int index) const
     {
         jassert(index < children.size());
         return *children[index];
@@ -131,7 +131,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    GuiItem::operator juce::FlexBox()
+    GuiItem::operator juce::FlexBox() const
     {
         // This item isn't a flex container!
         jassertfalse;

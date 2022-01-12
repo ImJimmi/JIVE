@@ -31,7 +31,7 @@ namespace jive
 
         virtual void addChild(std::unique_ptr<GuiItem> child);
         virtual int getNumChildren() const;
-        virtual GuiItem& getChild(int index);
+        virtual GuiItem& getChild(int index) const;
         const GuiItem* getParent() const;
         GuiItem* getParent();
 
@@ -49,7 +49,7 @@ namespace jive
         bool hasAutoHeight() const;
 
         //==============================================================================================================
-        virtual operator juce::FlexBox();
+        virtual operator juce::FlexBox() const;
         virtual operator juce::FlexItem();
 
     protected:

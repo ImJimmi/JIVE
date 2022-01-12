@@ -442,3 +442,24 @@ SCENARIO("GUI flex items implement padding")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI flex containers have an automatic height that's just tall enough to display their content")
+{
+    GIVEN("A GUI flex container with no height specified, and some children")
+    {
+        const auto jiveSource = R"(
+            <Component width="200" flex-direction="row" padding="10" border-width="5" margin="15">
+                <ComboBox height="25" width="100"/>
+                <ComboBox height="14" width="130"/>
+            </Component>
+        )";
+        jive::ViewRenderer renderer;
+        auto item = renderer.renderView(jiveSource);
+
+        THEN("The item's height should be enough to contain its content, with its padding and its border")
+        {
+            REQUIRE(item->getHeight() == 55.f);
+        }
+    }
+}

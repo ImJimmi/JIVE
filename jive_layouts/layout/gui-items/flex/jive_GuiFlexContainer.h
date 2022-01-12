@@ -13,19 +13,27 @@ namespace jive
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
         int getNumChildren() const override;
-        GuiItem& getChild(int index) override;
+        GuiItem& getChild(int index) const override;
+
+        float getHeight() const override;
 
         //==============================================================================================================
         void updateLayout() override;
 
         //==============================================================================================================
-        operator juce::FlexBox() override;
+        operator juce::FlexBox() const override;
 
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
 
     private:
+        //==============================================================================================================
+        juce::FlexBox getFlexBox() const;
+        juce::FlexBox getFlexBoxWithDummyItems() const;
+
+        float getMinimumContentHeight() const;
+
         //==============================================================================================================
         void forceUpdateOfAllCachedValues();
 
