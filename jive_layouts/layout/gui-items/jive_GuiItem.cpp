@@ -90,6 +90,11 @@ namespace jive
         return parent;
     }
 
+    bool GuiItem::isTopLevel() const
+    {
+        return getParent() == nullptr;
+    }
+
     bool GuiItem::isContainer() const
     {
         return true;
@@ -161,6 +166,14 @@ namespace jive
 
         if (!wasResized)
             return;
+
+        if (isTopLevel())
+        {
+            const auto bounds = getComponent().getLocalBounds();
+
+            width = bounds.getWidth();
+            height = bounds.getHeight();
+        }
 
         updateLayout();
     }

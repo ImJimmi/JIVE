@@ -34,6 +34,7 @@ namespace jive
         virtual GuiItem& getChild(int index) const;
         const GuiItem* getParent() const;
         GuiItem* getParent();
+        bool isTopLevel() const;
 
         virtual bool isContainer() const;
 
