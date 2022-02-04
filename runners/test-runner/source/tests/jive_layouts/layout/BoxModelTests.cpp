@@ -10,18 +10,18 @@ SCENARIO("box models have a width")
         const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
-        THEN("the box has a default width of -1")
+        THEN("the box's width matches the item's width")
         {
-            REQUIRE(box.getWidth() == -1.f);
+            REQUIRE(box.getWidth() == item.getWidth());
         }
 
         WHEN("the width is changed")
         {
             tree.setProperty("width", 312.4f, nullptr);
 
-            THEN("the box has the new width")
+            THEN("the box's width matches the item's width")
             {
-                REQUIRE(box.getWidth() == 312.4f);
+                REQUIRE(box.getWidth() == item.getWidth());
             }
         }
     }
@@ -36,18 +36,18 @@ SCENARIO("box models have a height")
         const jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
         jive::BoxModel box{ item, tree };
 
-        THEN("the box model has a default height of -1")
+        THEN("the box's height matches the item's height")
         {
-            REQUIRE(box.getHeight() == -1.f);
+            REQUIRE(box.getHeight() == item.getHeight());
         }
 
         WHEN("the height is changed")
         {
             tree.setProperty("height", 846.2f, nullptr);
 
-            THEN("the box has the new height")
+            THEN("the box's height matches the item's height")
             {
-                REQUIRE(box.getHeight() == 846.2f);
+                REQUIRE(box.getHeight() == item.getHeight());
             }
         }
     }

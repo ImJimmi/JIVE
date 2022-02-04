@@ -109,7 +109,7 @@ SCENARIO("GUI items can have an ID")
 //======================================================================================================================
 SCENARIO("GUI items have a width and height")
 {
-    GIVEN("a GUI item")
+    GIVEN("a top-level GUI item")
     {
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
@@ -130,15 +130,47 @@ SCENARIO("GUI items have a width and height")
             tree.setProperty("width", 100.11f, nullptr);
             tree.setProperty("height", 50.55f, nullptr);
 
-            THEN("the item has the specified size")
+            THEN("the item's size is the specified size rounded to the nearest "
+                 "whole numbers")
             {
-                REQUIRE(item.getWidth() == 100.11f);
-                REQUIRE(item.getHeight() == 50.55f);
+                REQUIRE(item.getWidth() == 100.f);
+                REQUIRE(item.getHeight() == 51.f);
             }
             THEN("the item's component has the specified size (rounded to the nearest whole-number)")
             {
                 REQUIRE(item.getComponent().getWidth() == 100);
                 REQUIRE(item.getComponent().getHeight() == 51);
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("top-level GUI items use their component's size when resized")
+{
+    GIVEN("a top-level GUI item with a specified size")
+    {
+        juce::ValueTree tree{
+            "Component",
+            { { "width", 200 },
+              { "height", 150 } }
+        };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item's component has the specified size")
+        {
+            REQUIRE(item.getComponent().getWidth() == 200);
+            REQUIRE(item.getComponent().getHeight() == 150);
+        }
+
+        WHEN("the item's component is resized")
+        {
+            item.getComponent().setSize(400, 300);
+
+            THEN("the item's size has changed to match its component")
+            {
+                REQUIRE(item.getWidth() == 400);
+                REQUIRE(item.getHeight() == 300);
             }
         }
     }
