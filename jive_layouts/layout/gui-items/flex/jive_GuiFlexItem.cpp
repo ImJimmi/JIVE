@@ -9,6 +9,7 @@ namespace jive
         , flexItemOrder{ tree, "order", nullptr }
         , flexItemGrow{ tree, "flex-grow", nullptr }
         , flexItemShrink{ tree, "flex-shrink", nullptr, 1 }
+        , flexItemBasis{ tree, "flex-basis", nullptr }
         , flexItemAlignSelf{ tree, "align-self", nullptr, juce::FlexItem::AlignSelf::autoAlign }
     {
     }
@@ -34,6 +35,7 @@ namespace jive
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
         flexItem.flexShrink = flexItemShrink;
+        flexItem.flexBasis = flexItemBasis;
         flexItem.alignSelf = flexItemAlignSelf;
         flexItem.margin = boxModelToFlexMargin(getBoxModel().getMargin());
 
@@ -59,6 +61,7 @@ namespace jive
         flexItemOrder.forceUpdateOfCachedValue();
         flexItemGrow.forceUpdateOfCachedValue();
         flexItemShrink.forceUpdateOfCachedValue();
+        flexItemBasis.forceUpdateOfCachedValue();
         flexItemAlignSelf.forceUpdateOfCachedValue();
     }
 
