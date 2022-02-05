@@ -51,7 +51,6 @@ namespace jive
 
     protected:
         //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
         //==============================================================================================================

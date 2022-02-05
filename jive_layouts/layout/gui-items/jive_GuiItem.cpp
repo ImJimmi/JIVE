@@ -136,11 +136,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItem::valueTreePropertyChanged(juce::ValueTree& /*treeWhosePropertyChanged*/,
-                                           const juce::Identifier& /*propertyID*/)
-    {
-    }
-
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                           bool /*wasMoved*/,
                                           bool wasResized)
