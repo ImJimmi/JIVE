@@ -37,6 +37,27 @@ namespace jive
     }
 
     //==================================================================================================================
+    GuiItem::Iterator GuiItemDecorator::begin()
+    {
+        return std::begin(*item);
+    }
+
+    const GuiItem::Iterator GuiItemDecorator::begin() const
+    {
+        return std::begin(*item);
+    }
+
+    GuiItem::Iterator GuiItemDecorator::end()
+    {
+        return std::end(*item);
+    }
+
+    const GuiItem::Iterator GuiItemDecorator::end() const
+    {
+        return std::end(*item);
+    }
+
+    //==================================================================================================================
     void GuiItemDecorator::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
         GuiItem::valueTreePropertyChanged(tree, id);

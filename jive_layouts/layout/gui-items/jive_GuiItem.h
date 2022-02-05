@@ -12,6 +12,25 @@ namespace jive
     {
     public:
         //==============================================================================================================
+        struct Iterator
+        {
+            using difference_type = std::ptrdiff_t;
+            using value_type = GuiItem*;
+            using pointer = GuiItem**;
+            using iterator_category = std::forward_iterator_tag;
+
+            Iterator(const GuiItem& item, bool isEnd);
+
+            Iterator& operator++();
+            bool operator==(const Iterator& other) const;
+            bool operator!=(const Iterator& other) const;
+            GuiItem& operator*();
+            const GuiItem& operator*() const;
+
+        private:
+            GuiItem* const* item;
+        };
+
         enum class Display
         {
             flex
@@ -48,6 +67,12 @@ namespace jive
 
         bool hasAutoWidth() const;
         bool hasAutoHeight() const;
+
+        //==============================================================================================================
+        virtual Iterator begin();
+        virtual const Iterator begin() const;
+        virtual Iterator end();
+        virtual const Iterator end() const;
 
     protected:
         //==============================================================================================================

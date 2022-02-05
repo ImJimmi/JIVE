@@ -29,6 +29,12 @@ namespace jive
         float getWidth() const override;
         float getHeight() const override;
 
+        //==============================================================================================================
+        Iterator begin() override;
+        const Iterator begin() const override;
+        Iterator end() override;
+        const Iterator end() const override;
+
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;

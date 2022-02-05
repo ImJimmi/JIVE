@@ -17,11 +17,11 @@ namespace jive
         void updateLayout() override;
 
         //==============================================================================================================
-        operator juce::FlexBox() const;
+        operator juce::FlexBox();
 
     private:
         //==============================================================================================================
-        juce::FlexBox getFlexBox() const;
+        juce::FlexBox getFlexBox();
         juce::FlexBox getFlexBoxWithDummyItems() const;
 
         float getMinimumContentHeight() const;
