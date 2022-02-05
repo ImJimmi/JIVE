@@ -161,6 +161,55 @@ SCENARIO("GUI flex items can shrink if necessary")
 }
 
 //======================================================================================================================
+SCENARIO("GUI flex items can have a default size before the remaining space is distributed")
+{
+    GIVEN("a GUI flex container with some children")
+    {
+        juce::ValueTree tree{
+            "Component",
+            { { "flex-direction", juce::VariantConverter<juce::FlexBox::Direction>::toVar(juce::FlexBox::Direction::row) } },
+            {}
+        };
+        jive::GuiFlexContainer item{ std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), tree) };
+
+        juce::ValueTree childTree1{ "Component", { { "width", 100 } } };
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                          childTree1,
+                                                                                          &item)));
+
+        juce::ValueTree childTree2{ "Component", { { "width", 100 } } };
+        item.addChild(std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                          childTree2,
+                                                                                          &item)));
+
+        WHEN("the container's component is resized")
+        {
+            item.getComponent().setSize(400, 300);
+
+            THEN("each item is the same width")
+            {
+                REQUIRE(item.getChild(0).getComponent().getWidth() == item.getChild(1).getComponent().getWidth());
+            }
+        }
+
+        WHEN("the first child's flex-basis is changed")
+        {
+            childTree1.setProperty("flex-basis", 200, nullptr);
+
+            AND_WHEN("the container's component is resized")
+            {
+                item.getComponent().setSize(150, 300);
+
+                THEN("the first item's component is wider than the others")
+                {
+                    REQUIRE(item.getChild(0).getComponent().getWidth() > item.getChild(1).getComponent().getWidth());
+                }
+            }
+        }
+    }
+}
+
+//======================================================================================================================
 SCENARIO("GUI flex items can align themselves along their parent's cross-axis")
 {
     GIVEN("a GUI flex container with a its children set to align at the end of its cross-axis, and a child")
