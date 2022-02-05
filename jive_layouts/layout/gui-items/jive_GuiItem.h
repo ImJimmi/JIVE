@@ -100,7 +100,7 @@ namespace jive
         BoxModel boxModel{ *this, tree };
 
         TypedValue<juce::Identifier> id;
-        juce::CachedValue<Display> display;
+        TypedValue<Display> display;
         TypedValue<float> width;
         TypedValue<float> height;
 

@@ -9,7 +9,7 @@ namespace jive
         , component{ std::move(comp) }
         , parent{ parentItem }
         , id{ tree, "id" }
-        , display{ tree, "display", nullptr, Display::flex }
+        , display{ tree, "display", Display::flex }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
     {
