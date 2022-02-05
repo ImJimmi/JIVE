@@ -65,7 +65,7 @@ namespace jive
         friend class GuiItemDecorator;
 
         //==============================================================================================================
-        GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
+        GuiItem(std::shared_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent);
 
         //==============================================================================================================
         void updateComponentSize();

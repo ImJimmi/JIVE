@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiItem::GuiItem(juce::ValueTree valueTree, std::shared_ptr<juce::Component> comp, GuiItem* parentItem)
+    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp, juce::ValueTree valueTree, GuiItem* parentItem)
         : tree{ valueTree }
         , component{ std::move(comp) }
         , parent{ parentItem }
@@ -33,12 +33,12 @@ namespace jive
     }
 
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree, GuiItem* parentItem)
-        : GuiItem{ valueTree, std::move(comp), parentItem }
+        : GuiItem{ std::shared_ptr<juce::Component>{ std::move(comp) }, valueTree, parentItem }
     {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
-        : GuiItem{ other.tree, other.component, other.parent }
+        : GuiItem{ other.component, other.tree, other.parent }
     {
     }
 
