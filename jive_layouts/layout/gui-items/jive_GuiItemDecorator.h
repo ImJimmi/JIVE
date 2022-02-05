@@ -11,11 +11,23 @@ namespace jive
         explicit GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        void addChild(std::unique_ptr<GuiItem> child) override;
+        int getNumChildren() const override;
+        GuiItem& getChild(int index) const override;
+
+        template <typename ItemType>
+        ItemType* toType()
+        {
+            if (auto* itemWithType = dynamic_cast<ItemType*>(this))
+                return itemWithType;
+            else if (auto* decoratedDecorator = dynamic_cast<GuiItemDecorator*>(item.get()))
+                return decoratedDecorator->toType<ItemType>();
+
+            return nullptr;
+        }
+
         float getWidth() const override;
         float getHeight() const override;
-
-        operator juce::FlexBox() const override;
-        operator juce::FlexItem() override;
 
     protected:
         //==============================================================================================================

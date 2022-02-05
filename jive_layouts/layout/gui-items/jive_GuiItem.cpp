@@ -136,23 +136,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    GuiItem::operator juce::FlexBox() const
-    {
-        // This item isn't a flex container!
-        jassertfalse;
-
-        return {};
-    }
-
-    GuiItem::operator juce::FlexItem()
-    {
-        // This item isn't a flex item!
-        jassertfalse;
-
-        return {};
-    }
-
-    //==================================================================================================================
     void GuiItem::valueTreePropertyChanged(juce::ValueTree& /*treeWhosePropertyChanged*/,
                                            const juce::Identifier& /*propertyID*/)
     {

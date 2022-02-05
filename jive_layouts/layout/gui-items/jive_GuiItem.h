@@ -49,10 +49,6 @@ namespace jive
         bool hasAutoWidth() const;
         bool hasAutoHeight() const;
 
-        //==============================================================================================================
-        virtual operator juce::FlexBox() const;
-        virtual operator juce::FlexItem();
-
     protected:
         //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;

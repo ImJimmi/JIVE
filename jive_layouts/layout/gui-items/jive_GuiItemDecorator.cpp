@@ -11,6 +11,21 @@ namespace jive
     }
 
     //==================================================================================================================
+    void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
+    {
+        item->addChild(std::move(child));
+    }
+
+    int GuiItemDecorator::getNumChildren() const
+    {
+        return item->getNumChildren();
+    }
+
+    GuiItem& GuiItemDecorator::getChild(int index) const
+    {
+        return item->getChild(index);
+    }
+
     float GuiItemDecorator::getWidth() const
     {
         return item->getWidth();
@@ -19,16 +34,6 @@ namespace jive
     float GuiItemDecorator::getHeight() const
     {
         return item->getHeight();
-    }
-
-    GuiItemDecorator::operator juce::FlexBox() const
-    {
-        return { *item };
-    }
-
-    GuiItemDecorator::operator juce::FlexItem()
-    {
-        return { *item };
     }
 
     //==================================================================================================================

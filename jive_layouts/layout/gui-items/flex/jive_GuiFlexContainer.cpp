@@ -8,30 +8,30 @@ namespace jive
     //==================================================================================================================
     GuiFlexContainer::GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
-        , flexWrap{ tree, "flex-wrap", nullptr }
-        , flexJustifyContent{ tree, "justify-content", nullptr }
-        , flexAlignItems{ tree, "align-items", nullptr }
-        , flexAlignContent{ tree, "align-content", nullptr }
+        , flexDirection{ tree, "flex-direction", juce::FlexBox::Direction::column }
+        , flexWrap{ tree, "flex-wrap" }
+        , flexJustifyContent{ tree, "justify-content" }
+        , flexAlignItems{ tree, "align-items" }
+        , flexAlignContent{ tree, "align-content" }
     {
+        flexDirection.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexWrap.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexJustifyContent.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexAlignItems.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexAlignContent.onValueChange = [this]() {
+            updateLayout();
+        };
     }
 
     //==================================================================================================================
-    void GuiFlexContainer::addChild(std::unique_ptr<GuiItem> child)
-    {
-        item->addChild(std::move(child));
-    }
-
-    int GuiFlexContainer::getNumChildren() const
-    {
-        return item->getNumChildren();
-    }
-
-    GuiItem& GuiFlexContainer::getChild(int index) const
-    {
-        return item->getChild(index);
-    }
-
     float GuiFlexContainer::getHeight() const
     {
         if (hasAutoHeight())
@@ -48,8 +48,6 @@ namespace jive
     //==================================================================================================================
     void GuiFlexContainer::updateLayout()
     {
-        forceUpdateOfAllCachedValues();
-
         auto flex = static_cast<juce::FlexBox>(*this);
         flex.performLayout(getBoxModel().getContentBounds());
     }
@@ -61,22 +59,16 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
-                                                    const juce::Identifier& propertyID)
-    {
-        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
-
-        if (treeWhosePropertyChanged != tree)
-            return;
-
-        updateLayout();
-    }
-
-    //==================================================================================================================
     void appendChildren(const GuiFlexContainer& container, juce::FlexBox& flex)
     {
         for (auto i = 0; i < container.getNumChildren(); i++)
-            flex.items.add(container.getChild(i));
+        {
+            if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&container.getChild(i)))
+            {
+                if (auto* flexItem = decoratedItem->toType<GuiFlexItem>())
+                    flex.items.add(*flexItem);
+            }
+        }
     }
 
     juce::FlexBox GuiFlexContainer::getFlexBox() const
@@ -118,15 +110,5 @@ namespace jive
         }
 
         return contentHeight;
-    }
-
-    //==================================================================================================================
-    void GuiFlexContainer::forceUpdateOfAllCachedValues()
-    {
-        flexDirection.forceUpdateOfCachedValue();
-        flexWrap.forceUpdateOfCachedValue();
-        flexJustifyContent.forceUpdateOfCachedValue();
-        flexAlignItems.forceUpdateOfCachedValue();
-        flexAlignContent.forceUpdateOfCachedValue();
     }
 } // namespace jive

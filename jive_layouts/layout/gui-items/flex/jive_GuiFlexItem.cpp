@@ -6,12 +6,27 @@ namespace jive
     //==================================================================================================================
     GuiFlexItem::GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexItemOrder{ tree, "order", nullptr }
-        , flexItemGrow{ tree, "flex-grow", nullptr }
-        , flexItemShrink{ tree, "flex-shrink", nullptr, 1 }
-        , flexItemBasis{ tree, "flex-basis", nullptr }
-        , flexItemAlignSelf{ tree, "align-self", nullptr, juce::FlexItem::AlignSelf::autoAlign }
+        , flexItemOrder{ tree, "order" }
+        , flexItemGrow{ tree, "flex-grow" }
+        , flexItemShrink{ tree, "flex-shrink", 1 }
+        , flexItemBasis{ tree, "flex-basis" }
+        , flexItemAlignSelf{ tree, "align-self", juce::FlexItem::AlignSelf::autoAlign }
     {
+        flexItemOrder.onValueChange = [this]() {
+            updateParentLayout();
+        };
+        flexItemGrow.onValueChange = [this]() {
+            updateParentLayout();
+        };
+        flexItemShrink.onValueChange = [this]() {
+            updateParentLayout();
+        };
+        flexItemBasis.onValueChange = [this]() {
+            updateParentLayout();
+        };
+        flexItemAlignSelf.onValueChange = [this]() {
+            updateParentLayout();
+        };
     }
 
     //==================================================================================================================
@@ -43,28 +58,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexItem::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
-                                               const juce::Identifier& propertyID)
-    {
-        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
-
-        if (treeWhosePropertyChanged != tree)
-            return;
-
-        forceUpdateOfAllCachedValues();
-        updateParentLayout();
-    }
-
-    //==================================================================================================================
-    void GuiFlexItem::forceUpdateOfAllCachedValues()
-    {
-        flexItemOrder.forceUpdateOfCachedValue();
-        flexItemGrow.forceUpdateOfCachedValue();
-        flexItemShrink.forceUpdateOfCachedValue();
-        flexItemBasis.forceUpdateOfCachedValue();
-        flexItemAlignSelf.forceUpdateOfCachedValue();
-    }
-
     void GuiFlexItem::updateParentLayout()
     {
         if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
