@@ -53,17 +53,17 @@ namespace jive
     }
 
     //==================================================================================================================
-    GuiFlexContainer::operator juce::FlexBox() const
+    GuiFlexContainer::operator juce::FlexBox()
     {
         return getFlexBox();
     }
 
     //==================================================================================================================
-    void appendChildren(const GuiFlexContainer& container, juce::FlexBox& flex)
+    void appendChildren(GuiFlexContainer& container, juce::FlexBox& flex)
     {
-        for (auto i = 0; i < container.getNumChildren(); i++)
+        for (auto& child : container)
         {
-            if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&container.getChild(i)))
+            if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
             {
                 if (auto* flexItem = decoratedItem->toType<GuiFlexItem>())
                     flex.items.add(*flexItem);
@@ -71,7 +71,7 @@ namespace jive
         }
     }
 
-    juce::FlexBox GuiFlexContainer::getFlexBox() const
+    juce::FlexBox GuiFlexContainer::getFlexBox()
     {
         juce::FlexBox flex;
 
@@ -88,7 +88,7 @@ namespace jive
 
     juce::FlexBox GuiFlexContainer::getFlexBoxWithDummyItems() const
     {
-        auto flex = getFlexBox();
+        auto flex = const_cast<GuiFlexContainer*>(this)->getFlexBox();
 
         for (auto& item : flex.items)
             item.associatedComponent = nullptr;

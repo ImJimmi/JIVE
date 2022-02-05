@@ -4,12 +4,12 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiItem::GuiItem(juce::ValueTree valueTree, std::shared_ptr<juce::Component> comp, GuiItem* parentItem)
+    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp, juce::ValueTree valueTree, GuiItem* parentItem)
         : tree{ valueTree }
         , component{ std::move(comp) }
         , parent{ parentItem }
         , id{ tree, "id" }
-        , display{ tree, "display", nullptr, Display::flex }
+        , display{ tree, "display", Display::flex }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
     {
@@ -33,12 +33,12 @@ namespace jive
     }
 
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree valueTree, GuiItem* parentItem)
-        : GuiItem{ valueTree, std::move(comp), parentItem }
+        : GuiItem{ std::shared_ptr<juce::Component>{ std::move(comp) }, valueTree, parentItem }
     {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
-        : GuiItem{ other.tree, other.component, other.parent }
+        : GuiItem{ other.component, other.tree, other.parent }
     {
     }
 
@@ -136,11 +136,27 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItem::valueTreePropertyChanged(juce::ValueTree& /*treeWhosePropertyChanged*/,
-                                           const juce::Identifier& /*propertyID*/)
+    GuiItem::Iterator GuiItem::begin()
     {
+        return Iterator{ *this, false };
     }
 
+    const GuiItem::Iterator GuiItem::begin() const
+    {
+        return Iterator{ *this, false };
+    }
+
+    GuiItem::Iterator GuiItem::end()
+    {
+        return Iterator{ *this, true };
+    }
+
+    const GuiItem::Iterator GuiItem::end() const
+    {
+        return Iterator{ *this, true };
+    }
+
+    //==================================================================================================================
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                           bool /*wasMoved*/,
                                           bool wasResized)
@@ -166,5 +182,37 @@ namespace jive
     {
         const auto borderBounds = boxModel.getBorderBounds();
         component->setSize(juce::roundToInt(borderBounds.getWidth()), juce::roundToInt(borderBounds.getHeight()));
+    }
+
+    //==================================================================================================================
+    GuiItem::Iterator::Iterator(const GuiItem& guiItem, bool isEnd)
+        : item{ isEnd ? guiItem.children.end() : guiItem.children.begin() }
+    {
+    }
+
+    GuiItem::Iterator& GuiItem::Iterator::operator++()
+    {
+        item++;
+        return *this;
+    }
+
+    bool GuiItem::Iterator::operator==(const Iterator& other) const
+    {
+        return item == other.item;
+    }
+
+    bool GuiItem::Iterator::operator!=(const Iterator& other) const
+    {
+        return item != other.item;
+    }
+
+    GuiItem& GuiItem::Iterator::operator*()
+    {
+        return *(*item);
+    }
+
+    const GuiItem& GuiItem::Iterator::operator*() const
+    {
+        return *(*item);
     }
 } // namespace jive

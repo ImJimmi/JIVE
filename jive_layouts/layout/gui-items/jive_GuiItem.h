@@ -12,6 +12,25 @@ namespace jive
     {
     public:
         //==============================================================================================================
+        struct Iterator
+        {
+            using difference_type = std::ptrdiff_t;
+            using value_type = GuiItem*;
+            using pointer = GuiItem**;
+            using iterator_category = std::forward_iterator_tag;
+
+            Iterator(const GuiItem& item, bool isEnd);
+
+            Iterator& operator++();
+            bool operator==(const Iterator& other) const;
+            bool operator!=(const Iterator& other) const;
+            GuiItem& operator*();
+            const GuiItem& operator*() const;
+
+        private:
+            GuiItem* const* item;
+        };
+
         enum class Display
         {
             flex
@@ -49,9 +68,14 @@ namespace jive
         bool hasAutoWidth() const;
         bool hasAutoHeight() const;
 
+        //==============================================================================================================
+        virtual Iterator begin();
+        virtual const Iterator begin() const;
+        virtual Iterator end();
+        virtual const Iterator end() const;
+
     protected:
         //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
         //==============================================================================================================
@@ -65,7 +89,7 @@ namespace jive
         friend class GuiItemDecorator;
 
         //==============================================================================================================
-        GuiItem(juce::ValueTree tree, std::shared_ptr<juce::Component> component, GuiItem* parent);
+        GuiItem(std::shared_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent);
 
         //==============================================================================================================
         void updateComponentSize();
@@ -76,7 +100,7 @@ namespace jive
         BoxModel boxModel{ *this, tree };
 
         TypedValue<juce::Identifier> id;
-        juce::CachedValue<Display> display;
+        TypedValue<Display> display;
         TypedValue<float> width;
         TypedValue<float> height;
 
