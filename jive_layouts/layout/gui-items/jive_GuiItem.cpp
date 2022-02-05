@@ -11,6 +11,7 @@ namespace jive
         , name{ tree, "name" }
         , id{ tree, "id" }
         , visible{ tree, "visible", true }
+        , alwaysOnTop{ tree, "always-on-top" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
         , display{ tree, "display", Display::flex }
@@ -33,6 +34,11 @@ namespace jive
             getComponent().setVisible(visible);
         };
         getComponent().setVisible(visible);
+
+        alwaysOnTop.onValueChange = [this]() {
+            getComponent().setAlwaysOnTop(alwaysOnTop);
+        };
+        getComponent().setAlwaysOnTop(alwaysOnTop);
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -132,6 +138,11 @@ namespace jive
     bool GuiItem::isVisible() const
     {
         return visible;
+    }
+
+    bool GuiItem::isAlwaysOnTop() const
+    {
+        return alwaysOnTop;
     }
 
     float GuiItem::getWidth() const

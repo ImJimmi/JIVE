@@ -343,3 +343,56 @@ SCENARIO("GUI items can be visible in invisible")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be told to always be on top of their siblings")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item won't always be on top")
+        {
+            REQUIRE_FALSE(item.isAlwaysOnTop());
+        }
+        THEN("the item's component won't always be on top")
+        {
+            REQUIRE_FALSE(item.getComponent().isAlwaysOnTop());
+        }
+
+        WHEN("the item is told to always be on top")
+        {
+            tree.setProperty("always-on-top", true, nullptr);
+
+            THEN("the item will always be on top")
+            {
+                REQUIRE(item.isAlwaysOnTop());
+            }
+            THEN("the item's component will always be on top")
+            {
+                REQUIRE(item.getComponent().isAlwaysOnTop());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with its 'always-on-top' property specified")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("always-on-top", true, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether the item will always be on top matches the tree's 'always-on-top' property")
+            {
+                REQUIRE(item.isAlwaysOnTop() == static_cast<bool>(tree["always-on-top"]));
+            }
+            THEN("whether the item's component will always be on top matches the tree's 'always-on-top' property")
+            {
+                REQUIRE(item.getComponent().isAlwaysOnTop() == static_cast<bool>(tree["always-on-top"]));
+            }
+        }
+    }
+}

@@ -63,6 +63,7 @@ namespace jive
         juce::Identifier getID() const;
 
         bool isVisible() const;
+        bool isAlwaysOnTop() const;
 
         virtual float getWidth() const;
         virtual float getHeight() const;
@@ -108,6 +109,7 @@ namespace jive
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
         TypedValue<bool> visible;
+        TypedValue<bool> alwaysOnTop;
         TypedValue<float> width;
         TypedValue<float> height;
         TypedValue<Display> display;
