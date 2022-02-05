@@ -8,12 +8,27 @@ namespace jive
     //==================================================================================================================
     GuiFlexContainer::GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexDirection{ tree, "flex-direction", nullptr, juce::FlexBox::Direction::column }
-        , flexWrap{ tree, "flex-wrap", nullptr }
-        , flexJustifyContent{ tree, "justify-content", nullptr }
-        , flexAlignItems{ tree, "align-items", nullptr }
-        , flexAlignContent{ tree, "align-content", nullptr }
+        , flexDirection{ tree, "flex-direction", juce::FlexBox::Direction::column }
+        , flexWrap{ tree, "flex-wrap" }
+        , flexJustifyContent{ tree, "justify-content" }
+        , flexAlignItems{ tree, "align-items" }
+        , flexAlignContent{ tree, "align-content" }
     {
+        flexDirection.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexWrap.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexJustifyContent.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexAlignItems.onValueChange = [this]() {
+            updateLayout();
+        };
+        flexAlignContent.onValueChange = [this]() {
+            updateLayout();
+        };
     }
 
     //==================================================================================================================
@@ -48,8 +63,6 @@ namespace jive
     //==================================================================================================================
     void GuiFlexContainer::updateLayout()
     {
-        forceUpdateOfAllCachedValues();
-
         auto flex = static_cast<juce::FlexBox>(*this);
         flex.performLayout(getBoxModel().getContentBounds());
     }
@@ -58,18 +71,6 @@ namespace jive
     GuiFlexContainer::operator juce::FlexBox() const
     {
         return getFlexBox();
-    }
-
-    //==================================================================================================================
-    void GuiFlexContainer::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
-                                                    const juce::Identifier& propertyID)
-    {
-        GuiItemDecorator::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
-
-        if (treeWhosePropertyChanged != tree)
-            return;
-
-        updateLayout();
     }
 
     //==================================================================================================================
@@ -118,15 +119,5 @@ namespace jive
         }
 
         return contentHeight;
-    }
-
-    //==================================================================================================================
-    void GuiFlexContainer::forceUpdateOfAllCachedValues()
-    {
-        flexDirection.forceUpdateOfCachedValue();
-        flexWrap.forceUpdateOfCachedValue();
-        flexJustifyContent.forceUpdateOfCachedValue();
-        flexAlignItems.forceUpdateOfCachedValue();
-        flexAlignContent.forceUpdateOfCachedValue();
     }
 } // namespace jive

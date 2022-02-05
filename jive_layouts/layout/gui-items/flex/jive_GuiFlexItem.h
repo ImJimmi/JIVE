@@ -13,21 +13,16 @@ namespace jive
         //==============================================================================================================
         operator juce::FlexItem() override;
 
-    protected:
-        //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
-
     private:
         //==============================================================================================================
-        void forceUpdateOfAllCachedValues();
         void updateParentLayout();
 
         //==============================================================================================================
-        juce::CachedValue<int> flexItemOrder;
-        juce::CachedValue<float> flexItemGrow;
-        juce::CachedValue<float> flexItemShrink;
-        juce::CachedValue<float> flexItemBasis;
-        juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
+        TypedValue<int> flexItemOrder;
+        TypedValue<float> flexItemGrow;
+        TypedValue<float> flexItemShrink;
+        TypedValue<float> flexItemBasis;
+        TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiFlexItem)

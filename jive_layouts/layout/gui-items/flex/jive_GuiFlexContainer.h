@@ -23,10 +23,6 @@ namespace jive
         //==============================================================================================================
         operator juce::FlexBox() const override;
 
-    protected:
-        //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
-
     private:
         //==============================================================================================================
         juce::FlexBox getFlexBox() const;
@@ -35,14 +31,11 @@ namespace jive
         float getMinimumContentHeight() const;
 
         //==============================================================================================================
-        void forceUpdateOfAllCachedValues();
-
-        //==============================================================================================================
-        juce::CachedValue<juce::FlexBox::Direction> flexDirection;
-        juce::CachedValue<juce::FlexBox::Wrap> flexWrap;
-        juce::CachedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
-        juce::CachedValue<juce::FlexBox::AlignItems> flexAlignItems;
-        juce::CachedValue<juce::FlexBox::AlignContent> flexAlignContent;
+        TypedValue<juce::FlexBox::Direction> flexDirection;
+        TypedValue<juce::FlexBox::Wrap> flexWrap;
+        TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
+        TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
+        TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiFlexContainer)
