@@ -10,9 +10,10 @@ namespace jive
         , parent{ parentItem }
         , name{ tree, "name" }
         , id{ tree, "id" }
-        , display{ tree, "display", Display::flex }
+        , visible{ tree, "visible", true }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
+        , display{ tree, "display", Display::flex }
     {
         jassert(component != nullptr);
 
@@ -27,6 +28,11 @@ namespace jive
             getComponent().setComponentID(id.get().toString());
         };
         getComponent().setComponentID(id.get().toString());
+
+        visible.onValueChange = [this]() {
+            getComponent().setVisible(visible);
+        };
+        getComponent().setVisible(visible);
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -74,7 +80,7 @@ namespace jive
     void GuiItem::addChild(std::unique_ptr<GuiItem> child)
     {
         auto* newlyAddedChild = children.add(std::move(child));
-        component->addAndMakeVisible(newlyAddedChild->getComponent());
+        component->addChildComponent(newlyAddedChild->getComponent());
     }
 
     int GuiItem::getNumChildren() const
@@ -121,6 +127,11 @@ namespace jive
     juce::Identifier GuiItem::getID() const
     {
         return id;
+    }
+
+    bool GuiItem::isVisible() const
+    {
+        return visible;
     }
 
     float GuiItem::getWidth() const
@@ -188,6 +199,13 @@ namespace jive
         }
 
         updateLayout();
+    }
+
+    void GuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
+    {
+        jassertquiet(&componentThatChangedVisiblity == component.get());
+
+        visible = component->isVisible();
     }
 
     void GuiItem::componentNameChanged(juce::Component& componentThatChangedName)

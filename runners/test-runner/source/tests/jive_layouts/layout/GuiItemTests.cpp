@@ -246,3 +246,100 @@ SCENARIO("GUI items can have a name")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be visible in invisible")
+{
+    GIVEN("a GUI item with no visibility specified")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item is visible")
+        {
+            REQUIRE(item.isVisible());
+        }
+        THEN("the item's component is visible")
+        {
+            REQUIRE(item.getComponent().isVisible());
+        }
+
+        WHEN("the item's visibility changes")
+        {
+            tree.setProperty("visible", false, nullptr);
+
+            THEN("the item's visible matches the visiblity specified")
+            {
+                REQUIRE_FALSE(item.isVisible());
+            }
+            THEN("the visibility of the item's component matches the visiblity of the item")
+            {
+                REQUIRE(item.getComponent().isVisible() == item.isVisible());
+            }
+        }
+
+        WHEN("a visible child is added to the item")
+        {
+            juce::ValueTree childTree{ "Component" };
+            childTree.setProperty("visible", true, nullptr);
+
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree, &item));
+
+            THEN("the child is still visible")
+            {
+                REQUIRE(item.getChild(0).isVisible());
+            }
+            THEN("the child's component is still visible")
+            {
+                REQUIRE(item.getChild(0).getComponent().isVisible());
+            }
+        }
+
+        WHEN("an invisible child is added to the item")
+        {
+            juce::ValueTree childTree{ "Component" };
+            childTree.setProperty("visible", false, nullptr);
+
+            item.addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), childTree, &item));
+
+            THEN("the child is still invisible")
+            {
+                REQUIRE_FALSE(item.getChild(0).isVisible());
+            }
+            THEN("the child's component is still invisible")
+            {
+                REQUIRE_FALSE(item.getChild(0).getComponent().isVisible());
+            }
+        }
+
+        WHEN("the visiblity of the item's component changes")
+        {
+            item.getComponent().setVisible(false);
+
+            THEN("the item's visibility matches the visibility of its component")
+            {
+                REQUIRE(item.isVisible() == item.getComponent().isVisible());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'visible' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("visible", false, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the item's visiblity matches the tree's 'visible' property")
+            {
+                REQUIRE(item.isVisible() == static_cast<bool>(tree["visible"]));
+            }
+            THEN("the visibility of the item's component matches the visiblity of the item")
+            {
+                REQUIRE(item.getComponent().isVisible() == item.isVisible());
+            }
+        }
+    }
+}

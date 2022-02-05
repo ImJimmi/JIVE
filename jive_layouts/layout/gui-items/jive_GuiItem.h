@@ -61,6 +61,9 @@ namespace jive
 
         juce::String getName() const;
         juce::Identifier getID() const;
+
+        bool isVisible() const;
+
         virtual float getWidth() const;
         virtual float getHeight() const;
 
@@ -78,6 +81,7 @@ namespace jive
     protected:
         //==============================================================================================================
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+        void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
 
         //==============================================================================================================
@@ -103,9 +107,10 @@ namespace jive
 
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
-        TypedValue<Display> display;
+        TypedValue<bool> visible;
         TypedValue<float> width;
         TypedValue<float> height;
+        TypedValue<Display> display;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
