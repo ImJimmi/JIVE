@@ -25,6 +25,7 @@ namespace jive
         //==============================================================================================================
         juce::CachedValue<int> flexItemOrder;
         juce::CachedValue<float> flexItemGrow;
+        juce::CachedValue<float> flexItemShrink;
         juce::CachedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
