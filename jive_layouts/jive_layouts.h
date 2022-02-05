@@ -1,11 +1,11 @@
 #pragma once
 
 /* BEGIN_JUCE_MODULE_DECLARATION
-    ID:                 jive
-    vendor:             James Johnson
+    ID:                 jive_layouts
+    vendor:             ImJimmi
     version:            0.1.0
-    name:               James' Intuitive View Explicator
-    license:            GPL/Commercial
+    name:               JIVE Layouts
+    license:            MIT
     minimumCppStandard: 14
     dependencies:       juce_gui_basics
 END_JUCE_MODULE_DECLARATION */
