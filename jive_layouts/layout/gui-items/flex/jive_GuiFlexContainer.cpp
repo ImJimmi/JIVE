@@ -62,7 +62,13 @@ namespace jive
     void appendChildren(const GuiFlexContainer& container, juce::FlexBox& flex)
     {
         for (auto i = 0; i < container.getNumChildren(); i++)
-            flex.items.add(container.getChild(i));
+        {
+            if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&container.getChild(i)))
+            {
+                if (auto* flexItem = decoratedItem->toType<GuiFlexItem>())
+                    flex.items.add(*flexItem);
+            }
+        }
     }
 
     juce::FlexBox GuiFlexContainer::getFlexBox() const

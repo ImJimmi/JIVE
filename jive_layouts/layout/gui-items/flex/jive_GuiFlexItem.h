@@ -11,7 +11,7 @@ namespace jive
         explicit GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        operator juce::FlexItem() override;
+        operator juce::FlexItem();
 
     private:
         //==============================================================================================================

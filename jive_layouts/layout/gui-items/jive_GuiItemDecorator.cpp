@@ -36,16 +36,6 @@ namespace jive
         return item->getHeight();
     }
 
-    GuiItemDecorator::operator juce::FlexBox() const
-    {
-        return { *item };
-    }
-
-    GuiItemDecorator::operator juce::FlexItem()
-    {
-        return { *item };
-    }
-
     //==================================================================================================================
     void GuiItemDecorator::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
