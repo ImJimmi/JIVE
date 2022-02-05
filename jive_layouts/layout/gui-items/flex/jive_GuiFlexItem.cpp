@@ -8,6 +8,7 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexItemOrder{ tree, "order", nullptr }
         , flexItemGrow{ tree, "flex-grow", nullptr }
+        , flexItemShrink{ tree, "flex-shrink", nullptr, 1 }
         , flexItemAlignSelf{ tree, "align-self", nullptr, juce::FlexItem::AlignSelf::autoAlign }
     {
     }
@@ -32,6 +33,7 @@ namespace jive
 
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
+        flexItem.flexShrink = flexItemShrink;
         flexItem.alignSelf = flexItemAlignSelf;
         flexItem.margin = boxModelToFlexMargin(getBoxModel().getMargin());
 
@@ -56,6 +58,7 @@ namespace jive
     {
         flexItemOrder.forceUpdateOfCachedValue();
         flexItemGrow.forceUpdateOfCachedValue();
+        flexItemShrink.forceUpdateOfCachedValue();
         flexItemAlignSelf.forceUpdateOfCachedValue();
     }
 
