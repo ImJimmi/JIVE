@@ -8,12 +8,20 @@ namespace jive
         : tree{ valueTree }
         , component{ std::move(comp) }
         , parent{ parentItem }
+        , name{ tree, "name" }
         , id{ tree, "id" }
         , display{ tree, "display", Display::flex }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
     {
         jassert(component != nullptr);
+
+        name.onValueChange = [this]() {
+            getComponent().setName(name);
+            getComponent().setTitle(name);
+        };
+        getComponent().setName(name);
+        getComponent().setTitle(name);
 
         id.onValueChange = [this]() {
             getComponent().setComponentID(id.get().toString());
@@ -105,6 +113,11 @@ namespace jive
         return boxModel;
     }
 
+    juce::String GuiItem::getName() const
+    {
+        return name;
+    }
+
     juce::Identifier GuiItem::getID() const
     {
         return id;
@@ -175,6 +188,13 @@ namespace jive
         }
 
         updateLayout();
+    }
+
+    void GuiItem::componentNameChanged(juce::Component& componentThatChangedName)
+    {
+        jassertquiet(&componentThatChangedName == component.get());
+
+        name = component->getName();
     }
 
     //==================================================================================================================

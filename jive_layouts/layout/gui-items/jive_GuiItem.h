@@ -59,6 +59,7 @@ namespace jive
 
         BoxModel getBoxModel() const;
 
+        juce::String getName() const;
         juce::Identifier getID() const;
         virtual float getWidth() const;
         virtual float getHeight() const;
@@ -77,6 +78,7 @@ namespace jive
     protected:
         //==============================================================================================================
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+        void componentNameChanged(juce::Component& component) override;
 
         //==============================================================================================================
         juce::ValueTree tree;
@@ -99,6 +101,7 @@ namespace jive
 
         BoxModel boxModel{ *this, tree };
 
+        TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
         TypedValue<Display> display;
         TypedValue<float> width;

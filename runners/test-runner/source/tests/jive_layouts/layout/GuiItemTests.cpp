@@ -175,3 +175,74 @@ SCENARIO("top-level GUI items use their component's size when resized")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can have a name")
+{
+    GIVEN("a GUI item with no name")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item has no name")
+        {
+            REQUIRE(item.getName().isEmpty());
+        }
+        THEN("the item's component has no name")
+        {
+            REQUIRE(item.getComponent().getName().isEmpty());
+        }
+
+        WHEN("the item's name changes")
+        {
+            tree.setProperty("name", "Zaphod Beeblebrox", nullptr);
+
+            THEN("the item's name matches the one specified")
+            {
+                REQUIRE(item.getName() == "Zaphod Beeblebrox");
+            }
+            THEN("the name of the item's component matches the item's name")
+            {
+                REQUIRE(item.getComponent().getName() == item.getName());
+            }
+            THEN("the title of the item's component matches the item's name")
+            {
+                REQUIRE(item.getComponent().getTitle() == item.getName());
+            }
+        }
+
+        WHEN("the name of the item's component changes")
+        {
+            item.getComponent().setName("Arthur Dent");
+
+            THEN("the item's name matches its component")
+            {
+                REQUIRE(item.getName() == item.getComponent().getName());
+            }
+        }
+    }
+
+    GIVEN("a value tree with a specified 'name' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("name", "Ford Prefect", nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the item's name matches the tree's 'name' property")
+            {
+                REQUIRE(item.getName() == tree["name"].toString());
+            }
+            THEN("the name of the item's component matches the tree's 'name' property")
+            {
+                REQUIRE(item.getComponent().getName() == tree["name"].toString());
+            }
+            THEN("the title of the item's component matches the tree's 'name' property")
+            {
+                REQUIRE(item.getComponent().getTitle() == tree["name"].toString());
+            }
+        }
+    }
+}
