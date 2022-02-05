@@ -32,21 +32,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexContainer::addChild(std::unique_ptr<GuiItem> child)
-    {
-        item->addChild(std::move(child));
-    }
-
-    int GuiFlexContainer::getNumChildren() const
-    {
-        return item->getNumChildren();
-    }
-
-    GuiItem& GuiFlexContainer::getChild(int index) const
-    {
-        return item->getChild(index);
-    }
-
     float GuiFlexContainer::getHeight() const
     {
         if (hasAutoHeight())
