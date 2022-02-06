@@ -13,6 +13,7 @@ namespace jive
         , visible{ tree, "visible", true }
         , alwaysOnTop{ tree, "always-on-top" }
         , bufferedToImage{ tree, "buffered-to-image" }
+        , opaque{ tree, "opaque" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
         , display{ tree, "display", Display::flex }
@@ -45,6 +46,11 @@ namespace jive
             getComponent().setBufferedToImage(bufferedToImage);
         };
         getComponent().setBufferedToImage(bufferedToImage);
+
+        opaque.onValueChange = [this]() {
+            getComponent().setOpaque(opaque);
+        };
+        getComponent().setOpaque(opaque);
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -154,6 +160,11 @@ namespace jive
     bool GuiItem::isBufferedToImage() const
     {
         return bufferedToImage;
+    }
+
+    bool GuiItem::isOpaque() const
+    {
+        return opaque;
     }
 
     float GuiItem::getWidth() const

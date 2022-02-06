@@ -451,3 +451,56 @@ SCENARIO("GUI items can be buffered to an image")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be opaque")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item is not opaque")
+        {
+            REQUIRE_FALSE(item.isOpaque());
+        }
+        THEN("the item's component is not opaque")
+        {
+            REQUIRE_FALSE(item.getComponent().isOpaque());
+        }
+
+        WHEN("the item's opaque-ness changes")
+        {
+            tree.setProperty("opaque", true, nullptr);
+
+            THEN("the item is opaque")
+            {
+                REQUIRE(item.isOpaque());
+            }
+            THEN("whether the item's component is opaque matches whether the item is opaque")
+            {
+                REQUIRE(item.getComponent().isOpaque() == item.isOpaque());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'opaque' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("opaque", true, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether the item is opaque matches the tree's 'opaque' property")
+            {
+                REQUIRE(item.isOpaque() == static_cast<bool>(tree["opaque"]));
+            }
+            THEN("whether the item's component is opaque matches whether the item is opaque")
+            {
+                REQUIRE(item.getComponent().isOpaque() == item.isOpaque());
+            }
+        }
+    }
+}

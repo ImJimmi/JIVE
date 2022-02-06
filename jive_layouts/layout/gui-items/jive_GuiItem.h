@@ -65,6 +65,7 @@ namespace jive
         bool isVisible() const;
         bool isAlwaysOnTop() const;
         bool isBufferedToImage() const;
+        bool isOpaque() const;
 
         virtual float getWidth() const;
         virtual float getHeight() const;
@@ -112,6 +113,7 @@ namespace jive
         TypedValue<bool> visible;
         TypedValue<bool> alwaysOnTop;
         TypedValue<bool> bufferedToImage;
+        TypedValue<bool> opaque;
         TypedValue<float> width;
         TypedValue<float> height;
         TypedValue<Display> display;
