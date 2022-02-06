@@ -16,6 +16,7 @@ namespace jive
         , opaque{ tree, "opaque" }
         , focusable{ tree, "focusable" }
         , clickingGrabsFocus{ tree, "clicking-grabs-focus", true }
+        , focusOutline{ tree, "focus-outline" }
         , focusOrder{ tree, "focus-order" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
@@ -59,6 +60,11 @@ namespace jive
             getComponent().setWantsKeyboardFocus(focusable);
         };
         getComponent().setWantsKeyboardFocus(focusable);
+
+        focusOutline.onValueChange = [this]() {
+            getComponent().setHasFocusOutline(focusOutline);
+        };
+        getComponent().setHasFocusOutline(focusOutline);
 
         clickingGrabsFocus.onValueChange = [this]() {
             getComponent().setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
@@ -193,6 +199,11 @@ namespace jive
     bool GuiItem::getClickingGrabsFocus() const
     {
         return clickingGrabsFocus;
+    }
+
+    bool GuiItem::hasFocusOutline() const
+    {
+        return focusOutline;
     }
 
     int GuiItem::getFocusOrder() const

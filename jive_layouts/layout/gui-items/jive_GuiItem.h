@@ -68,6 +68,7 @@ namespace jive
         bool isOpaque() const;
         bool isFocusable() const;
         bool getClickingGrabsFocus() const;
+        bool hasFocusOutline() const;
 
         int getFocusOrder() const;
 
@@ -120,6 +121,7 @@ namespace jive
         TypedValue<bool> opaque;
         TypedValue<bool> focusable;
         TypedValue<bool> clickingGrabsFocus;
+        TypedValue<bool> focusOutline;
         TypedValue<int> focusOrder;
         TypedValue<float> width;
         TypedValue<float> height;

@@ -666,3 +666,56 @@ SCENARIO("GUI items can optionally be clicked on to grab keyboard focus")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can have a focus outline")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item will not have a focus outline")
+        {
+            REQUIRE_FALSE(item.hasFocusOutline());
+        }
+        THEN("whether the item's component will be outlined when focused matches whether the item will be")
+        {
+            REQUIRE(item.getComponent().hasFocusOutline() == item.hasFocusOutline());
+        }
+
+        WHEN("whether the item can will be outlined when focused changes")
+        {
+            tree.setProperty("focus-outline", true, nullptr);
+
+            THEN("whether the item will be outlined when focused matches the value specified")
+            {
+                REQUIRE(item.hasFocusOutline());
+            }
+            THEN("whether the item's component will be outlined when focused matches whether the item will be")
+            {
+                REQUIRE(item.getComponent().hasFocusOutline() == item.hasFocusOutline());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'focus-outline' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("focus-outline", true, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether the item will have a focus outline matches the tree's 'focus-outline' property")
+            {
+                REQUIRE(item.hasFocusOutline() == static_cast<bool>(tree["focus-outline"]));
+            }
+            THEN("whether the item's component will be outlined when focused matches whether the item will be")
+            {
+                REQUIRE(item.getComponent().hasFocusOutline() == item.hasFocusOutline());
+            }
+        }
+    }
+}
