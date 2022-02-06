@@ -610,3 +610,59 @@ SCENARIO("GUI items can be focusable")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can optionally be clicked on to grab keyboard focus")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item can be clicked on to grab keyboard focus")
+        {
+            REQUIRE(item.getClickingGrabsFocus());
+        }
+        THEN("whether the item's component can be clicked to grab focus matches whether the item can be clicked to "
+             "grab focus")
+        {
+            REQUIRE(item.getComponent().getMouseClickGrabsKeyboardFocus() == item.getClickingGrabsFocus());
+        }
+
+        WHEN("whether the item can be clicked on to grab focus changes")
+        {
+            tree.setProperty("clicking-grabs-focus", false, nullptr);
+
+            THEN("whether the item can be clicked to grab focus matches the value specified")
+            {
+                REQUIRE_FALSE(item.getClickingGrabsFocus());
+            }
+            THEN("whether the item's component can be clicked to grab focus matches whether the item can be clicked to "
+                 "grab focus")
+            {
+                REQUIRE(item.getComponent().getMouseClickGrabsKeyboardFocus() == item.getClickingGrabsFocus());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'clicking-grabs-focus' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("clicking-grabs-focus", false, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether the item can be clicked to grab focus matches the tree's 'clicking-grabs-focus' property")
+            {
+                REQUIRE(item.getClickingGrabsFocus() == static_cast<bool>(tree["clicking-grabs-focus"]));
+            }
+            THEN("whether the item's component can be clicked to grab focus matches whether the item can be clicked to "
+                 "grab focus")
+            {
+                REQUIRE(item.getComponent().getMouseClickGrabsKeyboardFocus() == item.getClickingGrabsFocus());
+            }
+        }
+    }
+}

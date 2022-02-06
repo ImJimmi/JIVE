@@ -67,6 +67,7 @@ namespace jive
         bool isBufferedToImage() const;
         bool isOpaque() const;
         bool isFocusable() const;
+        bool getClickingGrabsFocus() const;
 
         int getFocusOrder() const;
 
@@ -118,6 +119,7 @@ namespace jive
         TypedValue<bool> bufferedToImage;
         TypedValue<bool> opaque;
         TypedValue<bool> focusable;
+        TypedValue<bool> clickingGrabsFocus;
         TypedValue<int> focusOrder;
         TypedValue<float> width;
         TypedValue<float> height;

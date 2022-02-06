@@ -15,6 +15,7 @@ namespace jive
         , bufferedToImage{ tree, "buffered-to-image" }
         , opaque{ tree, "opaque" }
         , focusable{ tree, "focusable" }
+        , clickingGrabsFocus{ tree, "clicking-grabs-focus", true }
         , focusOrder{ tree, "focus-order" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
@@ -58,6 +59,11 @@ namespace jive
             getComponent().setWantsKeyboardFocus(focusable);
         };
         getComponent().setWantsKeyboardFocus(focusable);
+
+        clickingGrabsFocus.onValueChange = [this]() {
+            getComponent().setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
+        };
+        getComponent().setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
 
         focusOrder.onValueChange = [this]() {
             getComponent().setExplicitFocusOrder(focusOrder);
@@ -182,6 +188,11 @@ namespace jive
     bool GuiItem::isFocusable() const
     {
         return focusable;
+    }
+
+    bool GuiItem::getClickingGrabsFocus() const
+    {
+        return clickingGrabsFocus;
     }
 
     int GuiItem::getFocusOrder() const
