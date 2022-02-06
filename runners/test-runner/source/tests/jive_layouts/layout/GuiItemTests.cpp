@@ -504,3 +504,56 @@ SCENARIO("GUI items can be opaque")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUi items have a focus order")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item's focus order index is 0")
+        {
+            REQUIRE(item.getFocusOrder() == 0);
+        }
+        THEN("the focus order of the item's component matches that of the item")
+        {
+            REQUIRE(item.getComponent().getExplicitFocusOrder() == item.getFocusOrder());
+        }
+
+        WHEN("the item's focus order changes")
+        {
+            tree.setProperty("focus-order", 12, nullptr);
+
+            THEN("the item's focus order has changed to match the specified value")
+            {
+                REQUIRE(item.getFocusOrder() == 12);
+            }
+            THEN("the focus order of the item's component matches that of the item")
+            {
+                REQUIRE(item.getComponent().getExplicitFocusOrder() == item.getFocusOrder());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'focus-order' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("focus-order", 4, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the item's focus order matches the tree's 'focus-order' property")
+            {
+                REQUIRE(item.getFocusOrder() == static_cast<int>(tree["focus-order"]));
+            }
+            THEN("the focus order of the item's component matches that of the item")
+            {
+                REQUIRE(item.getComponent().getExplicitFocusOrder() == item.getFocusOrder());
+            }
+        }
+    }
+}

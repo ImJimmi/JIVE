@@ -14,6 +14,7 @@ namespace jive
         , alwaysOnTop{ tree, "always-on-top" }
         , bufferedToImage{ tree, "buffered-to-image" }
         , opaque{ tree, "opaque" }
+        , focusOrder{ tree, "focus-order" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
         , display{ tree, "display", Display::flex }
@@ -51,6 +52,11 @@ namespace jive
             getComponent().setOpaque(opaque);
         };
         getComponent().setOpaque(opaque);
+
+        focusOrder.onValueChange = [this]() {
+            getComponent().setExplicitFocusOrder(focusOrder);
+        };
+        getComponent().setExplicitFocusOrder(focusOrder);
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -165,6 +171,11 @@ namespace jive
     bool GuiItem::isOpaque() const
     {
         return opaque;
+    }
+
+    int GuiItem::getFocusOrder() const
+    {
+        return focusOrder;
     }
 
     float GuiItem::getWidth() const
