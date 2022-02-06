@@ -557,3 +557,56 @@ SCENARIO("GUi items have a focus order")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be focusable")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item is not focusable")
+        {
+            REQUIRE_FALSE(item.isFocusable());
+        }
+        THEN("whether the item's component can be focused matches whether the item can be focused")
+        {
+            REQUIRE(item.getComponent().getWantsKeyboardFocus() == item.isFocusable());
+        }
+
+        WHEN("whether the item can be focused changes")
+        {
+            tree.setProperty("focusable", true, nullptr);
+
+            THEN("whether the item can be focused matches the value specified")
+            {
+                REQUIRE(item.isFocusable());
+            }
+            THEN("whether the item's component can be focused matches whether the item can be focused")
+            {
+                REQUIRE(item.getComponent().getWantsKeyboardFocus() == item.isFocusable());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'focusable' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("focusable", true, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether the item can be focused matches the tree's 'focusable' property")
+            {
+                REQUIRE(item.isFocusable() == static_cast<bool>(tree["focusable"]));
+            }
+            THEN("whether the item's component can be focused matches whether the item can be focused")
+            {
+                REQUIRE(item.getComponent().getWantsKeyboardFocus() == item.isFocusable());
+            }
+        }
+    }
+}

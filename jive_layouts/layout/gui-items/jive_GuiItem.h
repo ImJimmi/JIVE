@@ -66,6 +66,7 @@ namespace jive
         bool isAlwaysOnTop() const;
         bool isBufferedToImage() const;
         bool isOpaque() const;
+        bool isFocusable() const;
 
         int getFocusOrder() const;
 
@@ -116,6 +117,7 @@ namespace jive
         TypedValue<bool> alwaysOnTop;
         TypedValue<bool> bufferedToImage;
         TypedValue<bool> opaque;
+        TypedValue<bool> focusable;
         TypedValue<int> focusOrder;
         TypedValue<float> width;
         TypedValue<float> height;

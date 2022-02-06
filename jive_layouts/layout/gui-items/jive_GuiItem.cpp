@@ -14,6 +14,7 @@ namespace jive
         , alwaysOnTop{ tree, "always-on-top" }
         , bufferedToImage{ tree, "buffered-to-image" }
         , opaque{ tree, "opaque" }
+        , focusable{ tree, "focusable" }
         , focusOrder{ tree, "focus-order" }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
@@ -52,6 +53,11 @@ namespace jive
             getComponent().setOpaque(opaque);
         };
         getComponent().setOpaque(opaque);
+
+        focusable.onValueChange = [this]() {
+            getComponent().setWantsKeyboardFocus(focusable);
+        };
+        getComponent().setWantsKeyboardFocus(focusable);
 
         focusOrder.onValueChange = [this]() {
             getComponent().setExplicitFocusOrder(focusOrder);
@@ -171,6 +177,11 @@ namespace jive
     bool GuiItem::isOpaque() const
     {
         return opaque;
+    }
+
+    bool GuiItem::isFocusable() const
+    {
+        return focusable;
     }
 
     int GuiItem::getFocusOrder() const
