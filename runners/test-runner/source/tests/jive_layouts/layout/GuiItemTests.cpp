@@ -396,3 +396,58 @@ SCENARIO("GUI items can be told to always be on top of their siblings")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be buffered to an image")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item is not buffered to an image")
+        {
+            REQUIRE_FALSE(item.isBufferedToImage());
+        }
+        THEN("the item's component is not buffered to an image")
+        {
+            REQUIRE(item.getComponent().getCachedComponentImage() == nullptr);
+        }
+
+        WHEN("the item is told to buffer to an image")
+        {
+            tree.setProperty("buffered-to-image", true, nullptr);
+
+            THEN("the item is buffered to an image")
+            {
+                REQUIRE(item.isBufferedToImage());
+            }
+            THEN("whether the item's component is buffered to an images matches whether the item is buffered to an "
+                 "image")
+            {
+                REQUIRE((item.getComponent().getCachedComponentImage() != nullptr) == item.isBufferedToImage());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'buffered-to-image' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("buffered-to-image", true, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("whether to item is buffered to an image matches the tree's 'buffered-to-image' property")
+            {
+                REQUIRE(item.isBufferedToImage() == static_cast<bool>(tree["buffered-to-image"]));
+            }
+            THEN("whether the item's component is buffered to an images matches whether the item is buffered to an "
+                 "image")
+            {
+                REQUIRE((item.getComponent().getCachedComponentImage() != nullptr) == item.isBufferedToImage());
+            }
+        }
+    }
+}
