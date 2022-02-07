@@ -719,3 +719,66 @@ SCENARIO("GUI items can have a focus outline")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items can be enabled or disabled")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item is enabled")
+        {
+            REQUIRE(item.isEnabled());
+        }
+        THEN("the enablement of the item's component matches the item")
+        {
+            REQUIRE(item.getComponent().isEnabled() == item.isEnabled());
+        }
+
+        WHEN("the item's enablement changes")
+        {
+            tree.setProperty("enabled", false, nullptr);
+
+            THEN("the item's enablement matches the value specified")
+            {
+                REQUIRE_FALSE(item.isEnabled());
+            }
+            THEN("the enablement of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().isEnabled() == item.isEnabled());
+            }
+        }
+
+        WHEN("the enablement of the item's component changes")
+        {
+            item.getComponent().setEnabled(false);
+
+            THEN("the item's enablement matches its component")
+            {
+                REQUIRE(item.isEnabled() == item.getComponent().isEnabled());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'enabled' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("enabled", false, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the enablement of the item matches the tree's 'enabled' property")
+            {
+                REQUIRE(item.isEnabled() == static_cast<bool>(tree["enabled"]));
+            }
+            THEN("the enablement of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().isEnabled() == item.isEnabled());
+            }
+        }
+    }
+}

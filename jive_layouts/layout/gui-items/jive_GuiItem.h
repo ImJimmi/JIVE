@@ -62,6 +62,7 @@ namespace jive
         juce::String getName() const;
         juce::Identifier getID() const;
 
+        bool isEnabled() const;
         bool isVisible() const;
         bool isAlwaysOnTop() const;
         bool isBufferedToImage() const;
@@ -91,6 +92,7 @@ namespace jive
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
+        void componentEnablementChanged(juce::Component& component) override;
 
         //==============================================================================================================
         juce::ValueTree tree;
@@ -115,6 +117,7 @@ namespace jive
 
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
+        TypedValue<bool> enabled;
         TypedValue<bool> visible;
         TypedValue<bool> alwaysOnTop;
         TypedValue<bool> bufferedToImage;

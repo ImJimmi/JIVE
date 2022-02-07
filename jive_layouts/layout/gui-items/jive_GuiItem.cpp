@@ -10,6 +10,7 @@ namespace jive
         , parent{ parentItem }
         , name{ tree, "name" }
         , id{ tree, "id" }
+        , enabled{ tree, "enabled", true }
         , visible{ tree, "visible", true }
         , alwaysOnTop{ tree, "always-on-top" }
         , bufferedToImage{ tree, "buffered-to-image" }
@@ -35,6 +36,11 @@ namespace jive
             getComponent().setComponentID(id.get().toString());
         };
         getComponent().setComponentID(id.get().toString());
+
+        enabled.onValueChange = [this]() {
+            getComponent().setEnabled(enabled);
+        };
+        getComponent().setEnabled(enabled);
 
         visible.onValueChange = [this]() {
             getComponent().setVisible(visible);
@@ -171,6 +177,11 @@ namespace jive
         return id;
     }
 
+    bool GuiItem::isEnabled() const
+    {
+        return enabled;
+    }
+
     bool GuiItem::isVisible() const
     {
         return visible;
@@ -290,6 +301,13 @@ namespace jive
         jassertquiet(&componentThatChangedName == component.get());
 
         name = component->getName();
+    }
+
+    void GuiItem::componentEnablementChanged(juce::Component& componentThatChangedEnablement)
+    {
+        jassertquiet(&componentThatChangedEnablement == component.get());
+
+        enabled = component->isEnabled();
     }
 
     //==================================================================================================================
