@@ -72,6 +72,7 @@ namespace jive
         bool hasFocusOutline() const;
 
         int getFocusOrder() const;
+        float getOpacity() const;
 
         virtual float getWidth() const;
         virtual float getHeight() const;
@@ -126,6 +127,7 @@ namespace jive
         TypedValue<bool> clickingGrabsFocus;
         TypedValue<bool> focusOutline;
         TypedValue<int> focusOrder;
+        TypedValue<float> opacity;
         TypedValue<float> width;
         TypedValue<float> height;
         TypedValue<Display> display;

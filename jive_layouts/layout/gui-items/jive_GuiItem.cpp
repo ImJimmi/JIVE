@@ -19,6 +19,7 @@ namespace jive
         , clickingGrabsFocus{ tree, "clicking-grabs-focus", true }
         , focusOutline{ tree, "focus-outline" }
         , focusOrder{ tree, "focus-order" }
+        , opacity{ tree, "opacity", 1.f }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
         , display{ tree, "display", Display::flex }
@@ -81,6 +82,11 @@ namespace jive
             getComponent().setExplicitFocusOrder(focusOrder);
         };
         getComponent().setExplicitFocusOrder(focusOrder);
+
+        opacity.onValueChange = [this]() {
+            getComponent().setAlpha(opacity);
+        };
+        getComponent().setAlpha(opacity);
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -220,6 +226,11 @@ namespace jive
     int GuiItem::getFocusOrder() const
     {
         return focusOrder;
+    }
+
+    float GuiItem::getOpacity() const
+    {
+        return opacity;
     }
 
     float GuiItem::getWidth() const

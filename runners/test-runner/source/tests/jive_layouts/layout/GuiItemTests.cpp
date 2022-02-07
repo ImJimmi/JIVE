@@ -1,3 +1,4 @@
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <jive_layouts/jive_layouts.h>
 
@@ -778,6 +779,61 @@ SCENARIO("GUI items can be enabled or disabled")
             THEN("the enablement of the item's component matches the item")
             {
                 REQUIRE(item.getComponent().isEnabled() == item.isEnabled());
+            }
+        }
+    }
+}
+
+//======================================================================================================================
+SCENARIO("GUI items have an opacity")
+{
+    constexpr auto opacityErrorMargin = 1.f / 256.f;
+
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item's opacity is 1.0")
+        {
+            REQUIRE(item.getOpacity() == 1.f);
+        }
+        THEN("the opacity of the item's component matches the item")
+        {
+            REQUIRE(item.getComponent().getAlpha() == item.getOpacity());
+        }
+
+        WHEN("the item's opacity changes")
+        {
+            tree.setProperty("opacity", 0.42f, nullptr);
+
+            THEN("the item's opacity matches the value specified")
+            {
+                REQUIRE(item.getOpacity() == 0.42f);
+            }
+            THEN("the opacity of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getAlpha() == Catch::Approx{ item.getOpacity() }.margin(opacityErrorMargin));
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'opacity' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("opacity", 0.123f, nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the opacity of the item matches the tree's 'opacity' property")
+            {
+                REQUIRE(item.getOpacity() == static_cast<float>(tree["opacity"]));
+            }
+            THEN("the opacity of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getAlpha() == Catch::Approx{ item.getOpacity() }.margin(opacityErrorMargin));
             }
         }
     }
