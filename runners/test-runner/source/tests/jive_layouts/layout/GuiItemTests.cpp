@@ -893,3 +893,58 @@ SCENARIO("GUI items have a mouse cursor")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items have a description")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item's description is empty")
+        {
+            REQUIRE(item.getDescription().isEmpty());
+        }
+        THEN("the description of the item's component matches the item")
+        {
+            REQUIRE(item.getComponent().getDescription() == item.getDescription());
+        }
+
+        WHEN("the item's description changes")
+        {
+            tree.setProperty("description",
+                             "Don't panic!",
+                             nullptr);
+
+            THEN("the item's description matches the value specified")
+            {
+                REQUIRE(item.getDescription() == "Don't panic!");
+            }
+            THEN("the description of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getDescription() == item.getDescription());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'description' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("description", "You live and learn. At any rate, you live.", nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the description of the item matches the tree's 'description' property")
+            {
+                REQUIRE(item.getDescription() == tree["description"].toString());
+            }
+            THEN("the description of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getDescription() == item.getDescription());
+            }
+        }
+    }
+}

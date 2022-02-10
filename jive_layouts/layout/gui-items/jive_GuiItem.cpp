@@ -10,6 +10,7 @@ namespace jive
         , parent{ parentItem }
         , name{ tree, "name" }
         , id{ tree, "id" }
+        , description{ tree, "description" }
         , enabled{ tree, "enabled", true }
         , visible{ tree, "visible", true }
         , alwaysOnTop{ tree, "always-on-top" }
@@ -38,6 +39,11 @@ namespace jive
             getComponent().setComponentID(id.get().toString());
         };
         getComponent().setComponentID(id.get().toString());
+
+        description.onValueChange = [this]() {
+            getComponent().setDescription(description);
+        };
+        getComponent().setDescription(description);
 
         enabled.onValueChange = [this]() {
             getComponent().setEnabled(enabled);
@@ -187,6 +193,11 @@ namespace jive
     juce::Identifier GuiItem::getID() const
     {
         return id;
+    }
+
+    juce::String GuiItem::getDescription() const
+    {
+        return description;
     }
 
     bool GuiItem::isEnabled() const

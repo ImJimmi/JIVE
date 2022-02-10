@@ -61,6 +61,7 @@ namespace jive
 
         juce::String getName() const;
         juce::Identifier getID() const;
+        juce::String getDescription() const;
 
         bool isEnabled() const;
         bool isVisible() const;
@@ -119,6 +120,7 @@ namespace jive
 
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
+        TypedValue<juce::String> description;
         TypedValue<bool> enabled;
         TypedValue<bool> visible;
         TypedValue<bool> alwaysOnTop;
