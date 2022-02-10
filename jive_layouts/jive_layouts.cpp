@@ -1,6 +1,8 @@
 #include "jive_layouts.h"
 
 //======================================================================================================================
+#include "utilities/jive_IgnoredComponent.cpp"
+
 #include "layout/jive_BoxModel.cpp"
 
 #include "layout/gui-items/jive_GuiItem.cpp"
