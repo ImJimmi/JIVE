@@ -59,7 +59,7 @@ namespace jive
             return std::make_unique<juce::ComboBox>();
         });
         setFactory("Component", []() {
-            return std::make_unique<juce::Component>();
+            return std::make_unique<IgnoredComponent>();
         });
         setFactory("Label", []() {
             return std::make_unique<juce::Label>();
