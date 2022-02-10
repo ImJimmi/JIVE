@@ -62,6 +62,7 @@ namespace jive
         juce::String getName() const;
         juce::Identifier getID() const;
         juce::String getDescription() const;
+        juce::String getTooltip() const;
 
         bool isEnabled() const;
         bool isVisible() const;
@@ -121,6 +122,7 @@ namespace jive
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
         TypedValue<juce::String> description;
+        TypedValue<juce::String> tooltip;
         TypedValue<bool> enabled;
         TypedValue<bool> visible;
         TypedValue<bool> alwaysOnTop;

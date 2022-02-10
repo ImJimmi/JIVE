@@ -948,3 +948,60 @@ SCENARIO("GUI items have a description")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items have a tooltip")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item's tooltip is empty")
+        {
+            REQUIRE(item.getTooltip().isEmpty());
+        }
+        THEN("the tooltip of the item's component matches the item")
+        {
+            REQUIRE(item.getComponent().getHelpText() == item.getTooltip());
+        }
+
+        WHEN("the item's description changes")
+        {
+            tree.setProperty("tooltip",
+                             "I love deadlines. I love the whooshing noise they make as they go by.",
+                             nullptr);
+
+            THEN("the item's tooltip matches the value specified")
+            {
+                REQUIRE(item.getTooltip() == "I love deadlines. I love the whooshing noise they make as they go by.");
+            }
+            THEN("the tooltip of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getHelpText() == item.getTooltip());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'tooltip' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("tooltip",
+                         "I may not have gone where I intended to go, but I think I have ended up where I needed to be.",
+                         nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the tooltip of the item matches the tree's 'cursor' property")
+            {
+                REQUIRE(item.getTooltip() == tree["tooltip"].toString());
+            }
+            THEN("the tooltip of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getHelpText() == item.getTooltip());
+            }
+        }
+    }
+}
