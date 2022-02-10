@@ -838,3 +838,58 @@ SCENARIO("GUI items have an opacity")
         }
     }
 }
+
+//======================================================================================================================
+SCENARIO("GUI items have a mouse cursor")
+{
+    GIVEN("a GUI item")
+    {
+        juce::ValueTree tree{ "Component" };
+        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+        THEN("the item has a normal cursor")
+        {
+            REQUIRE(item.getCursor() == juce::MouseCursor::NormalCursor);
+        }
+        THEN("the cursor of the item's component matches the item")
+        {
+            REQUIRE(item.getComponent().getMouseCursor() == item.getCursor());
+        }
+
+        WHEN("the item's opacity changes")
+        {
+            tree.setProperty("cursor",
+                             "left-right",
+                             nullptr);
+
+            THEN("the item's cursor matches the value specified")
+            {
+                REQUIRE(item.getCursor() == juce::MouseCursor::LeftRightResizeCursor);
+            }
+            THEN("the cursor of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getMouseCursor() == item.getCursor());
+            }
+        }
+    }
+
+    GIVEN("a value-tree with a specified 'cursor' property")
+    {
+        juce::ValueTree tree{ "Component" };
+        tree.setProperty("cursor", "wait", nullptr);
+
+        WHEN("a GUI item is constructed from the tree")
+        {
+            jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
+
+            THEN("the cursor of the item matches the tree's 'cursor' property")
+            {
+                REQUIRE(item.getCursor() == juce::MouseCursor{ juce::VariantConverter<juce::MouseCursor::StandardCursorType>::fromVar(tree["cursor"]) });
+            }
+            THEN("the cursor of the item's component matches the item")
+            {
+                REQUIRE(item.getComponent().getMouseCursor() == item.getCursor());
+            }
+        }
+    }
+}

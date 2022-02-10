@@ -20,6 +20,7 @@ namespace jive
         , focusOutline{ tree, "focus-outline" }
         , focusOrder{ tree, "focus-order" }
         , opacity{ tree, "opacity", 1.f }
+        , cursor{ tree, "cursor", juce::MouseCursor::NormalCursor }
         , width{ tree, "width", -1 }
         , height{ tree, "height", -1 }
         , display{ tree, "display", Display::flex }
@@ -87,6 +88,11 @@ namespace jive
             getComponent().setAlpha(opacity);
         };
         getComponent().setAlpha(opacity);
+
+        cursor.onValueChange = [this]() {
+            getComponent().setMouseCursor(juce::MouseCursor{ cursor });
+        };
+        getComponent().setMouseCursor(juce::MouseCursor{ cursor });
 
         width.onValueChange = [this]() {
             updateComponentSize();
@@ -231,6 +237,11 @@ namespace jive
     float GuiItem::getOpacity() const
     {
         return opacity;
+    }
+
+    juce::MouseCursor GuiItem::getCursor() const
+    {
+        return juce::MouseCursor{ cursor };
     }
 
     float GuiItem::getWidth() const

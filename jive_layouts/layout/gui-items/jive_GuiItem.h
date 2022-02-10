@@ -73,6 +73,7 @@ namespace jive
 
         int getFocusOrder() const;
         float getOpacity() const;
+        juce::MouseCursor getCursor() const;
 
         virtual float getWidth() const;
         virtual float getHeight() const;
@@ -128,6 +129,7 @@ namespace jive
         TypedValue<bool> focusOutline;
         TypedValue<int> focusOrder;
         TypedValue<float> opacity;
+        TypedValue<juce::MouseCursor::StandardCursorType> cursor;
         TypedValue<float> width;
         TypedValue<float> height;
         TypedValue<Display> display;
