@@ -1,15 +1,9 @@
-#include <catch2/catch_session.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //======================================================================================================================
-namespace juce
-{
-    extern int juce_argc;
-    extern const char* const* juce_argv;
-} // namespace juce
-
-//======================================================================================================================
-class TestRunner : public juce::JUCEApplication
+class TestRunner
+    : public juce::JUCEApplication
+    , private juce::UnitTestRunner
 {
 public:
     //==================================================================================================================
@@ -28,11 +22,6 @@ public:
 
     void initialise(const juce::String&) final
     {
-        Catch::Session session;
-
-        const auto returnValue = session.run(juce::juce_argc, juce::juce_argv);
-        setApplicationReturnValue(returnValue);
-
         quit();
     }
 
