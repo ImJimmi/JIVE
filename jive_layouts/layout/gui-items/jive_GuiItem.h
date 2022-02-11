@@ -59,7 +59,24 @@ namespace jive
 
         BoxModel getBoxModel() const;
 
+        juce::String getName() const;
         juce::Identifier getID() const;
+        juce::String getDescription() const;
+        juce::String getTooltip() const;
+
+        bool isEnabled() const;
+        bool isVisible() const;
+        bool isAlwaysOnTop() const;
+        bool isBufferedToImage() const;
+        bool isOpaque() const;
+        bool isFocusable() const;
+        bool getClickingGrabsFocus() const;
+        bool hasFocusOutline() const;
+
+        int getFocusOrder() const;
+        float getOpacity() const;
+        juce::MouseCursor getCursor() const;
+
         virtual float getWidth() const;
         virtual float getHeight() const;
 
@@ -77,6 +94,9 @@ namespace jive
     protected:
         //==============================================================================================================
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+        void componentVisibilityChanged(juce::Component& component) override;
+        void componentNameChanged(juce::Component& component) override;
+        void componentEnablementChanged(juce::Component& component) override;
 
         //==============================================================================================================
         juce::ValueTree tree;
@@ -99,10 +119,24 @@ namespace jive
 
         BoxModel boxModel{ *this, tree };
 
+        TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
-        TypedValue<Display> display;
+        TypedValue<juce::String> description;
+        TypedValue<juce::String> tooltip;
+        TypedValue<bool> enabled;
+        TypedValue<bool> visible;
+        TypedValue<bool> alwaysOnTop;
+        TypedValue<bool> bufferedToImage;
+        TypedValue<bool> opaque;
+        TypedValue<bool> focusable;
+        TypedValue<bool> clickingGrabsFocus;
+        TypedValue<bool> focusOutline;
+        TypedValue<int> focusOrder;
+        TypedValue<float> opacity;
+        TypedValue<juce::MouseCursor::StandardCursorType> cursor;
         TypedValue<float> width;
         TypedValue<float> height;
+        TypedValue<Display> display;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

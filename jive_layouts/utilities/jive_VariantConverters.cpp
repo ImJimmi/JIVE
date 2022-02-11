@@ -271,4 +271,42 @@ namespace juce
     {
         return { id.toString() };
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<MouseCursor::StandardCursorType>::options = {
+        "inherit",
+        "none",
+        "default",
+        "wait",
+        "text",
+        "crosshair",
+        "copy",
+        "pointer",
+        "grab",
+        "left-right",
+        "up-down",
+        "move",
+        "up",
+        "down",
+        "left",
+        "right",
+        "up-left",
+        "up-right",
+        "down-left",
+        "down-right"
+    };
+
+    MouseCursor::StandardCursorType VariantConverter<MouseCursor::StandardCursorType>::fromVar(const var& v)
+    {
+        jassert(options.contains(v));
+        return static_cast<MouseCursor::StandardCursorType>(options.indexOf(v));
+    }
+
+    var VariantConverter<MouseCursor::StandardCursorType>::toVar(MouseCursor::StandardCursorType cursor)
+    {
+        const auto index = static_cast<int>(cursor);
+
+        jassert(options.size() >= index);
+        return options[index];
+    }
 } // namespace juce

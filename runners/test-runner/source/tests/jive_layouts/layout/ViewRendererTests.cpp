@@ -16,6 +16,20 @@ SCENARIO("view renderers can render different components")
             {
                 REQUIRE(dynamic_cast<jive::GuiItem*>(view.get()) != nullptr);
             }
+
+            AND_WHEN("the view's component is given a peer")
+            {
+                constexpr auto windowStyleFlags = 0;
+                view->getComponent().addToDesktop(windowStyleFlags);
+
+                THEN("the view's component should be ignored by accessibility clients")
+                {
+                    auto* handler = view->getComponent().getAccessibilityHandler();
+                    REQUIRE(handler != nullptr);
+
+                    REQUIRE(handler->getRole() == juce::AccessibilityRole::ignored);
+                }
+            }
         }
         WHEN("a view is rendered from a value-tree with a 'ComboBox' type")
         {

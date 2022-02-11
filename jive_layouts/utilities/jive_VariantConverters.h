@@ -1,7 +1,5 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
-
 //======================================================================================================================
 namespace juce
 {
@@ -121,5 +119,18 @@ namespace juce
         //==============================================================================================================
         static juce::Identifier fromVar(const var& v);
         static var toVar(juce::Identifier id);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<MouseCursor::StandardCursorType>
+    {
+        //==============================================================================================================
+        static MouseCursor::StandardCursorType fromVar(const var& v);
+        static var toVar(MouseCursor::StandardCursorType cursor);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> options;
     };
 } // namespace juce
