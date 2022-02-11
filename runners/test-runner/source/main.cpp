@@ -7,7 +7,11 @@ class TestRunner
 {
 public:
     //==================================================================================================================
-    TestRunner() = default;
+    TestRunner()
+    {
+        setAssertOnFailure(false);
+        setPassesAreLogged(verboseLogging);
+    }
 
     //==================================================================================================================
     const juce::String getApplicationName() final
@@ -22,6 +26,9 @@ public:
 
     void initialise(const juce::String&) final
     {
+        runTestsInCategory("jive");
+
+        setApplicationReturnValue(getNumFailures());
         quit();
     }
 
@@ -35,6 +42,23 @@ public:
     }
 
 private:
+    //==================================================================================================================
+    int getNumFailures() const
+    {
+        auto numFailures = 0;
+
+        for (auto i = 0; i < getNumResults(); i++)
+        {
+            if (auto* result = getResult(i))
+                numFailures += result->failures;
+        }
+
+        return numFailures;
+    }
+
+    //==================================================================================================================
+    static const bool verboseLogging{ false };
+
     //==================================================================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TestRunner)
 };
