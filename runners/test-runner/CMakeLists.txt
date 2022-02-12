@@ -48,6 +48,7 @@ PRIVATE
 target_compile_definitions(jive-test-runner
 PRIVATE
     JUCE_DISABLE_JUCE_VERSION_PRINTING=1
+    JIVE_UNIT_TESTS=1
 )
 
 get_target_property(JIVE_TEST_RUNNER_SOURCES jive-test-runner SOURCES)
