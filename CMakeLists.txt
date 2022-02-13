@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-option(JIVE_BUILD_TEST_RUNNER "Whether or not to build JIVE's test runner" ON)
+option(JIVE_BUILD_TEST_RUNNER "Whether or not to build JIVE's test runner" OFF)
 
 if (JIVE_BUILD_TEST_RUNNER)
     project(JIVE)
@@ -14,6 +14,7 @@ if (JIVE_BUILD_TEST_RUNNER)
 
     set(CMAKE_XCODE_GENERATE_SCHEME ${DEFAULT_XCODE_GENERATE_SCHEME})
 
+    enable_testing()
 endif()
 
 juce_add_module(jive_layouts ALIAS_NAMESPACE jive)

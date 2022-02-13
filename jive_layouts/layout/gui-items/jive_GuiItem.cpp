@@ -324,7 +324,7 @@ namespace jive
 
         if (isTopLevel())
         {
-            const auto bounds = getComponent().getLocalBounds();
+            const auto bounds = getComponent().getLocalBounds().toFloat();
 
             width = bounds.getWidth();
             height = bounds.getHeight();

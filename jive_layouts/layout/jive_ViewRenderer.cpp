@@ -80,6 +80,10 @@ namespace jive
         case GuiItem::Display::flex:
             return std::make_unique<GuiFlexContainer>(std::move(item));
         }
+
+        // Unhandled display type!
+        jassertfalse;
+        return nullptr;
     }
 
     std::unique_ptr<GuiItem> decorateWithHereditaryBehaviour(std::unique_ptr<GuiItem> item)
@@ -92,6 +96,10 @@ namespace jive
         case GuiItem::Display::flex:
             return std::make_unique<GuiFlexItem>(std::move(item));
         }
+
+        // Unhandled display type!
+        jassertfalse;
+        return nullptr;
     }
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)

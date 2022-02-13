@@ -2,6 +2,11 @@ juce_add_console_app(jive-test-runner
     VERSION 0.1.0
 )
 
+add_test(
+    NAME jive-tests
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/jive-test-runner_artefacts/jive-test-runner
+)
+
 target_sources(jive-test-runner
 PRIVATE
     source/tests/jive_layouts/layout/flex/GuiFlexContainerTests.cpp
@@ -36,14 +41,16 @@ PRIVATE
     cxx_std_14
 )
 
-target_compile_options(jive-test-runner
-PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+if (APPLE)
+    target_compile_options(jive-test-runner
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 
-    -fsanitize=address
-    -fsanitize=undefined
-)
+        -fsanitize=address
+        -fsanitize=undefined
+    )
+endif()
 
 target_link_options(jive-test-runner
 PRIVATE
