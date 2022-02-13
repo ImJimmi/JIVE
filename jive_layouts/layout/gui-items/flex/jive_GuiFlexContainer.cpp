@@ -37,9 +37,9 @@ namespace jive
         if (hasAutoHeight())
         {
             const auto contentHeight = getMinimumContentHeight();
-            const auto boxModel = getBoxModel();
+            const auto box = getBoxModel();
 
-            return contentHeight + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom();
+            return contentHeight + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
         }
 
         return item->getHeight();
@@ -90,8 +90,8 @@ namespace jive
     {
         auto flex = const_cast<GuiFlexContainer*>(this)->getFlexBox();
 
-        for (auto& item : flex.items)
-            item.associatedComponent = nullptr;
+        for (auto& flexItem : flex.items)
+            flexItem.associatedComponent = nullptr;
 
         return flex;
     }
@@ -103,10 +103,10 @@ namespace jive
 
         auto contentHeight = 0.f;
 
-        for (const auto& item : flex.items)
+        for (const auto& flexItem : flex.items)
         {
-            if (item.currentBounds.getBottom() > contentHeight)
-                contentHeight = item.currentBounds.getBottom();
+            if (flexItem.currentBounds.getBottom() > contentHeight)
+                contentHeight = flexItem.currentBounds.getBottom();
         }
 
         return contentHeight;

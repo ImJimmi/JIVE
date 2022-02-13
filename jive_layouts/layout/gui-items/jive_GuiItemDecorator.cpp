@@ -58,27 +58,29 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItemDecorator::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
+    void GuiItemDecorator::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged, const juce::Identifier& propertyID)
     {
-        GuiItem::valueTreePropertyChanged(tree, id);
-        item->valueTreePropertyChanged(tree, id);
+        GuiItem::valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
+        item->valueTreePropertyChanged(treeWhosePropertyChanged, propertyID);
     }
 
-    void GuiItemDecorator::valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child)
+    void GuiItemDecorator::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childTree)
     {
-        GuiItem::valueTreeChildAdded(parent, child);
-        item->valueTreeChildAdded(parent, child);
+        GuiItem::valueTreeChildAdded(parentTree, childTree);
+        item->valueTreeChildAdded(parentTree, childTree);
     }
 
-    void GuiItemDecorator::valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex)
+    void GuiItemDecorator::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childTree, int childIndex)
     {
-        GuiItem::valueTreeChildRemoved(parent, child, childIndex);
-        item->valueTreeChildRemoved(parent, child, childIndex);
+        GuiItem::valueTreeChildRemoved(parentTree, childTree, childIndex);
+        item->valueTreeChildRemoved(parentTree, childTree, childIndex);
     }
 
-    void GuiItemDecorator::componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized)
+    void GuiItemDecorator::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                                   bool wasMoved,
+                                                   bool wasResized)
     {
-        GuiItem::componentMovedOrResized(component, wasMoved, wasResized);
-        item->componentMovedOrResized(component, wasMoved, wasResized);
+        GuiItem::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+        item->componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
     }
 } // namespace jive

@@ -65,19 +65,19 @@ namespace jive
             resetComboBoxOptions();
     }
 
-    void ComboBox::valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child)
+    void ComboBox::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childTree)
     {
-        GuiItemDecorator::valueTreeChildAdded(parent, child);
+        GuiItemDecorator::valueTreeChildAdded(parentTree, childTree);
 
-        jassert(parent == tree);
+        jassert(parentTree == tree);
         resetComboBoxOptions();
     }
 
-    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex)
+    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childTree, int childIndex)
     {
-        GuiItemDecorator::valueTreeChildRemoved(parent, child, childIndex);
+        GuiItemDecorator::valueTreeChildRemoved(parentTree, childTree, childIndex);
 
-        jassert(parent == tree);
+        jassert(parentTree == tree);
         resetComboBoxOptions();
     }
 
