@@ -2,6 +2,11 @@ juce_add_console_app(jive-test-runner
     VERSION 0.1.0
 )
 
+add_test(
+    NAME jive-tests
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/jive-test-runner_artefacts/jive-test-runner
+)
+
 target_sources(jive-test-runner
 PRIVATE
     source/tests/jive_layouts/layout/flex/GuiFlexContainerTests.cpp
