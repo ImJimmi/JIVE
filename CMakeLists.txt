@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-option(JIVE_BUILD_TEST_RUNNER "Whether or not to build JIVE's test runner" ON)
+option(JIVE_BUILD_TEST_RUNNER "Whether or not to build JIVE's test runner" OFF)
 
 if (JIVE_BUILD_TEST_RUNNER)
     project(JIVE)
