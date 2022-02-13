@@ -41,14 +41,16 @@ PRIVATE
     cxx_std_14
 )
 
-target_compile_options(jive-test-runner
-PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+if (APPLE)
+    target_compile_options(jive-test-runner
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 
-    -fsanitize=address
-    -fsanitize=undefined
-)
+        -fsanitize=address
+        -fsanitize=undefined
+    )
+endif()
 
 target_link_options(jive-test-runner
 PRIVATE
