@@ -66,3 +66,172 @@ namespace jive
             jassertfalse;
     }
 } // namespace jive
+
+//======================================================================================================================
+#if JIVE_UNIT_TESTS
+class GuiFlexItemUnitTest : public juce::UnitTest
+{
+public:
+    GuiFlexItemUnitTest()
+        : juce::UnitTest{ "jive::GuiFlexItem", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        testComponent();
+        testOrder();
+        testFlexGrow();
+        testFlexShrink();
+        testFlexBasis();
+        testAlignSelf();
+        testSize();
+        testMargin();
+    }
+
+private:
+    std::unique_ptr<jive::GuiFlexItem> createFlexItem(juce::ValueTree tree)
+    {
+        return std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                   tree));
+    }
+
+    void testComponent()
+    {
+        beginTest("component");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.associatedComponent == &item->getComponent());
+    }
+
+    void testOrder()
+    {
+        beginTest("order");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.order == 0);
+
+        tree.setProperty("order", 10, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.order == 10);
+    }
+
+    void testFlexGrow()
+    {
+        beginTest("flex-grow");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexGrow == 0.f);
+
+        tree.setProperty("flex-grow", 5.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexGrow == 5.f);
+    }
+
+    void testFlexShrink()
+    {
+        beginTest("flex-shrink");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexShrink == 1.f);
+
+        tree.setProperty("flex-shrink", 3.4f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexShrink == 3.4f);
+    }
+
+    void testFlexBasis()
+    {
+        beginTest("flex-basis");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexBasis == 0.f);
+
+        tree.setProperty("flex-basis", 4.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.flexBasis == 4.f);
+    }
+
+    void testAlignSelf()
+    {
+        beginTest("align-self");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign);
+
+        tree.setProperty("align-self", "centre", nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::center);
+    }
+
+    void testSize()
+    {
+        beginTest("size");
+
+        juce::ValueTree tree{
+            "Component",
+            { { "width", 100 },
+              { "height", 200 } }
+        };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.width == 100.f);
+        expect(flexItem.height == 200.f);
+
+        tree.setProperty("width", 50.f, nullptr);
+        tree.setProperty("height", 175.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.width == 50.f);
+        expect(flexItem.height == 175.f);
+    }
+
+    void testMargin()
+    {
+        beginTest("margin");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexItem(tree);
+        auto flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.margin.top == 0.f);
+        expect(flexItem.margin.right == 0.f);
+        expect(flexItem.margin.bottom == 0.f);
+        expect(flexItem.margin.left == 0.f);
+
+        tree.setProperty("margin", "1 2 3 4", nullptr);
+        flexItem = static_cast<juce::FlexItem>(*item);
+
+        expect(flexItem.margin.top == 1.f);
+        expect(flexItem.margin.right == 2.f);
+        expect(flexItem.margin.bottom == 3.f);
+        expect(flexItem.margin.left == 4.f);
+    }
+};
+
+static GuiFlexItemUnitTest guiFlexItemUnitTest;
+#endif
