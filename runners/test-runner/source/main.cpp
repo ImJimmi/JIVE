@@ -1,19 +1,17 @@
-#include <catch2/catch_session.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //======================================================================================================================
-namespace juce
-{
-    extern int juce_argc;
-    extern const char* const* juce_argv;
-} // namespace juce
-
-//======================================================================================================================
-class TestRunner : public juce::JUCEApplication
+class TestRunner
+    : public juce::JUCEApplication
+    , private juce::UnitTestRunner
 {
 public:
     //==================================================================================================================
-    TestRunner() = default;
+    TestRunner()
+    {
+        setAssertOnFailure(false);
+        setPassesAreLogged(verboseLogging);
+    }
 
     //==================================================================================================================
     const juce::String getApplicationName() final
@@ -28,11 +26,9 @@ public:
 
     void initialise(const juce::String&) final
     {
-        Catch::Session session;
+        runTestsInCategory("jive");
 
-        const auto returnValue = session.run(juce::juce_argc, juce::juce_argv);
-        setApplicationReturnValue(returnValue);
-
+        setApplicationReturnValue(getNumFailures());
         quit();
     }
 
@@ -46,6 +42,23 @@ public:
     }
 
 private:
+    //==================================================================================================================
+    int getNumFailures() const
+    {
+        auto numFailures = 0;
+
+        for (auto i = 0; i < getNumResults(); i++)
+        {
+            if (auto* result = getResult(i))
+                numFailures += result->failures;
+        }
+
+        return numFailures;
+    }
+
+    //==================================================================================================================
+    static const bool verboseLogging{ false };
+
     //==================================================================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TestRunner)
 };

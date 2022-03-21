@@ -112,3 +112,176 @@ namespace jive
         return contentHeight;
     }
 } // namespace jive
+
+#if JIVE_UNIT_TESTS
+class GuiFlexContainerUnitTest : public juce::UnitTest
+{
+public:
+    GuiFlexContainerUnitTest()
+        : juce::UnitTest{ "jive::GuiFlexContainer", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        testDirection();
+        testWrap();
+        testAlignContent();
+        testAlignItems();
+        testJustifyContent();
+        testChildren();
+        testPadding();
+    }
+
+private:
+    std::unique_ptr<jive::GuiFlexContainer> createFlexContainer(juce::ValueTree tree = juce::ValueTree{ "Component" })
+    {
+        return std::make_unique<jive::GuiFlexContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                        tree));
+    }
+
+    std::unique_ptr<jive::GuiFlexItem> createFlexItem(jive::GuiFlexContainer* parent,
+                                                      juce::ValueTree tree = juce::ValueTree{ "Component" })
+    {
+        return std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                   tree,
+                                                                                   parent));
+    }
+
+    void testDirection()
+    {
+        beginTest("direction");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.flexDirection == juce::FlexBox::Direction::column);
+
+        tree.setProperty("flex-direction", "row-reverse", nullptr);
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.flexDirection == juce::FlexBox::Direction::rowReverse);
+    }
+
+    void testWrap()
+    {
+        beginTest("wrap");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.flexWrap == juce::FlexBox::Wrap::noWrap);
+
+        tree.setProperty("flex-wrap", "wrap-reverse", nullptr);
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.flexWrap == juce::FlexBox::Wrap::wrapReverse);
+    }
+
+    void testAlignContent()
+    {
+        beginTest("align-content");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.alignContent == juce::FlexBox::AlignContent::stretch);
+
+        tree.setProperty("align-content", "space-between", nullptr);
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.alignContent == juce::FlexBox::AlignContent::spaceBetween);
+    }
+
+    void testAlignItems()
+    {
+        beginTest("align-items");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.alignItems == juce::FlexBox::AlignItems::stretch);
+
+        tree.setProperty("align-items", "centre", nullptr);
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.alignItems == juce::FlexBox::AlignItems::center);
+    }
+
+    void testJustifyContent()
+    {
+        beginTest("justify-content");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.justifyContent == juce::FlexBox::JustifyContent::flexStart);
+
+        tree.setProperty("justify-content", "centre", nullptr);
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.justifyContent == juce::FlexBox::JustifyContent::center);
+    }
+
+    void testChildren()
+    {
+        beginTest("children");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.items.isEmpty());
+
+        item->addChild(createFlexItem(item.get()));
+        item->addChild(createFlexItem(item.get()));
+        item->addChild(createFlexItem(item.get()));
+
+        flexBox = static_cast<juce::FlexBox>(*item);
+
+        expect(flexBox.items.size() == item->getNumChildren());
+    }
+
+    void testPadding()
+    {
+        beginTest("padding");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createFlexContainer(tree);
+        item->addChild(createFlexItem(item.get()));
+        item->getComponent().setSize(100, 100);
+
+        expect(item->getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
+
+        tree.setProperty("padding", "10 20 30 40", nullptr);
+        item->getComponent().setSize(220, 330);
+
+        expect(item->getChild(0).getComponent().getPosition() == juce::Point<int>{ 40, 10 });
+    }
+
+    void testAutoHeight()
+    {
+        beginTest("auto-height");
+
+        juce::ValueTree tree{
+            "Component",
+            { { "flex-direction", "row" },
+              { "padding", 10 },
+              { "border-width", 5 },
+              { "margin", 15 } }
+        };
+        auto item = createFlexContainer(tree);
+        item->addChild(createFlexItem(item.get(), juce::ValueTree{ "Component", { { "width", 100 }, { "height", 25 } } }));
+        item->addChild(createFlexItem(item.get(), juce::ValueTree{ "Component", { { "width", 130 }, { "height", 14 } } }));
+
+        expect(item->getHeight() == 55.f);
+    }
+};
+
+static GuiFlexContainerUnitTest guiFlexContainerUnitTest;
+#endif

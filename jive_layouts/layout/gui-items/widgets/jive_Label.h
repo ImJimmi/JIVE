@@ -18,6 +18,7 @@ namespace jive
 
         //==============================================================================================================
         juce::Label& getLabel();
+        const juce::Label& getLabel() const;
 
         juce::Font getFont() const;
         juce::String getText() const;
@@ -35,5 +36,9 @@ namespace jive
         TypedValue<float> fontHeight;
         TypedValue<juce::String> fontStyle;
         TypedValue<juce::Justification> justification;
+        TypedValue<juce::BorderSize<float>> border;
+
+        //==============================================================================================================
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Label)
     };
 } // namespace jive

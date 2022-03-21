@@ -30,7 +30,6 @@ namespace jive
 
 #include "layout/gui-items/flex/jive_GuiFlexContainer.h"
 #include "layout/gui-items/flex/jive_GuiFlexItem.h"
-#include "layout/gui-items/widgets/jive_ComboBox.h"
 #include "layout/gui-items/widgets/jive_Label.h"
 
 #include "layout/jive_ViewRenderer.h"

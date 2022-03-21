@@ -9,24 +9,11 @@ add_test(
 
 target_sources(jive-test-runner
 PRIVATE
-    source/tests/jive_layouts/layout/flex/GuiFlexContainerTests.cpp
-    source/tests/jive_layouts/layout/flex/GuiFlexItemTests.cpp
-    source/tests/jive_layouts/layout/widgets/ComboBoxTests.cpp
-    source/tests/jive_layouts/layout/widgets/LabelTests.cpp
-    source/tests/jive_layouts/layout/BoxModelTests.cpp
-    source/tests/jive_layouts/layout/GuiItemTests.cpp
-    source/tests/jive_layouts/layout/ViewRendererTests.cpp
-    source/tests/jive_layouts/utilities/TypedValueTests.cpp
-
-    source/utilities/test_ComponentUtilities.cpp
-    source/utilities/test_ComponentUtilities.h
-
     source/main.cpp
 )
 
 target_link_libraries(jive-test-runner
 PRIVATE
-    Catch2
     jive::jive_layouts
     juce::juce_gui_basics
 )
@@ -61,6 +48,7 @@ PRIVATE
 target_compile_definitions(jive-test-runner
 PRIVATE
     JUCE_DISABLE_JUCE_VERSION_PRINTING=1
+    JIVE_UNIT_TESTS=1
 )
 
 get_target_property(JIVE_TEST_RUNNER_SOURCES jive-test-runner SOURCES)

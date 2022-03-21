@@ -55,9 +55,6 @@ namespace jive
     {
         factories.clear();
 
-        setFactory("ComboBox", []() {
-            return std::make_unique<juce::ComboBox>();
-        });
         setFactory("Component", []() {
             return std::make_unique<IgnoredComponent>();
         });
@@ -104,8 +101,6 @@ namespace jive
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)
     {
-        if (tree.hasType("ComboBox"))
-            return std::make_unique<ComboBox>(std::move(item));
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
 
@@ -157,3 +152,135 @@ namespace jive
         return nullptr;
     }
 } // namespace jive
+
+#if JIVE_UNIT_TESTS
+class ViewRendererUnitTest : public juce::UnitTest
+{
+public:
+    ViewRendererUnitTest()
+        : juce::UnitTest{ "jive::ViewRenderer", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        testComponentFactory();
+        testNestedComponents();
+        testDisplayTypes();
+        testXML();
+    }
+
+private:
+    void testComponentFactory()
+    {
+        beginTest("component factory");
+
+        jive::ViewRenderer renderer;
+
+        auto componentView = renderer.renderView(juce::ValueTree{ "Component" });
+        expect(dynamic_cast<jive::GuiItem*>(componentView.get()) != nullptr);
+
+        constexpr auto windowStyleFlags = 0;
+        componentView->getComponent().addToDesktop(windowStyleFlags);
+        auto* handler = componentView->getComponent().getAccessibilityHandler();
+        expect(handler->getRole() == juce::AccessibilityRole::ignored);
+
+        auto labelView = renderer.renderView(juce::ValueTree{ "Label" });
+        expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
+        expect(dynamic_cast<juce::Label*>(&labelView->getComponent()) != nullptr);
+
+        struct TestComponent : public juce::Component
+        {
+        };
+
+        renderer.setFactory("TestComponent", []() {
+            return std::make_unique<TestComponent>();
+        });
+
+        auto testView = renderer.renderView(juce::ValueTree{ "TestComponent" });
+        expect(dynamic_cast<jive::GuiItem*>(testView.get()) != nullptr);
+        expect(dynamic_cast<TestComponent*>(&testView->getComponent()) != nullptr);
+    }
+
+    void testNestedComponents()
+    {
+        beginTest("nested components");
+
+        const jive::ViewRenderer renderer;
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto view = renderer.renderView(juce::ValueTree{ "Component" });
+
+            expect(view->getNumChildren() == tree.getNumChildren());
+            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {},
+                { juce::ValueTree{ "Component" },
+                  juce::ValueTree{ "Component" } }
+            };
+            auto view = renderer.renderView(tree);
+
+            expect(view->getNumChildren() == tree.getNumChildren());
+            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {},
+                { juce::ValueTree{
+                    "Component",
+                    {},
+                    { juce::ValueTree{ "Component" },
+                      juce::ValueTree{ "Component" },
+                      juce::ValueTree{ "Component" } } } }
+            };
+            auto view = renderer.renderView(tree);
+
+            expect(view->getNumChildren() == tree.getNumChildren());
+            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+
+            expect(view->getChild(0).getNumChildren() == tree.getChild(0).getNumChildren());
+            expect(view->getChild(0).getComponent().getNumChildComponents() == tree.getChild(0).getNumChildren());
+        }
+    }
+
+    void testDisplayTypes()
+    {
+        beginTest("display");
+
+        const jive::ViewRenderer renderer;
+
+        auto basicView = renderer.renderView(juce::ValueTree{ "Component" });
+        expect(dynamic_cast<jive::GuiItem*>(basicView.get()));
+
+        auto flexView = renderer.renderView(juce::ValueTree{
+            "Component",
+            { { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) } },
+            { juce::ValueTree{ "Label" } } });
+        expect(dynamic_cast<jive::GuiFlexContainer*>(flexView.get()));
+        expect(dynamic_cast<jive::GuiFlexItem*>(&flexView->getChild(0)));
+    }
+
+    void testXML()
+    {
+        beginTest("xml");
+
+        const jive::ViewRenderer renderer;
+
+        const auto xml = R"(
+                <Component>
+                    <Label text="Some text"/>
+                    <Label>This is some sub-test</Label>
+                </Component>
+            )";
+
+        expect(renderer.renderView(xml) != nullptr);
+    }
+};
+
+static ViewRendererUnitTest viewRendererUnitTest;
+#endif
