@@ -55,9 +55,6 @@ namespace jive
     {
         factories.clear();
 
-        setFactory("ComboBox", []() {
-            return std::make_unique<juce::ComboBox>();
-        });
         setFactory("Component", []() {
             return std::make_unique<IgnoredComponent>();
         });
@@ -104,8 +101,6 @@ namespace jive
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)
     {
-        if (tree.hasType("ComboBox"))
-            return std::make_unique<ComboBox>(std::move(item));
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
 
@@ -189,10 +184,6 @@ private:
         componentView->getComponent().addToDesktop(windowStyleFlags);
         auto* handler = componentView->getComponent().getAccessibilityHandler();
         expect(handler->getRole() == juce::AccessibilityRole::ignored);
-
-        auto comboBoxView = renderer.renderView(juce::ValueTree{ "ComboBox" });
-        expect(dynamic_cast<jive::ComboBox*>(comboBoxView.get()) != nullptr);
-        expect(dynamic_cast<juce::ComboBox*>(&comboBoxView->getComponent()) != nullptr);
 
         auto labelView = renderer.renderView(juce::ValueTree{ "Label" });
         expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
