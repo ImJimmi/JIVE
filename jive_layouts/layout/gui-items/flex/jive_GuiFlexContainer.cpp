@@ -1,6 +1,4 @@
-#include "jive_GuiFlexContainer.h"
-
-#include "jive_GuiFlexItem.h"
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 namespace jive

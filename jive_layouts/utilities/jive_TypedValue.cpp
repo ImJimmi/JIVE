@@ -1,4 +1,4 @@
-#include "jive_TypedValue.h"
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 #if JIVE_UNIT_TESTS

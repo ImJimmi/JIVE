@@ -1,4 +1,4 @@
-#include "jive_IgnoredComponent.h"
+#include <jive_layouts/jive_layouts.h>
 
 //======================================================================================================================
 namespace jive
