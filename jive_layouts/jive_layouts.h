@@ -27,6 +27,7 @@ namespace jive
 
 #include "layout/gui-items/jive_GuiItem.h"
 #include "layout/gui-items/jive_GuiItemDecorator.h"
+#include "layout/gui-items/widgets/jive_TextWidget.h"
 
 #include "layout/gui-items/flex/jive_GuiFlexContainer.h"
 #include "layout/gui-items/flex/jive_GuiFlexItem.h"
