@@ -4,7 +4,9 @@
 namespace jive
 {
     //==================================================================================================================
-    class Label : public GuiItemDecorator
+    class Label
+        : public GuiItemDecorator
+        , public TextWidget
     {
     public:
         //==============================================================================================================
@@ -20,22 +22,8 @@ namespace jive
         juce::Label& getLabel();
         const juce::Label& getLabel() const;
 
-        juce::Font getFont() const;
-        juce::String getText() const;
-
     private:
         //==============================================================================================================
-        void fontChanged();
-
-        //==============================================================================================================
-        const std::unique_ptr<GuiItem> item;
-
-        TypedValue<juce::String> text;
-        TypedValue<juce::String> typefaceName;
-        TypedValue<juce::String> fontWeight;
-        TypedValue<float> fontHeight;
-        TypedValue<juce::String> fontStyle;
-        TypedValue<juce::Justification> justification;
         TypedValue<juce::BorderSize<float>> border;
 
         //==============================================================================================================
