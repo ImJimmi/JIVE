@@ -16,37 +16,23 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , text{ tree, "text" }
-        , typefaceName{ tree, "typeface-name" }
-        , fontWeight{ tree, "font-weight", "Regular" }
-        , fontHeight{ tree, "font-height", 12.f }
-        , fontStyle{ tree, "font-style", "plain" }
-        , justification{ tree, "justification", juce::Justification::centredLeft }
+        , TextWidget{ tree }
         , border{ tree, "border-width" }
     {
-        text.onValueChange = [this]() {
-            getLabel().setText(text, juce::sendNotification);
+        onTextChanged = [this]() {
+            getLabel().setText(getText(), juce::sendNotification);
         };
-        getLabel().setText(text, juce::sendNotification);
+        getLabel().setText(getText(), juce::sendNotification);
 
-        justification.onValueChange = [this]() {
-            getLabel().setJustificationType(justification);
+        onFontChanged = [this]() {
+            getLabel().setFont(getFont());
         };
-        getLabel().setJustificationType(justification);
+        getLabel().setFont(getFont());
 
-        typefaceName.onValueChange = [this]() {
-            fontChanged();
+        onJustificationChanged = [this]() {
+            getLabel().setJustificationType(getTextJustification());
         };
-        fontWeight.onValueChange = [this]() {
-            fontChanged();
-        };
-        fontHeight.onValueChange = [this]() {
-            fontChanged();
-        };
-        fontStyle.onValueChange = [this]() {
-            fontChanged();
-        };
-        fontChanged();
+        getLabel().setJustificationType(getTextJustification());
 
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));
@@ -64,7 +50,7 @@ namespace jive
     {
         if (hasAutoWidth())
         {
-            const auto textWidth = getFont().getStringWidthFloat(text);
+            const auto textWidth = getFont().getStringWidthFloat(getText());
             const auto borderWidth = getBoxModel().getBorder().getLeftAndRight();
 
             return textWidth + borderWidth;
@@ -102,46 +88,6 @@ namespace jive
 
         return *label;
     }
-
-    juce::Font Label::getFont() const
-    {
-        return getLabel().getFont();
-    }
-
-    juce::String Label::getText() const
-    {
-        return text;
-    }
-
-    //==================================================================================================================
-    int parseFontStyleFlags(const juce::String& styleString)
-    {
-        int flags = juce::Font::plain;
-        const auto tokens = juce::StringArray::fromTokens(styleString, false);
-
-        if (tokens.contains("bold"))
-            flags += juce::Font::bold;
-        if (tokens.contains("italic"))
-            flags += juce::Font::italic;
-        if (tokens.contains("underlined"))
-            flags += juce::Font::underlined;
-
-        return flags;
-    }
-
-    void Label::fontChanged()
-    {
-        juce::Font font;
-
-        if (typefaceName.get().isNotEmpty())
-            font.setTypefaceName(typefaceName);
-
-        font.setTypefaceStyle(fontWeight);
-        font.setStyleFlags(parseFontStyleFlags(fontStyle));
-        font = font.withPointHeight(fontHeight);
-
-        getLabel().setFont(font);
-    }
 } // namespace jive
 
 //======================================================================================================================
@@ -156,9 +102,6 @@ public:
 
     void runTest() final
     {
-        testText();
-        testFont();
-        testJustification();
         testBorder();
         testAutoSize();
     }
@@ -167,99 +110,6 @@ private:
     std::unique_ptr<jive::Label> createLabel(juce::ValueTree tree)
     {
         return std::make_unique<jive::Label>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Label>(), tree));
-    }
-
-    void testText()
-    {
-        beginTest("text");
-
-        {
-            juce::ValueTree tree{ "Label" };
-            auto label = createLabel(tree);
-
-            expect(label->getText().isEmpty());
-            expect(label->getLabel().getText() == label->getText());
-
-            tree.setProperty("text", "Some Text", nullptr);
-
-            expect(label->getText() == "Some Text");
-            expect(label->getLabel().getText() == label->getText());
-        }
-        {
-            juce::ValueTree tree{ "Label", { { "text", "Not empty" } } };
-            auto label = createLabel(tree);
-
-            expect(label->getText() == "Not empty");
-            expect(label->getLabel().getText() == label->getText());
-        }
-    }
-
-    void testFont()
-    {
-        beginTest("font");
-
-        {
-            juce::ValueTree tree{ "Label" };
-            auto label = createLabel(tree);
-
-            expect(label->getFont() == juce::Font{ 0.f }.withPointHeight(12.f));
-            expect(label->getLabel().getFont() == label->getFont());
-
-            tree.setProperty("typeface-name", "Helvetica", nullptr);
-
-            expect(label->getFont().getTypefaceName() == "Helvetica");
-            expect(label->getLabel().getFont() == label->getFont());
-
-            tree.setProperty("font-weight", "Thin", nullptr);
-
-            expect(label->getFont().getTypefaceStyle() == "Thin");
-            expect(label->getLabel().getFont() == label->getFont());
-
-            tree.setProperty("font-height", 35.f, nullptr);
-
-            expect(label->getFont().getHeight() == juce::Font{ "Helvetica", 0.f, 0 }.withPointHeight(35.f).getHeight());
-            expect(label->getLabel().getFont() == label->getFont());
-
-            tree.setProperty("font-style", "bold italic underlined", nullptr);
-
-            expect(label->getFont().isBold());
-            expect(label->getFont().isItalic());
-            expect(label->getFont().isUnderlined());
-            expect(label->getLabel().getFont() == label->getFont());
-        }
-        {
-            juce::ValueTree tree{
-                "Label",
-                { { "typeface-name", "Georgia" },
-                  { "font-height", 23.4 },
-                  { "font-style", "bold" } }
-            };
-            auto label = createLabel(tree);
-
-            expect(label->getFont() == juce::Font{ "Georgia", 0.f, 0 }.withPointHeight(23.4).withStyle(juce::Font::bold));
-        }
-    }
-
-    void testJustification()
-    {
-        beginTest("justification");
-
-        {
-            juce::ValueTree tree{ "Label" };
-            auto label = createLabel(tree);
-
-            expect(label->getLabel().getJustificationType() == juce::Justification::centredLeft);
-
-            tree.setProperty("justification", "top-left", nullptr);
-
-            expect(label->getLabel().getJustificationType() == juce::Justification::topLeft);
-        }
-        {
-            juce::ValueTree tree{ "Label", { { "justification", "bottom-right" } } };
-            auto label = createLabel(tree);
-
-            expect(label->getLabel().getJustificationType() == juce::Justification::bottomRight);
-        }
     }
 
     void testBorder()
