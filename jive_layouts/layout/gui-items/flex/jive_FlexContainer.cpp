@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiFlexContainer::GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
+    FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexDirection{ tree, "flex-direction", juce::FlexBox::Direction::column }
         , flexWrap{ tree, "flex-wrap" }
@@ -30,7 +30,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    float GuiFlexContainer::getHeight() const
+    float FlexContainer::getHeight() const
     {
         if (hasAutoHeight())
         {
@@ -44,32 +44,32 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexContainer::updateLayout()
+    void FlexContainer::updateLayout()
     {
         auto flex = static_cast<juce::FlexBox>(*this);
         flex.performLayout(getBoxModel().getContentBounds());
     }
 
     //==================================================================================================================
-    GuiFlexContainer::operator juce::FlexBox()
+    FlexContainer::operator juce::FlexBox()
     {
         return getFlexBox();
     }
 
     //==================================================================================================================
-    void appendChildren(GuiFlexContainer& container, juce::FlexBox& flex)
+    void appendChildren(FlexContainer& container, juce::FlexBox& flex)
     {
         for (auto& child : container)
         {
             if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
             {
-                if (auto* flexItem = decoratedItem->toType<GuiFlexItem>())
+                if (auto* flexItem = decoratedItem->toType<FlexItem>())
                     flex.items.add(*flexItem);
             }
         }
     }
 
-    juce::FlexBox GuiFlexContainer::getFlexBox()
+    juce::FlexBox FlexContainer::getFlexBox()
     {
         juce::FlexBox flex;
 
@@ -84,9 +84,9 @@ namespace jive
         return flex;
     }
 
-    juce::FlexBox GuiFlexContainer::getFlexBoxWithDummyItems() const
+    juce::FlexBox FlexContainer::getFlexBoxWithDummyItems() const
     {
-        auto flex = const_cast<GuiFlexContainer*>(this)->getFlexBox();
+        auto flex = const_cast<FlexContainer*>(this)->getFlexBox();
 
         for (auto& flexItem : flex.items)
             flexItem.associatedComponent = nullptr;
@@ -94,7 +94,7 @@ namespace jive
         return flex;
     }
 
-    float GuiFlexContainer::getMinimumContentHeight() const
+    float FlexContainer::getMinimumContentHeight() const
     {
         auto flex = getFlexBoxWithDummyItems();
         flex.performLayout(juce::Rectangle<float>{ 0.f, 0.f, getWidth(), std::numeric_limits<float>::max() });
@@ -112,11 +112,11 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-class GuiFlexContainerUnitTest : public juce::UnitTest
+class FlexContainerUnitTest : public juce::UnitTest
 {
 public:
-    GuiFlexContainerUnitTest()
-        : juce::UnitTest{ "jive::GuiFlexContainer", "jive" }
+    FlexContainerUnitTest()
+        : juce::UnitTest{ "jive::FlexContainer", "jive" }
     {
     }
 
@@ -132,18 +132,18 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::GuiFlexContainer> createFlexContainer(juce::ValueTree tree = juce::ValueTree{ "Component" })
+    std::unique_ptr<jive::FlexContainer> createFlexContainer(juce::ValueTree tree = juce::ValueTree{ "Component" })
     {
-        return std::make_unique<jive::GuiFlexContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                        tree));
+        return std::make_unique<jive::FlexContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                     tree));
     }
 
-    std::unique_ptr<jive::GuiFlexItem> createFlexItem(jive::GuiFlexContainer* parent,
-                                                      juce::ValueTree tree = juce::ValueTree{ "Component" })
+    std::unique_ptr<jive::FlexItem> createFlexItem(jive::FlexContainer* parent,
+                                                   juce::ValueTree tree = juce::ValueTree{ "Component" })
     {
-        return std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                   tree,
-                                                                                   parent));
+        return std::make_unique<jive::FlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                tree,
+                                                                                parent));
     }
 
     void testDirection()
@@ -281,5 +281,5 @@ private:
     }
 };
 
-static GuiFlexContainerUnitTest guiFlexContainerUnitTest;
+static FlexContainerUnitTest flexContainerUnitTest;
 #endif

@@ -4,11 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiFlexItem : public GuiItemDecorator
+    class FlexItem : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
-        explicit GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate);
+        explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
         operator juce::FlexItem();
@@ -25,6 +25,6 @@ namespace jive
         TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
-        JUCE_LEAK_DETECTOR(GuiFlexItem)
+        JUCE_LEAK_DETECTOR(FlexItem)
     };
 } // namespace jive

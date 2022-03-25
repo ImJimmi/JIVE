@@ -4,7 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiFlexItem::GuiFlexItem(std::unique_ptr<GuiItem> itemToDecorate)
+    FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexItemOrder{ tree, "order" }
         , flexItemGrow{ tree, "flex-grow" }
@@ -40,7 +40,7 @@ namespace jive
         };
     }
 
-    GuiFlexItem::operator juce::FlexItem()
+    FlexItem::operator juce::FlexItem()
     {
         juce::FlexItem flexItem{ *component };
 
@@ -58,9 +58,9 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiFlexItem::updateParentLayout()
+    void FlexItem::updateParentLayout()
     {
-        if (auto* container = dynamic_cast<GuiFlexContainer*>(getParent()))
+        if (auto* container = dynamic_cast<FlexContainer*>(getParent()))
             container->updateLayout();
         else if (getParent() != nullptr)
             jassertfalse;
@@ -69,11 +69,11 @@ namespace jive
 
 //======================================================================================================================
 #if JIVE_UNIT_TESTS
-class GuiFlexItemUnitTest : public juce::UnitTest
+class FlexItemUnitTest : public juce::UnitTest
 {
 public:
-    GuiFlexItemUnitTest()
-        : juce::UnitTest{ "jive::GuiFlexItem", "jive" }
+    FlexItemUnitTest()
+        : juce::UnitTest{ "jive::FlexItem", "jive" }
     {
     }
 
@@ -90,10 +90,10 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::GuiFlexItem> createFlexItem(juce::ValueTree tree)
+    std::unique_ptr<jive::FlexItem> createFlexItem(juce::ValueTree tree)
     {
-        return std::make_unique<jive::GuiFlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                   tree));
+        return std::make_unique<jive::FlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                tree));
     }
 
     void testComponent()
@@ -233,5 +233,5 @@ private:
     }
 };
 
-static GuiFlexItemUnitTest guiFlexItemUnitTest;
+static FlexItemUnitTest flexItemUnitTest;
 #endif
