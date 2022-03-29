@@ -309,4 +309,27 @@ namespace juce
         jassert(options.size() >= index);
         return options[index];
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::GridItem::JustifySelf>::varArray = {
+        "start",
+        "end",
+        "centre",
+        "stretch",
+        "auto"
+    };
+
+    juce::GridItem::JustifySelf VariantConverter<juce::GridItem::JustifySelf>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::GridItem::JustifySelf>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::GridItem::JustifySelf>::toVar(juce::GridItem::JustifySelf justification)
+    {
+        const auto index = static_cast<int>(justification);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce

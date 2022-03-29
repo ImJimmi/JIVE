@@ -7,6 +7,7 @@ namespace jive
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , order{ tree, "order" }
+        , justifySelf{ tree, "justify-self", juce::GridItem::JustifySelf::autoValue }
     {
     }
 
@@ -16,6 +17,7 @@ namespace jive
         juce::GridItem gridItem{ getComponent() };
 
         gridItem.order = order;
+        gridItem.justifySelf = justifySelf;
 
         return gridItem;
     }
@@ -35,6 +37,7 @@ public:
     {
         testComponent();
         testOrder();
+        testJustifySelf();
     }
 
 private:
@@ -82,6 +85,56 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.order == 456);
+        }
+    }
+
+    void testJustifySelf()
+    {
+        beginTest("justify-self");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::autoValue);
+
+            tree.setProperty("justify-self", "start", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::start);
+
+            tree.setProperty("justify-self", "end", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::end);
+
+            tree.setProperty("justify-self", "centre", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::center);
+
+            tree.setProperty("justify-self", "stretch", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::stretch);
+
+            tree.setProperty("justify-self", "auto", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::autoValue);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "justify-self", "end" },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.justifySelf == juce::GridItem::JustifySelf::end);
         }
     }
 };

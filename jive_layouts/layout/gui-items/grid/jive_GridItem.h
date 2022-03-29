@@ -16,6 +16,7 @@ namespace jive
     private:
         //==============================================================================================================
         TypedValue<int> order;
+        TypedValue<juce::GridItem::JustifySelf> justifySelf;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)

@@ -133,4 +133,17 @@ namespace juce
         //==============================================================================================================
         static const Array<var> options;
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::GridItem::JustifySelf>
+    {
+        //==============================================================================================================
+        static juce::GridItem::JustifySelf fromVar(const var& v);
+        static var toVar(juce::GridItem::JustifySelf direction);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce
