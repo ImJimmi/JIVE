@@ -140,7 +140,20 @@ namespace juce
     {
         //==============================================================================================================
         static juce::GridItem::JustifySelf fromVar(const var& v);
-        static var toVar(juce::GridItem::JustifySelf direction);
+        static var toVar(juce::GridItem::JustifySelf justification);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::GridItem::AlignSelf>
+    {
+        //==============================================================================================================
+        static juce::GridItem::AlignSelf fromVar(const var& v);
+        static var toVar(juce::GridItem::AlignSelf alignment);
 
     private:
         //==============================================================================================================
