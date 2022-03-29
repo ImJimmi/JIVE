@@ -12,6 +12,7 @@
 
 #include "layout/gui-items/flex/jive_FlexContainer.cpp"
 #include "layout/gui-items/flex/jive_FlexItem.cpp"
+#include "layout/gui-items/grid/jive_GridItem.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
 
 #include "layout/jive_ViewRenderer.cpp"
