@@ -9,6 +9,7 @@ namespace jive
         , order{ tree, "order" }
         , justifySelf{ tree, "justify-self", juce::GridItem::JustifySelf::autoValue }
         , alignSelf{ tree, "align-self", juce::GridItem::AlignSelf::autoValue }
+        , column{ tree, "column" }
     {
     }
 
@@ -20,6 +21,7 @@ namespace jive
         gridItem.order = order;
         gridItem.justifySelf = justifySelf;
         gridItem.alignSelf = alignSelf;
+        gridItem.column = column;
 
         return gridItem;
     }
@@ -27,6 +29,17 @@ namespace jive
 
 //======================================================================================================================
 #if JIVE_UNIT_TESTS
+bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
+{
+    return a.getName() == b.getName() && a.getNumber() == b.getNumber();
+}
+
+bool compare(juce::GridItem::StartAndEndProperty a,
+             juce::GridItem::StartAndEndProperty b)
+{
+    return compare(a.start, b.start) && compare(a.end, b.end);
+}
+
 class GridItemUnitTest : public juce::UnitTest
 {
 public:
@@ -41,6 +54,7 @@ public:
         testOrder();
         testJustifySelf();
         testAlignSelf();
+        testColumn();
     }
 
 private:
@@ -188,6 +202,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.alignSelf == juce::GridItem::AlignSelf::end);
+        }
+    }
+
+    void testColumn()
+    {
+        beginTest("column");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{}));
+
+            tree.setProperty("column", "3 / span 4", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{ 3, juce::GridItem::Span{ 4 } }));
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "column", "this-line / 42" },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{ "this-line", 42 }));
         }
     }
 };

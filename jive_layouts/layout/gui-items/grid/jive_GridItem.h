@@ -18,6 +18,7 @@ namespace jive
         TypedValue<int> order;
         TypedValue<juce::GridItem::JustifySelf> justifySelf;
         TypedValue<juce::GridItem::AlignSelf> alignSelf;
+        TypedValue<juce::GridItem::StartAndEndProperty> column;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)

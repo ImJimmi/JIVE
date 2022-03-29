@@ -355,4 +355,86 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    juce::GridItem::Span VariantConverter<juce::GridItem::Span>::fromVar(const var& v)
+    {
+        const auto tokens = juce::StringArray::fromTokens(v.toString(), false);
+        jassert(tokens.size() == 2);
+        jassert(tokens[0] == "span");
+
+        return juce::GridItem::Span{ tokens[1].getIntValue() };
+    }
+
+    var VariantConverter<juce::GridItem::Span>::toVar(juce::GridItem::Span span)
+    {
+        return "span " + String{ span.number };
+    }
+
+    //==================================================================================================================
+    juce::GridItem::Property VariantConverter<juce::GridItem::Property>::fromVar(const var& v)
+    {
+        if (v.isInt())
+            return static_cast<int>(v);
+
+        const auto value = v.toString();
+
+        if (value == "auto")
+            return juce::GridItem::Keyword::autoValue;
+
+        if (value.startsWith("span"))
+            return VariantConverter<juce::GridItem::Span>::fromVar(v);
+
+        return value;
+    }
+
+    var VariantConverter<juce::GridItem::Property>::toVar(juce::GridItem::Property property)
+    {
+        if (property.hasSpan())
+        {
+            return VariantConverter<juce::GridItem::Span>::toVar(juce::GridItem::Span{ property.getNumber(),
+                                                                                       property.getName() });
+        }
+
+        if (property.hasAbsolute())
+            return property.getNumber();
+        if (property.hasName())
+            return property.getName();
+
+        return "auto";
+    }
+
+    //==================================================================================================================
+    juce::GridItem::StartAndEndProperty VariantConverter<juce::GridItem::StartAndEndProperty>::fromVar(const var& v)
+    {
+        auto tokens = juce::StringArray::fromTokens(v.toString(), "/", "");
+        jassert(tokens.size() == 2);
+
+        juce::Array<juce::var> vars;
+
+        for (auto& token : tokens)
+        {
+            token = token.trim();
+
+            if (token.containsOnly("0123456789"))
+                vars.add(token.getIntValue());
+            else
+                vars.add(token);
+        }
+
+        const auto start = juce::VariantConverter<juce::GridItem::Property>::fromVar(vars[0]);
+        const auto end = juce::VariantConverter<juce::GridItem::Property>::fromVar(vars[1]);
+
+        return { start, end };
+    }
+
+    var VariantConverter<juce::GridItem::StartAndEndProperty>::toVar(juce::GridItem::StartAndEndProperty startAndEnd)
+    {
+        juce::StringArray tokens;
+
+        tokens.add(juce::VariantConverter<juce::GridItem::Property>::toVar(startAndEnd.start));
+        tokens.add(juce::VariantConverter<juce::GridItem::Property>::toVar(startAndEnd.end));
+
+        return tokens.joinIntoString(" / ");
+    }
 } // namespace juce

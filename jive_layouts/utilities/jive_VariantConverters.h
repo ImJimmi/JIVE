@@ -159,4 +159,31 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::GridItem::Span>
+    {
+        //==============================================================================================================
+        static juce::GridItem::Span fromVar(const var& v);
+        static var toVar(juce::GridItem::Span span);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::GridItem::Property>
+    {
+        //==============================================================================================================
+        static juce::GridItem::Property fromVar(const var& v);
+        static var toVar(juce::GridItem::Property startAndEnd);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::GridItem::StartAndEndProperty>
+    {
+        //==============================================================================================================
+        static juce::GridItem::StartAndEndProperty fromVar(const var& v);
+        static var toVar(juce::GridItem::StartAndEndProperty startAndEnd);
+    };
 } // namespace juce
