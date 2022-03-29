@@ -6,6 +6,7 @@ namespace jive
     //==================================================================================================================
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
+        , order{ tree, "order" }
     {
     }
 
@@ -13,6 +14,8 @@ namespace jive
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ getComponent() };
+
+        gridItem.order = order;
 
         return gridItem;
     }
@@ -31,6 +34,7 @@ public:
     void runTest() final
     {
         testComponent();
+        testOrder();
     }
 
 private:
@@ -49,6 +53,36 @@ private:
 
         auto gridItem = static_cast<juce::GridItem>(*item);
         expect(gridItem.associatedComponent == &item->getComponent());
+    }
+
+    void testOrder()
+    {
+        beginTest("order");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.order == 0);
+
+            tree.setProperty("order", 123, nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.order == 123);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "order", 456 },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.order == 456);
+        }
     }
 };
 
