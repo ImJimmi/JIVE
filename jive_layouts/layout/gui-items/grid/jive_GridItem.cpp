@@ -10,6 +10,7 @@ namespace jive
         , justifySelf{ tree, "justify-self", juce::GridItem::JustifySelf::autoValue }
         , alignSelf{ tree, "align-self", juce::GridItem::AlignSelf::autoValue }
         , column{ tree, "column" }
+        , row{ tree, "row" }
     {
     }
 
@@ -22,6 +23,7 @@ namespace jive
         gridItem.justifySelf = justifySelf;
         gridItem.alignSelf = alignSelf;
         gridItem.column = column;
+        gridItem.row = row;
 
         return gridItem;
     }
@@ -55,6 +57,7 @@ public:
         testJustifySelf();
         testAlignSelf();
         testColumn();
+        testRow();
     }
 
 private:
@@ -232,6 +235,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{ "this-line", 42 }));
+        }
+    }
+
+    void testRow()
+    {
+        beginTest("row");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{}));
+
+            tree.setProperty("row", "2 / another-line", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{ 2, "another-line" }));
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "row", "14 / span 7" },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{ 14, juce::GridItem::Span{ 7 } }));
         }
     }
 };
