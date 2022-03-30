@@ -20,6 +20,7 @@ namespace jive
         TypedValue<juce::GridItem::AlignSelf> alignSelf;
         TypedValue<juce::GridItem::StartAndEndProperty> column;
         TypedValue<juce::GridItem::StartAndEndProperty> row;
+        TypedValue<juce::String> area;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)

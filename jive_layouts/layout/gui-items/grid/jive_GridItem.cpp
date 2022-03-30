@@ -11,6 +11,7 @@ namespace jive
         , alignSelf{ tree, "align-self", juce::GridItem::AlignSelf::autoValue }
         , column{ tree, "column" }
         , row{ tree, "row" }
+        , area{ tree, "area" }
     {
     }
 
@@ -20,10 +21,13 @@ namespace jive
         juce::GridItem gridItem{ getComponent() };
 
         gridItem.order = order;
+
         gridItem.justifySelf = justifySelf;
         gridItem.alignSelf = alignSelf;
+
         gridItem.column = column;
         gridItem.row = row;
+        gridItem.area = area;
 
         return gridItem;
     }
@@ -58,6 +62,7 @@ public:
         testAlignSelf();
         testColumn();
         testRow();
+        testArea();
     }
 
 private:
@@ -265,6 +270,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{ 14, juce::GridItem::Span{ 7 } }));
+        }
+    }
+
+    void testArea()
+    {
+        beginTest("area");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.area.isEmpty());
+
+            tree.setProperty("area", "just-here", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.area == "just-here");
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "area", "abc" },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.area == "abc");
         }
     }
 };
