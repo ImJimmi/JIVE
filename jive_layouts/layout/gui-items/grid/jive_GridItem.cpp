@@ -22,6 +22,18 @@ namespace jive
     }
 
     //==================================================================================================================
+    juce::GridItem::Margin boxModelToGridItemMargin(const BoxModel& boxModel)
+    {
+        const auto margin = boxModel.getMargin();
+
+        return {
+            margin.getTop(),
+            margin.getRight(),
+            margin.getBottom(),
+            margin.getLeft(),
+        };
+    }
+
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ getComponent() };
@@ -42,6 +54,8 @@ namespace jive
         gridItem.minHeight = minHeight;
         gridItem.maxHeight = maxHeight;
 
+        gridItem.margin = boxModelToGridItemMargin(getBoxModel());
+
         return gridItem;
     }
 } // namespace jive
@@ -57,6 +71,11 @@ bool compare(juce::GridItem::StartAndEndProperty a,
              juce::GridItem::StartAndEndProperty b)
 {
     return compare(a.start, b.start) && compare(a.end, b.end);
+}
+
+bool compare(juce::GridItem::Margin a, juce::GridItem::Margin b)
+{
+    return a.top == b.top && a.right == b.right && a.bottom == b.bottom && a.left == b.left;
 }
 
 class GridItemUnitTest : public juce::UnitTest
@@ -82,6 +101,7 @@ public:
         testHeight();
         testMinHeight();
         testMaxHeight();
+        testMargin();
     }
 
 private:
@@ -499,6 +519,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.maxHeight == 986.f);
+        }
+    }
+
+    void testMargin()
+    {
+        beginTest("margin");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.margin, juce::GridItem::Margin{}));
+
+            tree.setProperty("margin", "10 20 4 13.67", nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.margin, juce::GridItem::Margin{ 10.f, 20.f, 4.f, 13.67f }));
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "margin", 45 },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(compare(gridItem.margin, juce::GridItem::Margin{ 45.f }));
         }
     }
 };
