@@ -13,6 +13,7 @@ namespace jive
         , row{ tree, "row" }
         , area{ tree, "area" }
         , width{ tree, "width", juce::GridItem::notAssigned }
+        , minWidth{ tree, "min-width" }
     {
     }
 
@@ -31,6 +32,7 @@ namespace jive
         gridItem.area = area;
 
         gridItem.width = width;
+        gridItem.minWidth = minWidth;
 
         return gridItem;
     }
@@ -67,6 +69,7 @@ public:
         testRow();
         testArea();
         testWidth();
+        testMinWidth();
     }
 
 private:
@@ -334,6 +337,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.width == 374.6f);
+        }
+    }
+
+    void testMinWidth()
+    {
+        beginTest("min-width");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minWidth == 0.f);
+
+            tree.setProperty("min-width", 493.6f, nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minWidth == 493.6f);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "min-width", 12.6f },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minWidth == 12.6f);
         }
     }
 };
