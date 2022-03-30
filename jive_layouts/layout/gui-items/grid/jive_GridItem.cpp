@@ -16,6 +16,7 @@ namespace jive
         , minWidth{ tree, "min-width" }
         , maxWidth{ tree, "max-width", juce::GridItem::notAssigned }
         , height{ tree, "height", juce::GridItem::notAssigned }
+        , minHeight{ tree, "min-height" }
     {
     }
 
@@ -37,6 +38,7 @@ namespace jive
         gridItem.minWidth = minWidth;
         gridItem.maxWidth = maxWidth;
         gridItem.height = height;
+        gridItem.minHeight = minHeight;
 
         return gridItem;
     }
@@ -76,6 +78,7 @@ public:
         testMinWidth();
         testMaxWidth();
         testHeight();
+        testMinHeight();
     }
 
 private:
@@ -433,6 +436,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.height == 374.6f);
+        }
+    }
+
+    void testMinHeight()
+    {
+        beginTest("min-height");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minHeight == 0.f);
+
+            tree.setProperty("min-height", 493.6f, nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minHeight == 493.6f);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "min-height", 12.6f },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.minHeight == 12.6f);
         }
     }
 };

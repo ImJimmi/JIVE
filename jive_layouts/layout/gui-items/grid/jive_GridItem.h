@@ -25,6 +25,7 @@ namespace jive
         TypedValue<float> minWidth;
         TypedValue<float> maxWidth;
         TypedValue<float> height;
+        TypedValue<float> minHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)
