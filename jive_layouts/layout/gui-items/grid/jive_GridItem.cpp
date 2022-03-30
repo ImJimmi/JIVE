@@ -14,6 +14,7 @@ namespace jive
         , area{ tree, "area" }
         , width{ tree, "width", juce::GridItem::notAssigned }
         , minWidth{ tree, "min-width" }
+        , maxWidth{ tree, "max-width", juce::GridItem::notAssigned }
     {
     }
 
@@ -33,6 +34,7 @@ namespace jive
 
         gridItem.width = width;
         gridItem.minWidth = minWidth;
+        gridItem.maxWidth = maxWidth;
 
         return gridItem;
     }
@@ -70,6 +72,7 @@ public:
         testArea();
         testWidth();
         testMinWidth();
+        testMaxWidth();
     }
 
 private:
@@ -367,6 +370,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.minWidth == 12.6f);
+        }
+    }
+
+    void testMaxWidth()
+    {
+        beginTest("max-width");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.maxWidth == juce::GridItem::notAssigned);
+
+            tree.setProperty("max-width", 30.4f, nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.maxWidth == 30.4f);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "max-width", 986.f },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.maxWidth == 986.f);
         }
     }
 };
