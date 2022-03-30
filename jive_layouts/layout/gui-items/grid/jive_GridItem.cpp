@@ -12,6 +12,7 @@ namespace jive
         , column{ tree, "column" }
         , row{ tree, "row" }
         , area{ tree, "area" }
+        , width{ tree, "width", juce::GridItem::notAssigned }
     {
     }
 
@@ -28,6 +29,8 @@ namespace jive
         gridItem.column = column;
         gridItem.row = row;
         gridItem.area = area;
+
+        gridItem.width = width;
 
         return gridItem;
     }
@@ -63,6 +66,7 @@ public:
         testColumn();
         testRow();
         testArea();
+        testWidth();
     }
 
 private:
@@ -300,6 +304,36 @@ private:
 
             auto gridItem = static_cast<juce::GridItem>(*item);
             expect(gridItem.area == "abc");
+        }
+    }
+
+    void testWidth()
+    {
+        beginTest("width");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.width == juce::GridItem::notAssigned);
+
+            tree.setProperty("width", 112.f, nullptr);
+
+            gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.width == 112.f);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 374.6f },
+                },
+            };
+            auto item = createGridItem(tree);
+
+            auto gridItem = static_cast<juce::GridItem>(*item);
+            expect(gridItem.width == 374.6f);
         }
     }
 };

@@ -21,6 +21,7 @@ namespace jive
         TypedValue<juce::GridItem::StartAndEndProperty> column;
         TypedValue<juce::GridItem::StartAndEndProperty> row;
         TypedValue<juce::String> area;
+        TypedValue<float> width;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)
