@@ -75,7 +75,7 @@ namespace jive
         switch (item->getDisplay())
         {
         case GuiItem::Display::flex:
-            return std::make_unique<GuiFlexContainer>(std::move(item));
+            return std::make_unique<FlexContainer>(std::move(item));
         }
 
         // Unhandled display type!
@@ -91,7 +91,7 @@ namespace jive
         switch (item->getParent()->getDisplay())
         {
         case GuiItem::Display::flex:
-            return std::make_unique<GuiFlexItem>(std::move(item));
+            return std::make_unique<FlexItem>(std::move(item));
         }
 
         // Unhandled display type!
@@ -261,8 +261,8 @@ private:
             "Component",
             { { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) } },
             { juce::ValueTree{ "Label" } } });
-        expect(dynamic_cast<jive::GuiFlexContainer*>(flexView.get()));
-        expect(dynamic_cast<jive::GuiFlexItem*>(&flexView->getChild(0)));
+        expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
+        expect(dynamic_cast<jive::FlexItem*>(&flexView->getChild(0)));
     }
 
     void testXML()

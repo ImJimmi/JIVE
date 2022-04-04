@@ -4,11 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
-    class GuiFlexContainer : public GuiItemDecorator
+    class FlexContainer : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
-        explicit GuiFlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
+        explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
         float getHeight() const override;
@@ -34,6 +34,6 @@ namespace jive
         TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
 
         //==============================================================================================================
-        JUCE_LEAK_DETECTOR(GuiFlexContainer)
+        JUCE_LEAK_DETECTOR(FlexContainer)
     };
 } // namespace jive
