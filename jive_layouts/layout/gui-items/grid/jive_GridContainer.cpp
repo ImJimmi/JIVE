@@ -15,6 +15,7 @@ namespace jive
         , templateRows{ tree, "template-rows" }
         , templateAreas{ tree, "template-areas" }
         , autoRows{ tree, "auto-rows" }
+        , autoColumns{ tree, "auto-columns" }
     {
     }
 
@@ -33,6 +34,7 @@ namespace jive
         grid.templateRows = templateRows;
         grid.templateAreas = templateAreas;
         grid.autoRows = autoRows;
+        grid.autoColumns = autoColumns;
 
         return grid;
     }
@@ -84,6 +86,7 @@ public:
         testTemplateRows();
         testTemplateAreas();
         testAutoRows();
+        testAutoColumns();
     }
 
 private:
@@ -374,6 +377,25 @@ private:
         tree.setProperty("auto-rows", "13fr", nullptr);
         grid = static_cast<juce::Grid>(*item);
         expect(compare(grid.autoRows, juce::Grid::Fr{ 13 }));
+    }
+
+    void testAutoColumns()
+    {
+        beginTest("auto-columns");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.autoColumns, juce::Grid::TrackInfo{}));
+
+        tree.setProperty("auto-columns", "1.23px", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.autoColumns, juce::Grid::Px{ 1.23L }));
+
+        tree.setProperty("auto-columns", "15fr", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.autoColumns, juce::Grid::Fr{ 15 }));
     }
 };
 
