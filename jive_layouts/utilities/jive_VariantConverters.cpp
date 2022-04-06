@@ -638,4 +638,29 @@ namespace juce
 
         return info.getSize();
     }
+
+    //==================================================================================================================
+    StringArray VariantConverter<StringArray>::fromVar(const var& v)
+    {
+        if (v.isArray())
+        {
+            auto& varArray = *v.getArray();
+            StringArray result;
+
+            for (const auto& value : varArray)
+            {
+                if (!value.isVoid())
+                    result.add(value.toString());
+            }
+
+            return result;
+        }
+
+        return juce::StringArray::fromTokens(v.toString(), " ", {});
+    }
+
+    var VariantConverter<StringArray>::toVar(const StringArray& array)
+    {
+        return array.joinIntoString(" ");
+    }
 } // namespace juce

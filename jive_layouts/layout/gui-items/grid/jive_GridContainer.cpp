@@ -13,6 +13,7 @@ namespace jive
         , autoFlow{ tree, "auto-flow", juce::Grid::AutoFlow::row }
         , templateColumns{ tree, "template-columns" }
         , templateRows{ tree, "template-rows" }
+        , templateAreas{ tree, "template-areas" }
     {
     }
 
@@ -29,6 +30,7 @@ namespace jive
 
         grid.templateColumns = templateColumns;
         grid.templateRows = templateRows;
+        grid.templateAreas = templateAreas;
 
         return grid;
     }
@@ -78,6 +80,7 @@ public:
         testAutoFlow();
         testTemplateColumns();
         testTemplateRows();
+        testTemplateAreas();
     }
 
 private:
@@ -334,6 +337,21 @@ private:
                            juce::Grid::Fr{ 3 },
                            juce::Grid::TrackInfo{},
                        }));
+    }
+
+    void testTemplateAreas()
+    {
+        beginTest("template-areas");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.templateAreas.isEmpty());
+
+        tree.setProperty("template-areas", "a b c", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.templateAreas == juce::StringArray{ "a", "b", "c" });
     }
 };
 

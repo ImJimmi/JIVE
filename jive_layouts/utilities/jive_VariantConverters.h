@@ -262,11 +262,20 @@ namespace juce
     };
 
     //==================================================================================================================
-    template<>
+    template <>
     struct VariantConverter<Grid::TrackInfo>
     {
         //==============================================================================================================
         static Grid::TrackInfo fromVar(const var& v);
         static var toVar(const Grid::TrackInfo& info);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<StringArray>
+    {
+        //==============================================================================================================
+        static StringArray fromVar(const var& v);
+        static var toVar(const StringArray& info);
     };
 } // namespace juce
