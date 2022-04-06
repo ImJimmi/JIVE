@@ -212,4 +212,17 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::Grid::JustifyContent>
+    {
+        //==============================================================================================================
+        static juce::Grid::JustifyContent fromVar(const var& v);
+        static var toVar(juce::Grid::JustifyContent alignment);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce

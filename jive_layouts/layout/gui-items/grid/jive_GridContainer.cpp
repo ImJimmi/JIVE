@@ -8,6 +8,7 @@ namespace jive
         : GuiItemDecorator(std::move(itemToDecorate))
         , justifyItems{ tree, "justify-items", juce::Grid::JustifyItems::stretch }
         , alignItems{ tree, "align-items", juce::Grid::AlignItems::stretch }
+        , justifyContent{ tree, "justify-content", juce::Grid::JustifyContent::stretch }
     {
     }
 
@@ -18,6 +19,7 @@ namespace jive
 
         grid.justifyItems = justifyItems;
         grid.alignItems = alignItems;
+        grid.justifyContent = justifyContent;
 
         return grid;
     }
@@ -37,6 +39,7 @@ public:
     {
         testJustifyItems();
         testAlignItems();
+        testJustifyContent();
     }
 
 private:
@@ -98,6 +101,45 @@ private:
         tree.setProperty("align-items", "stretch", nullptr);
         grid = static_cast<juce::Grid>(*item);
         expect(grid.alignItems == juce::Grid::AlignItems::stretch);
+    }
+
+    void testJustifyContent()
+    {
+        beginTest("justify-content");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::stretch);
+
+        tree.setProperty("justify-content", "start", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::start);
+
+        tree.setProperty("justify-content", "end", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::end);
+
+        tree.setProperty("justify-content", "centre", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::center);
+
+        tree.setProperty("justify-content", "stretch", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::stretch);
+
+        tree.setProperty("justify-content", "space-around", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::spaceAround);
+
+        tree.setProperty("justify-content", "space-between", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::spaceBetween);
+
+        tree.setProperty("justify-content", "space-evenly", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.justifyContent == juce::Grid::JustifyContent::spaceEvenly);
     }
 };
 
