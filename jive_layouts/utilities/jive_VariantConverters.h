@@ -186,4 +186,17 @@ namespace juce
         static juce::GridItem::StartAndEndProperty fromVar(const var& v);
         static var toVar(juce::GridItem::StartAndEndProperty startAndEnd);
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::Grid::JustifyItems>
+    {
+        //==============================================================================================================
+        static juce::Grid::JustifyItems fromVar(const var& v);
+        static var toVar(juce::Grid::JustifyItems justification);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce
