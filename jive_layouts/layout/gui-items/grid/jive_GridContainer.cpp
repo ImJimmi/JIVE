@@ -11,6 +11,7 @@ namespace jive
         , justifyContent{ tree, "justify-content", juce::Grid::JustifyContent::stretch }
         , alignContent{ tree, "align-content", juce::Grid::AlignContent::stretch }
         , autoFlow{ tree, "auto-flow", juce::Grid::AutoFlow::row }
+        , templateColumns{ tree, "template-columns" }
     {
     }
 
@@ -25,11 +26,38 @@ namespace jive
         grid.alignContent = alignContent;
         grid.autoFlow = autoFlow;
 
+        grid.templateColumns = templateColumns;
+
         return grid;
     }
 } // namespace jive
 
 //======================================================================================================================
+bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
+{
+    return (a.isAuto() == b.isAuto())
+        && (a.isFractional() == b.isFractional())
+        && (a.isPixels() == b.isPixels())
+        && (a.getStartLineName() == b.getStartLineName())
+        && (a.getEndLineName() == b.getEndLineName())
+        && (a.getSize() == b.getSize());
+}
+
+bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
+             const juce::Array<juce::Grid::TrackInfo>& b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    for (auto i = 0; i < a.size(); i++)
+    {
+        if (!compare(a[i], b[i]))
+            return false;
+    }
+
+    return true;
+}
+
 #if JIVE_UNIT_TESTS
 class GridContainerTest : public juce::UnitTest
 {
@@ -46,6 +74,7 @@ public:
         testJustifyContent();
         testAlignContent();
         testAutoFlow();
+        testTemplateColumns();
     }
 
 private:
@@ -212,6 +241,51 @@ private:
         tree.setProperty("auto-flow", "column dense", nullptr);
         grid = static_cast<juce::Grid>(*item);
         expect(grid.autoFlow == juce::Grid::AutoFlow::columnDense);
+    }
+
+    void testTemplateColumns()
+    {
+        beginTest("template-columns");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.templateColumns.isEmpty());
+
+        tree.setProperty("template-columns", "1fr", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Fr{ 1 } }));
+
+        tree.setProperty("template-columns", "4px", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 4 } }));
+
+        tree.setProperty("template-columns", "24", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 24 } }));
+
+        tree.setProperty("template-columns", "auto", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
+
+        tree.setProperty("template-columns", "10 30 40", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::Px{ 10 },
+                           juce::Grid::Px{ 30 },
+                           juce::Grid::Px{ 40 },
+                       }));
+
+        tree.setProperty("template-columns", "auto 2fr 99px", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateColumns,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::TrackInfo{},
+                           juce::Grid::Fr{ 2 },
+                           juce::Grid::Px{ 99 },
+                       }));
     }
 };
 

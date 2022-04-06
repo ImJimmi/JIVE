@@ -20,6 +20,7 @@ namespace jive
         TypedValue<juce::Grid::JustifyContent> justifyContent;
         TypedValue<juce::Grid::AlignContent> alignContent;
         TypedValue<juce::Grid::AutoFlow> autoFlow;
+        TypedValue<juce::Array<juce::Grid::TrackInfo>> templateColumns;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)

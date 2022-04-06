@@ -553,4 +553,89 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    template <typename T>
+    Array<T> VariantConverter<Array<T>>::fromVar(const var& v)
+    {
+        if (v.isArray())
+        {
+            auto& varArray = *v.getArray();
+            Array<T> result;
+
+            for (const auto& value : varArray)
+            {
+                if (!value.isVoid())
+                    result.add(VariantConverter<T>::fromVar(value));
+            }
+
+            return result;
+        }
+
+        if (v.isString())
+        {
+            const auto tokens = juce::StringArray::fromTokens(v.toString(), " ", {});
+
+            if (tokens.size() > 1)
+            {
+                Array<T> result;
+
+                for (const auto& value : tokens)
+                    result.add(VariantConverter<T>::fromVar(value));
+
+                return result;
+            }
+        }
+
+        if (v.isVoid())
+            return {};
+
+        return { VariantConverter<T>::fromVar(v) };
+    }
+
+    template <typename T>
+    var VariantConverter<Array<T>>::toVar(const Array<T>& array)
+    {
+        var result;
+
+        for (const auto& value : array)
+            result.append(VariantConverter<T>::toVar(value));
+
+        return result;
+    }
+
+    //==================================================================================================================
+    Grid::TrackInfo VariantConverter<Grid::TrackInfo>::fromVar(const var& v)
+    {
+        if (v.isString())
+        {
+            const auto text = v.toString();
+
+            if (text == "auto")
+                return {};
+
+            const auto doubleValue = text.getDoubleValue();
+
+            if (text.endsWithIgnoreCase("fr"))
+                return Grid::Fr{ roundToInt(doubleValue) };
+
+            return Grid::Px{ static_cast<long double>(doubleValue) };
+        }
+
+        if (v.isDouble())
+            return Grid::Px{ static_cast<long double>(static_cast<double>(v)) };
+
+        return Grid::Px{ static_cast<int>(v) };
+    }
+
+    var VariantConverter<Grid::TrackInfo>::toVar(const Grid::TrackInfo& info)
+    {
+        if (info.isAuto())
+            return "auto";
+
+        if (info.isFractional())
+            return String{ roundToInt(info.getSize()) } + "fr";
+
+        return info.getSize();
+    }
 } // namespace juce
