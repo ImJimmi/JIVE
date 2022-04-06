@@ -531,4 +531,26 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::Grid::AutoFlow>::varArray = {
+        "row",
+        "column",
+        "row dense",
+        "column dense",
+    };
+
+    juce::Grid::AutoFlow VariantConverter<juce::Grid::AutoFlow>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::Grid::AutoFlow>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::Grid::AutoFlow>::toVar(juce::Grid::AutoFlow flow)
+    {
+        const auto index = static_cast<int>(flow);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce

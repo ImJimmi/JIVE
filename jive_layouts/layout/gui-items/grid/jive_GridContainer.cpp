@@ -10,6 +10,7 @@ namespace jive
         , alignItems{ tree, "align-items", juce::Grid::AlignItems::stretch }
         , justifyContent{ tree, "justify-content", juce::Grid::JustifyContent::stretch }
         , alignContent{ tree, "align-content", juce::Grid::AlignContent::stretch }
+        , autoFlow{ tree, "auto-flow", juce::Grid::AutoFlow::row }
     {
     }
 
@@ -22,6 +23,7 @@ namespace jive
         grid.alignItems = alignItems;
         grid.justifyContent = justifyContent;
         grid.alignContent = alignContent;
+        grid.autoFlow = autoFlow;
 
         return grid;
     }
@@ -43,6 +45,7 @@ public:
         testAlignItems();
         testJustifyContent();
         testAlignContent();
+        testAutoFlow();
     }
 
 private:
@@ -182,6 +185,33 @@ private:
         tree.setProperty("align-content", "space-evenly", nullptr);
         grid = static_cast<juce::Grid>(*item);
         expect(grid.alignContent == juce::Grid::AlignContent::spaceEvenly);
+    }
+
+    void testAutoFlow()
+    {
+        beginTest("auto-flow");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.autoFlow == juce::Grid::AutoFlow::row);
+
+        tree.setProperty("auto-flow", "column", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.autoFlow == juce::Grid::AutoFlow::column);
+
+        tree.setProperty("auto-flow", "row", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.autoFlow == juce::Grid::AutoFlow::row);
+
+        tree.setProperty("auto-flow", "row dense", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.autoFlow == juce::Grid::AutoFlow::rowDense);
+
+        tree.setProperty("auto-flow", "column dense", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.autoFlow == juce::Grid::AutoFlow::columnDense);
     }
 };
 
