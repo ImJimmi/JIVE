@@ -663,4 +663,21 @@ namespace juce
     {
         return array.joinIntoString(" ");
     }
+
+    //==================================================================================================================
+    Grid::Px VariantConverter<Grid::Px>::fromVar(const var& v)
+    {
+        if (v.isString())
+            return Grid::Px{ static_cast<long double>(v.toString().getDoubleValue()) };
+
+        if (v.isDouble())
+            return Grid::Px{ static_cast<long double>(static_cast<double>(v)) };
+
+        return Grid::Px{ static_cast<int>(v) };
+    }
+
+    var VariantConverter<Grid::Px>::toVar(const Grid::Px& px)
+    {
+        return String{ static_cast<double>(px.pixels) } + "px";
+    }
 } // namespace juce

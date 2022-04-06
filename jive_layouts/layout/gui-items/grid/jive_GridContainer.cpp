@@ -16,6 +16,7 @@ namespace jive
         , templateAreas{ tree, "template-areas" }
         , autoRows{ tree, "auto-rows" }
         , autoColumns{ tree, "auto-columns" }
+        , gap{ tree, "gap" }
     {
     }
 
@@ -35,6 +36,10 @@ namespace jive
         grid.templateAreas = templateAreas;
         grid.autoRows = autoRows;
         grid.autoColumns = autoColumns;
+
+        const auto gaps = gap.get();
+        grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
+        grid.columnGap = gaps.size() > 1 ? gaps.getUnchecked(1) : grid.rowGap;
 
         return grid;
     }
@@ -87,6 +92,7 @@ public:
         testTemplateAreas();
         testAutoRows();
         testAutoColumns();
+        testGap();
     }
 
 private:
@@ -396,6 +402,28 @@ private:
         tree.setProperty("auto-columns", "15fr", nullptr);
         grid = static_cast<juce::Grid>(*item);
         expect(compare(grid.autoColumns, juce::Grid::Fr{ 15 }));
+    }
+
+    void testGap()
+    {
+        beginTest("gap");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.columnGap.pixels == 0);
+        expect(grid.rowGap.pixels == 0);
+
+        tree.setProperty("gap", "10", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.columnGap.pixels == 10);
+        expect(grid.rowGap.pixels == 10);
+
+        tree.setProperty("gap", "5 33", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.columnGap.pixels == 33);
+        expect(grid.rowGap.pixels == 5);
     }
 };
 

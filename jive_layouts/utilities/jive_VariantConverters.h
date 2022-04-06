@@ -278,4 +278,13 @@ namespace juce
         static StringArray fromVar(const var& v);
         static var toVar(const StringArray& info);
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<Grid::Px>
+    {
+        //==============================================================================================================
+        static Grid::Px fromVar(const var& v);
+        static var toVar(const Grid::Px& px);
+    };
 } // namespace juce
