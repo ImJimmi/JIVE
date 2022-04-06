@@ -12,6 +12,7 @@ namespace jive
         , alignContent{ tree, "align-content", juce::Grid::AlignContent::stretch }
         , autoFlow{ tree, "auto-flow", juce::Grid::AutoFlow::row }
         , templateColumns{ tree, "template-columns" }
+        , templateRows{ tree, "template-rows" }
     {
     }
 
@@ -27,6 +28,7 @@ namespace jive
         grid.autoFlow = autoFlow;
 
         grid.templateColumns = templateColumns;
+        grid.templateRows = templateRows;
 
         return grid;
     }
@@ -75,6 +77,7 @@ public:
         testAlignContent();
         testAutoFlow();
         testTemplateColumns();
+        testTemplateRows();
     }
 
 private:
@@ -285,6 +288,51 @@ private:
                            juce::Grid::TrackInfo{},
                            juce::Grid::Fr{ 2 },
                            juce::Grid::Px{ 99 },
+                       }));
+    }
+
+    void testTemplateRows()
+    {
+        beginTest("template-rows");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.templateRows.isEmpty());
+
+        tree.setProperty("template-rows", "5fr", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Fr{ 5 } }));
+
+        tree.setProperty("template-rows", "8px", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 8 } }));
+
+        tree.setProperty("template-rows", "17", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 17 } }));
+
+        tree.setProperty("template-rows", "auto", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
+
+        tree.setProperty("template-rows", "1 313 67", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::Px{ 1 },
+                           juce::Grid::Px{ 313 },
+                           juce::Grid::Px{ 67 },
+                       }));
+
+        tree.setProperty("template-rows", "78px 3fr auto", nullptr);
+        grid = static_cast<juce::Grid>(*item);
+        expect(compare(grid.templateRows,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::Px{ 78 },
+                           juce::Grid::Fr{ 3 },
+                           juce::Grid::TrackInfo{},
                        }));
     }
 };
