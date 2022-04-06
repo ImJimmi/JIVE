@@ -506,4 +506,29 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<juce::Grid::AlignContent>::varArray = {
+        "start",
+        "end",
+        "centre",
+        "stretch",
+        "space-around",
+        "space-between",
+        "space-evenly",
+    };
+
+    juce::Grid::AlignContent VariantConverter<juce::Grid::AlignContent>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<juce::Grid::AlignContent>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<juce::Grid::AlignContent>::toVar(juce::Grid::AlignContent alignment)
+    {
+        const auto index = static_cast<int>(alignment);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce
