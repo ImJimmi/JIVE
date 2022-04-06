@@ -16,6 +16,7 @@ namespace jive
     private:
         //==============================================================================================================
         TypedValue<juce::Grid::JustifyItems> justifyItems;
+        TypedValue<juce::Grid::AlignItems> alignItems;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)
