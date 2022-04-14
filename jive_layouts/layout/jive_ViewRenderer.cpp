@@ -76,6 +76,8 @@ namespace jive
         {
         case GuiItem::Display::flex:
             return std::make_unique<FlexContainer>(std::move(item));
+        case GuiItem::Display::grid:
+            return std::make_unique<GridContainer>(std::move(item));
         }
 
         // Unhandled display type!
@@ -92,6 +94,8 @@ namespace jive
         {
         case GuiItem::Display::flex:
             return std::make_unique<FlexItem>(std::move(item));
+        case GuiItem::Display::grid:
+            return std::make_unique<GridItem>(std::move(item));
         }
 
         // Unhandled display type!
@@ -259,10 +263,27 @@ private:
 
         auto flexView = renderer.renderView(juce::ValueTree{
             "Component",
-            { { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) } },
-            { juce::ValueTree{ "Label" } } });
+            {
+                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+            },
+            {
+                juce::ValueTree{ "Label" },
+            },
+        });
         expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
         expect(dynamic_cast<jive::FlexItem*>(&flexView->getChild(0)));
+
+        auto gridView = renderer.renderView(juce::ValueTree{
+            "Component",
+            {
+                { "display", "grid" },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        });
+        expect(dynamic_cast<jive::GridContainer*>(gridView.get()));
+        expect(dynamic_cast<jive::GridItem*>(&gridView->getChild(0)));
     }
 
     void testXML()
