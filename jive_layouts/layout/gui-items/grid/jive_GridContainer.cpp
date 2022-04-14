@@ -21,6 +21,18 @@ namespace jive
     }
 
     //==================================================================================================================
+    void appendChildren(GuiItem& container, juce::Grid& grid)
+    {
+        for (auto& child : container)
+        {
+            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
+            {
+                if (auto* const gridItem = decoratedItem->toType<GridItem>())
+                    grid.items.add(*gridItem);
+            }
+        }
+    }
+
     GridContainer::operator juce::Grid()
     {
         juce::Grid grid;
@@ -40,6 +52,8 @@ namespace jive
         const auto gaps = gap.get();
         grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
         grid.columnGap = gaps.size() > 1 ? gaps.getUnchecked(1) : grid.rowGap;
+
+        appendChildren(*this, grid);
 
         return grid;
     }
@@ -93,6 +107,7 @@ public:
         testAutoRows();
         testAutoColumns();
         testGap();
+        testItems();
     }
 
 private:
@@ -100,6 +115,13 @@ private:
     {
         return std::make_unique<jive::GridContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                                      tree));
+    }
+
+    std::unique_ptr<jive::GridItem> createGridItem(jive::GuiItem* const parent)
+    {
+        return std::make_unique<jive::GridItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                juce::ValueTree{ "Component" },
+                                                                                parent));
     }
 
     void testJustifyItems()
@@ -424,6 +446,26 @@ private:
         grid = static_cast<juce::Grid>(*item);
         expect(grid.columnGap.pixels == 33);
         expect(grid.rowGap.pixels == 5);
+    }
+
+    void testItems()
+    {
+        beginTest("children");
+
+        juce::ValueTree tree{ "Component" };
+        auto item = createGridContainer(tree);
+
+        auto grid = static_cast<juce::Grid>(*item);
+        expect(grid.items.isEmpty());
+
+        item->addChild(createGridItem(item.get()));
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.items.size() == 1);
+
+        item->addChild(createGridItem(item.get()));
+        item->addChild(createGridItem(item.get()));
+        grid = static_cast<juce::Grid>(*item);
+        expect(grid.items.size() == 3);
     }
 };
 

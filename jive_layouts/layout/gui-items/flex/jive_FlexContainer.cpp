@@ -57,13 +57,13 @@ namespace jive
     }
 
     //==================================================================================================================
-    void appendChildren(FlexContainer& container, juce::FlexBox& flex)
+    void appendChildren(GuiItem& container, juce::FlexBox& flex)
     {
         for (auto& child : container)
         {
-            if (auto* decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
+            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
             {
-                if (auto* flexItem = decoratedItem->toType<FlexItem>())
+                if (auto* const flexItem = decoratedItem->toType<FlexItem>())
                     flex.items.add(*flexItem);
             }
         }
