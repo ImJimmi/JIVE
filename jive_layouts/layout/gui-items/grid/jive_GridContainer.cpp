@@ -21,6 +21,33 @@ namespace jive
     }
 
     //==================================================================================================================
+    float GridContainer::getWidth() const
+    {
+        if (hasAutoWidth())
+        {
+            const auto contentWidth = getMinimumContentWidth();
+            const auto box = getBoxModel();
+
+            return contentWidth + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
+        }
+
+        return GuiItemDecorator::getWidth();
+    }
+
+    float GridContainer::getHeight() const
+    {
+        if (hasAutoHeight())
+        {
+            const auto contentHeight = getMinimumContentHeight();
+            const auto box = getBoxModel();
+
+            return contentHeight + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
+        }
+
+        return GuiItemDecorator::getHeight();
+    }
+
+    //==================================================================================================================
     void GridContainer::updateLayout()
     {
         auto grid = getGrid();
@@ -71,6 +98,56 @@ namespace jive
         appendChildren(*this, grid);
 
         return grid;
+    }
+
+    juce::Grid GridContainer::getGridWithDummyItems() const
+    {
+        auto grid = const_cast<GridContainer*>(this)->getGrid();
+
+        for (auto& gridItem : grid.items)
+            gridItem.associatedComponent = nullptr;
+
+        return grid;
+    }
+
+    void performDummyLayout(juce::Grid& grid)
+    {
+        grid.autoRows = juce::Grid::Px{ 1 };
+        grid.autoColumns = juce::Grid::Px{ 1 };
+
+        grid.performLayout(juce::Rectangle<int>{ 0, 0, 0, 0 });
+    }
+
+    float GridContainer::getMinimumContentWidth() const
+    {
+        auto grid = getGridWithDummyItems();
+        performDummyLayout(grid);
+
+        auto contentWidth = 0.f;
+
+        for (const auto& gridItem : grid.items)
+        {
+            if (gridItem.currentBounds.getRight() > contentWidth)
+                contentWidth = gridItem.currentBounds.getRight();
+        }
+
+        return contentWidth;
+    }
+
+    float GridContainer::getMinimumContentHeight() const
+    {
+        auto grid = getGridWithDummyItems();
+        performDummyLayout(grid);
+
+        auto contentHeight = 0.f;
+
+        for (const auto& gridItem : grid.items)
+        {
+            if (gridItem.currentBounds.getBottom() > contentHeight)
+                contentHeight = gridItem.currentBounds.getBottom();
+        }
+
+        return contentHeight;
     }
 } // namespace jive
 
@@ -124,6 +201,7 @@ public:
         testGap();
         testItems();
         testLayout();
+        testAutoSize();
     }
 
 private:
@@ -502,6 +580,28 @@ private:
         item->getComponent().setSize(200, 200);
         expect(item->getChild(0).getComponent().getWidth() > 0);
         expect(item->getChild(1).getComponent().getWidth() > 0);
+    }
+
+    void testAutoSize()
+    {
+        beginTest("auto-size");
+
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "template-columns", "10px 10px" },
+                { "template-rows", "10px 1fr" },
+                { "gap", "5" },
+            },
+        };
+        auto item = createGridContainer(tree);
+        item->addChild(createGridItem(item.get()));
+        item->addChild(createGridItem(item.get()));
+        item->addChild(createGridItem(item.get()));
+        item->addChild(createGridItem(item.get()));
+
+        expect(item->getWidth() == 25.f);
+        expect(item->getHeight() == 15.f);
     }
 };
 
