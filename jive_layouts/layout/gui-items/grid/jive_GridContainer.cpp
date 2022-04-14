@@ -21,6 +21,21 @@ namespace jive
     }
 
     //==================================================================================================================
+    void GridContainer::updateLayout()
+    {
+        auto grid = getGrid();
+        const auto bounds = getBoxModel().getContentBounds().toNearestInt();
+
+        grid.performLayout(bounds);
+    }
+
+    //==================================================================================================================
+    GridContainer::operator juce::Grid()
+    {
+        return getGrid();
+    }
+
+    //==================================================================================================================
     void appendChildren(GuiItem& container, juce::Grid& grid)
     {
         for (auto& child : container)
@@ -33,7 +48,7 @@ namespace jive
         }
     }
 
-    GridContainer::operator juce::Grid()
+    juce::Grid GridContainer::getGrid()
     {
         juce::Grid grid;
 
@@ -108,6 +123,7 @@ public:
         testAutoColumns();
         testGap();
         testItems();
+        testLayout();
     }
 
 private:
@@ -466,6 +482,26 @@ private:
         item->addChild(createGridItem(item.get()));
         grid = static_cast<juce::Grid>(*item);
         expect(grid.items.size() == 3);
+    }
+
+    void testLayout()
+    {
+        beginTest("layout");
+
+        juce::ValueTree tree{
+            "Component",
+            {
+                { "template-columns", "1fr 1fr" },
+                { "template-rows", "1fr" },
+            },
+        };
+        auto item = createGridContainer(tree);
+        item->addChild(createGridItem(item.get()));
+        item->addChild(createGridItem(item.get()));
+
+        item->getComponent().setSize(200, 200);
+        expect(item->getChild(0).getComponent().getWidth() > 0);
+        expect(item->getChild(1).getComponent().getWidth() > 0);
     }
 };
 
