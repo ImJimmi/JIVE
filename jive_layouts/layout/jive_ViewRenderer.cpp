@@ -122,6 +122,8 @@ namespace jive
         if (guiItem->isContainer())
             appendChildItems(*guiItem, tree);
 
+        guiItem->updateLayout();
+
         return guiItem;
     }
 
@@ -172,6 +174,7 @@ public:
         testNestedComponents();
         testDisplayTypes();
         testXML();
+        testInitialLayout();
     }
 
 private:
@@ -300,6 +303,40 @@ private:
             )";
 
         expect(renderer.renderView(xml) != nullptr);
+    }
+
+    void testInitialLayout()
+    {
+        beginTest("initial layout");
+
+        const jive::ViewRenderer renderer;
+        const auto view = renderer.renderView(juce::ValueTree{
+            "Component",
+            {
+                { "width", 200 },
+                { "height", 200 },
+            },
+            {
+                {
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 100 },
+                    },
+                    {},
+                },
+                {
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 100 },
+                    },
+                    {},
+                },
+            },
+        });
+
+        expect(view->getChild(1).getComponent().getPosition() != juce::Point<int>{});
     }
 };
 
