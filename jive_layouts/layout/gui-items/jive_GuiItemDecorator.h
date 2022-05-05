@@ -11,6 +11,9 @@ namespace jive
         explicit GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        void updateLayout() override;
+
+        //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
         int getNumChildren() const override;
         GuiItem& getChild(int index) const override;
