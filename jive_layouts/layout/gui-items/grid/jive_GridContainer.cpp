@@ -14,8 +14,8 @@ namespace jive
         , templateColumns{ tree, "template-columns" }
         , templateRows{ tree, "template-rows" }
         , templateAreas{ tree, "template-areas" }
-        , autoRows{ tree, "auto-rows" }
-        , autoColumns{ tree, "auto-columns" }
+        , autoRows{ tree, "auto-rows", {} }
+        , autoColumns{ tree, "auto-columns", {} }
         , gap{ tree, "gap" }
     {
     }

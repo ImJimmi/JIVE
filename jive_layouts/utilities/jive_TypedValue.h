@@ -11,16 +11,21 @@ namespace jive
         using VariantConverter = juce::VariantConverter<ValueType>;
 
         TypedValue(juce::ValueTree& sourceTree,
-                   const juce::Identifier& propertyID,
-                   const ValueType& initialValue = ValueType{})
+                   const juce::Identifier& propertyID)
             : id{ propertyID }
             , tree{ sourceTree }
             , value{ tree.getPropertyAsValue(id, nullptr, true) }
         {
+            value.addListener(this);
+        }
+
+        TypedValue(juce::ValueTree& sourceTree,
+                   const juce::Identifier& propertyID,
+                   const ValueType& initialValue)
+            : TypedValue{ sourceTree, propertyID }
+        {
             if (!exists())
                 value = VariantConverter::toVar(initialValue);
-
-            value.addListener(this);
         }
 
         ValueType get() const
