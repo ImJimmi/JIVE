@@ -33,6 +33,11 @@ namespace jive
             return VariantConverter::fromVar(value);
         }
 
+        void clear()
+        {
+            tree.removeProperty(id, nullptr);
+        }
+
         bool exists() const
         {
             return tree.hasProperty(id);
