@@ -52,7 +52,7 @@ namespace jive
         {
             jassertquiet(valueThatChanged.refersToSameSourceAs(value));
 
-            if (onValueChange != nullptr)
+            if (onValueChange != nullptr && exists())
                 onValueChange();
         }
 
