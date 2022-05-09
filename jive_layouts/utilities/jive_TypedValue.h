@@ -10,12 +10,14 @@ namespace jive
     public:
         using VariantConverter = juce::VariantConverter<ValueType>;
 
-        TypedValue(juce::ValueTree& tree,
+        TypedValue(juce::ValueTree& sourceTree,
                    const juce::Identifier& propertyID,
                    const ValueType& initialValue = ValueType{})
-            : value{ tree.getPropertyAsValue(propertyID, nullptr, true) }
+            : id{ propertyID }
+            , tree{ sourceTree }
+            , value{ tree.getPropertyAsValue(id, nullptr, true) }
         {
-            if (!tree.hasProperty(propertyID))
+            if (!exists())
                 value = VariantConverter::toVar(initialValue);
 
             value.addListener(this);
@@ -24,6 +26,11 @@ namespace jive
         ValueType get() const
         {
             return VariantConverter::fromVar(value);
+        }
+
+        bool exists() const
+        {
+            return tree.hasProperty(id);
         }
 
         operator ValueType() const
@@ -37,6 +44,7 @@ namespace jive
             return *this;
         }
 
+        const juce::Identifier id;
         std::function<void(void)> onValueChange = nullptr;
 
     private:
@@ -48,6 +56,7 @@ namespace jive
                 onValueChange();
         }
 
+        juce::ValueTree tree;
         juce::Value value;
     };
 } // namespace jive
