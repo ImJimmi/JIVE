@@ -12,8 +12,13 @@ namespace jive
 
     private:
         //==============================================================================================================
+        juce::Point<int> calculatePosition() const;
+
+        //==============================================================================================================
         TypedValue<float> x;
         TypedValue<float> y;
+        TypedValue<float> centreX;
+        TypedValue<float> centreY;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BlockItem)

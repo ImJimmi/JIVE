@@ -8,21 +8,59 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , x{ tree, "x" }
         , y{ tree, "y" }
+        , centreX{ tree, "centre-x" }
+        , centreY{ tree, "centre-y" }
     {
         x.onValueChange = [this]() {
+            centreX.clear();
+
             const auto nearestX = juce::roundToInt(x);
             auto& component = getComponent();
             component.setTopLeftPosition(component.getPosition().withX(nearestX));
         };
         y.onValueChange = [this]() {
+            centreY.clear();
+
             const auto nearestY = juce::roundToInt(y);
             auto& component = getComponent();
             component.setTopLeftPosition(component.getPosition().withY(nearestY));
         };
-        getComponent().setTopLeftPosition({ juce::roundToInt(x), juce::roundToInt(y) });
+        centreX.onValueChange = [this]() {
+            x.clear();
+
+            auto& component = getComponent();
+            const auto nearestCentreX = juce::roundToInt(centreX);
+            const auto centre = component.getBounds().getCentre().withX(nearestCentreX);
+            component.setCentrePosition(centre);
+        };
+        centreY.onValueChange = [this]() {
+            y.clear();
+
+            auto& component = getComponent();
+            const auto nearestCentreY = juce::roundToInt(centreY);
+            const auto centre = component.getBounds().getCentre().withY(nearestCentreY);
+            component.setCentrePosition(centre);
+        };
+        getComponent().setTopLeftPosition(calculatePosition());
     }
 
     //==================================================================================================================
+    juce::Point<int> BlockItem::calculatePosition() const
+    {
+        juce::Point<int> position;
+
+        if (centreX.exists())
+            position.x = centreX - getWidth() / 2.f;
+        else
+            position.x = x;
+
+        if (centreY.exists())
+            position.y = centreY - getHeight() / 2.f;
+        else
+            position.y = y;
+
+        return position;
+    }
 } // namespace jive
 
 //======================================================================================================================
@@ -38,6 +76,7 @@ public:
     void runTest() override
     {
         testPosition();
+        testCentre();
     }
 
 private:
@@ -55,13 +94,13 @@ private:
             juce::ValueTree tree{ "Component" };
             const auto item = createBlockItem(tree);
 
-            expect(item->getComponent().getX() == 0);
-            expect(item->getComponent().getY() == 0);
+            expectEquals(item->getComponent().getX(), 0);
+            expectEquals(item->getComponent().getY(), 0);
 
             tree.setProperty("x", 10.4f, nullptr);
             tree.setProperty("y", 20.89f, nullptr);
-            expect(item->getComponent().getX() == 10);
-            expect(item->getComponent().getY() == 21);
+            expectEquals(item->getComponent().getX(), 10);
+            expectEquals(item->getComponent().getY(), 21);
         }
         {
             juce::ValueTree tree{
@@ -73,8 +112,54 @@ private:
             };
             const auto item = createBlockItem(tree);
 
-            expect(item->getComponent().getX() == 15);
-            expect(item->getComponent().getY() == 25);
+            expectEquals(item->getComponent().getX(), 15);
+            expectEquals(item->getComponent().getY(), 25);
+        }
+    }
+
+    void testCentre()
+    {
+        beginTest("centre");
+
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 50 },
+                    { "height", 50 },
+                }
+            };
+            const auto item = createBlockItem(tree);
+
+            expectEquals(item->getComponent().getBounds().getCentreX(), 25);
+            expectEquals(item->getComponent().getBounds().getCentreY(), 25);
+
+            tree.setProperty("centre-x", 12.3f, nullptr);
+            tree.setProperty("centre-y", 98.7f, nullptr);
+
+            expectEquals(item->getComponent().getBounds().getCentreX(), 12);
+            expectEquals(item->getComponent().getBounds().getCentreY(), 99);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 50 },
+                    { "height", 50 },
+                    { "centre-x", 85 },
+                    { "centre-y", 43 },
+                }
+            };
+            const auto item = createBlockItem(tree);
+
+            expect(item->getComponent().getBounds().getCentreX() == 85);
+            expect(item->getComponent().getBounds().getCentreY() == 43);
+
+            tree.setProperty("x", 66, nullptr);
+            expectEquals(item->getComponent().getX(), 66);
+
+            tree.setProperty("centre-x", 44, nullptr);
+            expectEquals(item->getComponent().getBounds().getCentreX(), 44);
         }
     }
 };
