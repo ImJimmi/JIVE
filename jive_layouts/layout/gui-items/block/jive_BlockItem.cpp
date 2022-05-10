@@ -45,6 +45,23 @@ namespace jive
     }
 
     //==================================================================================================================
+    float BlockItem::getWidth() const
+    {
+        if (hasAutoWidth())
+            return 0.f;
+
+        return GuiItemDecorator::getWidth();
+    }
+
+    float BlockItem::getHeight() const
+    {
+        if (hasAutoHeight())
+            return 0.f;
+
+        return GuiItemDecorator::getHeight();
+    }
+
+    //==================================================================================================================
     juce::Point<int> BlockItem::calculatePosition() const
     {
         juce::Point<int> position;
@@ -77,6 +94,7 @@ public:
     {
         testPosition();
         testCentre();
+        testSize();
     }
 
 private:
@@ -161,6 +179,22 @@ private:
             tree.setProperty("centre-x", 44, nullptr);
             expectEquals(item->getComponent().getBounds().getCentreX(), 44);
         }
+    }
+
+    void testSize()
+    {
+        beginTest("size");
+
+        juce::ValueTree tree{ "Component" };
+        const auto item = createBlockItem(tree);
+
+        expectEquals(item->getWidth(), 0.f);
+        expectEquals(item->getHeight(), 0.f);
+
+        tree.setProperty("width", 10.4f, nullptr);
+        tree.setProperty("height", 20.89f, nullptr);
+        expectEquals(item->getWidth(), 10.f);
+        expectEquals(item->getHeight(), 21.f);
     }
 };
 
