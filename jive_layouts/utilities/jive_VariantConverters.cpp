@@ -6,7 +6,8 @@ namespace juce
     //==================================================================================================================
     const Array<var> VariantConverter<jive::GuiItem::Display>::varArray = {
         "flex",
-        "grid"
+        "grid",
+        "block"
     };
 
     jive::GuiItem::Display VariantConverter<jive::GuiItem::Display>::fromVar(const var& v)
