@@ -12,6 +12,8 @@ namespace jive
 
         //==============================================================================================================
         void updateLayout() override;
+        void updateSize() override;
+        void updatePosition() override;
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;

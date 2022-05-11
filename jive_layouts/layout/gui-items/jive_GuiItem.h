@@ -42,6 +42,8 @@ namespace jive
 
         //==============================================================================================================
         virtual void updateLayout();
+        virtual void updateSize();
+        virtual void updatePosition();
 
         //==============================================================================================================
         const juce::Component& getComponent() const;

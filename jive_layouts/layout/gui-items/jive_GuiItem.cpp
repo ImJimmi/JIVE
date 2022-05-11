@@ -138,6 +138,15 @@ namespace jive
     {
     }
 
+    void GuiItem::updateSize()
+    {
+        updateComponentSize();
+    }
+
+    void GuiItem::updatePosition()
+    {
+    }
+
     //==================================================================================================================
     juce::Component& GuiItem::getComponent()
     {

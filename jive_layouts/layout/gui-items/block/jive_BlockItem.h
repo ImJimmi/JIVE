@@ -11,6 +11,9 @@ namespace jive
         explicit BlockItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        void updatePosition() override;
+
+        //==============================================================================================================
         float getWidth() const override;
         float getHeight() const override;
 

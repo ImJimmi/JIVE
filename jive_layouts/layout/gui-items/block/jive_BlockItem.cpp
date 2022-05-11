@@ -13,20 +13,27 @@ namespace jive
     {
         x.onValueChange = [this]() {
             centreX.clear();
-            getComponent().setTopLeftPosition(calculatePosition());
+            updatePosition();
         };
         y.onValueChange = [this]() {
             centreY.clear();
-            getComponent().setTopLeftPosition(calculatePosition());
+            updatePosition();
         };
         centreX.onValueChange = [this]() {
             x.clear();
-            getComponent().setTopLeftPosition(calculatePosition());
+            updatePosition();
         };
         centreY.onValueChange = [this]() {
             y.clear();
-            getComponent().setTopLeftPosition(calculatePosition());
+            updatePosition();
         };
+        updatePosition();
+    }
+
+    //==================================================================================================================
+    void BlockItem::updatePosition()
+    {
+        GuiItemDecorator::updatePosition();
         getComponent().setTopLeftPosition(calculatePosition());
     }
 
