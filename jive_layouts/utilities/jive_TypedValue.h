@@ -50,7 +50,7 @@ namespace jive
 
         TypedValue<ValueType>& operator=(const ValueType& newValue)
         {
-            value = newValue;
+            value = juce::VariantConverter<ValueType>::toVar(newValue);
             return *this;
         }
 

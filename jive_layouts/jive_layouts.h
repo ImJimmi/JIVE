@@ -21,6 +21,7 @@ namespace jive
 
 //======================================================================================================================
 #include "utilities/jive_IgnoredComponent.h"
+#include "utilities/jive_Length.h"
 #include "utilities/jive_TypedValue.h"
 
 #include "layout/jive_BoxModel.h"
