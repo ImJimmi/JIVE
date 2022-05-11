@@ -13,33 +13,19 @@ namespace jive
     {
         x.onValueChange = [this]() {
             centreX.clear();
-
-            const auto nearestX = juce::roundToInt(x);
-            auto& component = getComponent();
-            component.setTopLeftPosition(component.getPosition().withX(nearestX));
+            getComponent().setTopLeftPosition(calculatePosition());
         };
         y.onValueChange = [this]() {
             centreY.clear();
-
-            const auto nearestY = juce::roundToInt(y);
-            auto& component = getComponent();
-            component.setTopLeftPosition(component.getPosition().withY(nearestY));
+            getComponent().setTopLeftPosition(calculatePosition());
         };
         centreX.onValueChange = [this]() {
             x.clear();
-
-            auto& component = getComponent();
-            const auto nearestCentreX = juce::roundToInt(centreX);
-            const auto centre = component.getBounds().getCentre().withX(nearestCentreX);
-            component.setCentrePosition(centre);
+            getComponent().setTopLeftPosition(calculatePosition());
         };
         centreY.onValueChange = [this]() {
             y.clear();
-
-            auto& component = getComponent();
-            const auto nearestCentreY = juce::roundToInt(centreY);
-            const auto centre = component.getBounds().getCentre().withY(nearestCentreY);
-            component.setCentrePosition(centre);
+            getComponent().setTopLeftPosition(calculatePosition());
         };
         getComponent().setTopLeftPosition(calculatePosition());
     }
@@ -62,21 +48,41 @@ namespace jive
     }
 
     //==================================================================================================================
+    int BlockItem::calculateX() const
+    {
+        if (centreX.exists())
+        {
+            auto length = centreX.get();
+            length.setCorrespondingGuiItem(*item);
+
+            return juce::roundToInt(length - getWidth() / 2.f);
+        }
+
+        auto length = x.get();
+        length.setCorrespondingGuiItem(*item);
+
+        return juce::roundToInt(length);
+    }
+
+    int BlockItem::calculateY() const
+    {
+        if (centreY.exists())
+        {
+            auto length = centreY.get();
+            length.setCorrespondingGuiItem(*item);
+
+            return juce::roundToInt(length - getHeight() / 2.f);
+        }
+
+        auto length = y.get();
+        length.setCorrespondingGuiItem(*item);
+
+        return juce::roundToInt(length);
+    }
+
     juce::Point<int> BlockItem::calculatePosition() const
     {
-        juce::Point<int> position;
-
-        if (centreX.exists())
-            position.x = centreX - getWidth() / 2.f;
-        else
-            position.x = x;
-
-        if (centreY.exists())
-            position.y = centreY - getHeight() / 2.f;
-        else
-            position.y = y;
-
-        return position;
+        return { calculateX(), calculateY() };
     }
 } // namespace jive
 
@@ -133,6 +139,36 @@ private:
             expectEquals(item->getComponent().getX(), 15);
             expectEquals(item->getComponent().getY(), 25);
         }
+        {
+            juce::ValueTree parentTree{
+                "Component",
+                {
+                    { "width", 50 },
+                    { "height", 60 },
+                },
+            };
+            auto parent = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          parentTree);
+
+            juce::ValueTree childTree{
+                "Component",
+                {
+                    { "x", "20%" },
+                    { "y", "50%" },
+                }
+            };
+            auto child = std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                           childTree,
+                                                                                           parent.get()));
+
+            expectEquals(child->getComponent().getX(), 10);
+            expectEquals(child->getComponent().getY(), 30);
+
+            childTree.setProperty("x", "10%", nullptr);
+            childTree.setProperty("y", "33.3333333333333%", nullptr);
+            expectEquals(child->getComponent().getX(), 5);
+            expectEquals(child->getComponent().getY(), 20);
+        }
     }
 
     void testCentre()
@@ -178,6 +214,36 @@ private:
 
             tree.setProperty("centre-x", 44, nullptr);
             expectEquals(item->getComponent().getBounds().getCentreX(), 44);
+        }
+        {
+            juce::ValueTree parentTree{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 250 },
+                },
+            };
+            auto parent = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          parentTree);
+
+            juce::ValueTree childTree{
+                "Component",
+                {
+                    { "x", "1%" },
+                    { "y", "37.3%" },
+                }
+            };
+            auto child = std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                           childTree,
+                                                                                           parent.get()));
+
+            expectEquals(child->getComponent().getX(), 1);
+            expectEquals(child->getComponent().getY(), 93);
+
+            childTree.setProperty("x", "97.8%", nullptr);
+            childTree.setProperty("y", "10%", nullptr);
+            expectEquals(child->getComponent().getX(), 98);
+            expectEquals(child->getComponent().getY(), 25);
         }
     }
 
