@@ -23,8 +23,8 @@ namespace jive
         , focusOrder{ tree, "focus-order" }
         , opacity{ tree, "opacity", 1.f }
         , cursor{ tree, "cursor", juce::MouseCursor::NormalCursor }
-        , width{ tree, "width", -1 }
-        , height{ tree, "height", -1 }
+        , width{ tree, "width", Width::fromPixels(-1.f) }
+        , height{ tree, "height", Height::fromPixels(-1.f) }
         , display{ tree, "display", Display::flex }
     {
         jassert(component != nullptr);
@@ -135,6 +135,15 @@ namespace jive
 
     //==================================================================================================================
     void GuiItem::updateLayout()
+    {
+    }
+
+    void GuiItem::updateSize()
+    {
+        updateComponentSize();
+    }
+
+    void GuiItem::updatePosition()
     {
     }
 
@@ -268,12 +277,18 @@ namespace jive
 
     float GuiItem::getWidth() const
     {
-        return width;
+        auto length = width.get();
+        length.setCorrespondingGuiItem(*this);
+
+        return length;
     }
 
     float GuiItem::getHeight() const
     {
-        return height;
+        auto length = height.get();
+        length.setCorrespondingGuiItem(*this);
+
+        return length;
     }
 
     GuiItem::Display GuiItem::getDisplay() const
@@ -283,11 +298,17 @@ namespace jive
 
     bool GuiItem::hasAutoWidth() const
     {
+        if (width.get().isPercent())
+            return false;
+
         return static_cast<int>(width.get()) == -1;
     }
 
     bool GuiItem::hasAutoHeight() const
     {
+        if (height.get().isPercent())
+            return false;
+
         return static_cast<int>(height.get()) == -1;
     }
 
@@ -326,8 +347,8 @@ namespace jive
         {
             const auto bounds = getComponent().getLocalBounds().toFloat();
 
-            width = bounds.getWidth();
-            height = bounds.getHeight();
+            width = Width::fromPixels(bounds.getWidth());
+            height = Height::fromPixels(bounds.getHeight());
         }
 
         updateLayout();

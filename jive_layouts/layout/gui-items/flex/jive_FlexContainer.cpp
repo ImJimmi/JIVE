@@ -7,10 +7,10 @@ namespace jive
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexDirection{ tree, "flex-direction", juce::FlexBox::Direction::column }
-        , flexWrap{ tree, "flex-wrap" }
-        , flexJustifyContent{ tree, "justify-content" }
-        , flexAlignItems{ tree, "align-items" }
-        , flexAlignContent{ tree, "align-content" }
+        , flexWrap{ tree, "flex-wrap", juce::FlexBox::Wrap::noWrap }
+        , flexJustifyContent{ tree, "justify-content", juce::FlexBox::JustifyContent::flexStart }
+        , flexAlignItems{ tree, "align-items", juce::FlexBox::AlignItems::stretch }
+        , flexAlignContent{ tree, "align-content", juce::FlexBox::AlignContent::stretch }
     {
         flexDirection.onValueChange = [this]() {
             updateLayout();

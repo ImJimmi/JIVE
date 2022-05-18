@@ -16,6 +16,16 @@ namespace jive
         item->updateLayout();
     }
 
+    void GuiItemDecorator::updateSize()
+    {
+        item->updateSize();
+    }
+
+    void GuiItemDecorator::updatePosition()
+    {
+        item->updatePosition();
+    }
+
     //==================================================================================================================
     void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
     {

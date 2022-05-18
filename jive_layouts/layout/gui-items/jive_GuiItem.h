@@ -32,7 +32,8 @@ namespace jive
         enum class Display
         {
             flex,
-            grid
+            grid,
+            block
         };
 
         //==============================================================================================================
@@ -42,6 +43,8 @@ namespace jive
 
         //==============================================================================================================
         virtual void updateLayout();
+        virtual void updateSize();
+        virtual void updatePosition();
 
         //==============================================================================================================
         const juce::Component& getComponent() const;
@@ -133,8 +136,8 @@ namespace jive
         TypedValue<int> focusOrder;
         TypedValue<float> opacity;
         TypedValue<juce::MouseCursor::StandardCursorType> cursor;
-        TypedValue<float> width;
-        TypedValue<float> height;
+        TypedValue<Width> width;
+        TypedValue<Height> height;
         TypedValue<Display> display;
 
         //==============================================================================================================

@@ -6,7 +6,8 @@ namespace juce
     //==================================================================================================================
     const Array<var> VariantConverter<jive::GuiItem::Display>::varArray = {
         "flex",
-        "grid"
+        "grid",
+        "block"
     };
 
     jive::GuiItem::Display VariantConverter<jive::GuiItem::Display>::fromVar(const var& v)
@@ -679,5 +680,53 @@ namespace juce
     var VariantConverter<Grid::Px>::toVar(const Grid::Px& px)
     {
         return String{ static_cast<double>(px.pixels) } + "px";
+    }
+
+    //==================================================================================================================
+    jive::Width VariantConverter<jive::Width>::fromVar(const var& v)
+    {
+        jive::Width width;
+        const auto text = v.toString();
+
+        if (text.endsWith("%"))
+        {
+            width.setPercent(text.getFloatValue());
+            return width;
+        }
+
+        width.setPixels(static_cast<float>(v));
+        return width;
+    }
+
+    var VariantConverter<jive::Width>::toVar(const jive::Width& width)
+    {
+        if (width.isPixels())
+            return width.getPixels();
+
+        return juce::String{ width.getPercent() } + "%";
+    }
+
+    //==================================================================================================================
+    jive::Height VariantConverter<jive::Height>::fromVar(const var& v)
+    {
+        jive::Height height;
+        const auto text = v.toString();
+
+        if (text.endsWith("%"))
+        {
+            height.setPercent(text.getFloatValue());
+            return height;
+        }
+
+        height.setPixels(static_cast<float>(v));
+        return height;
+    }
+
+    var VariantConverter<jive::Height>::toVar(const jive::Height& height)
+    {
+        if (height.isPixels())
+            return height.getPixels();
+
+        return juce::String{ height.getPercent() } + "%";
     }
 } // namespace juce

@@ -14,8 +14,8 @@ namespace jive
         , templateColumns{ tree, "template-columns" }
         , templateRows{ tree, "template-rows" }
         , templateAreas{ tree, "template-areas" }
-        , autoRows{ tree, "auto-rows" }
-        , autoColumns{ tree, "auto-columns" }
+        , autoRows{ tree, "auto-rows", {} }
+        , autoColumns{ tree, "auto-columns", {} }
         , gap{ tree, "gap" }
     {
     }
@@ -152,6 +152,7 @@ namespace jive
 } // namespace jive
 
 //======================================================================================================================
+#if JIVE_UNIT_TESTS
 bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {
     return (a.isAuto() == b.isAuto())
@@ -177,7 +178,6 @@ bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
     return true;
 }
 
-#if JIVE_UNIT_TESTS
 class GridContainerTest : public juce::UnitTest
 {
 public:

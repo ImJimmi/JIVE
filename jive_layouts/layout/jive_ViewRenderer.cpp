@@ -78,6 +78,8 @@ namespace jive
             return std::make_unique<FlexContainer>(std::move(item));
         case GuiItem::Display::grid:
             return std::make_unique<GridContainer>(std::move(item));
+        case GuiItem::Display::block:
+            return std::make_unique<BlockContainer>(std::move(item));
         }
 
         // Unhandled display type!
@@ -96,6 +98,8 @@ namespace jive
             return std::make_unique<FlexItem>(std::move(item));
         case GuiItem::Display::grid:
             return std::make_unique<GridItem>(std::move(item));
+        case GuiItem::Display::block:
+            return std::make_unique<BlockItem>(std::move(item));
         }
 
         // Unhandled display type!
@@ -287,6 +291,18 @@ private:
         });
         expect(dynamic_cast<jive::GridContainer*>(gridView.get()));
         expect(dynamic_cast<jive::GridItem*>(&gridView->getChild(0)));
+
+        auto blockView = renderer.renderView(juce::ValueTree{
+            "Component",
+            {
+                { "display", "block" },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        });
+        expect(dynamic_cast<jive::GuiItem*>(blockView.get()));
+        expect(dynamic_cast<jive::BlockItem*>(&blockView->getChild(0)));
     }
 
     void testXML()

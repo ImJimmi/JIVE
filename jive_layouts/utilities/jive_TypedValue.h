@@ -10,20 +10,37 @@ namespace jive
     public:
         using VariantConverter = juce::VariantConverter<ValueType>;
 
-        TypedValue(juce::ValueTree& tree,
-                   const juce::Identifier& propertyID,
-                   const ValueType& initialValue = ValueType{})
-            : value{ tree.getPropertyAsValue(propertyID, nullptr, true) }
+        TypedValue(juce::ValueTree& sourceTree,
+                   const juce::Identifier& propertyID)
+            : id{ propertyID }
+            , tree{ sourceTree }
+            , value{ tree.getPropertyAsValue(id, nullptr, true) }
         {
-            if (!tree.hasProperty(propertyID))
-                value = VariantConverter::toVar(initialValue);
-
             value.addListener(this);
+        }
+
+        TypedValue(juce::ValueTree& sourceTree,
+                   const juce::Identifier& propertyID,
+                   const ValueType& initialValue)
+            : TypedValue{ sourceTree, propertyID }
+        {
+            if (!exists())
+                value = VariantConverter::toVar(initialValue);
         }
 
         ValueType get() const
         {
             return VariantConverter::fromVar(value);
+        }
+
+        void clear()
+        {
+            tree.removeProperty(id, nullptr);
+        }
+
+        bool exists() const
+        {
+            return tree.hasProperty(id);
         }
 
         operator ValueType() const
@@ -33,10 +50,11 @@ namespace jive
 
         TypedValue<ValueType>& operator=(const ValueType& newValue)
         {
-            value = newValue;
+            value = juce::VariantConverter<ValueType>::toVar(newValue);
             return *this;
         }
 
+        const juce::Identifier id;
         std::function<void(void)> onValueChange = nullptr;
 
     private:
@@ -44,10 +62,11 @@ namespace jive
         {
             jassertquiet(valueThatChanged.refersToSameSourceAs(value));
 
-            if (onValueChange != nullptr)
+            if (onValueChange != nullptr && exists())
                 onValueChange();
         }
 
+        juce::ValueTree tree;
         juce::Value value;
     };
 } // namespace jive

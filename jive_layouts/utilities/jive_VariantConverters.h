@@ -287,4 +287,22 @@ namespace juce
         static Grid::Px fromVar(const var& v);
         static var toVar(const Grid::Px& px);
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<jive::Width>
+    {
+        //==============================================================================================================
+        static jive::Width fromVar(const var& v);
+        static var toVar(const jive::Width& width);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<jive::Height>
+    {
+        //==============================================================================================================
+        static jive::Height fromVar(const var& v);
+        static var toVar(const jive::Height& width);
+    };
 } // namespace juce

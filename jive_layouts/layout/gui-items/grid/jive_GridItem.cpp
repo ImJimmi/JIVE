@@ -9,8 +9,8 @@ namespace jive
         , order{ tree, "order" }
         , justifySelf{ tree, "justify-self", juce::GridItem::JustifySelf::autoValue }
         , alignSelf{ tree, "align-self", juce::GridItem::AlignSelf::autoValue }
-        , column{ tree, "column" }
-        , row{ tree, "row" }
+        , column{ tree, "column", {} }
+        , row{ tree, "row", {} }
         , area{ tree, "area" }
         , width{ tree, "width", juce::GridItem::notAssigned }
         , minWidth{ tree, "min-width" }

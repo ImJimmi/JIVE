@@ -21,6 +21,7 @@ namespace jive
 
 //======================================================================================================================
 #include "utilities/jive_IgnoredComponent.h"
+#include "utilities/jive_Length.h"
 #include "utilities/jive_TypedValue.h"
 
 #include "layout/jive_BoxModel.h"
@@ -29,6 +30,8 @@ namespace jive
 #include "layout/gui-items/jive_GuiItemDecorator.h"
 #include "layout/gui-items/widgets/jive_TextWidget.h"
 
+#include "layout/gui-items/block/jive_BlockContainer.h"
+#include "layout/gui-items/block/jive_BlockItem.h"
 #include "layout/gui-items/flex/jive_FlexContainer.h"
 #include "layout/gui-items/flex/jive_FlexItem.h"
 #include "layout/gui-items/grid/jive_GridContainer.h"
