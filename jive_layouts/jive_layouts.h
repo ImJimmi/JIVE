@@ -36,6 +36,7 @@ namespace jive
 #include "layout/gui-items/flex/jive_FlexItem.h"
 #include "layout/gui-items/grid/jive_GridContainer.h"
 #include "layout/gui-items/grid/jive_GridItem.h"
+#include "layout/gui-items/widgets/jive_Button.h"
 #include "layout/gui-items/widgets/jive_Label.h"
 
 #include "layout/jive_ViewRenderer.h"
