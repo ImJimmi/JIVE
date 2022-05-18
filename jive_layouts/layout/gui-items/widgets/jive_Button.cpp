@@ -12,6 +12,11 @@ namespace jive
             getButton().setButtonText(getText());
         };
         getButton().setButtonText(getText());
+
+        onFontChanged = [this]() {
+            getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
+        };
+        getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
     }
 
     //==================================================================================================================
@@ -39,6 +44,7 @@ public:
     void runTest() final
     {
         testText();
+        testFont();
     }
 
 private:
@@ -81,6 +87,38 @@ private:
             auto item = createButton(tree);
 
             expectEquals(item->getButton().getButtonText(), juce::String{ "Bacon sandwich" });
+        }
+    }
+
+    void testFont()
+    {
+        beginTest("font");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+
+            expect(item->getComponent().getProperties().contains("font"));
+
+            juce::Font font{ "Helvetica", 16.f, 0 };
+            tree.setProperty("typeface-name", font.getTypefaceName(), nullptr);
+            tree.setProperty("font-weight", font.getTypefaceStyle(), nullptr);
+            tree.setProperty("font-height", font.getHeightInPoints(), nullptr);
+            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
+        }
+        {
+            juce::Font font{ "Arial", 48.f, 0 };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "typeface-name", font.getTypefaceName() },
+                    { "font-weight", font.getTypefaceStyle() },
+                    { "font-height", font.getHeightInPoints() },
+                },
+            };
+            auto item = createButton(tree);
+
+            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
         }
     }
 };

@@ -729,4 +729,15 @@ namespace juce
 
         return juce::String{ height.getPercent() } + "%";
     }
+
+    //==================================================================================================================
+    juce::Font VariantConverter<juce::Font>::fromVar(const var& v)
+    {
+        return juce::Font::fromString(v.toString());
+    }
+
+    var VariantConverter<juce::Font>::toVar(const juce::Font& font)
+    {
+        return font.toString();
+    }
 } // namespace juce

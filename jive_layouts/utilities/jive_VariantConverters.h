@@ -305,4 +305,13 @@ namespace juce
         static jive::Height fromVar(const var& v);
         static var toVar(const jive::Height& width);
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<juce::Font>
+    {
+        //==============================================================================================================
+        static juce::Font fromVar(const var& v);
+        static var toVar(const juce::Font& font);
+    };
 } // namespace juce
