@@ -17,6 +17,11 @@ namespace jive
             getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
         };
         getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
+
+        onJustificationChanged = [this]() {
+            getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
+        };
+        getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
     }
 
     //==================================================================================================================
@@ -45,6 +50,7 @@ public:
     {
         testText();
         testFont();
+        testJustification();
     }
 
 private:
@@ -119,6 +125,36 @@ private:
             auto item = createButton(tree);
 
             expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
+        }
+    }
+
+    void testJustification()
+    {
+        beginTest("justification");
+
+        using Converter = juce::VariantConverter<juce::Justification>;
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+
+            expect(item->getComponent().getProperties().contains("justification"));
+
+            tree.setProperty("justification",
+                             Converter::toVar(juce::Justification::bottomRight),
+                             nullptr);
+            expect(Converter::fromVar(item->getComponent().getProperties()["justification"]) == juce::Justification::bottomRight);
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "justification", Converter::toVar(juce::Justification::topLeft) },
+                },
+            };
+            auto item = createButton(tree);
+
+            expect(Converter::fromVar(item->getComponent().getProperties()["justification"]) == juce::Justification::topLeft);
         }
     }
 };
