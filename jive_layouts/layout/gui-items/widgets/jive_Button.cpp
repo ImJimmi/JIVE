@@ -7,6 +7,7 @@ namespace jive
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , TextWidget{ tree }
+        , toggleable{ tree, "toggleable" }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -22,6 +23,11 @@ namespace jive
             getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
         };
         getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
+
+        toggleable.onValueChange = [this]() {
+            getButton().setToggleable(toggleable);
+        };
+        getButton().setToggleable(toggleable);
     }
 
     //==================================================================================================================
@@ -51,6 +57,7 @@ public:
         testText();
         testFont();
         testJustification();
+        testToggleable();
     }
 
 private:
@@ -155,6 +162,33 @@ private:
             auto item = createButton(tree);
 
             expect(Converter::fromVar(item->getComponent().getProperties()["justification"]) == juce::Justification::topLeft);
+        }
+    }
+
+    void testToggleable()
+    {
+        beginTest("toggleable");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+
+            expect(!item->getButton().isToggleable());
+
+            tree.setProperty("toggleable", true, nullptr);
+
+            expect(item->getButton().isToggleable());
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "toggleable", true },
+                },
+            };
+            auto item = createButton(tree);
+
+            expect(item->getButton().isToggleable());
         }
     }
 };
