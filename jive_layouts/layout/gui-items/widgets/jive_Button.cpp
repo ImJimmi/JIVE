@@ -10,6 +10,7 @@ namespace jive
         , toggleable{ tree, "toggleable" }
         , toggled{ tree, "toggled" }
         , toggleOnClick{ tree, "toggle-on-click" }
+        , radioGroup{ tree, "radio-group" }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -40,6 +41,11 @@ namespace jive
             getButton().setClickingTogglesState(toggleOnClick);
         };
         getButton().setClickingTogglesState(toggleOnClick);
+
+        radioGroup.onValueChange = [this]() {
+            getButton().setRadioGroupId(radioGroup);
+        };
+        getButton().setRadioGroupId(radioGroup);
     }
 
     //==================================================================================================================
@@ -71,6 +77,7 @@ public:
         testJustification();
         testToggleable();
         testClickingTogglesState();
+        testRadioGroup();
     }
 
 private:
@@ -253,6 +260,30 @@ private:
             };
             auto item = createButton(tree);
             expect(item->getButton().getClickingTogglesState());
+        }
+    }
+
+    void testRadioGroup()
+    {
+        beginTest("radio-group");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+            expectEquals(item->getButton().getRadioGroupId(), 0);
+
+            tree.setProperty("radio-group", 100, nullptr);
+            expectEquals(item->getButton().getRadioGroupId(), 100);
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "radio-group", 12 },
+                },
+            };
+            auto item = createButton(tree);
+            expectEquals(item->getButton().getRadioGroupId(), 12);
         }
     }
 };
