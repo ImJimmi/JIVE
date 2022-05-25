@@ -33,6 +33,7 @@ namespace jive
         TypedValue<bool> toggleOnClick;
         TypedValue<int> radioGroup;
         TypedValue<TriggerEvent> triggerEvent;
+        TypedValue<juce::String> tooltip;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)

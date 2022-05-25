@@ -12,6 +12,7 @@ namespace jive
         , toggleOnClick{ tree, "toggle-on-click" }
         , radioGroup{ tree, "radio-group" }
         , triggerEvent{ tree, "trigger-event", TriggerEvent::mouseUp }
+        , tooltip{ tree, "tooltip" }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -52,6 +53,11 @@ namespace jive
             getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
         };
         getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
+
+        tooltip.onValueChange = [this]() {
+            getButton().setTooltip(tooltip);
+        };
+        getButton().setTooltip(tooltip);
     }
 
     //==================================================================================================================
@@ -84,6 +90,7 @@ public:
         testToggleable();
         testClickingTogglesState();
         testRadioGroup();
+        testTooltip();
     }
 
 private:
@@ -317,6 +324,30 @@ private:
 
             tree.setProperty("trigger-event", "mouse-up", nullptr);
             expect(!item->getButton().getTriggeredOnMouseDown());
+        }
+    }
+
+    void testTooltip()
+    {
+        beginTest("tooltip");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+            expect(item->getButton().getTooltip().isEmpty());
+
+            tree.setProperty("tooltip", "Click me!", nullptr);
+            expectEquals(item->getButton().getTooltip(), juce::String{ "Click me!" });
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "tooltip", "OneTwoThree" },
+                },
+            };
+            auto item = createButton(tree);
+            expectEquals(item->getButton().getTooltip(), juce::String{ "OneTwoThree" });
         }
     }
 };
