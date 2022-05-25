@@ -8,6 +8,7 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , TextWidget{ tree }
         , toggleable{ tree, "toggleable" }
+        , toggled{ tree, "toggled" }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -28,6 +29,11 @@ namespace jive
             getButton().setToggleable(toggleable);
         };
         getButton().setToggleable(toggleable);
+
+        toggled.onValueChange = [this]() {
+            getButton().setToggleState(toggled, juce::sendNotification);
+        };
+        getButton().setToggleState(toggled, juce::sendNotification);
     }
 
     //==================================================================================================================
@@ -189,6 +195,33 @@ private:
             auto item = createButton(tree);
 
             expect(item->getButton().isToggleable());
+        }
+    }
+
+    void testToggled()
+    {
+        beginTest("toggled");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+
+            expect(!item->getButton().getToggleState());
+
+            tree.setProperty("toggled", true, nullptr);
+
+            expect(item->getButton().getToggleState());
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "toggled", true },
+                },
+            };
+            auto item = createButton(tree);
+
+            expect(item->getButton().getToggleState());
         }
     }
 };
