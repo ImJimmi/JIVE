@@ -9,6 +9,7 @@ namespace jive
         , TextWidget{ tree }
         , toggleable{ tree, "toggleable" }
         , toggled{ tree, "toggled" }
+        , toggleOnClick{ tree, "toggle-on-click" }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -34,6 +35,11 @@ namespace jive
             getButton().setToggleState(toggled, juce::sendNotification);
         };
         getButton().setToggleState(toggled, juce::sendNotification);
+
+        toggleOnClick.onValueChange = [this]() {
+            getButton().setClickingTogglesState(toggleOnClick);
+        };
+        getButton().setClickingTogglesState(toggleOnClick);
     }
 
     //==================================================================================================================
@@ -64,6 +70,7 @@ public:
         testFont();
         testJustification();
         testToggleable();
+        testClickingTogglesState();
     }
 
 private:
@@ -222,6 +229,30 @@ private:
             auto item = createButton(tree);
 
             expect(item->getButton().getToggleState());
+        }
+    }
+
+    void testClickingTogglesState()
+    {
+        beginTest("toggle-on-click");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+            expect(!item->getButton().getClickingTogglesState());
+
+            tree.setProperty("toggle-on-click", true, nullptr);
+            expect(item->getButton().getClickingTogglesState());
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "toggle-on-click", true },
+                },
+            };
+            auto item = createButton(tree);
+            expect(item->getButton().getClickingTogglesState());
         }
     }
 };

@@ -20,6 +20,7 @@ namespace jive
         //==============================================================================================================
         TypedValue<bool> toggleable;
         TypedValue<bool> toggled;
+        TypedValue<bool> toggleOnClick;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)
