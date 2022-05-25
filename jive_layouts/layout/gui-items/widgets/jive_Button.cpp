@@ -11,6 +11,7 @@ namespace jive
         , toggled{ tree, "toggled" }
         , toggleOnClick{ tree, "toggle-on-click" }
         , radioGroup{ tree, "radio-group" }
+        , triggerEvent{ tree, "trigger-event", TriggerEvent::mouseUp }
     {
         onTextChanged = [this]() {
             getButton().setButtonText(getText());
@@ -46,6 +47,11 @@ namespace jive
             getButton().setRadioGroupId(radioGroup);
         };
         getButton().setRadioGroupId(radioGroup);
+
+        triggerEvent.onValueChange = [this]() {
+            getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
+        };
+        getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
     }
 
     //==================================================================================================================
@@ -284,6 +290,33 @@ private:
             };
             auto item = createButton(tree);
             expectEquals(item->getButton().getRadioGroupId(), 12);
+        }
+    }
+
+    void testTriggerEvent()
+    {
+        beginTest("trigger-event");
+
+        {
+            juce::ValueTree tree{ "Button" };
+            auto item = createButton(tree);
+            expect(!item->getButton().getTriggeredOnMouseDown());
+
+            tree.setProperty("trigger-event", "mouse-down", nullptr);
+            expect(item->getButton().getTriggeredOnMouseDown());
+        }
+        {
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "trigger-event", "mouse-down" },
+                },
+            };
+            auto item = createButton(tree);
+            expect(item->getButton().getTriggeredOnMouseDown());
+
+            tree.setProperty("trigger-event", "mouse-up", nullptr);
+            expect(!item->getButton().getTriggeredOnMouseDown());
         }
     }
 };

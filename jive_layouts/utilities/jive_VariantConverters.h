@@ -314,4 +314,18 @@ namespace juce
         static juce::Font fromVar(const var& v);
         static var toVar(const juce::Font& font);
     };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<jive::Button::TriggerEvent>
+    {
+    public:
+        //==============================================================================================================
+        static jive::Button::TriggerEvent fromVar(const var& v);
+        static var toVar(const jive::Button::TriggerEvent& event);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce
