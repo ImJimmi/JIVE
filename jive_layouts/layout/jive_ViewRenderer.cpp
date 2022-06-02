@@ -61,11 +61,14 @@ namespace jive
         setFactory("Label", []() {
             return std::make_unique<juce::Label>();
         });
-        setFactory("TextButton", []() {
+        setFactory("Button", []() {
             return std::make_unique<juce::TextButton>();
         });
-        setFactory("ToggleButton", []() {
+        setFactory("Checkbox", []() {
             return std::make_unique<juce::ToggleButton>();
+        });
+        setFactory("Hyperlink", []() {
+            return std::make_unique<juce::HyperlinkButton>();
         });
     }
 
@@ -111,6 +114,10 @@ namespace jive
     {
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
+        if (tree.hasType("Button") || tree.hasType("Checkbox"))
+            return std::make_unique<Button>(std::move(item));
+        if (tree.hasType("Hyperlink"))
+            return std::make_unique<Hyperlink>(std::move(item));
 
         return item;
     }
@@ -199,6 +206,18 @@ private:
         auto labelView = renderer.renderView(juce::ValueTree{ "Label" });
         expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
         expect(dynamic_cast<juce::Label*>(&labelView->getComponent()) != nullptr);
+
+        auto buttonView = renderer.renderView(juce::ValueTree{ "Button" });
+        expect(dynamic_cast<jive::Button*>(buttonView.get()) != nullptr);
+        expect(dynamic_cast<juce::TextButton*>(&buttonView->getComponent()) != nullptr);
+
+        auto checkboxView = renderer.renderView(juce::ValueTree{ "Checkbox" });
+        expect(dynamic_cast<jive::Button*>(checkboxView.get()) != nullptr);
+        expect(dynamic_cast<juce::ToggleButton*>(&checkboxView->getComponent()) != nullptr);
+
+        auto hyperlinkView = renderer.renderView(juce::ValueTree{ "Hyperlink" });
+        expect(dynamic_cast<jive::Hyperlink*>(hyperlinkView.get()) != nullptr);
+        expect(dynamic_cast<juce::HyperlinkButton*>(&hyperlinkView->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {

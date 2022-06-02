@@ -729,4 +729,35 @@ namespace juce
 
         return juce::String{ height.getPercent() } + "%";
     }
+
+    //==================================================================================================================
+    juce::Font VariantConverter<juce::Font>::fromVar(const var& v)
+    {
+        return juce::Font::fromString(v.toString());
+    }
+
+    var VariantConverter<juce::Font>::toVar(const juce::Font& font)
+    {
+        return font.toString();
+    }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<jive::Button::TriggerEvent>::varArray = {
+        "mouse-up",
+        "mouse-down",
+    };
+
+    jive::Button::TriggerEvent VariantConverter<jive::Button::TriggerEvent>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<jive::Button::TriggerEvent>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<jive::Button::TriggerEvent>::toVar(const jive::Button::TriggerEvent& event)
+    {
+        const auto index = static_cast<int>(event);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce

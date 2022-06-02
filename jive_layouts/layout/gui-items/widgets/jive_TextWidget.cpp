@@ -9,7 +9,7 @@ namespace jive
         , typefaceName{ tree, "typeface-name" }
         , fontWeight{ tree, "font-weight", "Regular" }
         , fontHeight{ tree, "font-height", 12.f }
-        , fontStyle{ tree, "font-style", "plain" }
+        , fontStyle{ tree, "font-style" }
         , justification{ tree, "justification", juce::Justification::centredLeft }
     {
         text.onValueChange = [this]() {
