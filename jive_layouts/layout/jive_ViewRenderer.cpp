@@ -64,6 +64,9 @@ namespace jive
         setFactory("Button", []() {
             return std::make_unique<juce::TextButton>();
         });
+        setFactory("Checkbox", []() {
+            return std::make_unique<juce::ToggleButton>();
+        });
     }
 
     //==================================================================================================================
@@ -108,7 +111,7 @@ namespace jive
     {
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
-        if (tree.hasType("Button"))
+        if (tree.hasType("Button") || tree.hasType("Checkbox"))
             return std::make_unique<Button>(std::move(item));
 
         return item;
@@ -202,6 +205,10 @@ private:
         auto buttonView = renderer.renderView(juce::ValueTree{ "Button" });
         expect(dynamic_cast<jive::Button*>(buttonView.get()) != nullptr);
         expect(dynamic_cast<juce::TextButton*>(&buttonView->getComponent()) != nullptr);
+
+        auto checkboxView = renderer.renderView(juce::ValueTree{ "Checkbox" });
+        expect(dynamic_cast<jive::Button*>(checkboxView.get()) != nullptr);
+        expect(dynamic_cast<juce::ToggleButton*>(&checkboxView->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {
