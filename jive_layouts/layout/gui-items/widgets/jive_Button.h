@@ -20,6 +20,10 @@ namespace jive
         explicit Button(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        float getWidth() const override;
+        float getHeight() const override;
+
+        //==============================================================================================================
         juce::Button& getButton();
         const juce::Button& getButton() const;
 

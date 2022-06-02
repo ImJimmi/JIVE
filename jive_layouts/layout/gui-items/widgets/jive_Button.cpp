@@ -61,6 +61,29 @@ namespace jive
     }
 
     //==================================================================================================================
+    float Button::getWidth() const
+    {
+        if (!hasAutoWidth())
+            return GuiItemDecorator::getWidth();
+
+        const auto textWidth = getFont().getStringWidthFloat(getText());
+        const auto borderWidth = getBoxModel().getBorder().getLeftAndRight();
+
+        return juce::jmax(textWidth + borderWidth, 20.f);
+    }
+
+    float Button::getHeight() const
+    {
+        if (!hasAutoWidth())
+            return GuiItemDecorator::getHeight();
+
+        const auto textHeight = getFont().getHeight();
+        const auto borderHeight = getBoxModel().getBorder().getTopAndBottom();
+
+        return juce::jmax(textHeight + borderHeight, 20.f);
+    }
+
+    //==================================================================================================================
     juce::Button& Button::getButton()
     {
         return *dynamic_cast<juce::Button*>(&getComponent());
@@ -91,6 +114,7 @@ public:
         testClickingTogglesState();
         testRadioGroup();
         testTooltip();
+        testAutoSize();
     }
 
 private:
@@ -349,6 +373,32 @@ private:
             auto item = createButton(tree);
             expectEquals(item->getButton().getTooltip(), juce::String{ "OneTwoThree" });
         }
+    }
+
+    void testAutoSize()
+    {
+        beginTest("auto size");
+
+        juce::ValueTree tree{ "Button" };
+        auto button = createButton(tree);
+
+        expectEquals(button->getWidth(), 20.f);
+        expectEquals(button->getHeight(), 20.f);
+
+        tree.setProperty("text", "Some text", nullptr);
+        tree.setProperty("border-width", 30, nullptr);
+        tree.setProperty("padding", 5, nullptr);
+
+        const auto boxModel = button->getBoxModel();
+        const auto borderWidth = boxModel.getBorder().getLeftAndRight();
+        const auto textWidth = button->getFont().getStringWidthFloat(button->getText());
+        const auto expectedWidth = borderWidth + textWidth;
+        expect(button->getWidth() == expectedWidth);
+
+        const auto borderHeight = boxModel.getBorder().getTopAndBottom();
+        const auto textHeight = button->getFont().getHeight();
+        const auto expectedHeight = borderHeight + textHeight;
+        expect(button->getHeight() == expectedHeight);
     }
 };
 
