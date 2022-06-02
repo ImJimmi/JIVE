@@ -70,6 +70,9 @@ namespace jive
         setFactory("Hyperlink", []() {
             return std::make_unique<juce::HyperlinkButton>();
         });
+        setFactory("ComboBox", []() {
+            return std::make_unique<juce::ComboBox>();
+        });
     }
 
     //==================================================================================================================
@@ -118,6 +121,8 @@ namespace jive
             return std::make_unique<Button>(std::move(item));
         if (tree.hasType("Hyperlink"))
             return std::make_unique<Hyperlink>(std::move(item));
+        if (tree.hasType("ComboBox"))
+            return std::make_unique<ComboBox>(std::move(item));
 
         return item;
     }
@@ -218,6 +223,10 @@ private:
         auto hyperlinkView = renderer.renderView(juce::ValueTree{ "Hyperlink" });
         expect(dynamic_cast<jive::Hyperlink*>(hyperlinkView.get()) != nullptr);
         expect(dynamic_cast<juce::HyperlinkButton*>(&hyperlinkView->getComponent()) != nullptr);
+
+        auto comboBox = renderer.renderView(juce::ValueTree{ "ComboBox" });
+        expect(dynamic_cast<jive::ComboBox*>(comboBox.get()) != nullptr);
+        expect(dynamic_cast<juce::ComboBox*>(&comboBox->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {
