@@ -67,6 +67,9 @@ namespace jive
         setFactory("Checkbox", []() {
             return std::make_unique<juce::ToggleButton>();
         });
+        setFactory("Hyperlink", []() {
+            return std::make_unique<juce::HyperlinkButton>();
+        });
     }
 
     //==================================================================================================================
@@ -113,6 +116,8 @@ namespace jive
             return std::make_unique<Label>(std::move(item));
         if (tree.hasType("Button") || tree.hasType("Checkbox"))
             return std::make_unique<Button>(std::move(item));
+        if (tree.hasType("Hyperlink"))
+            return std::make_unique<Hyperlink>(std::move(item));
 
         return item;
     }
@@ -209,6 +214,10 @@ private:
         auto checkboxView = renderer.renderView(juce::ValueTree{ "Checkbox" });
         expect(dynamic_cast<jive::Button*>(checkboxView.get()) != nullptr);
         expect(dynamic_cast<juce::ToggleButton*>(&checkboxView->getComponent()) != nullptr);
+
+        auto hyperlinkView = renderer.renderView(juce::ValueTree{ "Hyperlink" });
+        expect(dynamic_cast<jive::Hyperlink*>(hyperlinkView.get()) != nullptr);
+        expect(dynamic_cast<juce::HyperlinkButton*>(&hyperlinkView->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {
