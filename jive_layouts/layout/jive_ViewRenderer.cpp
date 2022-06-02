@@ -61,11 +61,8 @@ namespace jive
         setFactory("Label", []() {
             return std::make_unique<juce::Label>();
         });
-        setFactory("TextButton", []() {
+        setFactory("Button", []() {
             return std::make_unique<juce::TextButton>();
-        });
-        setFactory("ToggleButton", []() {
-            return std::make_unique<juce::ToggleButton>();
         });
     }
 
@@ -111,6 +108,8 @@ namespace jive
     {
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
+        if (tree.hasType("Button"))
+            return std::make_unique<Button>(std::move(item));
 
         return item;
     }
@@ -199,6 +198,10 @@ private:
         auto labelView = renderer.renderView(juce::ValueTree{ "Label" });
         expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
         expect(dynamic_cast<juce::Label*>(&labelView->getComponent()) != nullptr);
+
+        auto buttonView = renderer.renderView(juce::ValueTree{ "Button" });
+        expect(dynamic_cast<jive::Button*>(buttonView.get()) != nullptr);
+        expect(dynamic_cast<juce::TextButton*>(&buttonView->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {
