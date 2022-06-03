@@ -328,4 +328,13 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<DocumentWindow::TitleBarButtons>
+    {
+        //==============================================================================================================
+        static DocumentWindow::TitleBarButtons fromVar(const var& v);
+        static var toVar(const DocumentWindow::TitleBarButtons& flags);
+    };
 } // namespace juce

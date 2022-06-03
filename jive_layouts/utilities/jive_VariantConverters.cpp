@@ -760,4 +760,35 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    DocumentWindow::TitleBarButtons VariantConverter<DocumentWindow::TitleBarButtons>::fromVar(const var& v)
+    {
+        auto result = 0;
+
+        const auto tokens = juce::StringArray::fromTokens(v.toString(), false);
+
+        if (tokens.contains("close"))
+            result += DocumentWindow::closeButton;
+        if (tokens.contains("minimise"))
+            result += DocumentWindow::minimiseButton;
+        if (tokens.contains("maximise"))
+            result += DocumentWindow::maximiseButton;
+
+        return static_cast<DocumentWindow::TitleBarButtons>(result);
+    }
+
+    var VariantConverter<DocumentWindow::TitleBarButtons>::toVar(const DocumentWindow::TitleBarButtons& flags)
+    {
+        juce::StringArray tokens;
+
+        if (flags & DocumentWindow::closeButton)
+            tokens.add("close");
+        if (flags & DocumentWindow::minimiseButton)
+            tokens.add("minimise");
+        if (flags & DocumentWindow::maximiseButton)
+            tokens.add("maximise");
+
+        return tokens.joinIntoString(" ");
+    }
 } // namespace juce

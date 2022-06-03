@@ -73,6 +73,9 @@ namespace jive
         setFactory("ComboBox", []() {
             return std::make_unique<juce::ComboBox>();
         });
+        setFactory("Window", []() {
+            return std::make_unique<DocumentWindow>();
+        });
     }
 
     //==================================================================================================================
@@ -123,6 +126,8 @@ namespace jive
             return std::make_unique<Hyperlink>(std::move(item));
         if (tree.hasType("ComboBox"))
             return std::make_unique<ComboBox>(std::move(item));
+        if (tree.hasType("Window"))
+            return std::make_unique<Window>(std::move(item));
 
         return item;
     }
@@ -191,6 +196,7 @@ public:
         testDisplayTypes();
         testXML();
         testInitialLayout();
+        testWindowContent();
     }
 
 private:
@@ -227,6 +233,10 @@ private:
         auto comboBox = renderer.renderView(juce::ValueTree{ "ComboBox" });
         expect(dynamic_cast<jive::ComboBox*>(comboBox.get()) != nullptr);
         expect(dynamic_cast<juce::ComboBox*>(&comboBox->getComponent()) != nullptr);
+
+        auto window = renderer.renderView(juce::ValueTree{ "Window" });
+        expect(dynamic_cast<jive::Window*>(window.get()) != nullptr);
+        expect(dynamic_cast<juce::DocumentWindow*>(&window->getComponent()) != nullptr);
 
         struct TestComponent : public juce::Component
         {
@@ -381,6 +391,32 @@ private:
         });
 
         expect(view->getChild(1).getComponent().getPosition() != juce::Point<int>{});
+    }
+
+    void testWindowContent()
+    {
+        beginTest("window content");
+
+        const jive::ViewRenderer renderer;
+        const auto view = renderer.renderView(juce::ValueTree{
+            "Window",
+            {
+                { "width", 200 },
+                { "height", 200 },
+            },
+            {
+                {
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 100 },
+                    },
+                    {},
+                },
+            },
+        });
+        expect(dynamic_cast<jive::Window*>(view.get()) != nullptr);
+        expect(dynamic_cast<jive::Window*>(view.get())->getWindow().getContentComponent() != nullptr);
     }
 };
 

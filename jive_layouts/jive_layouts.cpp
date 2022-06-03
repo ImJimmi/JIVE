@@ -1,7 +1,9 @@
 #include "jive_layouts.h"
 
 //======================================================================================================================
-#include "utilities/jive_IgnoredComponent.cpp"
+#include "components/jive_DocumentWindow.cpp"
+#include "components/jive_IgnoredComponent.cpp"
+
 #include "utilities/jive_Length.cpp"
 #include "utilities/jive_TypedValue.cpp"
 
@@ -21,6 +23,7 @@
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
 #include "layout/gui-items/widgets/jive_Hyperlink.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
+#include "layout/gui-items/widgets/jive_Window.cpp"
 
 #include "layout/jive_ViewRenderer.cpp"
 #include "utilities/jive_VariantConverters.cpp"
