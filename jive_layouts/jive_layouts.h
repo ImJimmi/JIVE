@@ -3,10 +3,8 @@
 /* BEGIN_JUCE_MODULE_DECLARATION
     ID:                 jive_layouts
     vendor:             ImJimmi
-    version:            0.1.0
     name:               JIVE Layouts
     license:            MIT
-    minimumCppStandard: 17
     dependencies:       jive_components
 END_JUCE_MODULE_DECLARATION */
 

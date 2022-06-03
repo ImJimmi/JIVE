@@ -3,10 +3,8 @@
 /* BEGIN_JUCE_MODULE_DECLARATION
     ID:                 jive_components
     vendor:             ImJimmi
-    version:            0.1.0
     name:               JIVE Core
     license:            MIT
-    minimumCppStandard: 14
     dependencies:       jive_core
 END_JUCE_MODULE_DECLARATION */
 

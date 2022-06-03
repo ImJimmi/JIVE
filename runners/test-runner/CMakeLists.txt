@@ -1,6 +1,4 @@
-juce_add_console_app(jive-test-runner
-    VERSION 0.1.0
-)
+juce_add_console_app(jive-test-runner)
 
 target_sources(jive-test-runner
 PRIVATE

@@ -1,75 +1,75 @@
 name: Test Runner
 
 on:
-  pull_request:
-    branches: [ main ]
+    pull_request:
+        branches: [main]
 
 env:
-  BUILD_TYPE: Debug
+    BUILD_TYPE: Debug
 
 jobs:
-  test-windows:
-    name: Test Windows
-    runs-on: windows-latest
+    test-windows:
+        name: Test Windows
+        runs-on: windows-latest
 
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: "recursive"
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON
+            - name: Configure CMake
+              run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+            - name: Build
+              run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
+            - name: Test
+              working-directory: ${{github.workspace}}/build
+              run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
 
-  test-macos:
-    name: Test macOS
-    runs-on: macos-latest
+    test-macos:
+        name: Test macOS
+        runs-on: macos-latest
 
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: "recursive"
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON -DJIVE_ENABLE_COVERAGE=ON
+            - name: Configure CMake
+              run: cmake -B ${{github.workspace}}/build -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON -DJIVE_ENABLE_COVERAGE=ON
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+            - name: Build
+              run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
+            - name: Test
+              working-directory: ${{github.workspace}}/build
+              run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
 
-    - name: Install lcov
-      working-directory: ${{github.workspace}}/build
-      run: brew install lcov
+            - name: Install lcov
+              working-directory: ${{github.workspace}}/build
+              run: brew install lcov
 
-    - name: Generate Coverage Report
-      working-directory: ${{github.workspace}}/build
-      run: lcov --directory . --capture --output-file coverage.info --ignore-errors inconsistent --ignore-errors gcov
+            - name: Generate Coverage Report
+              working-directory: ${{github.workspace}}/build
+              run: lcov --directory . --capture --output-file coverage.info --ignore-errors inconsistent --ignore-errors gcov
 
-    - name: Upload Coverage
-      working-directory: ${{github.workspace}}/build
-      run: |
-        curl -Os https://uploader.codecov.io/latest/macos/codecov
-        chmod +x codecov
-        ./codecov -t ${{ secrets.CODECOV_TOKEN }}
+            - name: Upload Coverage
+              working-directory: ${{github.workspace}}/build
+              run: |
+                  curl -Os https://uploader.codecov.io/latest/macos/codecov
+                  chmod +x codecov
+                  ./codecov -t ${{ secrets.CODECOV_TOKEN }}
 
-  verify-formatting:
-    name: Verify Formatting
-    runs-on: macos-latest
+    verify-formatting:
+        name: Verify Formatting
+        runs-on: macos-latest
 
-    steps:
-    - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-    - name: Install clang-format
-      run: brew install clang-format
+            - name: Install clang-format
+              run: brew install clang-format
 
-    - name: Verify formatting
-      run: python3 ${{github.workspace}}/.github/scripts/verify_formatting.py 
+            - name: Verify formatting
+              run: python3 ${{github.workspace}}/.github/scripts/verify_formatting.py
