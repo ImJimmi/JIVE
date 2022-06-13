@@ -453,9 +453,9 @@ public:
 private:
     std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree = juce::ValueTree{ "Component" }) const
     {
-        jive::ViewRenderer viewRenderer;
+        jive::Interpreter interpreter;
 
-        auto view = viewRenderer.renderView(tree);
+        auto view = interpreter.interpret(tree);
         jassert(view != nullptr);
 
         return view;

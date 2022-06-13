@@ -4,18 +4,18 @@
 namespace jive
 {
     //==================================================================================================================
-    ViewRenderer::ViewRenderer()
+    Interpreter::Interpreter()
     {
         resetFactories();
     }
 
     //==================================================================================================================
-    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree) const
     {
         // Can't render a view from an invalid tree!
         jassert(tree.isValid());
 
-        return renderView(tree, nullptr);
+        return interpret(tree, nullptr);
     }
 
     void replaceTextElementWithTextProperty(juce::XmlElement& parentXML, juce::XmlElement& textChild)
@@ -37,21 +37,21 @@ namespace jive
         }
     }
 
-    std::unique_ptr<GuiItem> ViewRenderer::renderView(const juce::String& xmlString) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::String& xmlString) const
     {
         auto xml = juce::parseXML(xmlString);
         recursivelyReplaceSubTextElementsWithTextProperties(*xml);
 
-        return renderView(juce::ValueTree::fromXml(*xml));
+        return interpret(juce::ValueTree::fromXml(*xml));
     }
 
     //==================================================================================================================
-    void ViewRenderer::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
+    void Interpreter::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
     {
         factories.set(treeType.toString(), factory);
     }
 
-    void ViewRenderer::resetFactories()
+    void Interpreter::resetFactories()
     {
         factories.clear();
 
@@ -132,7 +132,7 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> ViewRenderer::renderView(juce::ValueTree tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree, GuiItem* const parent) const
     {
         auto guiItem = createGuiItem(tree, parent);
 
@@ -153,18 +153,18 @@ namespace jive
         return tree.getType().toString().equalsIgnoreCase(expectedType);
     }
 
-    std::unique_ptr<GuiItem> ViewRenderer::createGuiItem(juce::ValueTree tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::createGuiItem(juce::ValueTree tree, GuiItem* const parent) const
     {
         return std::make_unique<GuiItem>(createComponent(tree), tree, parent);
     }
 
-    void ViewRenderer::appendChildItems(GuiItem& item, juce::ValueTree tree) const
+    void Interpreter::appendChildItems(GuiItem& item, juce::ValueTree tree) const
     {
         for (auto childTree : tree)
-            item.addChild(renderView(childTree, &item));
+            item.addChild(interpret(childTree, &item));
     }
 
-    std::unique_ptr<juce::Component> ViewRenderer::createComponent(juce::ValueTree tree) const
+    std::unique_ptr<juce::Component> Interpreter::createComponent(juce::ValueTree tree) const
     {
         const auto treeType = tree.getType().toString();
 
@@ -185,7 +185,7 @@ class ViewRendererUnitTest : public juce::UnitTest
 {
 public:
     ViewRendererUnitTest()
-        : juce::UnitTest{ "jive::ViewRenderer", "jive" }
+        : juce::UnitTest{ "jive::Interpreter", "jive" }
     {
     }
 
@@ -204,9 +204,9 @@ private:
     {
         beginTest("component factory");
 
-        jive::ViewRenderer renderer;
+        jive::Interpreter interpreter;
 
-        auto componentView = renderer.renderView(juce::ValueTree{ "Component" });
+        auto componentView = interpreter.interpret(juce::ValueTree{ "Component" });
         expect(dynamic_cast<jive::GuiItem*>(componentView.get()) != nullptr);
 
         constexpr auto windowStyleFlags = 0;
@@ -214,27 +214,27 @@ private:
         auto* handler = componentView->getComponent().getAccessibilityHandler();
         expect(handler->getRole() == juce::AccessibilityRole::ignored);
 
-        auto labelView = renderer.renderView(juce::ValueTree{ "Label" });
+        auto labelView = interpreter.interpret(juce::ValueTree{ "Label" });
         expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
         expect(dynamic_cast<juce::Label*>(&labelView->getComponent()) != nullptr);
 
-        auto buttonView = renderer.renderView(juce::ValueTree{ "Button" });
+        auto buttonView = interpreter.interpret(juce::ValueTree{ "Button" });
         expect(dynamic_cast<jive::Button*>(buttonView.get()) != nullptr);
         expect(dynamic_cast<juce::TextButton*>(&buttonView->getComponent()) != nullptr);
 
-        auto checkboxView = renderer.renderView(juce::ValueTree{ "Checkbox" });
+        auto checkboxView = interpreter.interpret(juce::ValueTree{ "Checkbox" });
         expect(dynamic_cast<jive::Button*>(checkboxView.get()) != nullptr);
         expect(dynamic_cast<juce::ToggleButton*>(&checkboxView->getComponent()) != nullptr);
 
-        auto hyperlinkView = renderer.renderView(juce::ValueTree{ "Hyperlink" });
+        auto hyperlinkView = interpreter.interpret(juce::ValueTree{ "Hyperlink" });
         expect(dynamic_cast<jive::Hyperlink*>(hyperlinkView.get()) != nullptr);
         expect(dynamic_cast<juce::HyperlinkButton*>(&hyperlinkView->getComponent()) != nullptr);
 
-        auto comboBox = renderer.renderView(juce::ValueTree{ "ComboBox" });
+        auto comboBox = interpreter.interpret(juce::ValueTree{ "ComboBox" });
         expect(dynamic_cast<jive::ComboBox*>(comboBox.get()) != nullptr);
         expect(dynamic_cast<juce::ComboBox*>(&comboBox->getComponent()) != nullptr);
 
-        auto window = renderer.renderView(juce::ValueTree{ "Window" });
+        auto window = interpreter.interpret(juce::ValueTree{ "Window" });
         expect(dynamic_cast<jive::Window*>(window.get()) != nullptr);
         expect(dynamic_cast<juce::DocumentWindow*>(&window->getComponent()) != nullptr);
 
@@ -242,11 +242,11 @@ private:
         {
         };
 
-        renderer.setFactory("TestComponent", []() {
+        interpreter.setFactory("TestComponent", []() {
             return std::make_unique<TestComponent>();
         });
 
-        auto testView = renderer.renderView(juce::ValueTree{ "TestComponent" });
+        auto testView = interpreter.interpret(juce::ValueTree{ "TestComponent" });
         expect(dynamic_cast<jive::GuiItem*>(testView.get()) != nullptr);
         expect(dynamic_cast<TestComponent*>(&testView->getComponent()) != nullptr);
     }
@@ -255,11 +255,11 @@ private:
     {
         beginTest("nested components");
 
-        const jive::ViewRenderer renderer;
+        const jive::Interpreter interpreter;
 
         {
             juce::ValueTree tree{ "Component" };
-            auto view = renderer.renderView(juce::ValueTree{ "Component" });
+            auto view = interpreter.interpret(juce::ValueTree{ "Component" });
 
             expect(view->getNumChildren() == tree.getNumChildren());
             expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
@@ -271,7 +271,7 @@ private:
                 { juce::ValueTree{ "Component" },
                   juce::ValueTree{ "Component" } }
             };
-            auto view = renderer.renderView(tree);
+            auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
             expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
@@ -287,7 +287,7 @@ private:
                       juce::ValueTree{ "Component" },
                       juce::ValueTree{ "Component" } } } }
             };
-            auto view = renderer.renderView(tree);
+            auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
             expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
@@ -301,12 +301,12 @@ private:
     {
         beginTest("display");
 
-        const jive::ViewRenderer renderer;
+        const jive::Interpreter interpreter;
 
-        auto basicView = renderer.renderView(juce::ValueTree{ "Component" });
+        auto basicView = interpreter.interpret(juce::ValueTree{ "Component" });
         expect(dynamic_cast<jive::GuiItem*>(basicView.get()));
 
-        auto flexView = renderer.renderView(juce::ValueTree{
+        auto flexView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
                 { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
@@ -318,7 +318,7 @@ private:
         expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
         expect(dynamic_cast<jive::FlexItem*>(&flexView->getChild(0)));
 
-        auto gridView = renderer.renderView(juce::ValueTree{
+        auto gridView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
                 { "display", "grid" },
@@ -330,7 +330,7 @@ private:
         expect(dynamic_cast<jive::GridContainer*>(gridView.get()));
         expect(dynamic_cast<jive::GridItem*>(&gridView->getChild(0)));
 
-        auto blockView = renderer.renderView(juce::ValueTree{
+        auto blockView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
                 { "display", "block" },
@@ -347,7 +347,7 @@ private:
     {
         beginTest("xml");
 
-        const jive::ViewRenderer renderer;
+        const jive::Interpreter interpreter;
 
         const auto xml = R"(
                 <Component>
@@ -356,15 +356,15 @@ private:
                 </Component>
             )";
 
-        expect(renderer.renderView(xml) != nullptr);
+        expect(interpreter.interpret(xml) != nullptr);
     }
 
     void testInitialLayout()
     {
         beginTest("initial layout");
 
-        const jive::ViewRenderer renderer;
-        const auto view = renderer.renderView(juce::ValueTree{
+        const jive::Interpreter interpreter;
+        const auto view = interpreter.interpret(juce::ValueTree{
             "Component",
             {
                 { "width", 200 },
@@ -397,8 +397,8 @@ private:
     {
         beginTest("window content");
 
-        const jive::ViewRenderer renderer;
-        const auto view = renderer.renderView(juce::ValueTree{
+        const jive::Interpreter interpreter;
+        const auto view = interpreter.interpret(juce::ValueTree{
             "Window",
             {
                 { "width", 200 },

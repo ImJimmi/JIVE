@@ -44,5 +44,5 @@ namespace jive
 #include "layout/gui-items/widgets/jive_Label.h"
 #include "layout/gui-items/widgets/jive_Window.h"
 
-#include "layout/jive_ViewRenderer.h"
+#include "layout/jive_Interpreter.h"
 #include "utilities/jive_VariantConverters.h"

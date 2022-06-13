@@ -158,7 +158,7 @@ private:
                                              0.000001f);
         }
         {
-            jive::ViewRenderer renderer;
+            jive::Interpreter interpreter;
             juce::ValueTree tree{
                 "Component",
                 {
@@ -178,7 +178,7 @@ private:
                     },
                 },
             };
-            auto item = renderer.renderView(tree);
+            auto item = interpreter.interpret(tree);
 
             jive::Width width;
             width.setCorrespondingGuiItem(item->getChild(0).getChild(0));

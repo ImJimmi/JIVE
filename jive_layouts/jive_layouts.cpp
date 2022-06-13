@@ -25,5 +25,5 @@
 #include "layout/gui-items/widgets/jive_Label.cpp"
 #include "layout/gui-items/widgets/jive_Window.cpp"
 
-#include "layout/jive_ViewRenderer.cpp"
+#include "layout/jive_Interpreter.cpp"
 #include "utilities/jive_VariantConverters.cpp"
