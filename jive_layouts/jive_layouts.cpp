@@ -23,6 +23,7 @@
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
 #include "layout/gui-items/widgets/jive_Hyperlink.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
+#include "layout/gui-items/widgets/jive_Slider.cpp"
 #include "layout/gui-items/widgets/jive_Window.cpp"
 
 #include "layout/jive_Interpreter.cpp"

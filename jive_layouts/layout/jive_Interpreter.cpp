@@ -55,23 +55,26 @@ namespace jive
     {
         factories.clear();
 
-        setFactory("Component", []() {
-            return std::make_unique<IgnoredComponent>();
-        });
-        setFactory("Label", []() {
-            return std::make_unique<juce::Label>();
-        });
         setFactory("Button", []() {
             return std::make_unique<juce::TextButton>();
         });
         setFactory("Checkbox", []() {
             return std::make_unique<juce::ToggleButton>();
         });
+        setFactory("ComboBox", []() {
+            return std::make_unique<juce::ComboBox>();
+        });
+        setFactory("Component", []() {
+            return std::make_unique<IgnoredComponent>();
+        });
         setFactory("Hyperlink", []() {
             return std::make_unique<juce::HyperlinkButton>();
         });
-        setFactory("ComboBox", []() {
-            return std::make_unique<juce::ComboBox>();
+        setFactory("Label", []() {
+            return std::make_unique<juce::Label>();
+        });
+        setFactory("Slider", []() {
+            return std::make_unique<juce::Slider>();
         });
         setFactory("Window", []() {
             return std::make_unique<DocumentWindow>();
@@ -118,14 +121,16 @@ namespace jive
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)
     {
-        if (tree.hasType("Label"))
-            return std::make_unique<Label>(std::move(item));
         if (tree.hasType("Button") || tree.hasType("Checkbox"))
             return std::make_unique<Button>(std::move(item));
-        if (tree.hasType("Hyperlink"))
-            return std::make_unique<Hyperlink>(std::move(item));
         if (tree.hasType("ComboBox"))
             return std::make_unique<ComboBox>(std::move(item));
+        if (tree.hasType("Hyperlink"))
+            return std::make_unique<Hyperlink>(std::move(item));
+        if (tree.hasType("Label"))
+            return std::make_unique<Label>(std::move(item));
+        if (tree.hasType("Slider"))
+            return std::make_unique<Slider>(std::move(item));
         if (tree.hasType("Window"))
             return std::make_unique<Window>(std::move(item));
 

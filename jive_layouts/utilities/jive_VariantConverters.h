@@ -337,4 +337,27 @@ namespace juce
         static DocumentWindow::TitleBarButtons fromVar(const var& v);
         static var toVar(const DocumentWindow::TitleBarButtons& flags);
     };
+
+    //==================================================================================================================
+    template <typename T>
+    struct VariantConverter<jive::AutoValue<T>>
+    {
+        //==============================================================================================================
+        static jive::AutoValue<T> fromVar(const var& v);
+        static var toVar(const jive::AutoValue<T>& value);
+    };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<jive::Orientation>
+    {
+    public:
+        //==============================================================================================================
+        static jive::Orientation fromVar(const var& v);
+        static var toVar(const jive::Orientation& orientation);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> varArray;
+    };
 } // namespace juce
