@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Launch (macOS)",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "cwd": "${workspaceFolder}",
