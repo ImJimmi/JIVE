@@ -29,6 +29,12 @@ namespace jive
     }
 
     //==================================================================================================================
+    bool Hyperlink::isContainer() const
+    {
+        return false;
+    }
+
+    //==================================================================================================================
     juce::HyperlinkButton& Hyperlink::getHyperlink()
     {
         return *dynamic_cast<juce::HyperlinkButton*>(&getButton());
@@ -52,6 +58,7 @@ public:
 
     void runTest() final
     {
+        testGuiItem();
         testURL();
         testFont();
         testJustification();
@@ -60,8 +67,17 @@ public:
 private:
     std::unique_ptr<jive::Hyperlink> createHyperlink(juce::ValueTree tree)
     {
-        return std::make_unique<jive::Hyperlink>(std::make_unique<jive::GuiItem>(std::make_unique<juce::HyperlinkButton>(),
-                                                                                 tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::Hyperlink>(interpreter.interpret(tree));
+    }
+
+    void testGuiItem()
+    {
+        beginTest("gui-item");
+
+        auto item = createHyperlink(juce::ValueTree{ "Hyperlink" });
+        expect(!item->isContainer());
     }
 
     void testURL()

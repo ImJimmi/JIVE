@@ -147,8 +147,9 @@ public:
 private:
     std::unique_ptr<jive::Window> createWindow(juce::ValueTree tree)
     {
-        return std::make_unique<jive::Window>(std::make_unique<jive::GuiItem>(std::make_unique<juce::DocumentWindow>("", juce::Colour{}, 0),
-                                                                              tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::Window>(interpreter.interpret(tree));
     }
 
     void testShadow()

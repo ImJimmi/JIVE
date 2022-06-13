@@ -92,8 +92,9 @@ public:
 private:
     std::unique_ptr<jive::FlexItem> createFlexItem(juce::ValueTree tree)
     {
-        return std::make_unique<jive::FlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::FlexItem>(interpreter.interpret(tree));
     }
 
     void testComponent()

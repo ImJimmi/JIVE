@@ -12,6 +12,9 @@ namespace jive
         , flexAlignItems{ tree, "align-items", juce::FlexBox::AlignItems::stretch }
         , flexAlignContent{ tree, "align-content", juce::FlexBox::AlignContent::stretch }
     {
+        jassert(tree.hasProperty("display"));
+        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
+
         flexDirection.onValueChange = [this]() {
             updateLayout();
         };
@@ -132,18 +135,11 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::FlexContainer> createFlexContainer(juce::ValueTree tree = juce::ValueTree{ "Component" })
+    std::unique_ptr<jive::FlexContainer> createFlexContainer(juce::ValueTree tree)
     {
-        return std::make_unique<jive::FlexContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                     tree));
-    }
+        jive::Interpreter interpreter;
 
-    std::unique_ptr<jive::FlexItem> createFlexItem(jive::FlexContainer* parent,
-                                                   juce::ValueTree tree = juce::ValueTree{ "Component" })
-    {
-        return std::make_unique<jive::FlexItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                tree,
-                                                                                parent));
+        return std::make_unique<jive::FlexContainer>(interpreter.interpret(tree));
     }
 
     void testDirection()
@@ -236,9 +232,9 @@ private:
 
         expect(flexBox.items.isEmpty());
 
-        item->addChild(createFlexItem(item.get()));
-        item->addChild(createFlexItem(item.get()));
-        item->addChild(createFlexItem(item.get()));
+        tree.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        tree.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        tree.appendChild(juce::ValueTree{ "Component" }, nullptr);
 
         flexBox = static_cast<juce::FlexBox>(*item);
 
@@ -249,11 +245,20 @@ private:
     {
         beginTest("padding");
 
-        juce::ValueTree tree{ "Component" };
+        juce::ValueTree tree{
+            "Component",
+            {},
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 100 },
+                    },
+                },
+            },
+        };
         auto item = createFlexContainer(tree);
-        item->addChild(createFlexItem(item.get()));
-        item->getComponent().setSize(100, 100);
-
         expect(item->getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
 
         tree.setProperty("padding", "10 20 30 40", nullptr);
@@ -268,15 +273,30 @@ private:
 
         juce::ValueTree tree{
             "Component",
-            { { "flex-direction", "row" },
-              { "padding", 10 },
-              { "border-width", 5 },
-              { "margin", 15 } }
+            {
+                { "flex-direction", "row" },
+                { "padding", 10 },
+                { "border-width", 5 },
+                { "margin", 15 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 25 },
+                    },
+                },
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 130 },
+                        { "height", 14 },
+                    },
+                },
+            },
         };
         auto item = createFlexContainer(tree);
-        item->addChild(createFlexItem(item.get(), juce::ValueTree{ "Component", { { "width", 100 }, { "height", 25 } } }));
-        item->addChild(createFlexItem(item.get(), juce::ValueTree{ "Component", { { "width", 130 }, { "height", 14 } } }));
-
         expect(item->getHeight() == 55.f);
     }
 };

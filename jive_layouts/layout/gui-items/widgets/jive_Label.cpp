@@ -102,6 +102,7 @@ public:
 
     void runTest() final
     {
+        testGuiItem();
         testBorder();
         testAutoSize();
     }
@@ -109,7 +110,17 @@ public:
 private:
     std::unique_ptr<jive::Label> createLabel(juce::ValueTree tree)
     {
-        return std::make_unique<jive::Label>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Label>(), tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::Label>(interpreter.interpret(tree));
+    }
+
+    void testGuiItem()
+    {
+        beginTest("gui-item");
+
+        auto item = createLabel(juce::ValueTree{ "Label" });
+        expect(!item->isContainer());
     }
 
     void testBorder()

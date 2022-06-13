@@ -7,6 +7,8 @@ namespace jive
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
     {
+        jassert(tree.hasProperty("display"));
+        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
     //==================================================================================================================
@@ -37,25 +39,33 @@ public:
     }
 
 private:
+    std::unique_ptr<jive::BlockContainer> createBlockContainer(juce::ValueTree tree)
+    {
+        jive::Interpreter interpreter;
+
+        tree.setProperty("display", "block", nullptr);
+
+        return std::make_unique<jive::BlockContainer>(interpreter.interpret(tree));
+    }
+
     void testLayout()
     {
         beginTest("layout");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = std::make_unique<jive::BlockContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                           tree));
-        auto child = std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                       juce::ValueTree{
-                                                                                           "Component",
-                                                                                           {
-                                                                                               { "x", "50%" },
-                                                                                               { "height", "10%" },
-                                                                                           },
-                                                                                       },
-                                                                                       item.get()));
-        item->addChild(std::move(child));
-        item->updateLayout();
-
+        juce::ValueTree tree{
+            "Component",
+            {},
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "x", "50%" },
+                        { "height", "10%" },
+                    },
+                },
+            },
+        };
+        auto item = createBlockContainer(tree);
         expectEquals(item->getChild(0).getComponent().getX(), 0);
 
         tree.setProperty("width", 300, nullptr);

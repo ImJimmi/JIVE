@@ -61,6 +61,11 @@ namespace jive
     }
 
     //==================================================================================================================
+    bool Button::isContainer() const
+    {
+        return false;
+    }
+
     float Button::getWidth() const
     {
         if (!hasAutoWidth())
@@ -107,6 +112,7 @@ public:
 
     void runTest() final
     {
+        testGuiItem();
         testText();
         testFont();
         testJustification();
@@ -120,18 +126,17 @@ public:
 private:
     std::unique_ptr<jive::Button> createButton(juce::ValueTree tree)
     {
-        struct ConcreteButton : public juce::Button
-        {
-            ConcreteButton()
-                : juce::Button{ "" }
-            {
-            }
+        jive::Interpreter interpreter;
 
-            void paintButton(juce::Graphics&, bool, bool) final {}
-        };
+        return std::make_unique<jive::Button>(interpreter.interpret(tree));
+    }
 
-        return std::make_unique<jive::Button>(std::make_unique<jive::GuiItem>(std::make_unique<ConcreteButton>(),
-                                                                              tree));
+    void testGuiItem()
+    {
+        beginTest("gui-item");
+
+        auto item = createButton(juce::ValueTree{ "Button" });
+        expect(!item->isContainer());
     }
 
     void testText()
