@@ -113,8 +113,9 @@ public:
 private:
     std::unique_ptr<jive::BlockItem> createBlockItem(juce::ValueTree tree)
     {
-        return std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                 tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::BlockItem>(interpreter.interpret(tree));
     }
 
     void testPosition()

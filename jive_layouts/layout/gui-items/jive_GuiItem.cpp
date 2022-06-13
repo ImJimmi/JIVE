@@ -451,32 +451,29 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree = juce::ValueTree{ "Component" }) const
+    std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree) const
     {
         jive::Interpreter interpreter;
 
-        auto view = interpreter.interpret(tree);
-        jassert(view != nullptr);
-
-        return view;
+        return interpreter.interpret(tree);
     }
 
     void testChildren()
     {
         beginTest("children");
 
-        auto item = createGuiItem();
+        auto item = createGuiItem(juce::ValueTree{ "Component" });
 
         expect(item->getNumChildren() == 0);
         expect(item->getComponent().getNumChildComponents() == item->getNumChildren());
 
-        item->addChild(createGuiItem());
+        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
 
         expect(item->getNumChildren() == 1);
         expect(item->getComponent().getNumChildComponents() == item->getNumChildren());
 
-        item->addChild(createGuiItem());
-        item->addChild(createGuiItem());
+        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
+        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
 
         expect(item->getNumChildren() == 3);
         expect(item->getComponent().getNumChildComponents() == item->getNumChildren());

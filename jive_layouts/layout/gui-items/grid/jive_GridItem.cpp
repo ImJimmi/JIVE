@@ -107,8 +107,9 @@ public:
 private:
     std::unique_ptr<jive::GridItem> createGridItem(juce::ValueTree tree)
     {
-        return std::make_unique<jive::GridItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::GridItem>(interpreter.interpret(tree));
     }
 
     void testComponent()

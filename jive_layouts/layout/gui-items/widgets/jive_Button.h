@@ -20,6 +20,8 @@ namespace jive
         explicit Button(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        bool isContainer() const override;
+
         float getWidth() const override;
         float getHeight() const override;
 

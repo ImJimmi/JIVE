@@ -18,6 +18,8 @@ namespace jive
         , autoColumns{ tree, "auto-columns", {} }
         , gap{ tree, "gap" }
     {
+        jassert(tree.hasProperty("display"));
+        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
     }
 
     //==================================================================================================================
@@ -207,8 +209,11 @@ public:
 private:
     std::unique_ptr<jive::GridContainer> createGridContainer(juce::ValueTree tree)
     {
-        return std::make_unique<jive::GridContainer>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                     tree));
+        jive::Interpreter interpreter;
+
+        tree.setProperty("display", "grid", nullptr);
+
+        return std::make_unique<jive::GridContainer>(interpreter.interpret(tree));
     }
 
     std::unique_ptr<jive::GridItem> createGridItem(jive::GuiItem* const parent)

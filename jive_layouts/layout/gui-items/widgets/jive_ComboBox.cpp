@@ -111,6 +111,11 @@ namespace jive
     }
 
     //==================================================================================================================
+    bool ComboBox::isContainer() const
+    {
+        return false;
+    }
+
     float ComboBox::getWidth() const
     {
         if (!hasAutoWidth())
@@ -202,6 +207,7 @@ public:
 
     void runTest() override
     {
+        testGuiItem();
         testEditable();
         testJustification();
         testFont();
@@ -214,8 +220,17 @@ public:
 private:
     std::unique_ptr<jive::ComboBox> createComboBox(juce::ValueTree tree)
     {
-        return std::make_unique<jive::ComboBox>(std::make_unique<jive::GuiItem>(std::make_unique<juce::ComboBox>(),
-                                                                                tree));
+        jive::Interpreter interpreter;
+
+        return std::make_unique<jive::ComboBox>(interpreter.interpret(tree));
+    }
+
+    void testGuiItem()
+    {
+        beginTest("gui-item");
+
+        auto item = createComboBox(juce::ValueTree{ "ComboBox" });
+        expect(!item->isContainer());
     }
 
     void testEditable()
@@ -309,7 +324,7 @@ private:
         {
             juce::Font font{ "Arial", 48.f, 0 };
             juce::ValueTree tree{
-                "Button",
+                "ComboBox",
                 {
                     { "typeface-name", font.getTypefaceName() },
                     { "font-weight", font.getTypefaceStyle() },
@@ -336,7 +351,7 @@ private:
         }
         {
             juce::ValueTree tree{
-                "Button",
+                "ComboBox",
                 {
                     { "tooltip", "369" },
                 },

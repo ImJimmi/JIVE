@@ -11,6 +11,9 @@ namespace jive
         explicit Hyperlink(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        bool isContainer() const override;
+
+        //==============================================================================================================
         juce::HyperlinkButton& getHyperlink();
         const juce::HyperlinkButton& getHyperlink() const;
 

@@ -47,6 +47,8 @@ namespace jive
         explicit ComboBox(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        bool isContainer() const override;
+        
         float getWidth() const override;
         float getHeight() const override;
 
