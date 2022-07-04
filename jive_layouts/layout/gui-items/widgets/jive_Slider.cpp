@@ -115,12 +115,47 @@ namespace jive
     }
 
     //==================================================================================================================
+    void Slider::updateStyle()
+    {
+        Orientation ori;
+
+        if (orientation.get().isAuto())
+        {
+            if (getWidth() < getHeight())
+                ori = Orientation::vertical;
+            else
+                ori = Orientation::horizontal;
+        }
+        else
+        {
+            ori = orientation.get().getWithDefault();
+        }
+
+        getSlider().setSliderStyle(getStyleForOrientation(ori));
+    }
+
+    //==================================================================================================================
     void Slider::sliderValueChanged(juce::Slider* slider)
     {
         if (slider != &getSlider())
             return;
 
         value = getSlider().getTextFromValue(getSlider().getValue());
+    }
+
+    //==================================================================================================================
+    juce::Slider::SliderStyle Slider::getStyleForOrientation(Orientation ori)
+    {
+        switch (ori)
+        {
+        case Orientation::horizontal:
+            return juce::Slider::SliderStyle::LinearHorizontal;
+        case Orientation::vertical:
+            return juce::Slider::SliderStyle::LinearVertical;
+        }
+
+        jassertfalse;
+        return {};
     }
 
     //==================================================================================================================
@@ -136,29 +171,6 @@ namespace jive
             range.interval = slider.getValueFromText(interval);
 
         slider.setNormalisableRange(range);
-    }
-
-    void Slider::updateStyle()
-    {
-        if (orientation.get().isAuto())
-        {
-            if (getWidth() < getHeight())
-                getSlider().setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-            else
-                getSlider().setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
-        }
-        else
-        {
-            switch (orientation.get().getWithDefault())
-            {
-            case Orientation::horizontal:
-                getSlider().setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
-                break;
-            case Orientation::vertical:
-                getSlider().setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-                break;
-            }
-        }
     }
 } // namespace jive
 

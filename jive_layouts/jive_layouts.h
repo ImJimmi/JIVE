@@ -42,10 +42,12 @@ namespace jive
 #include "layout/gui-items/grid/jive_GridItem.h"
 #include "layout/gui-items/widgets/jive_Button.h"
 #include "layout/gui-items/widgets/jive_ComboBox.h"
-#include "layout/gui-items/widgets/jive_Hyperlink.h"
 #include "layout/gui-items/widgets/jive_Label.h"
 #include "layout/gui-items/widgets/jive_Slider.h"
 #include "layout/gui-items/widgets/jive_Window.h"
+
+#include "layout/gui-items/widgets/jive_Hyperlink.h"
+#include "layout/gui-items/widgets/jive_Spinner.h"
 
 #include "layout/jive_Interpreter.h"
 #include "utilities/jive_VariantConverters.h"

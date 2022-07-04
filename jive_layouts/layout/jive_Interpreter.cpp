@@ -76,6 +76,9 @@ namespace jive
         setFactory("Slider", []() {
             return std::make_unique<juce::Slider>();
         });
+        setFactory("Spinner", []() {
+            return std::make_unique<juce::Slider>();
+        });
         setFactory("Window", []() {
             return std::make_unique<DocumentWindow>();
         });
@@ -131,6 +134,8 @@ namespace jive
             return std::make_unique<Label>(std::move(item));
         if (tree.hasType("Slider"))
             return std::make_unique<Slider>(std::move(item));
+        if (tree.hasType("Spinner"))
+            return std::make_unique<Spinner>(std::move(item));
         if (tree.hasType("Window"))
             return std::make_unique<Window>(std::move(item));
 

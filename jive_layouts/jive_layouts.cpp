@@ -21,10 +21,12 @@
 #include "layout/gui-items/grid/jive_GridItem.cpp"
 #include "layout/gui-items/widgets/jive_Button.cpp"
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
-#include "layout/gui-items/widgets/jive_Hyperlink.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
 #include "layout/gui-items/widgets/jive_Slider.cpp"
 #include "layout/gui-items/widgets/jive_Window.cpp"
+
+#include "layout/gui-items/widgets/jive_Hyperlink.cpp"
+#include "layout/gui-items/widgets/jive_Spinner.cpp"
 
 #include "layout/jive_Interpreter.cpp"
 #include "utilities/jive_VariantConverters.cpp"
