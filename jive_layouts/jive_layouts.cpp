@@ -26,6 +26,7 @@
 #include "layout/gui-items/widgets/jive_Window.cpp"
 
 #include "layout/gui-items/widgets/jive_Hyperlink.cpp"
+#include "layout/gui-items/widgets/jive_Knob.cpp"
 #include "layout/gui-items/widgets/jive_Spinner.cpp"
 
 #include "layout/jive_Interpreter.cpp"

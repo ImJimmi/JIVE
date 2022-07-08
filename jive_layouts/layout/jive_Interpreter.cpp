@@ -70,6 +70,9 @@ namespace jive
         setFactory("Hyperlink", []() {
             return std::make_unique<juce::HyperlinkButton>();
         });
+        setFactory("Knob", []() {
+            return std::make_unique<juce::Slider>();
+        });
         setFactory("Label", []() {
             return std::make_unique<juce::Label>();
         });
@@ -130,6 +133,8 @@ namespace jive
             return std::make_unique<ComboBox>(std::move(item));
         if (tree.hasType("Hyperlink"))
             return std::make_unique<Hyperlink>(std::move(item));
+        if (tree.hasType("Knob"))
+            return std::make_unique<Knob>(std::move(item));
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
         if (tree.hasType("Slider"))
