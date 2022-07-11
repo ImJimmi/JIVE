@@ -72,4 +72,4 @@ jobs:
       run: brew install clang-format
 
     - name: Verify formatting
-      run: python3 ${{github.workspace}}/.github/verify_formatting.py 
+      run: python3 ${{github.workspace}}/.github/scripts/verify_formatting.py 
