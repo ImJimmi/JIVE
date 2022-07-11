@@ -791,4 +791,43 @@ namespace juce
 
         return tokens.joinIntoString(" ");
     }
+
+    //==================================================================================================================
+    template <typename T>
+    jive::AutoValue<T> VariantConverter<jive::AutoValue<T>>::fromVar(const var& v)
+    {
+        if (v.isVoid() || v.toString().compareIgnoreCase("auto") == 0)
+            return jive::AutoValue<T>{};
+
+        return jive::AutoValue<T>{ VariantConverter<T>::fromVar(v) };
+    }
+
+    template <typename T>
+    var VariantConverter<jive::AutoValue<T>>::toVar(const jive::AutoValue<T>& value)
+    {
+        if (value.isAuto())
+            return "auto";
+
+        return VariantConverter<T>::toVar(*value.get());
+    }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<jive::Orientation>::varArray = {
+        "horizontal",
+        "vertical",
+    };
+
+    jive::Orientation VariantConverter<jive::Orientation>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<jive::Orientation>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<jive::Orientation>::toVar(const jive::Orientation& orientation)
+    {
+        const auto index = static_cast<int>(orientation);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce
