@@ -76,6 +76,9 @@ namespace jive
         setFactory("Label", []() {
             return std::make_unique<juce::Label>();
         });
+        setFactory("ProgressBar", []() {
+            return std::make_unique<NormalisedProgressBar>();
+        });
         setFactory("Slider", []() {
             return std::make_unique<juce::Slider>();
         });
@@ -137,6 +140,8 @@ namespace jive
             return std::make_unique<Knob>(std::move(item));
         if (tree.hasType("Label"))
             return std::make_unique<Label>(std::move(item));
+        if (tree.hasType("ProgressBar"))
+            return std::make_unique<ProgressBar>(std::move(item));
         if (tree.hasType("Slider"))
             return std::make_unique<Slider>(std::move(item));
         if (tree.hasType("Spinner"))
