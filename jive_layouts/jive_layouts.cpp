@@ -3,6 +3,7 @@
 //======================================================================================================================
 #include "components/jive_DocumentWindow.cpp"
 #include "components/jive_IgnoredComponent.cpp"
+#include "components/jive_NormalisedProgressBar.cpp"
 
 #include "utilities/jive_Length.cpp"
 #include "utilities/jive_TypedValue.cpp"
@@ -22,6 +23,7 @@
 #include "layout/gui-items/widgets/jive_Button.cpp"
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
+#include "layout/gui-items/widgets/jive_ProgressBar.cpp"
 #include "layout/gui-items/widgets/jive_Slider.cpp"
 #include "layout/gui-items/widgets/jive_Window.cpp"
 

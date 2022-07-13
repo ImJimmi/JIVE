@@ -22,6 +22,7 @@ namespace jive
 //======================================================================================================================
 #include "components/jive_DocumentWindow.h"
 #include "components/jive_IgnoredComponent.h"
+#include "components/jive_NormalisedProgressBar.h"
 
 #include "utilities/jive_AutoValue.h"
 #include "utilities/jive_Length.h"
@@ -43,6 +44,7 @@ namespace jive
 #include "layout/gui-items/widgets/jive_Button.h"
 #include "layout/gui-items/widgets/jive_ComboBox.h"
 #include "layout/gui-items/widgets/jive_Label.h"
+#include "layout/gui-items/widgets/jive_ProgressBar.h"
 #include "layout/gui-items/widgets/jive_Slider.h"
 #include "layout/gui-items/widgets/jive_Window.h"
 
