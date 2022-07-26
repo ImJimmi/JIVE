@@ -49,6 +49,8 @@ namespace jive
         //==============================================================================================================
         const juce::Component& getComponent() const;
         juce::Component& getComponent();
+        const juce::Viewport& getViewport() const;
+        juce::Viewport& getViewport();
 
         virtual void addChild(std::unique_ptr<GuiItem> child);
         virtual int getNumChildren() const;
@@ -104,6 +106,7 @@ namespace jive
         juce::ValueTree tree;
 
         const std::shared_ptr<juce::Component> component;
+        const std::shared_ptr<juce::Viewport> viewport;
         GuiItem* const parent;
 
     private:
@@ -111,9 +114,13 @@ namespace jive
         friend class GuiItemDecorator;
 
         //==============================================================================================================
-        GuiItem(std::shared_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent);
+        GuiItem(std::shared_ptr<juce::Component> component,
+                std::shared_ptr<juce::Viewport> viewport,
+                juce::ValueTree tree,
+                GuiItem* parent);
 
         //==============================================================================================================
+        void updateViewportSize();
         void updateComponentSize();
 
         //==============================================================================================================
@@ -139,6 +146,7 @@ namespace jive
         TypedValue<Width> width;
         TypedValue<Height> height;
         TypedValue<Display> display;
+        TypedValue<Overflow> overflow;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

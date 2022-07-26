@@ -41,8 +41,8 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getBorderBounds() const
     {
-        const auto width = item.hasAutoWidth() ? item.getComponent().getWidth() : calculateBorderBoundsWidth();
-        const auto height = item.hasAutoHeight() ? item.getComponent().getHeight() : calculateBorderBoundsHeight();
+        const auto width = item.hasAutoWidth() ? item.getViewport().getWidth() : calculateBorderBoundsWidth();
+        const auto height = item.hasAutoHeight() ? item.getViewport().getHeight() : calculateBorderBoundsHeight();
 
         return { width, height };
     }

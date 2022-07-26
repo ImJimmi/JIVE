@@ -20,6 +20,10 @@ namespace jive
 } // namespace jive
 
 //======================================================================================================================
+#if JIVE_UNIT_TESTS
+    #include "utilities/jive_StringStreams.h"
+#endif
+
 #include "components/jive_DocumentWindow.h"
 #include "components/jive_IgnoredComponent.h"
 #include "components/jive_NormalisedProgressBar.h"
@@ -27,6 +31,7 @@ namespace jive
 #include "utilities/jive_AutoValue.h"
 #include "utilities/jive_Length.h"
 #include "utilities/jive_Orientation.h"
+#include "utilities/jive_Overflow.h"
 #include "utilities/jive_TypedValue.h"
 
 #include "layout/jive_BoxModel.h"

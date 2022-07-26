@@ -86,7 +86,7 @@ namespace jive
             return std::make_unique<juce::Slider>();
         });
         setFactory("Window", []() {
-            return std::make_unique<DocumentWindow>();
+            return std::make_unique<IgnoredComponent>();
         });
     }
 
@@ -254,10 +254,6 @@ private:
         expect(dynamic_cast<jive::ComboBox*>(comboBox.get()) != nullptr);
         expect(dynamic_cast<juce::ComboBox*>(&comboBox->getComponent()) != nullptr);
 
-        auto window = interpreter.interpret(juce::ValueTree{ "Window" });
-        expect(dynamic_cast<jive::Window*>(window.get()) != nullptr);
-        expect(dynamic_cast<juce::DocumentWindow*>(&window->getComponent()) != nullptr);
-
         struct TestComponent : public juce::Component
         {
         };
@@ -410,7 +406,7 @@ private:
             },
         });
 
-        expect(view->getChild(1).getComponent().getPosition() != juce::Point<int>{});
+        expect(view->getChild(1).getViewport().getPosition() != juce::Point<int>{});
     }
 
     void testWindowContent()

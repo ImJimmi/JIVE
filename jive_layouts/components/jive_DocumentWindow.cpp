@@ -13,7 +13,7 @@ namespace jive
             juce::JUCEApplication::getInstance()->systemRequestedQuit();
         } }
     {
-        setContentOwned(new juce::Component, false);
+        setVisible(true);
     }
 
     //==================================================================================================================

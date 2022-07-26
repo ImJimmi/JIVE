@@ -6,6 +6,7 @@
 #include "components/jive_NormalisedProgressBar.cpp"
 
 #include "utilities/jive_Length.cpp"
+#include "utilities/jive_Overflow.cpp"
 #include "utilities/jive_TypedValue.cpp"
 
 #include "layout/jive_BoxModel.cpp"

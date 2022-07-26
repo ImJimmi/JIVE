@@ -42,7 +42,7 @@ namespace jive
 
     FlexItem::operator juce::FlexItem()
     {
-        juce::FlexItem flexItem{ *component };
+        juce::FlexItem flexItem{ getViewport() };
 
         flexItem.width = getWidth();
         flexItem.height = getHeight();
@@ -105,7 +105,7 @@ private:
         auto item = createFlexItem(tree);
         auto flexItem = static_cast<juce::FlexItem>(*item);
 
-        expect(flexItem.associatedComponent == &item->getComponent());
+        expect(flexItem.associatedComponent == &item->getViewport());
     }
 
     void testOrder()

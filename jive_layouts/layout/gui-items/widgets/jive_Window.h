@@ -11,9 +11,6 @@ namespace jive
         explicit Window(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child) override;
-
-        //==============================================================================================================
         juce::DocumentWindow& getWindow();
         const juce::DocumentWindow& getWindow() const;
 
@@ -22,6 +19,8 @@ namespace jive
         int getStyleFlags() const;
 
         //==============================================================================================================
+        DocumentWindow window;
+
         TypedValue<bool> hasShadow;
         TypedValue<bool> isNative;
         TypedValue<bool> isResizable;
