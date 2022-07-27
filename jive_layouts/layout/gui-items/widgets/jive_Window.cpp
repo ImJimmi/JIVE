@@ -26,6 +26,9 @@ namespace jive
         , titleBarHeight{ tree, "title-bar-height", 26 }
         , titleBarButtons{ tree, "title-bar-buttons", juce::DocumentWindow::allButtons }
     {
+        static constexpr auto resizeWindowWhenViewportSizeChanges = true;
+        getWindow().setContentNonOwned(&getViewport(), resizeWindowWhenViewportSizeChanges);
+
         hasShadow.onValueChange = [this]() {
             getWindow().setDropShadowEnabled(hasShadow);
         };
@@ -98,26 +101,14 @@ namespace jive
     }
 
     //==================================================================================================================
-    void Window::addChild(std::unique_ptr<GuiItem> child)
-    {
-        const auto componentIndex = getWindow().getNumChildComponents();
-        const auto childIndex = getNumChildren();
-
-        GuiItemDecorator::addChild(std::move(child));
-        getWindow().removeChildComponent(componentIndex);
-
-        getWindow().getContentComponent()->addChildComponent(getChild(childIndex).getComponent());
-    }
-
-    //==================================================================================================================
     juce::DocumentWindow& Window::getWindow()
     {
-        return *dynamic_cast<juce::DocumentWindow*>(&getComponent());
+        return window;
     }
 
     const juce::DocumentWindow& Window::getWindow() const
     {
-        return *dynamic_cast<const juce::DocumentWindow*>(&getComponent());
+        return window;
     }
 } // namespace jive
 
@@ -157,9 +148,18 @@ private:
         beginTest("shadow");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
             auto item = createWindow(tree);
             expect(item->getWindow().isDropShadowEnabled());
+            expect(item->getWindow().isOnDesktop());
+            expect(item->getWindow().isVisible());
+            expect(item->getWindow().isShowing());
 
             tree.setProperty("shadow", false, nullptr);
             expect(!item->getWindow().isDropShadowEnabled());
@@ -169,6 +169,8 @@ private:
                 "Window",
                 {
                     { "shadow", false },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -181,7 +183,13 @@ private:
         beginTest("native");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 150 },
+                },
+            };
             auto item = createWindow(tree);
             expect(item->getWindow().isUsingNativeTitleBar());
 
@@ -193,6 +201,8 @@ private:
                 "Window",
                 {
                     { "native", false },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -205,7 +215,13 @@ private:
         beginTest("resizable");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
             auto item = createWindow(tree);
             expect(item->getWindow().isResizable());
 
@@ -217,6 +233,8 @@ private:
                 "Window",
                 {
                     { "resizable", false },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -229,7 +247,13 @@ private:
         beginTest("size limits");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
             auto item = createWindow(tree);
             expectEquals(item->getWindow().getConstrainer()->getMinimumWidth(), 128);
             expectEquals(item->getWindow().getConstrainer()->getMinimumHeight(), 128);
@@ -256,6 +280,8 @@ private:
                     { "min-height", 369 },
                     { "max-width", 1122 },
                     { "max-height", 3344 },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -271,7 +297,13 @@ private:
         beginTest("draggable");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
             auto item = createWindow(tree);
             expect(item->getWindow().isDraggable());
 
@@ -283,6 +315,8 @@ private:
                 "Window",
                 {
                     { "draggable", false },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -294,7 +328,13 @@ private:
     {
         beginTest("full-screen");
 
-        juce::ValueTree tree{ "Window" };
+        juce::ValueTree tree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+        };
         auto item = createWindow(tree);
         expect(!item->getWindow().isFullScreen());
     }
@@ -303,7 +343,13 @@ private:
     {
         beginTest("minimised");
 
-        juce::ValueTree tree{ "Window" };
+        juce::ValueTree tree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+        };
         auto item = createWindow(tree);
         expect(!item->getWindow().isMinimised());
     }
@@ -313,7 +359,13 @@ private:
         beginTest("name");
 
         {
-            juce::ValueTree tree{ "Window" };
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
             auto item = createWindow(tree);
             expectEquals(item->getWindow().getName(), juce::String{ JUCE_APPLICATION_NAME });
 
@@ -325,6 +377,8 @@ private:
                 "Window",
                 {
                     { "name", "foo" },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -341,6 +395,8 @@ private:
                 "Window",
                 {
                     { "native", false },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);
@@ -355,6 +411,8 @@ private:
                 {
                     { "native", false },
                     { "title-bar-height", 100 },
+                    { "width", 100 },
+                    { "height", 100 },
                 },
             };
             auto item = createWindow(tree);

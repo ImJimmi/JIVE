@@ -259,12 +259,12 @@ private:
             },
         };
         auto item = createFlexContainer(tree);
-        expect(item->getChild(0).getComponent().getPosition() == juce::Point<int>{ 0, 0 });
+        expectEquals(item->getChild(0).getViewport().getPosition(), juce::Point<int>{ 0, 0 });
 
         tree.setProperty("padding", "10 20 30 40", nullptr);
         item->getComponent().setSize(220, 330);
 
-        expect(item->getChild(0).getComponent().getPosition() == juce::Point<int>{ 40, 10 });
+        expectEquals(item->getChild(0).getViewport().getPosition(), juce::Point<int>{ 40, 10 });
     }
 
     void testAutoHeight()

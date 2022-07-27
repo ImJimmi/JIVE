@@ -36,7 +36,7 @@ namespace jive
 
     GridItem::operator juce::GridItem()
     {
-        juce::GridItem gridItem{ getComponent() };
+        juce::GridItem gridItem{ getViewport() };
 
         gridItem.order = order;
 
@@ -47,10 +47,10 @@ namespace jive
         gridItem.row = row;
         gridItem.area = area;
 
-        gridItem.width = width;
+        gridItem.width = hasAutoWidth() ? juce::GridItem::notAssigned : getWidth();
         gridItem.minWidth = minWidth;
         gridItem.maxWidth = maxWidth;
-        gridItem.height = height;
+        gridItem.height = hasAutoHeight() ? juce::GridItem::notAssigned : getHeight();
         gridItem.minHeight = minHeight;
         gridItem.maxHeight = maxHeight;
 
@@ -120,7 +120,7 @@ private:
         auto item = createGridItem(tree);
 
         auto gridItem = static_cast<juce::GridItem>(*item);
-        expect(gridItem.associatedComponent == &item->getComponent());
+        expect(gridItem.associatedComponent == &item->getViewport());
     }
 
     void testOrder()
@@ -369,7 +369,7 @@ private:
             auto item = createGridItem(tree);
 
             auto gridItem = static_cast<juce::GridItem>(*item);
-            expect(gridItem.width == 374.6f);
+            expectEquals(gridItem.width, 374.6f);
         }
     }
 
@@ -459,7 +459,7 @@ private:
             auto item = createGridItem(tree);
 
             auto gridItem = static_cast<juce::GridItem>(*item);
-            expect(gridItem.height == 374.6f);
+            expectEquals(gridItem.height, 374.6f);
         }
     }
 

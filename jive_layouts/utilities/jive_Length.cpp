@@ -73,7 +73,7 @@ namespace jive
 
     float Width::getRelativeParentLength() const
     {
-        return item->getParent()->getComponent().getWidth();
+        return item->getParent()->getViewport().getWidth();
     }
 
     //==================================================================================================================
@@ -89,7 +89,7 @@ namespace jive
 
     float Height::getRelativeParentLength() const
     {
-        return item->getParent()->getComponent().getHeight();
+        return item->getParent()->getViewport().getHeight();
     }
 } // namespace jive
 

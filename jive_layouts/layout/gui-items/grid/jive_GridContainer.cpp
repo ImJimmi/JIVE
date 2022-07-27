@@ -582,9 +582,9 @@ private:
         item->addChild(createGridItem(item.get()));
         item->addChild(createGridItem(item.get()));
 
-        item->getComponent().setSize(200, 200);
-        expect(item->getChild(0).getComponent().getWidth() > 0);
-        expect(item->getChild(1).getComponent().getWidth() > 0);
+        item->getViewport().setSize(200, 200);
+        expect(item->getChild(0).getViewport().getWidth() > 0);
+        expect(item->getChild(1).getViewport().getWidth() > 0);
     }
 
     void testAutoSize()

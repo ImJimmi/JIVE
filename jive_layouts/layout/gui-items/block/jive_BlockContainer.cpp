@@ -66,13 +66,13 @@ private:
             },
         };
         auto item = createBlockContainer(tree);
-        expectEquals(item->getChild(0).getComponent().getX(), 0);
+        expectEquals(item->getChild(0).getViewport().getX(), 0);
 
         tree.setProperty("width", 300, nullptr);
         tree.setProperty("height", 100, nullptr);
 
-        expectEquals(item->getChild(0).getComponent().getX(), 150);
-        expectEquals(item->getChild(0).getComponent().getHeight(), 10);
+        expectEquals(item->getChild(0).getViewport().getX(), 150);
+        expectEquals(item->getChild(0).getViewport().getHeight(), 10);
     }
 };
 
