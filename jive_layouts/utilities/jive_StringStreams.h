@@ -18,7 +18,17 @@ namespace juce
     {
         return str << "juce::Point<" << typeid(T).name() << "> { "
                    << point.getX()
-                   << ", " << point.getY()
+                   << ", "
+                   << point.getY()
+                   << " }";
+    }
+
+    JUCE_API String& JUCE_CALLTYPE operator<<(String& str, const Image& image)
+    {
+        return str << "juce::Image { "
+                   << image.getWidth()
+                   << ", "
+                   << image.getHeight()
                    << " }";
     }
 } // namespace juce

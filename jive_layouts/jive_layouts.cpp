@@ -23,6 +23,7 @@
 #include "layout/gui-items/grid/jive_GridItem.cpp"
 #include "layout/gui-items/widgets/jive_Button.cpp"
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
+#include "layout/gui-items/widgets/jive_Image.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
 #include "layout/gui-items/widgets/jive_ProgressBar.cpp"
 #include "layout/gui-items/widgets/jive_Slider.cpp"

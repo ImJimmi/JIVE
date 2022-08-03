@@ -48,6 +48,7 @@ namespace jive
 #include "layout/gui-items/grid/jive_GridItem.h"
 #include "layout/gui-items/widgets/jive_Button.h"
 #include "layout/gui-items/widgets/jive_ComboBox.h"
+#include "layout/gui-items/widgets/jive_Image.h"
 #include "layout/gui-items/widgets/jive_Label.h"
 #include "layout/gui-items/widgets/jive_ProgressBar.h"
 #include "layout/gui-items/widgets/jive_Slider.h"
