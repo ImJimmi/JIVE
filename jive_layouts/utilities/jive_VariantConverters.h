@@ -360,4 +360,28 @@ namespace juce
         //==============================================================================================================
         static const Array<var> varArray;
     };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<Image>
+    {
+    public:
+        //==============================================================================================================
+        static Image fromVar(const var& v);
+        static var toVar(const Image& image);
+    };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<RectanglePlacement>
+    {
+    public:
+        //==============================================================================================================
+        static RectanglePlacement fromVar(const var& v);
+        static var toVar(const RectanglePlacement& placement);
+
+    private:
+        //==============================================================================================================
+        static const std::unordered_map<String, RectanglePlacement::Flags> map;
+    };
 } // namespace juce

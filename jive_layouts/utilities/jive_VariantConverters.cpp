@@ -830,4 +830,57 @@ namespace juce
         jassert(varArray.size() >= index);
         return varArray[index];
     }
+
+    //==================================================================================================================
+    Image VariantConverter<Image>::fromVar(const var& v)
+    {
+        return Image{
+            dynamic_cast<ImagePixelData*>(v.getObject())
+        };
+    }
+
+    var VariantConverter<Image>::toVar(const Image& image)
+    {
+        return var{ image.getPixelData() };
+    }
+
+    //==================================================================================================================
+    const std::unordered_map<String, RectanglePlacement::Flags> VariantConverter<RectanglePlacement>::map = {
+        { "left", RectanglePlacement::xLeft },
+        { "right", RectanglePlacement::xRight },
+        { "centred-x", RectanglePlacement::xMid },
+        { "top", RectanglePlacement::yTop },
+        { "bottom", RectanglePlacement::yBottom },
+        { "centred-y", RectanglePlacement::yMid },
+        { "stretch", RectanglePlacement::stretchToFit },
+        { "fill", RectanglePlacement::fillDestination },
+        { "reduce-only", RectanglePlacement::onlyReduceInSize },
+        { "increase-only", RectanglePlacement::onlyIncreaseInSize },
+        { "do-not-resize", RectanglePlacement::doNotResize },
+        { "centred", RectanglePlacement::centred },
+    };
+
+    RectanglePlacement VariantConverter<RectanglePlacement>::fromVar(const var& v)
+    {
+        const auto tokens = StringArray::fromTokens(v.toString(), false);
+        return std::accumulate(std::begin(tokens),
+                               std::end(tokens),
+                               0,
+                               [](const auto& flags, const auto& token) {
+                                   jassert(map.count(token) > 0);
+                                   return flags + map.at(token);
+                               });
+    }
+
+    var VariantConverter<RectanglePlacement>::toVar(const RectanglePlacement& placement)
+    {
+        auto stringFlagPair = std::find_if(std::begin(map),
+                                           std::end(map),
+                                           [&placement](const auto& pair) {
+                                               return placement.testFlags(pair.second);
+                                           });
+        jassert(stringFlagPair != std::end(map));
+
+        return stringFlagPair->first;
+    }
 } // namespace juce
