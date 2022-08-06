@@ -31,4 +31,9 @@ namespace juce
                    << image.getHeight()
                    << " }";
     }
+
+    JUCE_API String& JUCE_CALLTYPE operator<<(String& str, const jive::Drawable& /* drawable */)
+    {
+        return str << "Drawable{}";
+    }
 } // namespace juce

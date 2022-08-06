@@ -71,7 +71,7 @@ namespace jive
             return std::make_unique<juce::HyperlinkButton>();
         });
         setFactory("Image", []() {
-            return std::make_unique<juce::ImageComponent>();
+            return std::make_unique<IgnoredComponent>();
         });
         setFactory("Knob", []() {
             return std::make_unique<juce::Slider>();

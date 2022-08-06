@@ -5,6 +5,7 @@
 #include "components/jive_IgnoredComponent.cpp"
 #include "components/jive_NormalisedProgressBar.cpp"
 
+#include "utilities/jive_Drawable.cpp"
 #include "utilities/jive_Length.cpp"
 #include "utilities/jive_Overflow.cpp"
 #include "utilities/jive_TypedValue.cpp"
