@@ -16,13 +16,23 @@ namespace jive
 
         bool isContainer() const override;
 
-        const juce::ImageComponent& getImage() const;
-        juce::ImageComponent& getImage();
+        Drawable getDrawable();
+
+    protected:
+        //==============================================================================================================
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
     private:
         //==============================================================================================================
-        TypedValue<juce::Image> image;
+        void updateChildComponent();
+        void updateChildBounds();
+        void updatePlacement();
+
+        //==============================================================================================================
+        TypedValue<Drawable> source;
         TypedValue<juce::RectanglePlacement> placement;
+
+        std::unique_ptr<juce::Component> childComponent;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Image)
