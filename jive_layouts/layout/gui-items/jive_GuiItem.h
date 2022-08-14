@@ -60,6 +60,7 @@ namespace jive
         bool isTopLevel() const;
 
         virtual bool isContainer() const;
+        virtual bool isContent() const;
 
         BoxModel getBoxModel() const;
 

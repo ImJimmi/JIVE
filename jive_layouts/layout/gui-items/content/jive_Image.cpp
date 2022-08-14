@@ -17,6 +17,7 @@ namespace jive
         };
 
         updateChildComponent();
+        getComponent().setInterceptsMouseClicks(false, false);
     }
 
     //==================================================================================================================
@@ -61,6 +62,11 @@ namespace jive
     bool Image::isContainer() const
     {
         return false;
+    }
+
+    bool Image::isContent() const
+    {
+        return true;
     }
 
     Drawable Image::getDrawable()

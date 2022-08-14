@@ -8,6 +8,8 @@ namespace jive
         : GuiItem{ *itemToDecorate }
         , item{ std::move(itemToDecorate) }
     {
+        if (auto* decorator = dynamic_cast<GuiItemDecorator*>(item.get()))
+            decorator->owner = this;
     }
 
     //==================================================================================================================
@@ -98,5 +100,14 @@ namespace jive
     {
         GuiItem::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
         item->componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+    }
+
+    //==================================================================================================================
+    GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
     }
 } // namespace jive
