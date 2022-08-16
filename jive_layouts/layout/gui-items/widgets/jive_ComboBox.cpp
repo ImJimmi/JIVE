@@ -63,7 +63,6 @@ namespace jive
     //==================================================================================================================
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator(std::move(itemToDecorate))
-        , TextWidget{ tree }
         , editable{ tree, "editable" }
         , tooltip{ tree, "tooltip" }
         , selected{ tree, "selected" }
@@ -87,23 +86,15 @@ namespace jive
                 currentlySelectedOption.setProperty("selected", false, nullptr);
 
             if (selected < options.size())
-                options[selected]->setSelected(true);
+            {
+                if (auto* selectedOption = options[selected])
+                    selectedOption->setSelected(true);
+            }
         };
 
-        onJustificationChanged = [this]() {
-            getComboBox().setJustificationType(getTextJustification());
+        onComboBoxChanged = [this]() {
+            selected = getComboBox().getSelectedItemIndex();
         };
-        getComboBox().setJustificationType(getTextJustification());
-
-        onTextChanged = [this]() {
-            getComboBox().setText(getText());
-        };
-        getComboBox().setText(getText());
-
-        onFontChanged = [this]() {
-            getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
-        };
-        getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
 
         updateItems();
         getComboBox().setSelectedItemIndex(selected);
@@ -114,28 +105,6 @@ namespace jive
     bool ComboBox::isContainer() const
     {
         return false;
-    }
-
-    float ComboBox::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getWidth();
-
-        const auto textWidth = getFont().getStringWidthFloat(getText());
-        const auto borderWidth = getBoxModel().getBorder().getLeftAndRight();
-
-        return juce::jmax(textWidth + borderWidth, 20.f);
-    }
-
-    float ComboBox::getHeight() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getHeight();
-
-        const auto textHeight = getFont().getHeight();
-        const auto borderHeight = getBoxModel().getBorder().getTopAndBottom();
-
-        return juce::jmax(textHeight + borderHeight, 20.f);
     }
 
     //==================================================================================================================
@@ -188,10 +157,26 @@ namespace jive
     }
 
     //==================================================================================================================
+    void ComboBox::contentChanged()
+    {
+        GuiItemDecorator::contentChanged();
+
+        if (auto* text = findFirstTextContent(*this))
+        {
+            juce::ScopedValueSetter<std::function<void()>> scopedValueSetter{ onComboBoxChanged, nullptr };
+
+            getComboBox().setText(text->getTextComponent().getText(),
+                                  juce::sendNotificationSync);
+        }
+    }
+
+    //==================================================================================================================
     void ComboBox::comboBoxChanged(juce::ComboBox* box)
     {
         jassert(box == &getComboBox());
-        selected = getComboBox().getSelectedItemIndex();
+
+        if (onComboBoxChanged != nullptr)
+            onComboBoxChanged();
     }
 } // namespace jive
 
@@ -209,20 +194,17 @@ public:
     {
         testGuiItem();
         testEditable();
-        testJustification();
-        testFont();
         testTooltip();
         testOptions();
         testSelected();
-        testAutoSize();
+        testContentChanged();
     }
 
 private:
     std::unique_ptr<jive::ComboBox> createComboBox(juce::ValueTree tree)
     {
         jive::Interpreter interpreter;
-
-        return std::make_unique<jive::ComboBox>(interpreter.interpret(tree));
+        return std::unique_ptr<jive::ComboBox>{ dynamic_cast<jive::ComboBox*>(interpreter.interpret(tree).release()) };
     }
 
     void testGuiItem()
@@ -254,86 +236,6 @@ private:
             };
             auto item = createComboBox(tree);
             expect(item->getComboBox().isTextEditable());
-        }
-    }
-
-    void testJustification()
-    {
-        beginTest("justification");
-
-        {
-            juce::ValueTree tree{ "ComboBox" };
-            auto item = createComboBox(tree);
-            expect(item->getComboBox().getJustificationType() == juce::Justification::centredLeft);
-
-            tree.setProperty("justification", "bottom-right", nullptr);
-            expect(item->getComboBox().getJustificationType() == juce::Justification::bottomRight);
-        }
-        {
-            juce::ValueTree tree{
-                "ComboBox",
-                {
-                    { "justification", "bottom-left" },
-                },
-            };
-            auto item = createComboBox(tree);
-            expect(item->getComboBox().getJustificationType() == juce::Justification::bottomLeft);
-        }
-    }
-
-    void testText()
-    {
-        beginTest("text");
-
-        {
-            juce::ValueTree tree{ "ComboBox" };
-            auto item = createComboBox(tree);
-            expect(item->getComboBox().getText().isEmpty());
-
-            tree.setProperty("text", "123", nullptr);
-            expectEquals(item->getComboBox().getText(), juce::String{ "123" });
-        }
-        {
-            juce::ValueTree tree{
-                "ComboBox",
-                {
-                    { "text", "456" },
-                },
-            };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getText(), juce::String{ "456" });
-        }
-    }
-
-    void testFont()
-    {
-        beginTest("font");
-
-        {
-            juce::ValueTree tree{ "ComboBox" };
-            auto item = createComboBox(tree);
-
-            expect(item->getComponent().getProperties().contains("font"));
-
-            juce::Font font{ "Helvetica", 16.f, 0 };
-            tree.setProperty("typeface-name", font.getTypefaceName(), nullptr);
-            tree.setProperty("font-weight", font.getTypefaceStyle(), nullptr);
-            tree.setProperty("font-height", font.getHeightInPoints(), nullptr);
-            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
-        }
-        {
-            juce::Font font{ "Arial", 48.f, 0 };
-            juce::ValueTree tree{
-                "ComboBox",
-                {
-                    { "typeface-name", font.getTypefaceName() },
-                    { "font-weight", font.getTypefaceStyle() },
-                    { "font-height", font.getHeightInPoints() },
-                },
-            };
-            auto item = createComboBox(tree);
-
-            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
         }
     }
 
@@ -499,30 +401,27 @@ private:
         }
     }
 
-    void testAutoSize()
+    void testContentChanged()
     {
-        beginTest("auto size");
+        beginTest("content-changed");
 
-        juce::ValueTree tree{ "ComboBox" };
+        juce::ValueTree tree{
+            "ComboBox",
+            {},
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        { "text", "Some text..." },
+                    },
+                },
+            },
+        };
         auto item = createComboBox(tree);
+        expectEquals<juce::String>(item->getComboBox().getText(), "Some text...");
 
-        expectEquals(item->getWidth(), 20.f);
-        expectEquals(item->getHeight(), 20.f);
-
-        tree.setProperty("text", "Some text", nullptr);
-        tree.setProperty("border-width", 20, nullptr);
-        tree.setProperty("padding", 17, nullptr);
-
-        const auto boxModel = item->getBoxModel();
-        const auto borderWidth = boxModel.getBorder().getLeftAndRight();
-        const auto textWidth = item->getFont().getStringWidthFloat(item->getText());
-        const auto expectedWidth = borderWidth + textWidth;
-        expect(item->getWidth() == expectedWidth);
-
-        const auto borderHeight = boxModel.getBorder().getTopAndBottom();
-        const auto textHeight = item->getFont().getHeight();
-        const auto expectedHeight = borderHeight + textHeight;
-        expect(item->getHeight() == expectedHeight);
+        tree.getChild(0).setProperty("text", "Some different text!", nullptr);
+        expectEquals<juce::String>(item->getComboBox().getText(), "Some different text!");
     }
 };
 

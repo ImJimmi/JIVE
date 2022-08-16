@@ -110,6 +110,9 @@ namespace jive
             getComponent().addAndMakeVisible(*childComponent);
 
         updateChildBounds();
+
+        if (auto* parent = getParent())
+            parent->informContentChanged();
     }
 
     void Image::updateChildBounds()
@@ -144,6 +147,7 @@ public:
         testAutoSize();
         testChildComponent();
         testSVG();
+        testContentChanged();
     }
 
 private:
@@ -349,6 +353,58 @@ private:
             expectEquals(item->getWidth(), 155.0f);
             expectEquals(item->getHeight(), 155.0f);
         }
+    }
+
+    void testContentChanged()
+    {
+        beginTest("parent-content-changed");
+
+        class SpyGuiItem : public jive::GuiItem
+        {
+        public:
+            using jive::GuiItem::GuiItem;
+
+            std::function<void()> onContentChanged = nullptr;
+
+        protected:
+            void contentChanged() final
+            {
+                if (onContentChanged != nullptr)
+                    onContentChanged();
+            }
+        };
+
+        juce::Image image{ juce::Image::ARGB, 10, 10, false };
+        juce::ValueTree tree{
+            "Spy",
+            {},
+            {
+                juce::ValueTree{
+                    "Image",
+                    {
+                        { "source", juce::VariantConverter<juce::Image>::toVar(image) },
+                    },
+                },
+            },
+        };
+        SpyGuiItem item{
+            std::make_unique<juce::Component>(),
+            tree,
+        };
+
+        auto parentContentChangedCalled = false;
+        item.onContentChanged = [&parentContentChangedCalled]() {
+            parentContentChangedCalled = true;
+        };
+
+        item.addChild(std::make_unique<jive::Image>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                                    tree.getChild(0),
+                                                                                    &item)));
+        expect(parentContentChangedCalled);
+        parentContentChangedCalled = false;
+
+        tree.getChild(0).setProperty("source", "<svg/>", nullptr);
+        expect(parentContentChangedCalled);
     }
 };
 

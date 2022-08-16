@@ -16,24 +16,8 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , TextWidget{ tree }
         , border{ tree, "border-width" }
     {
-        onTextChanged = [this]() {
-            getLabel().setText(getText(), juce::sendNotification);
-        };
-        getLabel().setText(getText(), juce::sendNotification);
-
-        onFontChanged = [this]() {
-            getLabel().setFont(getFont());
-        };
-        getLabel().setFont(getFont());
-
-        onJustificationChanged = [this]() {
-            getLabel().setJustificationType(getTextJustification());
-        };
-        getLabel().setJustificationType(getTextJustification());
-
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));
         };
@@ -44,32 +28,6 @@ namespace jive
     bool Label::isContainer() const
     {
         return false;
-    }
-
-    float Label::getWidth() const
-    {
-        if (hasAutoWidth())
-        {
-            const auto textWidth = getFont().getStringWidthFloat(getText());
-            const auto borderWidth = getBoxModel().getBorder().getLeftAndRight();
-
-            return textWidth + borderWidth;
-        }
-
-        return GuiItemDecorator::getWidth();
-    }
-
-    float Label::getHeight() const
-    {
-        if (hasAutoHeight())
-        {
-            const auto textHeight = getFont().getHeight();
-            const auto borderHeight = getLabel().getBorderSize().getTopAndBottom();
-
-            return textHeight + borderHeight;
-        }
-
-        return GuiItemDecorator::getHeight();
     }
 
     //==================================================================================================================
@@ -88,6 +46,18 @@ namespace jive
 
         return *label;
     }
+
+    //==================================================================================================================
+    void Label::contentChanged()
+    {
+        GuiItemDecorator::contentChanged();
+
+        if (auto* text = findFirstTextContent(*this))
+        {
+            getLabel().setText(text->getTextComponent().getText(),
+                               juce::sendNotification);
+        }
+    }
 } // namespace jive
 
 //======================================================================================================================
@@ -104,7 +74,7 @@ public:
     {
         testGuiItem();
         testBorder();
-        testAutoSize();
+        testContentChanged();
     }
 
 private:
@@ -143,28 +113,27 @@ private:
         expect(label->getLabel().getBorderSize().getLeft() == 40);
     }
 
-    void testAutoSize()
+    void testContentChanged()
     {
-        beginTest("auto size");
+        beginTest("content-changed");
 
         juce::ValueTree tree{
             "Label",
-            { { "text", "Some text" },
-              { "border-width", 30 },
-              { "padding", 5 } }
+            {},
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        { "text", "Some text..." },
+                    },
+                },
+            },
         };
-        auto label = createLabel(tree);
+        auto item = createLabel(tree);
+        expectEquals<juce::String>(item->getLabel().getText(), "Some text...");
 
-        const auto boxModel = label->getBoxModel();
-        const auto borderWidth = boxModel.getBorder().getLeftAndRight();
-        const auto textWidth = label->getFont().getStringWidthFloat(label->getText());
-        const auto expectedWidth = borderWidth + textWidth;
-        expect(label->getWidth() == expectedWidth);
-
-        const auto borderHeight = boxModel.getBorder().getTopAndBottom();
-        const auto textHeight = label->getFont().getHeight();
-        const auto expectedHeight = borderHeight + textHeight;
-        expect(label->getHeight() == expectedHeight);
+        tree.getChild(0).setProperty("text", "Some different text!", nullptr);
+        expectEquals<juce::String>(item->getLabel().getText(), "Some different text!");
     }
 };
 

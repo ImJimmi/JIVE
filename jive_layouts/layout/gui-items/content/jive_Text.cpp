@@ -19,7 +19,19 @@ namespace jive
         , direction{ tree, "direction", juce::AttributedString::ReadingDirection::natural }
     {
         text.onValueChange = [this]() {
-            getTextComponent().setText(text);
+            updateTextComponent();
+        };
+        justification.onValueChange = [this]() {
+            updateTextComponent();
+        };
+        wordWrap.onValueChange = [this]() {
+            updateTextComponent();
+        };
+        direction.onValueChange = [this]() {
+            updateTextComponent();
+        };
+        lineSpacing.onValueChange = [this]() {
+            updateTextComponent();
         };
         typefaceName.onValueChange = [this]() {
             updateFont();
@@ -38,18 +50,6 @@ namespace jive
         };
         horizontalScale.onValueChange = [this]() {
             updateFont();
-        };
-        justification.onValueChange = [this]() {
-            getTextComponent().setJustification(justification);
-        };
-        wordWrap.onValueChange = [this]() {
-            getTextComponent().setWordWrap(wordWrap);
-        };
-        direction.onValueChange = [this]() {
-            getTextComponent().setDirection(direction);
-        };
-        lineSpacing.onValueChange = [this]() {
-            getTextComponent().setLineSpacing(lineSpacing);
         };
 
         updateTextComponent();
@@ -104,13 +104,25 @@ namespace jive
         updateTextComponent();
     }
 
+    void Text::componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged)
+    {
+        if (&componentWhoseParentHierarchyChanged != &getComponent())
+            return;
+
+        if (auto* parent = getParent())
+            parent->informContentChanged();
+    }
+
     //==================================================================================================================
     juce::TextLayout Text::buildTextLayout() const
     {
         auto maxWidth = std::numeric_limits<float>::max();
 
-        if (!isTopLevel())
-            maxWidth = static_cast<float>(getParent()->getBoxModel().getContentBounds().getWidth());
+        if (auto* parent = getParent())
+        {
+            if (!parent->hasAutoWidth())
+                maxWidth = parent->getWidth();
+        }
 
         juce::TextLayout layout;
         layout.createLayout(getTextComponent().getAttributedString(), maxWidth);
@@ -168,6 +180,31 @@ namespace jive
         getTextComponent().setWordWrap(wordWrap);
 
         updateFont();
+
+        if (auto* parent = getParent())
+        {
+            parent->informContentChanged();
+
+            if (!parent->isContainer())
+                getTextComponent().setAccessible(false);
+        }
+    }
+
+    //==================================================================================================================
+    const Text* findFirstTextContent(const GuiItem& item)
+    {
+        if (auto* text = dynamic_cast<const Text*>(&item))
+            return text;
+
+        for (const auto& child : item)
+        {
+            auto* text = findFirstTextContent(child);
+
+            if (text != nullptr)
+                return text;
+        }
+
+        return nullptr;
     }
 } // namespace jive
 
@@ -191,6 +228,7 @@ public:
         testLineSpacing();
         testNested();
         testAutoSize();
+        testContentChanged();
     }
 
 private:
@@ -579,6 +617,57 @@ private:
                                  nullptr);
             expectGreaterThan(item->getChild(0).getHeight(), font.getHeight());
         }
+    }
+
+    void testContentChanged()
+    {
+        beginTest("parent-content-changed");
+
+        class SpyGuiItem : public jive::GuiItem
+        {
+        public:
+            using jive::GuiItem::GuiItem;
+
+            std::function<void()> onContentChanged = nullptr;
+
+        protected:
+            void contentChanged() final
+            {
+                if (onContentChanged != nullptr)
+                    onContentChanged();
+            }
+        };
+
+        juce::ValueTree tree{
+            "Spy",
+            {},
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        { "text", "Some text..." },
+                    },
+                },
+            },
+        };
+        SpyGuiItem item{
+            std::make_unique<juce::Component>(),
+            tree,
+        };
+
+        auto parentContentChangedCalled = false;
+        item.onContentChanged = [&parentContentChangedCalled]() {
+            parentContentChangedCalled = true;
+        };
+
+        item.addChild(std::make_unique<jive::Text>(std::make_unique<jive::GuiItem>(std::make_unique<jive::TextComponent>(),
+                                                                                   tree.getChild(0),
+                                                                                   &item)));
+        expect(parentContentChangedCalled);
+        parentContentChangedCalled = false;
+
+        tree.getChild(0).setProperty("text", "Some more text...", nullptr);
+        expect(parentContentChangedCalled);
     }
 };
 

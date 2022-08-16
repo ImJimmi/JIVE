@@ -28,6 +28,11 @@ namespace jive
         item->updatePosition();
     }
 
+    void GuiItemDecorator::informContentChanged()
+    {
+        getTopLevelDecorator().contentChanged();
+    }
+
     //==================================================================================================================
     void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
     {
@@ -104,6 +109,14 @@ namespace jive
 
     //==================================================================================================================
     GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
+    }
+
+    const GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator() const
     {
         if (owner != nullptr)
             return owner->getTopLevelDecorator();

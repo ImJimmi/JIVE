@@ -33,17 +33,20 @@ namespace jive
     }
 
     //==================================================================================================================
+    float FlexContainer::getWidth() const
+    {
+        if (hasAutoWidth())
+            return getMinimumContentWidth();
+
+        return GuiItemDecorator::getWidth();
+    }
+
     float FlexContainer::getHeight() const
     {
         if (hasAutoHeight())
-        {
-            const auto contentHeight = getMinimumContentHeight();
-            const auto box = getBoxModel();
+            return getMinimumContentHeight();
 
-            return contentHeight + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
-        }
-
-        return item->getHeight();
+        return GuiItemDecorator::getHeight();
     }
 
     //==================================================================================================================
@@ -97,20 +100,62 @@ namespace jive
         return flex;
     }
 
-    float FlexContainer::getMinimumContentHeight() const
+    float FlexContainer::getMinimumContentWidth() const
     {
         auto flex = getFlexBoxWithDummyItems();
-        flex.performLayout(juce::Rectangle<float>{ 0.f, 0.f, getWidth(), std::numeric_limits<float>::max() });
 
-        auto contentHeight = 0.f;
+        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
+        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+        flex.performLayout(juce::Rectangle<float>{
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max(),
+        });
+
+        auto rightOfFarthestItem = -1.0f;
 
         for (const auto& flexItem : flex.items)
         {
-            if (flexItem.currentBounds.getBottom() > contentHeight)
-                contentHeight = flexItem.currentBounds.getBottom();
+            if (flexItem.currentBounds.getWidth() == 0)
+                continue;
+
+            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
+
+            if (right > rightOfFarthestItem)
+                rightOfFarthestItem = right;
         }
 
-        return contentHeight;
+        return rightOfFarthestItem;
+    }
+
+    float FlexContainer::getMinimumContentHeight() const
+    {
+        auto flex = getFlexBoxWithDummyItems();
+
+        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
+        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+        flex.performLayout(juce::Rectangle<float>{
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max(),
+        });
+
+        auto bottomOfLowestItem = -1.0f;
+
+        for (const auto& flexItem : flex.items)
+        {
+            if (flexItem.currentBounds.getHeight() == 0)
+                continue;
+
+            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
+
+            if (bottom > bottomOfLowestItem)
+                bottomOfLowestItem = bottom;
+        }
+
+        return bottomOfLowestItem;
     }
 } // namespace jive
 
@@ -132,6 +177,7 @@ public:
         testJustifyContent();
         testChildren();
         testPadding();
+        testAutoSize();
     }
 
 private:
@@ -267,37 +313,43 @@ private:
         expectEquals(item->getChild(0).getViewport().getPosition(), juce::Point<int>{ 40, 10 });
     }
 
-    void testAutoHeight()
+    void testAutoSize()
     {
-        beginTest("auto-height");
+        beginTest("auto-size");
 
-        juce::ValueTree tree{
-            "Component",
-            {
-                { "flex-direction", "row" },
-                { "padding", 10 },
-                { "border-width", 5 },
-                { "margin", 15 },
-            },
-            {
-                juce::ValueTree{
-                    "Component",
-                    {
-                        { "width", 100 },
-                        { "height", 25 },
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "justify-content", "centre" },
+                    { "padding", 10 },
+                    { "border-width", 5 },
+                    { "margin", 15 },
+                },
+                {
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "width", 100 },
+                            { "height", 25 },
+                            { "padding", 7 },
+                            { "border-width", 3 },
+                        },
+                    },
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "width", 130 },
+                            { "height", 14 },
+                            { "margin", 18 },
+                        },
                     },
                 },
-                juce::ValueTree{
-                    "Component",
-                    {
-                        { "width", 130 },
-                        { "height", 14 },
-                    },
-                },
-            },
-        };
-        auto item = createFlexContainer(tree);
-        expect(item->getHeight() == 55.f);
+            };
+            auto item = createFlexContainer(tree);
+            expectEquals(item->getHeight(), 95.0f);
+            expectEquals(item->getWidth(), 166.0f);
+        }
     }
 };
 

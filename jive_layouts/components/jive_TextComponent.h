@@ -8,6 +8,10 @@ namespace jive
     {
     public:
         //==============================================================================================================
+        class AccessibilityHandler;
+        class AccessibilityInterface;
+
+        //==============================================================================================================
         TextComponent();
 
         //==============================================================================================================
@@ -15,6 +19,7 @@ namespace jive
 
         //==============================================================================================================
         void setText(const juce::String& text);
+        const juce::String& getText() const;
         void setFont(const juce::Font& font);
         void setJustification(juce::Justification justification);
         void setWordWrap(juce::AttributedString::WordWrap wrap);
@@ -27,6 +32,9 @@ namespace jive
         const juce::AttributedString& getAttributedString() const;
 
     private:
+        //==============================================================================================================
+        std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
+
         //==============================================================================================================
         juce::AttributedString attributedString;
 

@@ -14,6 +14,7 @@ namespace jive
         void updateLayout() override;
         void updateSize() override;
         void updatePosition() override;
+        void informContentChanged() override;
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
@@ -50,6 +51,7 @@ namespace jive
 
         //==============================================================================================================
         GuiItemDecorator& getTopLevelDecorator();
+        const GuiItemDecorator& getTopLevelDecorator() const;
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

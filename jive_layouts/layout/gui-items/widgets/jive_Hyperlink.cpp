@@ -13,19 +13,6 @@ namespace jive
             getHyperlink().setURL(url);
         };
         getHyperlink().setURL(url);
-
-        static constexpr auto resizeFontToMatchWidgetHeight = false;
-        onFontChanged = [this]() {
-            getHyperlink().setFont(getFont(),
-                                   resizeFontToMatchWidgetHeight);
-        };
-        getHyperlink().setFont(getFont(),
-                               resizeFontToMatchWidgetHeight);
-
-        onJustificationChanged = [this]() {
-            getHyperlink().setJustificationType(getTextJustification());
-        };
-        getHyperlink().setJustificationType(getTextJustification());
     }
 
     //==================================================================================================================
@@ -60,8 +47,6 @@ public:
     {
         testGuiItem();
         testURL();
-        testFont();
-        testJustification();
     }
 
 private:
@@ -101,39 +86,6 @@ private:
             };
             auto hyperlink = createHyperlink(tree);
             expect(hyperlink->getHyperlink().getURL() == juce::URL{ "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" });
-        }
-    }
-
-    void testFont()
-    {
-        beginTest("font");
-
-        juce::ValueTree tree{ "Hyperlink" };
-        auto hyperlink = createHyperlink(tree);
-        expect(hyperlink->getFont().isUnderlined());
-    }
-
-    void testJustification()
-    {
-        beginTest("justification");
-
-        {
-            juce::ValueTree tree{ "Hyperlink" };
-            auto hyperlink = createHyperlink(tree);
-            expect(hyperlink->getHyperlink().getJustificationType() == juce::Justification::centredLeft);
-
-            tree.setProperty("justification", "centred", nullptr);
-            expect(hyperlink->getHyperlink().getJustificationType() == juce::Justification::centred);
-        }
-        {
-            juce::ValueTree tree{
-                "Hyperlink",
-                {
-                    { "justification", "centred" },
-                },
-            };
-            auto hyperlink = createHyperlink(tree);
-            expect(hyperlink->getHyperlink().getJustificationType() == juce::Justification::centred);
         }
     }
 };

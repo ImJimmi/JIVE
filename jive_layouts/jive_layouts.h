@@ -40,7 +40,6 @@ namespace jive
 
 #include "layout/gui-items/jive_GuiItem.h"
 #include "layout/gui-items/jive_GuiItemDecorator.h"
-#include "layout/gui-items/widgets/jive_TextWidget.h"
 
 #include "layout/gui-items/block/jive_BlockContainer.h"
 #include "layout/gui-items/block/jive_BlockItem.h"

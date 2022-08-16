@@ -6,7 +6,6 @@ namespace jive
     //==================================================================================================================
     class ComboBox
         : public GuiItemDecorator
-        , public TextWidget
         , private juce::ComboBox::Listener
     {
     public:
@@ -48,9 +47,6 @@ namespace jive
 
         //==============================================================================================================
         bool isContainer() const override;
-        
-        float getWidth() const override;
-        float getHeight() const override;
 
         //==============================================================================================================
         juce::ComboBox& getComboBox();
@@ -64,6 +60,9 @@ namespace jive
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
         void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int index) override;
 
+        //==============================================================================================================
+        void contentChanged() override;
+
     private:
         //==============================================================================================================
         void comboBoxChanged(juce::ComboBox* box) final;
@@ -75,6 +74,8 @@ namespace jive
 
         juce::OwnedArray<Option> options;
         juce::OwnedArray<Header> headers;
+
+        std::function<void()> onComboBoxChanged = nullptr;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ComboBox)
