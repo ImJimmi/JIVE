@@ -10,7 +10,8 @@
             "MIMode": "lldb",
             "logging": {
                 "moduleLoad": false
-            }
+            },
+            "preLaunchTask": "deleteGCDA"
         },
         {
             "name": "Launch (Windows)",
