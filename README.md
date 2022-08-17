@@ -1,5 +1,9 @@
 ![JIVE Banner](assets/banner.svg)
 
+[![codecov](https://img.shields.io/codecov/c/gh/ImJimmi/JIVE?label=CodeCov&logo=codecov&style=for-the-badge&token=827SYOR678)](https://codecov.io/gh/ImJimmi/JIVE)
+
+[![codecov](https://codecov.io/gh/ImJimmi/JIVE/branch/main/graphs/sunburst.svg?token=827SYOR678)](https://codecov.io/gh/ImJimmi/JIVE)
+
 JIVE is a collection of JUCE modules aimed at making front-end development much simpler.
 
 Developing UIs with JUCE can be cumbersome and downright frustrating at times. Using a proper architecture, such as the [MVP pattern](https://www.martinfowler.com/eaaDev/uiArchs.html#Model-view-presentermvp), can massively improve this experience; however there's a limit to how well you can polish the turd that is UI development in C++. Each of JIVE's modules aims to tackle a specific part of UI development to make the whole experience much more enjoyable!

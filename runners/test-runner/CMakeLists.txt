@@ -36,6 +36,8 @@ if (APPLE)
 
         -fsanitize=address
         -fsanitize=undefined
+
+        --coverage
     )
 endif()
 
@@ -43,6 +45,7 @@ target_link_options(jive-test-runner
 PRIVATE
     -fsanitize=address
     -fsanitize=undefined
+    --coverage
 )
 
 target_compile_definitions(jive-test-runner

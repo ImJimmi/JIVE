@@ -25,7 +25,7 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
-      
+
   test-macos:
     runs-on: macos-latest
 
@@ -43,5 +43,18 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
-  
-      
+
+    - name: Install lcov
+      working-directory: ${{github.workspace}}/build
+      run: brew install lcov
+
+    - name: Generate Coverage Report
+      working-directory: ${{github.workspace}}/build
+      run: lcov --directory . --capture --output-file coverage.info
+
+    - name: Upload Coverage
+      working-directory: ${{github.workspace}}/build
+      run: |
+        curl -Os https://uploader.codecov.io/latest/macos/codecov
+        chmod +x codecov
+        ./codecov -t ${{ secrets.CODECOV_TOKEN }}
