@@ -44,8 +44,8 @@ namespace jive
     {
         juce::FlexItem flexItem{ getViewport() };
 
-        flexItem.width = getWidth();
-        flexItem.height = getHeight();
+        flexItem.width = getTopLevelDecorator().getWidth();
+        flexItem.height = getTopLevelDecorator().getHeight();
 
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
@@ -87,6 +87,7 @@ public:
         testAlignSelf();
         testSize();
         testMargin();
+        testDecoratedItems();
     }
 
 private:
@@ -231,6 +232,39 @@ private:
         expect(flexItem.margin.right == 2.f);
         expect(flexItem.margin.bottom == 3.f);
         expect(flexItem.margin.left == 4.f);
+    }
+
+    void testDecoratedItems()
+    {
+        beginTest("decorated-items");
+
+        struct StubItem : public jive::GuiItemDecorator
+        {
+            explicit StubItem(std::unique_ptr<jive::GuiItem> itemToDecorate)
+                : jive::GuiItemDecorator{ std::move(itemToDecorate) }
+            {
+            }
+
+            float getWidth() const final
+            {
+                return 123.45f;
+            }
+
+            float getHeight() const final
+            {
+                return 678.9f;
+            }
+        };
+
+        auto item = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                    juce::ValueTree{ "Component" });
+        item = std::make_unique<jive::FlexItem>(std::move(item));
+        item = std::make_unique<StubItem>(std::move(item));
+
+        const auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                               .toType<jive::FlexItem>());
+        expectEquals(flexItem.width, 123.45f);
+        expectEquals(flexItem.height, 678.9f);
     }
 };
 

@@ -883,4 +883,46 @@ namespace juce
 
         return stringFlagPair->first;
     }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<AttributedString::WordWrap>::varArray = {
+        "none",
+        "by-word",
+        "by-character",
+    };
+
+    AttributedString::WordWrap VariantConverter<AttributedString::WordWrap>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<AttributedString::WordWrap>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<AttributedString::WordWrap>::toVar(const AttributedString::WordWrap& wordWrap)
+    {
+        const auto index = static_cast<int>(wordWrap);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
+
+    //==================================================================================================================
+    const Array<var> VariantConverter<AttributedString::ReadingDirection>::varArray = {
+        "natural",
+        "left-to-right",
+        "right-to-left",
+    };
+
+    AttributedString::ReadingDirection VariantConverter<AttributedString::ReadingDirection>::fromVar(const var& v)
+    {
+        jassert(varArray.contains(v));
+        return static_cast<AttributedString::ReadingDirection>(varArray.indexOf(v));
+    }
+
+    var VariantConverter<AttributedString::ReadingDirection>::toVar(const AttributedString::ReadingDirection& direction)
+    {
+        const auto index = static_cast<int>(direction);
+
+        jassert(varArray.size() >= index);
+        return varArray[index];
+    }
 } // namespace juce

@@ -15,6 +15,7 @@ namespace jive
         float getHeight() const override;
 
         bool isContainer() const override;
+        bool isContent() const override;
 
         Drawable getDrawable();
 

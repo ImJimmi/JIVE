@@ -88,6 +88,9 @@ namespace jive
         setFactory("Spinner", []() {
             return std::make_unique<juce::Slider>();
         });
+        setFactory("Text", []() {
+            return std::make_unique<TextComponent>();
+        });
         setFactory("Window", []() {
             return std::make_unique<IgnoredComponent>();
         });
@@ -151,6 +154,8 @@ namespace jive
             return std::make_unique<Slider>(std::move(item));
         if (tree.hasType("Spinner"))
             return std::make_unique<Spinner>(std::move(item));
+        if (tree.hasType("Text"))
+            return std::make_unique<Text>(std::move(item));
         if (tree.hasType("Window"))
             return std::make_unique<Window>(std::move(item));
 
@@ -161,12 +166,14 @@ namespace jive
     {
         auto guiItem = createGuiItem(tree, parent);
 
-        guiItem = decorateWithDisplayBehaviour(std::move(guiItem));
-        guiItem = decorateWithWidgetBehaviour(std::move(guiItem), tree);
-        guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
+        if (guiItem == nullptr)
+            return nullptr;
 
-        if (guiItem->isContainer())
-            appendChildItems(*guiItem, tree);
+        guiItem = decorateWithDisplayBehaviour(std::move(guiItem));
+        guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
+        guiItem = decorateWithWidgetBehaviour(std::move(guiItem), tree);
+
+        appendChildItems(*guiItem, tree);
 
         guiItem->updateLayout();
 
@@ -180,13 +187,24 @@ namespace jive
 
     std::unique_ptr<GuiItem> Interpreter::createGuiItem(juce::ValueTree tree, GuiItem* const parent) const
     {
-        return std::make_unique<GuiItem>(createComponent(tree), tree, parent);
+        if (auto component = createComponent(tree))
+            return std::make_unique<GuiItem>(std::move(component), tree, parent);
+
+        return nullptr;
     }
 
     void Interpreter::appendChildItems(GuiItem& item, juce::ValueTree tree) const
     {
         for (auto childTree : tree)
-            item.addChild(interpret(childTree, &item));
+        {
+            auto childItem = interpret(childTree, &item);
+
+            if (childItem != nullptr)
+            {
+                if (item.isContainer() || childItem->isContent())
+                    item.addChild(std::move(childItem));
+            }
+        }
     }
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(juce::ValueTree tree) const
@@ -199,8 +217,6 @@ namespace jive
             return create();
         }
 
-        // No creator for the given ValueTree's type.
-        jassertfalse;
         return nullptr;
     }
 } // namespace jive
@@ -337,7 +353,9 @@ private:
             },
         });
         expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
-        expect(dynamic_cast<jive::FlexItem*>(&flexView->getChild(0)));
+        expect(dynamic_cast<jive::GuiItemDecorator*>(&flexView->getChild(0))
+                   ->toType<jive::FlexItem>()
+               != nullptr);
 
         auto gridView = interpreter.interpret(juce::ValueTree{
             "Component",

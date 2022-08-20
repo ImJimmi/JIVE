@@ -223,6 +223,11 @@ namespace jive
         return true;
     }
 
+    bool GuiItem::isContent() const
+    {
+        return false;
+    }
+
     BoxModel GuiItem::getBoxModel() const
     {
         return boxModel;

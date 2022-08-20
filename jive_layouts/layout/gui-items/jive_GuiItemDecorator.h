@@ -49,9 +49,15 @@ namespace jive
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 
         //==============================================================================================================
+        GuiItemDecorator& getTopLevelDecorator();
+
+        //==============================================================================================================
         const std::unique_ptr<GuiItem> item;
 
     private:
+        //==============================================================================================================
+        GuiItemDecorator* owner = nullptr;
+
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
