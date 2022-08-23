@@ -395,10 +395,10 @@ namespace jive
             const auto h = juce::roundToInt(getHeight());
 
             if (w != bounds.getWidth())
-                width = Width::fromPixels(bounds.getWidth());
+                width = Width::fromPixels(static_cast<float>(bounds.getWidth()));
 
             if (h != bounds.getHeight())
-                height = Height::fromPixels(bounds.getHeight());
+                height = Height::fromPixels(static_cast<float>(bounds.getHeight()));
         }
 
         if (&componentThatWasMovedOrResized == component.get())

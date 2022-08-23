@@ -48,18 +48,33 @@ namespace jive
         getWindow().setResizable(isResizable, useCornerResizer);
 
         minWidth.onValueChange = [this]() {
-            getWindow().setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
+            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
+                                        static_cast<int>(std::ceil(minHeight)),
+                                        static_cast<int>(std::floor(maxWidth)),
+                                        static_cast<int>(std::floor(maxHeight)));
         };
         minHeight.onValueChange = [this]() {
-            getWindow().setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
+            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
+                                        static_cast<int>(std::ceil(minHeight)),
+                                        static_cast<int>(std::floor(maxWidth)),
+                                        static_cast<int>(std::floor(maxHeight)));
         };
         maxWidth.onValueChange = [this]() {
-            getWindow().setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
+            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
+                                        static_cast<int>(std::ceil(minHeight)),
+                                        static_cast<int>(std::floor(maxWidth)),
+                                        static_cast<int>(std::floor(maxHeight)));
         };
         maxHeight.onValueChange = [this]() {
-            getWindow().setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
+            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
+                                        static_cast<int>(std::ceil(minHeight)),
+                                        static_cast<int>(std::floor(maxWidth)),
+                                        static_cast<int>(std::floor(maxHeight)));
         };
-        getWindow().setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
+        getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
+                                    static_cast<int>(std::ceil(minHeight)),
+                                    static_cast<int>(std::floor(maxWidth)),
+                                    static_cast<int>(std::floor(maxHeight)));
 
         isDraggable.onValueChange = [this]() {
             getWindow().setDraggable(isDraggable);

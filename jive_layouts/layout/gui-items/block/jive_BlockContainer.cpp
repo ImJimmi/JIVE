@@ -16,10 +16,10 @@ namespace jive
     {
         GuiItemDecorator::updateLayout();
 
-        for (auto& item : *this)
+        for (auto& child : *this)
         {
-            item.updatePosition();
-            item.updateSize();
+            child.updatePosition();
+            child.updateSize();
         }
     }
 } // namespace jive

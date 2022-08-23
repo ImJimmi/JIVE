@@ -27,7 +27,7 @@ namespace jive
         {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
             {
-                return image->getImage().getWidth();
+                return static_cast<float>(image->getImage().getWidth());
             }
             if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
             {
@@ -46,7 +46,7 @@ namespace jive
         {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
             {
-                return image->getImage().getHeight();
+                return static_cast<float>(image->getImage().getHeight());
             }
             if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
             {
@@ -111,8 +111,8 @@ namespace jive
 
         updateChildBounds();
 
-        if (auto* parent = getParent())
-            parent->informContentChanged();
+        if (auto* parentItem = getParent())
+            parentItem->informContentChanged();
     }
 
     void Image::updateChildBounds()

@@ -98,9 +98,9 @@ namespace jive
     }
 
     //==================================================================================================================
-    void Text::valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child)
+    void Text::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& child)
     {
-        GuiItemDecorator::valueTreeChildAdded(parent, child);
+        GuiItemDecorator::valueTreeChildAdded(parentTree, child);
         updateTextComponent();
     }
 
@@ -109,8 +109,8 @@ namespace jive
         if (&componentWhoseParentHierarchyChanged != &getComponent())
             return;
 
-        if (auto* parent = getParent())
-            parent->informContentChanged();
+        if (auto* parentItem = getParent())
+            parentItem->informContentChanged();
     }
 
     //==================================================================================================================
@@ -118,10 +118,10 @@ namespace jive
     {
         auto maxWidth = std::numeric_limits<float>::max();
 
-        if (auto* parent = getParent())
+        if (auto* parentItem = getParent())
         {
-            if (!parent->hasAutoWidth())
-                maxWidth = parent->getWidth();
+            if (!parentItem->hasAutoWidth())
+                maxWidth = parentItem->getWidth();
         }
 
         juce::TextLayout layout;
@@ -181,11 +181,11 @@ namespace jive
 
         updateFont();
 
-        if (auto* parent = getParent())
+        if (auto* parentItem = getParent())
         {
-            parent->informContentChanged();
+            parentItem->informContentChanged();
 
-            if (!parent->isContainer())
+            if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
         }
     }
