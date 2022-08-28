@@ -25,6 +25,11 @@ namespace jive
 
     private:
         //==============================================================================================================
+        float calculateAspectRatio(const juce::ImageComponent& image) const;
+        float calculateAutoWidth(const juce::ImageComponent& image) const;
+        float calculateAutoHeight(const juce::ImageComponent& image) const;
+
+        //==============================================================================================================
         void updateChildComponent();
         void updateChildBounds();
         void updatePlacement();
