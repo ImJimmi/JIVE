@@ -136,20 +136,16 @@ namespace jive
     }
 
     //==================================================================================================================
-    void ComboBox::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& child)
+    void ComboBox::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& /* child */)
     {
-        GuiItemDecorator::valueTreeChildAdded(parentTree, child);
-
         if (parentTree != tree)
             return;
 
         updateItems();
     }
 
-    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& child, int index)
+    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& /* child */, int /* index */)
     {
-        GuiItemDecorator::valueTreeChildRemoved(parentTree, child, index);
-
         if (parentTree != tree)
             return;
 

@@ -98,9 +98,8 @@ namespace jive
     }
 
     //==================================================================================================================
-    void Text::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& child)
+    void Text::valueTreeChildAdded(juce::ValueTree& /* parentTree */, juce::ValueTree& /* child */)
     {
-        GuiItemDecorator::valueTreeChildAdded(parentTree, child);
         updateTextComponent();
     }
 
@@ -121,7 +120,7 @@ namespace jive
         if (auto* parentItem = getParent())
         {
             if (!parentItem->hasAutoWidth())
-                maxWidth = parentItem->getWidth();
+                maxWidth = parentItem->getBoxModel().getContentBounds().getWidth();
         }
 
         juce::TextLayout layout;
@@ -616,6 +615,30 @@ private:
                                  "very very long line.",
                                  nullptr);
             expectGreaterThan(item->getChild(0).getHeight(), font.getHeight());
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 240.0f },
+                    { "height", 1000.0f },
+                    { "padding", 50.0f },
+                    { "border-width", 50.0f },
+                },
+                {
+                    juce::ValueTree{
+                        "Text",
+                        {
+                            { "text", "One two three four five six" },
+                        },
+                    },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(tree);
+            auto& item = dynamic_cast<jive::Text&>(parent->getChild(0));
+            expectLessThan(item.getWidth(), 40.0f);
+            expectGreaterThan(item.getWidth(), 0.0f);
         }
     }
 

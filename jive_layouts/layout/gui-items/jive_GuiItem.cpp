@@ -440,9 +440,6 @@ namespace jive
         const auto borderBounds = boxModel.getBorderBounds();
         getViewport().setSize(juce::roundToInt(borderBounds.getWidth()),
                               juce::roundToInt(borderBounds.getHeight()));
-
-        if (getViewport().getWidth() > 0 && getViewport().getHeight() > 0)
-            updateComponentSize();
     }
 
     void GuiItem::updateComponentSize()
@@ -461,6 +458,8 @@ namespace jive
 
             if (getViewport().isHorizontalScrollBarShown())
                 newHeight -= getViewport().getScrollBarThickness();
+
+            updateLayout();
 
             for (auto& child : *this)
             {

@@ -57,7 +57,7 @@ namespace jive
     //==================================================================================================================
     float BoxModel::calculateBorderBoundsWidth() const
     {
-        if (item.getParent() == nullptr)
+        if (item.isTopLevel())
             return getWidth();
 
         return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
@@ -65,7 +65,7 @@ namespace jive
 
     float BoxModel::calculateBorderBoundsHeight() const
     {
-        if (item.getParent() == nullptr)
+        if (item.isTopLevel())
             return getHeight();
 
         return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();
