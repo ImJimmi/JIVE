@@ -45,6 +45,7 @@ namespace jive
         virtual void updateLayout();
         virtual void updateSize();
         virtual void updatePosition();
+        virtual void informContentChanged();
 
         //==============================================================================================================
         const juce::Component& getComponent() const;
@@ -102,6 +103,9 @@ namespace jive
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
+
+        //==============================================================================================================
+        virtual void contentChanged();
 
         //==============================================================================================================
         juce::ValueTree tree;

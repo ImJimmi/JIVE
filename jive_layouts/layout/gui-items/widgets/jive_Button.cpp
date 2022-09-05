@@ -6,7 +6,6 @@ namespace jive
     //==================================================================================================================
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , TextWidget{ tree }
         , toggleable{ tree, "toggleable" }
         , toggled{ tree, "toggled" }
         , toggleOnClick{ tree, "toggle-on-click" }
@@ -14,21 +13,6 @@ namespace jive
         , triggerEvent{ tree, "trigger-event", TriggerEvent::mouseUp }
         , tooltip{ tree, "tooltip" }
     {
-        onTextChanged = [this]() {
-            getButton().setButtonText(getText());
-        };
-        getButton().setButtonText(getText());
-
-        onFontChanged = [this]() {
-            getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
-        };
-        getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
-
-        onJustificationChanged = [this]() {
-            getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
-        };
-        getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
-
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
         };
@@ -66,28 +50,6 @@ namespace jive
         return false;
     }
 
-    float Button::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getWidth();
-
-        const auto textWidth = getFont().getStringWidthFloat(getText());
-        const auto borderWidth = getBoxModel().getBorder().getLeftAndRight();
-
-        return juce::jmax(textWidth + borderWidth, 20.f);
-    }
-
-    float Button::getHeight() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getHeight();
-
-        const auto textHeight = getFont().getHeight();
-        const auto borderHeight = getBoxModel().getBorder().getTopAndBottom();
-
-        return juce::jmax(textHeight + borderHeight, 20.f);
-    }
-
     //==================================================================================================================
     juce::Button& Button::getButton()
     {
@@ -97,6 +59,15 @@ namespace jive
     const juce::Button& Button::getButton() const
     {
         return *dynamic_cast<const juce::Button*>(&getComponent());
+    }
+
+    //==================================================================================================================
+    void Button::contentChanged()
+    {
+        GuiItemDecorator::contentChanged();
+
+        if (auto* text = findFirstTextContent(*this))
+            getButton().setButtonText(text->getTextComponent().getText());
     }
 } // namespace jive
 
@@ -113,14 +84,11 @@ public:
     void runTest() final
     {
         testGuiItem();
-        testText();
-        testFont();
-        testJustification();
         testToggleable();
         testClickingTogglesState();
         testRadioGroup();
         testTooltip();
-        testAutoSize();
+        testContentChanged();
     }
 
 private:
@@ -137,94 +105,6 @@ private:
 
         auto item = createButton(juce::ValueTree{ "Button" });
         expect(!item->isContainer());
-    }
-
-    void testText()
-    {
-        beginTest("text");
-
-        {
-            juce::ValueTree tree{ "Button" };
-            auto item = createButton(tree);
-
-            expect(item->getButton().getButtonText().isEmpty());
-
-            tree.setProperty("text", "Some text", nullptr);
-            expectEquals(item->getButton().getButtonText(), juce::String{ "Some text" });
-        }
-        {
-            juce::ValueTree tree{
-                "Button",
-                {
-                    { "text", "Bacon sandwich" },
-                },
-            };
-            auto item = createButton(tree);
-
-            expectEquals(item->getButton().getButtonText(), juce::String{ "Bacon sandwich" });
-        }
-    }
-
-    void testFont()
-    {
-        beginTest("font");
-
-        {
-            juce::ValueTree tree{ "Button" };
-            auto item = createButton(tree);
-
-            expect(item->getComponent().getProperties().contains("font"));
-
-            juce::Font font{ "Helvetica", 16.f, 0 };
-            tree.setProperty("typeface-name", font.getTypefaceName(), nullptr);
-            tree.setProperty("font-weight", font.getTypefaceStyle(), nullptr);
-            tree.setProperty("font-height", font.getHeightInPoints(), nullptr);
-            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
-        }
-        {
-            juce::Font font{ "Arial", 48.f, 0 };
-            juce::ValueTree tree{
-                "Button",
-                {
-                    { "typeface-name", font.getTypefaceName() },
-                    { "font-weight", font.getTypefaceStyle() },
-                    { "font-height", font.getHeightInPoints() },
-                },
-            };
-            auto item = createButton(tree);
-
-            expectEquals(item->getComponent().getProperties()["font"].toString(), font.toString());
-        }
-    }
-
-    void testJustification()
-    {
-        beginTest("justification");
-
-        using Converter = juce::VariantConverter<juce::Justification>;
-
-        {
-            juce::ValueTree tree{ "Button" };
-            auto item = createButton(tree);
-
-            expect(item->getComponent().getProperties().contains("justification"));
-
-            tree.setProperty("justification",
-                             Converter::toVar(juce::Justification::bottomRight),
-                             nullptr);
-            expect(Converter::fromVar(item->getComponent().getProperties()["justification"]) == juce::Justification::bottomRight);
-        }
-        {
-            juce::ValueTree tree{
-                "Button",
-                {
-                    { "justification", Converter::toVar(juce::Justification::topLeft) },
-                },
-            };
-            auto item = createButton(tree);
-
-            expect(Converter::fromVar(item->getComponent().getProperties()["justification"]) == juce::Justification::topLeft);
-        }
     }
 
     void testToggleable()
@@ -380,30 +260,27 @@ private:
         }
     }
 
-    void testAutoSize()
+    void testContentChanged()
     {
-        beginTest("auto size");
+        beginTest("content-changed");
 
-        juce::ValueTree tree{ "Button" };
+        juce::ValueTree tree{
+            "Button",
+            {},
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        { "text", "Some text..." },
+                    },
+                },
+            },
+        };
         auto button = createButton(tree);
+        expectEquals<juce::String>(button->getButton().getButtonText(), "Some text...");
 
-        expectEquals(button->getWidth(), 20.f);
-        expectEquals(button->getHeight(), 20.f);
-
-        tree.setProperty("text", "Some text", nullptr);
-        tree.setProperty("border-width", 30, nullptr);
-        tree.setProperty("padding", 5, nullptr);
-
-        const auto boxModel = button->getBoxModel();
-        const auto borderWidth = boxModel.getBorder().getLeftAndRight();
-        const auto textWidth = button->getFont().getStringWidthFloat(button->getText());
-        const auto expectedWidth = borderWidth + textWidth;
-        expect(button->getWidth() == expectedWidth);
-
-        const auto borderHeight = boxModel.getBorder().getTopAndBottom();
-        const auto textHeight = button->getFont().getHeight();
-        const auto expectedHeight = borderHeight + textHeight;
-        expect(button->getHeight() == expectedHeight);
+        tree.getChild(0).setProperty("text", "Some different text!", nullptr);
+        expectEquals<juce::String>(button->getButton().getButtonText(), "Some different text!");
     }
 };
 

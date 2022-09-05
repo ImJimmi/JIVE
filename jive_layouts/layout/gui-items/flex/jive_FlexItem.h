@@ -25,6 +25,6 @@ namespace jive
         TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
 
         //==============================================================================================================
-        JUCE_LEAK_DETECTOR(FlexItem)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)
     };
 } // namespace jive

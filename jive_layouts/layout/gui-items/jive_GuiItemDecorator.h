@@ -14,6 +14,7 @@ namespace jive
         void updateLayout() override;
         void updateSize() override;
         void updatePosition() override;
+        void informContentChanged() override;
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
@@ -42,14 +43,8 @@ namespace jive
 
     protected:
         //==============================================================================================================
-        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
-        void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
-        void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int childIndex) override;
-
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
-
-        //==============================================================================================================
         GuiItemDecorator& getTopLevelDecorator();
+        const GuiItemDecorator& getTopLevelDecorator() const;
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

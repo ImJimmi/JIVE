@@ -15,7 +15,6 @@
 
 #include "layout/gui-items/jive_GuiItem.cpp"
 #include "layout/gui-items/jive_GuiItemDecorator.cpp"
-#include "layout/gui-items/widgets/jive_TextWidget.cpp"
 
 #include "layout/gui-items/block/jive_BlockContainer.cpp"
 #include "layout/gui-items/block/jive_BlockItem.cpp"

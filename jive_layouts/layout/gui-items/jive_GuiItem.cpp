@@ -164,6 +164,11 @@ namespace jive
     {
     }
 
+    void GuiItem::informContentChanged()
+    {
+        contentChanged();
+    }
+
     //==================================================================================================================
     const juce::Component& GuiItem::getComponent() const
     {
@@ -310,6 +315,9 @@ namespace jive
 
     float GuiItem::getWidth() const
     {
+        if (hasAutoWidth())
+            return -1.0f;
+
         auto length = width.get();
         length.setCorrespondingGuiItem(*this);
 
@@ -318,6 +326,9 @@ namespace jive
 
     float GuiItem::getHeight() const
     {
+        if (hasAutoHeight())
+            return -1.0f;
+
         auto length = height.get();
         length.setCorrespondingGuiItem(*this);
 
@@ -384,10 +395,10 @@ namespace jive
             const auto h = juce::roundToInt(getHeight());
 
             if (w != bounds.getWidth())
-                width = Width::fromPixels(bounds.getWidth());
+                width = Width::fromPixels(static_cast<float>(bounds.getWidth()));
 
             if (h != bounds.getHeight())
-                height = Height::fromPixels(bounds.getHeight());
+                height = Height::fromPixels(static_cast<float>(bounds.getHeight()));
         }
 
         if (&componentThatWasMovedOrResized == component.get())
@@ -419,14 +430,16 @@ namespace jive
     }
 
     //==================================================================================================================
+    void GuiItem::contentChanged()
+    {
+    }
+
+    //==================================================================================================================
     void GuiItem::updateViewportSize()
     {
         const auto borderBounds = boxModel.getBorderBounds();
         getViewport().setSize(juce::roundToInt(borderBounds.getWidth()),
                               juce::roundToInt(borderBounds.getHeight()));
-
-        if (getViewport().getWidth() > 0 && getViewport().getHeight() > 0)
-            updateComponentSize();
     }
 
     void GuiItem::updateComponentSize()
@@ -445,6 +458,8 @@ namespace jive
 
             if (getViewport().isHorizontalScrollBarShown())
                 newHeight -= getViewport().getScrollBarThickness();
+
+            updateLayout();
 
             for (auto& child : *this)
             {
@@ -573,21 +588,37 @@ private:
     {
         beginTest("width and height");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createGuiItem(tree);
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGuiItem(tree);
 
-        expect(item->hasAutoWidth());
-        expect(item->hasAutoHeight());
-        expect(item->getViewport().getWidth() == 0);
-        expect(item->getViewport().getHeight() == 0);
+            expect(item->hasAutoWidth());
+            expect(item->hasAutoHeight());
+            expect(item->getViewport().getWidth() == 0);
+            expect(item->getViewport().getHeight() == 0);
 
-        tree.setProperty("width", 100.11f, nullptr);
-        tree.setProperty("height", 50.55f, nullptr);
+            tree.setProperty("width", 100.11f, nullptr);
+            tree.setProperty("height", 50.55f, nullptr);
 
-        expect(item->getWidth() == 100.11f);
-        expect(item->getHeight() == 50.55f);
-        expect(item->getViewport().getWidth() == 100);
-        expect(item->getViewport().getHeight() == 51);
+            expect(item->getWidth() == 100.11f);
+            expect(item->getHeight() == 50.55f);
+            expect(item->getViewport().getWidth() == 100);
+            expect(item->getViewport().getHeight() == 51);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 100.0f },
+                    { "height", 389.0f },
+                },
+            };
+            auto item = createGuiItem(tree);
+            expect(!item->hasAutoWidth());
+            expect(!item->hasAutoHeight());
+            expectEquals(item->getViewport().getWidth(), 100);
+            expectEquals(item->getViewport().getHeight(), 389);
+        }
     }
 
     void testTopLevelSize()

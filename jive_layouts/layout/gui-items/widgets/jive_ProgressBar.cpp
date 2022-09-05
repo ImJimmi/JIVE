@@ -6,35 +6,14 @@ namespace jive
     //==================================================================================================================
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , TextWidget{ tree }
         , value{ tree, "value" }
-        , showPercentage{ tree, "show-percentage", true }
     {
         value.onValueChange = [this]() {
             getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
         };
         getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
 
-        showPercentage.onValueChange = [this]() {
-            getProgressBar().setPercentageDisplay(showPercentage);
-        };
-
-        onTextChanged = [this]() {
-            getProgressBar().setTextToDisplay(getText());
-            getProgressBar().setPercentageDisplay(getText().isEmpty() && showPercentage);
-        };
-        getProgressBar().setTextToDisplay(getText());
-        getProgressBar().setPercentageDisplay(getText().isEmpty() && showPercentage);
-
-        onFontChanged = [this]() {
-            getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
-        };
-        getComponent().getProperties().set("font", juce::VariantConverter<juce::Font>::toVar(getFont()));
-
-        onJustificationChanged = [this]() {
-            getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
-        };
-        getComponent().getProperties().set("justification", juce::VariantConverter<juce::Justification>::toVar(getTextJustification()));
+        getProgressBar().setPercentageDisplay(false);
     }
 
     //==================================================================================================================

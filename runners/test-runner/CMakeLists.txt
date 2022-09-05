@@ -31,22 +31,26 @@ PRIVATE
 if (APPLE)
     target_compile_options(jive-test-runner
     PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
-
         -fsanitize=address
         -fsanitize=undefined
+        -Wall
+        -Werror
+        -Wextra
+        -Wpedantic
+    )
 
-        --coverage
+    target_link_options(jive-test-runner
+    PRIVATE
+        -fsanitize=address
+        -fsanitize=undefined
+    )
+elseif(MSVC)
+    target_compile_options(jive-test-runner
+    PRIVATE
+        /W4
+        /WX
     )
 endif()
-
-target_link_options(jive-test-runner
-PRIVATE
-    -fsanitize=address
-    -fsanitize=undefined
-    --coverage
-)
 
 target_compile_definitions(jive-test-runner
 PRIVATE
@@ -54,6 +58,21 @@ PRIVATE
     JIVE_UNIT_TESTS=1
     JUCE_APPLICATION_NAME="JIVE Test Runner"
 )
+
+if (APPLE)
+    option(JIVE_ENABLE_COVERAGE OFF "Whether or not to enable coverage reports when building the JIVE test-runner.")
+    if (JIVE_ENABLE_COVERAGE)
+        target_compile_options(jive-test-runner
+        PRIVATE
+            --coverage
+        )
+
+        target_link_options(jive-test-runner
+        PRIVATE
+            --coverage
+        )
+    endif()
+endif()
 
 get_target_property(JIVE_TEST_RUNNER_SOURCES jive-test-runner SOURCES)
 

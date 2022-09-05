@@ -41,10 +41,7 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getBorderBounds() const
     {
-        const auto width = item.hasAutoWidth() ? item.getViewport().getWidth() : calculateBorderBoundsWidth();
-        const auto height = item.hasAutoHeight() ? item.getViewport().getHeight() : calculateBorderBoundsHeight();
-
-        return { width, height };
+        return { calculateBorderBoundsWidth(), calculateBorderBoundsHeight() };
     }
 
     juce::Rectangle<float> BoxModel::getPaddingBounds() const
@@ -60,7 +57,7 @@ namespace jive
     //==================================================================================================================
     float BoxModel::calculateBorderBoundsWidth() const
     {
-        if (item.getParent() == nullptr)
+        if (item.isTopLevel())
             return getWidth();
 
         return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
@@ -68,7 +65,7 @@ namespace jive
 
     float BoxModel::calculateBorderBoundsHeight() const
     {
-        if (item.getParent() == nullptr)
+        if (item.isTopLevel())
             return getHeight();
 
         return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();

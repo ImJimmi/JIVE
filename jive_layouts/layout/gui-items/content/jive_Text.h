@@ -26,6 +26,7 @@ namespace jive
     protected:
         //==============================================================================================================
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
+        void componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged) override;
 
     private:
         //==============================================================================================================
@@ -50,4 +51,7 @@ namespace jive
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };
+
+    //==================================================================================================================
+    const Text* findFirstTextContent(const GuiItem& item);
 } // namespace jive

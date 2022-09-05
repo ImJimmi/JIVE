@@ -11,6 +11,7 @@ namespace jive
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
+        float getWidth() const override;
         float getHeight() const override;
 
         //==============================================================================================================
@@ -24,6 +25,7 @@ namespace jive
         juce::FlexBox getFlexBox();
         juce::FlexBox getFlexBoxWithDummyItems() const;
 
+        float getMinimumContentWidth() const;
         float getMinimumContentHeight() const;
 
         //==============================================================================================================

@@ -4,9 +4,7 @@
 namespace jive
 {
     //==================================================================================================================
-    class ProgressBar
-        : public GuiItemDecorator
-        , public TextWidget
+    class ProgressBar : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
@@ -19,7 +17,6 @@ namespace jive
     private:
         //==============================================================================================================
         TypedValue<double> value;
-        TypedValue<bool> showPercentage;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressBar)
