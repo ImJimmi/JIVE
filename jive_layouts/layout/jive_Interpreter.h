@@ -19,7 +19,6 @@ namespace jive
 
         //==============================================================================================================
         std::unique_ptr<GuiItem> interpret(juce::ValueTree tree) const;
-        std::unique_ptr<GuiItem> interpret(const juce::String& xmlString) const;
 
     private:
         //==============================================================================================================

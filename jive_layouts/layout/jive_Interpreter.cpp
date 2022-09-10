@@ -18,33 +18,6 @@ namespace jive
         return interpret(tree, nullptr);
     }
 
-    void replaceTextElementWithTextProperty(juce::XmlElement& parentXML, juce::XmlElement& textChild)
-    {
-        parentXML.setAttribute("text", textChild.getText());
-        parentXML.removeChildElement(&textChild, true);
-    }
-
-    void recursivelyReplaceSubTextElementsWithTextProperties(juce::XmlElement& xml)
-    {
-        for (auto i = xml.getNumChildElements() - 1; i >= 0; i--)
-        {
-            auto* child = xml.getChildElement(i);
-
-            recursivelyReplaceSubTextElementsWithTextProperties(*child);
-
-            if (child->getTagName().isEmpty())
-                replaceTextElementWithTextProperty(xml, *child);
-        }
-    }
-
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::String& xmlString) const
-    {
-        auto xml = juce::parseXML(xmlString);
-        recursivelyReplaceSubTextElementsWithTextProperties(*xml);
-
-        return interpret(juce::ValueTree::fromXml(*xml));
-    }
-
     //==================================================================================================================
     void Interpreter::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
     {
@@ -235,7 +208,6 @@ public:
         testComponentFactory();
         testNestedComponents();
         testDisplayTypes();
-        testXML();
         testInitialLayout();
         testWindowContent();
     }
@@ -380,22 +352,6 @@ private:
         });
         expect(dynamic_cast<jive::GuiItem*>(blockView.get()));
         expect(dynamic_cast<jive::BlockItem*>(&blockView->getChild(0)));
-    }
-
-    void testXML()
-    {
-        beginTest("xml");
-
-        const jive::Interpreter interpreter;
-
-        const auto xml = R"(
-                <Component>
-                    <Label text="Some text"/>
-                    <Label>This is some sub-test</Label>
-                </Component>
-            )";
-
-        expect(interpreter.interpret(xml) != nullptr);
     }
 
     void testInitialLayout()
