@@ -66,24 +66,6 @@ namespace jive
 
         BoxModel getBoxModel() const;
 
-        juce::String getName() const;
-        juce::Identifier getID() const;
-        juce::String getDescription() const;
-        juce::String getTooltip() const;
-
-        bool isEnabled() const;
-        bool isVisible() const;
-        bool isAlwaysOnTop() const;
-        bool isBufferedToImage() const;
-        bool isOpaque() const;
-        bool isFocusable() const;
-        bool getClickingGrabsFocus() const;
-        bool hasFocusOutline() const;
-
-        int getFocusOrder() const;
-        float getOpacity() const;
-        juce::MouseCursor getCursor() const;
-
         virtual float getWidth() const;
         virtual float getHeight() const;
 

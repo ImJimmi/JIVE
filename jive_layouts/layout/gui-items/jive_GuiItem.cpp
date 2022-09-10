@@ -244,81 +244,6 @@ namespace jive
         return boxModel;
     }
 
-    juce::String GuiItem::getName() const
-    {
-        return name;
-    }
-
-    juce::Identifier GuiItem::getID() const
-    {
-        return id;
-    }
-
-    juce::String GuiItem::getDescription() const
-    {
-        return description;
-    }
-
-    juce::String GuiItem::getTooltip() const
-    {
-        return tooltip;
-    }
-
-    bool GuiItem::isEnabled() const
-    {
-        return enabled;
-    }
-
-    bool GuiItem::isVisible() const
-    {
-        return visible;
-    }
-
-    bool GuiItem::isAlwaysOnTop() const
-    {
-        return alwaysOnTop;
-    }
-
-    bool GuiItem::isBufferedToImage() const
-    {
-        return bufferedToImage;
-    }
-
-    bool GuiItem::isOpaque() const
-    {
-        return opaque;
-    }
-
-    bool GuiItem::isFocusable() const
-    {
-        return focusable;
-    }
-
-    bool GuiItem::getClickingGrabsFocus() const
-    {
-        return clickingGrabsFocus;
-    }
-
-    bool GuiItem::hasFocusOutline() const
-    {
-        return focusOutline;
-    }
-
-    int GuiItem::getFocusOrder() const
-    {
-        return focusOrder;
-    }
-
-    float GuiItem::getOpacity() const
-    {
-        return opacity;
-    }
-
-    juce::MouseCursor GuiItem::getCursor() const
-    {
-        return juce::MouseCursor{ cursor };
-    }
-
     float GuiItem::getWidth() const
     {
         if (hasAutoWidth())
@@ -657,27 +582,25 @@ private:
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
 
-            expect(item->getName().isEmpty());
-            expect(item->getComponent().getName() == item->getName());
-            expect(item->getComponent().getTitle() == item->getName());
+            expect(item->getComponent().getName().isEmpty());
+            expect(item->getComponent().getTitle().isEmpty());
 
             tree.setProperty("name", "Zaphod Beeblebrox", nullptr);
 
-            expect(item->getName() == "Zaphod Beeblebrox");
-            expect(item->getComponent().getName() == item->getName());
-            expect(item->getComponent().getTitle() == item->getName());
-
-            item->getComponent().setName("Arthur Dent");
-
-            expect(item->getName() == item->getComponent().getName());
+            expectEquals<juce::String>(item->getComponent().getName(), "Zaphod Beeblebrox");
+            expectEquals<juce::String>(item->getComponent().getTitle(), "Zaphod Beeblebrox");
         }
         {
-            juce::ValueTree tree{ "Component", { { "name", "Ford Prefect" } } };
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "name", "Ford Prefect" },
+                },
+            };
             auto item = createGuiItem(tree);
 
-            expect(item->getName() == "Ford Prefect");
-            expect(item->getComponent().getName() == item->getName());
-            expect(item->getComponent().getTitle() == item->getName());
+            expectEquals<juce::String>(item->getComponent().getName(), "Ford Prefect");
+            expectEquals<juce::String>(item->getComponent().getTitle(), "Ford Prefect");
         }
     }
 
@@ -689,20 +612,22 @@ private:
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
 
-            expect(item->getID().isNull());
-            expect(item->getComponent().getComponentID() == item->getID().toString());
+            expect(item->getComponent().getComponentID().isEmpty());
 
             tree.setProperty("id", "comp123", nullptr);
 
-            expect(item->getID() == juce::Identifier{ "comp123" });
-            expect(item->getComponent().getComponentID() == item->getID().toString());
+            expectEquals<juce::String>(item->getComponent().getComponentID(), "comp123");
         }
         {
-            juce::ValueTree tree{ "Component", { { "id", "specified" } } };
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "id", "specified" },
+                },
+            };
             auto item = createGuiItem(tree);
 
-            expect(item->getID() == juce::Identifier{ tree["id"] });
-            expect(item->getComponent().getComponentID() == item->getID().toString());
+            expectEquals<juce::String>(item->getComponent().getComponentID(), "specified");
         }
     }
 
@@ -714,13 +639,11 @@ private:
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
 
-            expect(item->getDescription().isEmpty());
             expect(item->getComponent().getDescription().isEmpty());
 
             tree.setProperty("description", "Don't panic!", nullptr);
 
-            expect(item->getDescription() == "Don't panic!");
-            expect(item->getComponent().getDescription() == "Don't panic!");
+            expectEquals<juce::String>(item->getComponent().getDescription(), "Don't panic!");
         }
         {
             juce::ValueTree tree{
@@ -731,8 +654,8 @@ private:
             };
             auto item = createGuiItem(tree);
 
-            expect(item->getDescription() == tree["description"].toString());
-            expect(item->getComponent().getDescription() == tree["description"].toString());
+            expectEquals<juce::String>(item->getComponent().getDescription(),
+                                       "You live and learn. At any rate, you live.");
         }
     }
 
@@ -744,15 +667,14 @@ private:
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
 
-            expect(item->getTooltip().isEmpty());
             expect(item->getComponent().getHelpText().isEmpty());
 
             tree.setProperty("tooltip",
                              "I love deadlines. I love the whooshing noise they make as they go by.",
                              nullptr);
 
-            expect(item->getTooltip() == "I love deadlines. I love the whooshing noise they make as they go by.");
-            expect(item->getComponent().getHelpText() == "I love deadlines. I love the whooshing noise they make as they go by.");
+            expectEquals<juce::String>(item->getComponent().getHelpText(),
+                                       "I love deadlines. I love the whooshing noise they make as they go by.");
         }
         {
             juce::ValueTree tree{
@@ -764,8 +686,8 @@ private:
             };
             auto item = createGuiItem(tree);
 
-            expect(item->getTooltip() == tree["tooltip"].toString());
-            expect(item->getComponent().getHelpText() == tree["tooltip"].toString());
+            expectEquals<juce::String>(item->getComponent().getHelpText(),
+                                       "I may not have gone where I intended to go, but I think I have ended up where I needed to be.");
         }
     }
 
@@ -777,12 +699,9 @@ private:
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
 
-            expect(item->isVisible());
             expect(item->getViewport().isVisible());
 
             tree.setProperty("visible", false, nullptr);
-
-            expect(!item->isVisible());
             expect(!item->getViewport().isVisible());
 
             juce::ValueTree childTree1{
@@ -792,8 +711,6 @@ private:
                 },
             };
             item->addChild(createGuiItem(childTree1));
-
-            expect(item->getChild(0).isVisible());
             expect(item->getChild(0).getViewport().isVisible());
 
             juce::ValueTree childTree2{
@@ -803,13 +720,7 @@ private:
                 },
             };
             item->addChild(createGuiItem(childTree2));
-
-            expect(!item->getChild(1).isVisible());
             expect(!item->getChild(1).getViewport().isVisible());
-
-            item->getViewport().setVisible(!item->getViewport().isVisible());
-
-            expect(item->isVisible() == item->getViewport().isVisible());
         }
         {
             juce::ValueTree tree{
@@ -820,8 +731,7 @@ private:
             };
             auto item = createGuiItem(tree);
 
-            expect(item->isVisible() == static_cast<bool>(tree["visible"]));
-            expect(item->getViewport().isVisible() == static_cast<bool>(tree["visible"]));
+            expect(!item->getViewport().isVisible());
         }
     }
 
@@ -832,13 +742,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(!item->isAlwaysOnTop());
             expect(!item->getViewport().isAlwaysOnTop());
 
             tree.setProperty("always-on-top", true, nullptr);
-
-            expect(item->isAlwaysOnTop());
             expect(item->getViewport().isAlwaysOnTop());
         }
         {
@@ -849,8 +755,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->isAlwaysOnTop() == static_cast<bool>(tree["always-on-top"]));
             expect(item->getViewport().isAlwaysOnTop() == static_cast<bool>(tree["always-on-top"]));
         }
     }
@@ -862,13 +766,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(!item->isBufferedToImage());
             expect(item->getComponent().getCachedComponentImage() == nullptr);
 
             tree.setProperty("buffered-to-image", true, nullptr);
-
-            expect(item->isBufferedToImage());
             expect(item->getComponent().getCachedComponentImage() != nullptr);
         }
         {
@@ -879,8 +779,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->isBufferedToImage());
             expect(item->getComponent().getCachedComponentImage() != nullptr);
         }
     }
@@ -892,13 +790,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(!item->isOpaque());
             expect(!item->getComponent().isOpaque());
 
             tree.setProperty("opaque", true, nullptr);
-
-            expect(item->isOpaque());
             expect(item->getComponent().isOpaque());
         }
         {
@@ -909,8 +803,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->isOpaque());
             expect(item->getComponent().isOpaque());
         }
     }
@@ -922,13 +814,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(item->getFocusOrder() == 0);
             expect(item->getViewport().getExplicitFocusOrder() == 0);
 
             tree.setProperty("focus-order", 12, nullptr);
-
-            expect(item->getFocusOrder() == 12);
             expect(item->getViewport().getExplicitFocusOrder() == 12);
         }
         {
@@ -939,8 +827,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->getFocusOrder() == 4);
             expect(item->getViewport().getExplicitFocusOrder() == 4);
         }
     }
@@ -952,13 +838,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(!item->isFocusable());
             expect(!item->getComponent().getWantsKeyboardFocus());
 
             tree.setProperty("focusable", true, nullptr);
-
-            expect(item->isFocusable());
             expect(item->getComponent().getWantsKeyboardFocus());
         }
         {
@@ -969,8 +851,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->isFocusable());
             expect(item->getComponent().getWantsKeyboardFocus());
         }
     }
@@ -982,13 +862,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(item->getClickingGrabsFocus());
             expect(item->getComponent().getMouseClickGrabsKeyboardFocus());
 
             tree.setProperty("clicking-grabs-focus", false, nullptr);
-
-            expect(!item->getClickingGrabsFocus());
             expect(!item->getComponent().getMouseClickGrabsKeyboardFocus());
         }
         {
@@ -999,8 +875,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(!item->getClickingGrabsFocus());
             expect(!item->getComponent().getMouseClickGrabsKeyboardFocus());
         }
     }
@@ -1012,13 +886,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(!item->hasFocusOutline());
             expect(!item->getViewport().hasFocusOutline());
 
             tree.setProperty("focus-outline", true, nullptr);
-
-            expect(item->hasFocusOutline());
             expect(item->getViewport().hasFocusOutline());
         }
         {
@@ -1029,8 +899,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->hasFocusOutline());
             expect(item->getViewport().hasFocusOutline());
         }
     }
@@ -1042,19 +910,10 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(item->isEnabled());
             expect(item->getComponent().isEnabled());
 
             tree.setProperty("enabled", false, nullptr);
-
-            expect(!item->isEnabled());
             expect(!item->getComponent().isEnabled());
-
-            item->getComponent().setEnabled(true);
-
-            expect(item->isEnabled());
-            expect(item->getComponent().isEnabled());
         }
         {
             juce::ValueTree tree{
@@ -1064,8 +923,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(!item->isEnabled());
             expect(!item->getComponent().isEnabled());
         }
     }
@@ -1077,13 +934,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(item->getOpacity() == 1.f);
             expect(item->getViewport().getAlpha() == 1.f);
 
             tree.setProperty("opacity", 0.42f, nullptr);
-
-            expect(item->getOpacity() == 0.42f);
             expectWithinAbsoluteError(item->getViewport().getAlpha(), 0.42f, 1.f / 256.f);
         }
         {
@@ -1094,8 +947,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->getOpacity() == 0.123f);
             expectWithinAbsoluteError(item->getViewport().getAlpha(), 0.123f, 1.f / 256.f);
         }
     }
@@ -1107,13 +958,9 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
-            expect(item->getCursor() == juce::MouseCursor::NormalCursor);
             expect(item->getComponent().getMouseCursor() == juce::MouseCursor::NormalCursor);
 
             tree.setProperty("cursor", "left-right", nullptr);
-
-            expect(item->getCursor() == juce::MouseCursor::LeftRightResizeCursor);
             expect(item->getComponent().getMouseCursor() == juce::MouseCursor::LeftRightResizeCursor);
         }
         {
@@ -1124,8 +971,6 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
-            expect(item->getCursor() == juce::MouseCursor::WaitCursor);
             expect(item->getComponent().getMouseCursor() == juce::MouseCursor::WaitCursor);
         }
     }
