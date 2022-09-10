@@ -37,6 +37,7 @@ namespace jive
     void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
     {
         item->addChild(std::move(child));
+        updateLayout();
     }
 
     int GuiItemDecorator::getNumChildren() const

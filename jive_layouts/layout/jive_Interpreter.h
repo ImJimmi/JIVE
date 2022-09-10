@@ -8,14 +8,9 @@ namespace jive
     {
     public:
         //==============================================================================================================
-        using ComponentFactory = std::function<std::unique_ptr<juce::Component>()>;
-
-        //==============================================================================================================
-        Interpreter();
-
-        //==============================================================================================================
-        void setFactory(const juce::Identifier& treeType, ComponentFactory factory);
-        void resetFactories();
+        const ComponentFactory& getComponentFactory() const;
+        ComponentFactory& getComponentFactory();
+        void setComponentFactory(const ComponentFactory& newFactory);
 
         //==============================================================================================================
         std::unique_ptr<GuiItem> interpret(juce::ValueTree tree) const;
@@ -24,15 +19,16 @@ namespace jive
         //==============================================================================================================
         std::unique_ptr<GuiItem> interpret(juce::ValueTree tree, GuiItem* const parent) const;
 
-        std::unique_ptr<GuiItem> createGuiItem(juce::ValueTree tree, GuiItem* const parent) const;
-        void appendChildItems(GuiItem& item, juce::ValueTree tree) const;
+        std::unique_ptr<GuiItem> createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const;
+        void appendChild(GuiItem& item, juce::ValueTree childState) const;
+        void appendChildItems(GuiItem& item) const;
 
         std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
 
         //==============================================================================================================
-        juce::HashMap<juce::String, ComponentFactory> factories;
+        ComponentFactory componentFactory;
 
         //==============================================================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Interpreter)
+        JUCE_LEAK_DETECTOR(Interpreter)
     };
 } // namespace jive

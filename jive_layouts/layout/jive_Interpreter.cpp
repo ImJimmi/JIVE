@@ -4,69 +4,25 @@
 namespace jive
 {
     //==================================================================================================================
-    Interpreter::Interpreter()
+    const ComponentFactory& Interpreter::getComponentFactory() const
     {
-        resetFactories();
+        return componentFactory;
+    }
+
+    ComponentFactory& Interpreter::getComponentFactory()
+    {
+        return componentFactory;
+    }
+
+    void Interpreter::setComponentFactory(const ComponentFactory& newFactory)
+    {
+        componentFactory = newFactory;
     }
 
     //==================================================================================================================
     std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree) const
     {
-        // Can't render a view from an invalid tree!
-        jassert(tree.isValid());
-
         return interpret(tree, nullptr);
-    }
-
-    //==================================================================================================================
-    void Interpreter::setFactory(const juce::Identifier& treeType, ComponentFactory factory)
-    {
-        factories.set(treeType.toString(), factory);
-    }
-
-    void Interpreter::resetFactories()
-    {
-        factories.clear();
-
-        setFactory("Button", []() {
-            return std::make_unique<juce::TextButton>();
-        });
-        setFactory("Checkbox", []() {
-            return std::make_unique<juce::ToggleButton>();
-        });
-        setFactory("ComboBox", []() {
-            return std::make_unique<juce::ComboBox>();
-        });
-        setFactory("Component", []() {
-            return std::make_unique<IgnoredComponent>();
-        });
-        setFactory("Hyperlink", []() {
-            return std::make_unique<juce::HyperlinkButton>();
-        });
-        setFactory("Image", []() {
-            return std::make_unique<IgnoredComponent>();
-        });
-        setFactory("Knob", []() {
-            return std::make_unique<juce::Slider>();
-        });
-        setFactory("Label", []() {
-            return std::make_unique<juce::Label>();
-        });
-        setFactory("ProgressBar", []() {
-            return std::make_unique<NormalisedProgressBar>();
-        });
-        setFactory("Slider", []() {
-            return std::make_unique<juce::Slider>();
-        });
-        setFactory("Spinner", []() {
-            return std::make_unique<juce::Slider>();
-        });
-        setFactory("Text", []() {
-            return std::make_unique<TextComponent>();
-        });
-        setFactory("Window", []() {
-            return std::make_unique<IgnoredComponent>();
-        });
     }
 
     //==================================================================================================================
@@ -107,58 +63,59 @@ namespace jive
         return nullptr;
     }
 
-    std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item, const juce::ValueTree& tree)
+    std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item)
     {
-        if (tree.hasType("Button") || tree.hasType("Checkbox"))
+        const auto name = item->getState().getType().toString();
+
+        if (name == "Button" || name == "Checkbox")
             return std::make_unique<Button>(std::move(item));
-        if (tree.hasType("ComboBox"))
+        if (name == "ComboBox")
             return std::make_unique<ComboBox>(std::move(item));
-        if (tree.hasType("Hyperlink"))
+        if (name == "Hyperlink")
             return std::make_unique<Hyperlink>(std::move(item));
-        if (tree.hasType("Image"))
+        if (name == "Image")
             return std::make_unique<Image>(std::move(item));
-        if (tree.hasType("Knob"))
+        if (name == "Knob")
             return std::make_unique<Knob>(std::move(item));
-        if (tree.hasType("Label"))
+        if (name == "Label")
             return std::make_unique<Label>(std::move(item));
-        if (tree.hasType("ProgressBar"))
+        if (name == "ProgressBar")
             return std::make_unique<ProgressBar>(std::move(item));
-        if (tree.hasType("Slider"))
+        if (name == "Slider")
             return std::make_unique<Slider>(std::move(item));
-        if (tree.hasType("Spinner"))
+        if (name == "Spinner")
             return std::make_unique<Spinner>(std::move(item));
-        if (tree.hasType("Text"))
+        if (name == "Text")
             return std::make_unique<Text>(std::move(item));
-        if (tree.hasType("Window"))
+        if (name == "Window")
             return std::make_unique<Window>(std::move(item));
+
+        return item;
+    }
+
+    std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item)
+    {
+        item = decorateWithDisplayBehaviour(std::move(item));
+        item = decorateWithHereditaryBehaviour(std::move(item));
+        item = decorateWithWidgetBehaviour(std::move(item));
 
         return item;
     }
 
     std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree, GuiItem* const parent) const
     {
-        auto guiItem = createGuiItem(tree, parent);
+        auto item = createUndecoratedItem(tree, parent);
 
-        if (guiItem == nullptr)
-            return nullptr;
+        if (item != nullptr)
+        {
+            item = decorate(std::move(item));
+            appendChildItems(*item);
+        }
 
-        guiItem = decorateWithDisplayBehaviour(std::move(guiItem));
-        guiItem = decorateWithHereditaryBehaviour(std::move(guiItem));
-        guiItem = decorateWithWidgetBehaviour(std::move(guiItem), tree);
-
-        appendChildItems(*guiItem, tree);
-
-        guiItem->updateLayout();
-
-        return guiItem;
+        return item;
     }
 
-    bool treeHasMatchingTypeIgnoringCase(const juce::ValueTree& tree, const juce::String& expectedType)
-    {
-        return tree.getType().toString().equalsIgnoreCase(expectedType);
-    }
-
-    std::unique_ptr<GuiItem> Interpreter::createGuiItem(juce::ValueTree tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const
     {
         if (auto component = createComponent(tree))
             return std::make_unique<GuiItem>(std::move(component), tree, parent);
@@ -166,31 +123,27 @@ namespace jive
         return nullptr;
     }
 
-    void Interpreter::appendChildItems(GuiItem& item, juce::ValueTree tree) const
+    void Interpreter::appendChild(GuiItem& item, juce::ValueTree childState) const
     {
-        for (auto childTree : tree)
-        {
-            auto childItem = interpret(childTree, &item);
+        auto childItem = interpret(childState, &item);
 
-            if (childItem != nullptr)
-            {
-                if (item.isContainer() || childItem->isContent())
-                    item.addChild(std::move(childItem));
-            }
+        if (childItem != nullptr)
+        {
+            if (item.isContainer() || childItem->isContent())
+                item.addChild(std::move(childItem));
         }
+    }
+
+    void Interpreter::appendChildItems(GuiItem& item) const
+    {
+        for (auto childTree : item.getState())
+            appendChild(item, childTree);
     }
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(juce::ValueTree tree) const
     {
-        const auto treeType = tree.getType().toString();
-
-        if (factories.contains(treeType))
-        {
-            const auto create = factories[treeType];
-            return create();
-        }
-
-        return nullptr;
+        const auto name = tree.getType();
+        return componentFactory.create(name);
     }
 } // namespace jive
 
@@ -218,46 +171,25 @@ private:
         beginTest("component factory");
 
         jive::Interpreter interpreter;
+        expect(interpreter.getComponentFactory().create("MyComponent") == nullptr);
 
-        auto componentView = interpreter.interpret(juce::ValueTree{ "Component" });
-        expect(dynamic_cast<jive::GuiItem*>(componentView.get()) != nullptr);
-
-        constexpr auto windowStyleFlags = 0;
-        componentView->getComponent().addToDesktop(windowStyleFlags);
-        auto* handler = componentView->getComponent().getAccessibilityHandler();
-        expect(handler->getRole() == juce::AccessibilityRole::ignored);
-
-        auto labelView = interpreter.interpret(juce::ValueTree{ "Label" });
-        expect(dynamic_cast<jive::Label*>(labelView.get()) != nullptr);
-        expect(dynamic_cast<juce::Label*>(&labelView->getComponent()) != nullptr);
-
-        auto buttonView = interpreter.interpret(juce::ValueTree{ "Button" });
-        expect(dynamic_cast<jive::Button*>(buttonView.get()) != nullptr);
-        expect(dynamic_cast<juce::TextButton*>(&buttonView->getComponent()) != nullptr);
-
-        auto checkboxView = interpreter.interpret(juce::ValueTree{ "Checkbox" });
-        expect(dynamic_cast<jive::Button*>(checkboxView.get()) != nullptr);
-        expect(dynamic_cast<juce::ToggleButton*>(&checkboxView->getComponent()) != nullptr);
-
-        auto hyperlinkView = interpreter.interpret(juce::ValueTree{ "Hyperlink" });
-        expect(dynamic_cast<jive::Hyperlink*>(hyperlinkView.get()) != nullptr);
-        expect(dynamic_cast<juce::HyperlinkButton*>(&hyperlinkView->getComponent()) != nullptr);
-
-        auto comboBox = interpreter.interpret(juce::ValueTree{ "ComboBox" });
-        expect(dynamic_cast<jive::ComboBox*>(comboBox.get()) != nullptr);
-        expect(dynamic_cast<juce::ComboBox*>(&comboBox->getComponent()) != nullptr);
-
-        struct TestComponent : public juce::Component
+        struct MyComponent : public juce::Component
         {
         };
-
-        interpreter.setFactory("TestComponent", []() {
-            return std::make_unique<TestComponent>();
+        interpreter.getComponentFactory().set("MyComponent", []() {
+            return std::make_unique<MyComponent>();
         });
+        expect(dynamic_cast<MyComponent*>(interpreter.getComponentFactory().create("MyComponent").get()) != nullptr);
 
-        auto testView = interpreter.interpret(juce::ValueTree{ "TestComponent" });
-        expect(dynamic_cast<jive::GuiItem*>(testView.get()) != nullptr);
-        expect(dynamic_cast<TestComponent*>(&testView->getComponent()) != nullptr);
+        struct YourComponent : public juce::Component
+        {
+        };
+        jive::ComponentFactory factory;
+        factory.set("YourComponent", []() {
+            return std::make_unique<YourComponent>();
+        });
+        interpreter.setComponentFactory(factory);
+        expect(dynamic_cast<YourComponent*>(interpreter.getComponentFactory().create("YourComponent").get()) != nullptr);
     }
 
     void testNestedComponents()
@@ -372,7 +304,6 @@ private:
                         { "width", 100 },
                         { "height", 100 },
                     },
-                    {},
                 },
                 {
                     "Component",
@@ -380,12 +311,11 @@ private:
                         { "width", 100 },
                         { "height", 100 },
                     },
-                    {},
                 },
             },
         });
 
-        expect(view->getChild(1).getViewport().getPosition() != juce::Point<int>{});
+        expectNotEquals(view->getChild(1).getViewport().getPosition(), juce::Point<int>{});
     }
 
     void testWindowContent()
