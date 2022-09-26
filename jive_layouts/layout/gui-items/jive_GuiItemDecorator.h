@@ -32,9 +32,6 @@ namespace jive
             return nullptr;
         }
 
-        float getWidth() const override;
-        float getHeight() const override;
-
         //==============================================================================================================
         Iterator begin() override;
         const Iterator begin() const override;

@@ -44,8 +44,10 @@ namespace jive
     {
         juce::FlexItem flexItem{ getViewport() };
 
-        flexItem.width = getTopLevelDecorator().getBoxModel().getBorderBounds().getWidth();
-        flexItem.height = getTopLevelDecorator().getBoxModel().getBorderBounds().getHeight();
+        if (!hasAutoWidth())
+            flexItem.width = getTopLevelDecorator().getBoxModel().getBorderBounds().getWidth();
+        if (!hasAutoHeight())
+            flexItem.height = getTopLevelDecorator().getBoxModel().getBorderBounds().getHeight();
 
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
@@ -243,16 +245,8 @@ private:
             explicit StubItem(std::unique_ptr<jive::GuiItem> itemToDecorate)
                 : jive::GuiItemDecorator{ std::move(itemToDecorate) }
             {
-            }
-
-            float getWidth() const final
-            {
-                return 123.45f;
-            }
-
-            float getHeight() const final
-            {
-                return 678.9f;
+                getBoxModel().setWidth(123.45f);
+                getBoxModel().setHeight(678.9f);
             }
         };
 

@@ -11,11 +11,10 @@ namespace jive
         explicit GridContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        float getWidth() const override;
-        float getHeight() const override;
+        void updateLayout() override;
 
         //==============================================================================================================
-        void updateLayout() override;
+        void addChild(std::unique_ptr<GuiItem> child) override;
 
         //==============================================================================================================
         operator juce::Grid();
@@ -25,8 +24,8 @@ namespace jive
         juce::Grid getGrid();
         juce::Grid getGridWithDummyItems() const;
 
-        float getMinimumContentWidth() const;
-        float getMinimumContentHeight() const;
+        float calculateMinimumContentWidth() const;
+        float calculateMinimumContentHeight() const;
 
         //==============================================================================================================
         TypedValue<juce::Grid::JustifyItems> justifyItems;

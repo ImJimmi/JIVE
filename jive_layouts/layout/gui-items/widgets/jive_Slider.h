@@ -15,14 +15,14 @@ namespace jive
         //==============================================================================================================
         bool isContainer() const override;
 
-        float getWidth() const override;
-        float getHeight() const override;
-
         //==============================================================================================================
         juce::Slider& getSlider();
         const juce::Slider& getSlider() const;
 
     protected:
+        //==============================================================================================================
+        Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight);
+
         //==============================================================================================================
         void updateStyle();
 
@@ -51,6 +51,8 @@ namespace jive
         TypedValue<int> velocityThreshold;
         TypedValue<double> velocityOffset;
         TypedValue<bool> snapToMouse;
+        TypedValue<float> explicitWidth;
+        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Slider)

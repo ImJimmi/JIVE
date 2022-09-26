@@ -38,8 +38,8 @@ namespace jive
         jassert(item != nullptr);
         jassert(item->getParent() != nullptr);
 
-        const auto scale = magnitude * 0.01f;
-        return scale * getRelativeParentLength();
+        const auto scale = static_cast<double>(magnitude) * 0.01;
+        return static_cast<float>(scale * static_cast<double>(getRelativeParentLength()));
     }
 
     bool Length::isPercent() const
@@ -73,7 +73,7 @@ namespace jive
 
     float Width::getRelativeParentLength() const
     {
-        return static_cast<float>(item->getParent()->getComponent().getWidth());
+        return static_cast<float>(item->getParent()->getBoxModel().getWidth());
     }
 
     //==================================================================================================================
@@ -89,7 +89,7 @@ namespace jive
 
     float Height::getRelativeParentLength() const
     {
-        return static_cast<float>(item->getParent()->getComponent().getHeight());
+        return static_cast<float>(item->getParent()->getBoxModel().getHeight());
     }
 } // namespace jive
 
@@ -110,12 +110,19 @@ public:
     }
 
 private:
+    std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree)
+    {
+        jive::Interpreter interpreter;
+
+        return interpreter.interpret(tree);
+    }
+
     void testPixels()
     {
         beginTest("pixels");
 
-        auto item = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                    juce::ValueTree{ "Component" });
+        juce::ValueTree tree{ "Component" };
+        auto item = createGuiItem(tree);
         jive::Width width;
         width.setCorrespondingGuiItem(*item);
 
@@ -131,27 +138,25 @@ private:
         beginTest("percent");
 
         {
-            auto item = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                        juce::ValueTree{
-                                                            "Component",
-                                                            {
-                                                                { "width", 40.f },
-                                                                { "height", 20.f },
-                                                            },
-                                                        });
-            item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                           juce::ValueTree{ "Component" },
-                                                           item.get()));
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 40.f },
+                    { "height", 20.f },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                }
+            };
+            auto item = createGuiItem(tree);
 
             jive::Width width;
             width.setCorrespondingGuiItem(item->getChild(0));
-
             width.setPercent(50.f);
             expectEquals<float>(width, 20.f);
 
             jive::Height height;
             height.setCorrespondingGuiItem(item->getChild(0));
-
             height.setPercent(20.f);
             expectWithinAbsoluteError<float>(height,
                                              4.f,
@@ -162,27 +167,33 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
-                    { "display", "flex" },
                     { "width", 40.f },
                     { "height", 60.f },
+                    { "id", "top-level" },
                 },
                 {
                     juce::ValueTree{
                         "Component",
                         {
                             { "height", 20.f },
+                            { "id", "mid-level" },
                         },
                         {
-                            juce::ValueTree{ "Component" },
+                            juce::ValueTree{
+                                "Component",
+                                {
+                                    { "id", "bottom-level" },
+                                },
+                            },
                         },
                     },
                 },
             };
+
             auto item = interpreter.interpret(tree);
 
             jive::Width width;
             width.setCorrespondingGuiItem(item->getChild(0).getChild(0));
-
             width.setPercent(25.f);
             expectEquals<float>(width, 10.f);
         }

@@ -21,10 +21,8 @@ namespace jive
         TypedValue<juce::GridItem::StartAndEndProperty> column;
         TypedValue<juce::GridItem::StartAndEndProperty> row;
         TypedValue<juce::String> area;
-        TypedValue<float> width;
         TypedValue<float> minWidth;
         TypedValue<float> maxWidth;
-        TypedValue<float> height;
         TypedValue<float> minHeight;
         TypedValue<float> maxHeight;
 

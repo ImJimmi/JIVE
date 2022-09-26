@@ -10,7 +10,7 @@ namespace jive
     public:
         using VariantConverter = juce::VariantConverter<ValueType>;
 
-        TypedValue(juce::ValueTree& sourceTree,
+        TypedValue(juce::ValueTree sourceTree,
                    const juce::Identifier& propertyID)
             : id{ propertyID }
             , tree{ sourceTree }
@@ -19,7 +19,7 @@ namespace jive
             value.addListener(this);
         }
 
-        TypedValue(juce::ValueTree& sourceTree,
+        TypedValue(juce::ValueTree sourceTree,
                    const juce::Identifier& propertyID,
                    const ValueType& initialValue)
             : TypedValue{ sourceTree, propertyID }

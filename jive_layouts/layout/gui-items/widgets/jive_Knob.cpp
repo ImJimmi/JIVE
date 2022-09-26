@@ -5,26 +5,9 @@ namespace jive
 {
     //==================================================================================================================
     Knob::Knob(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate) }
+        : Slider{ std::move(itemToDecorate), 55.0f, 55.0f }
     {
         updateStyle();
-    }
-
-    //==================================================================================================================
-    float Knob::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return Slider::getWidth();
-
-        return defaultSize;
-    }
-
-    float Knob::getHeight() const
-    {
-        if (!hasAutoHeight())
-            return Slider::getHeight();
-
-        return defaultSize;
     }
 
     //==============================================================================================================
@@ -81,14 +64,14 @@ private:
 
         juce::ValueTree tree{ "Knob" };
         auto item = createKnob(tree);
-        expectEquals(item->getWidth(), 55.0f);
-        expectEquals(item->getHeight(), 55.0f);
+        expectEquals(item->getBoxModel().getWidth(), 55.0f);
+        expectEquals(item->getBoxModel().getHeight(), 55.0f);
 
         tree.setProperty("width", 100.0f, nullptr);
-        expectEquals(item->getWidth(), 100.0f);
+        expectEquals(item->getBoxModel().getWidth(), 100.0f);
 
         tree.setProperty("height", 78.0f, nullptr);
-        expectEquals(item->getHeight(), 78.0f);
+        expectEquals(item->getBoxModel().getHeight(), 78.0f);
     }
 };
 

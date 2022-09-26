@@ -8,47 +8,31 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , source{ tree, "source" }
         , placement{ tree, "placement", juce::RectanglePlacement::centred }
+        , explicitWidth{ tree, "explicit-width" }
+        , explicitHeight{ tree, "explicit-height" }
     {
         source.onValueChange = [this]() {
-            updateChildComponent();
+            setChildComponent(createChildComponent());
+            updateExplicitSize();
         };
         placement.onValueChange = [this]() {
-            updatePlacement();
+            if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+                image->setImagePlacement(placement);
+        };
+        setChildComponent(createChildComponent());
+
+        explicitWidth.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        explicitHeight.onValueChange = [this]() {
+            updateExplicitSize();
         };
 
-        updateChildComponent();
         getComponent().setInterceptsMouseClicks(false, false);
+        updateExplicitSize();
     }
 
     //==================================================================================================================
-    float Image::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getWidth();
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateAutoWidth(*image);
-
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return drawable->getDrawableBounds().getWidth();
-
-        return 0.0f;
-    }
-
-    float Image::getHeight() const
-    {
-        if (!hasAutoHeight())
-            return GuiItemDecorator::getHeight();
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateAutoHeight(*image);
-
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return drawable->getDrawableBounds().getHeight();
-
-        return 0.0f;
-    }
-
     bool Image::isContainer() const
     {
         return false;
@@ -59,7 +43,7 @@ namespace jive
         return true;
     }
 
-    Drawable Image::getDrawable()
+    Drawable Image::getDrawable() const
     {
         return source.get();
     }
@@ -74,7 +58,8 @@ namespace jive
         if (!wasResized)
             return;
 
-        updateChildBounds();
+        if (childComponent != nullptr)
+            childComponent->setBounds(getComponent().getLocalBounds());
     }
 
     //==================================================================================================================
@@ -88,7 +73,23 @@ namespace jive
         if (hasAutoHeight())
             return static_cast<float>(image.getImage().getWidth());
 
-        return getHeight() * calculateAspectRatio(image);
+        return getBoxModel().getHeight() * calculateAspectRatio(image);
+    }
+
+    float Image::calculateAutoWidth(const juce::Drawable& drawable) const
+    {
+        return drawable.getDrawableBounds().getWidth();
+    }
+
+    float Image::calculateAutoWidth() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateAutoWidth(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateAutoWidth(*image);
+
+        return 0.0f;
     }
 
     float Image::calculateAutoHeight(const juce::ImageComponent& image) const
@@ -96,49 +97,76 @@ namespace jive
         if (hasAutoWidth())
             return static_cast<float>(image.getImage().getHeight());
 
-        return getWidth() / calculateAspectRatio(image);
+        return getBoxModel().getWidth() / calculateAspectRatio(image);
     }
 
-    //==================================================================================================================
-    void Image::updateChildComponent()
+    float Image::calculateAutoHeight(const juce::Drawable& drawable) const
+    {
+        return drawable.getDrawableBounds().getHeight();
+    }
+
+    float Image::calculateAutoHeight() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateAutoHeight(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateAutoHeight(*image);
+
+        return 0.0f;
+    }
+
+    std::unique_ptr<juce::ImageComponent> Image::createImageComponent(const juce::Image& image) const
+    {
+        auto imageComponent = std::make_unique<juce::ImageComponent>();
+
+        imageComponent->setImage(image);
+        imageComponent->setImagePlacement(placement);
+
+        return imageComponent;
+    }
+
+    std::unique_ptr<juce::Drawable> Image::createSVG(const juce::String& svgString) const
+    {
+        const auto xml = juce::parseXML(svgString);
+        return juce::Drawable::createFromSVG(*xml);
+    }
+
+    std::unique_ptr<juce::Component> Image::createChildComponent() const
     {
         const auto drawable = getDrawable();
 
         if (drawable.isImage())
-        {
-            auto image = std::make_unique<juce::ImageComponent>();
-            image->setImage(static_cast<juce::Image>(drawable));
-            childComponent = std::move(image);
+            return createImageComponent(drawable);
 
-            updatePlacement();
-        }
-        else if (drawable.isSVG())
-        {
-            auto xml = juce::parseXML(drawable);
-            childComponent = juce::Drawable::createFromSVG(*xml);
-        }
+        if (drawable.isSVG())
+            return createSVG(drawable);
 
-        if (childComponent != nullptr)
-            getComponent().addAndMakeVisible(*childComponent);
+        return nullptr;
+    }
 
-        updateChildBounds();
+    void Image::setChildComponent(std::unique_ptr<juce::Component> newComponent)
+    {
+        childComponent = std::move(newComponent);
+
+        if (childComponent == nullptr)
+            return;
+
+        getComponent().addAndMakeVisible(*childComponent);
+        childComponent->setBounds(getComponent().getLocalBounds());
 
         if (auto* parentItem = getParent())
             parentItem->informContentChanged();
     }
 
-    void Image::updateChildBounds()
+    //==================================================================================================================
+    void Image::updateExplicitSize()
     {
-        if (childComponent != nullptr)
-            childComponent->setBounds(getComponent().getLocalBounds());
-    }
+        if (hasAutoWidth())
+            explicitWidth = juce::jmax<float>(explicitWidth, calculateAutoWidth());
 
-    void Image::updatePlacement()
-    {
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-        {
-            image->setImagePlacement(placement);
-        }
+        if (hasAutoHeight())
+            explicitHeight = juce::jmax<float>(explicitHeight, calculateAutoHeight());
     }
 } // namespace jive
 
@@ -342,15 +370,16 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentTree);
             auto& item = dynamic_cast<jive::Image&>(parent->getChild(0));
-            expectEquals(item.getWidth(), 80.0f);
-            expectEquals(item.getHeight(), 40.0f);
+            expectEquals(item.getBoxModel().getWidth(), 80.0f);
+            expectEquals(item.getBoxModel().getHeight(), 40.0f);
 
             tree.setProperty("width", 120.0f, nullptr);
-            expectEquals(item.getHeight(), 60.0f);
+            expectEquals(item.getBoxModel().getHeight(), 60.0f);
 
-            tree.setProperty("width", -1.0f, nullptr);
+            tree.removeProperty("width", nullptr);
+            tree.removeProperty("explicit-width", nullptr);
             tree.setProperty("height", 47.0f, nullptr);
-            expectEquals(item.getWidth(), 94.0f);
+            expectEquals(item.getBoxModel().getWidth(), 94.0f);
         }
         {
             juce::ValueTree tree{
@@ -373,8 +402,8 @@ private:
                 },
             };
             auto item = createImage(tree);
-            expectEquals(item->getWidth(), 155.0f);
-            expectEquals(item->getHeight(), 155.0f);
+            expectEquals(item->getBoxModel().getWidth(), 155.0f);
+            expectEquals(item->getBoxModel().getHeight(), 155.0f);
         }
     }
 

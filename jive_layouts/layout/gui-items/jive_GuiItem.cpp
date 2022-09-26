@@ -27,8 +27,8 @@ namespace jive
         , focusOrder{ tree, "focus-order" }
         , opacity{ tree, "opacity", 1.f }
         , cursor{ tree, "cursor", juce::MouseCursor::NormalCursor }
-        , width{ tree, "width", Width::fromPixels(-1.f) }
-        , height{ tree, "height", Height::fromPixels(-1.f) }
+        , width{ tree, "width" }
+        , height{ tree, "height" }
         , display{ tree, "display", Display::flex }
         , overflow{ tree, "overflow", Overflow::hidden }
     {
@@ -117,11 +117,17 @@ namespace jive
         getComponent().setMouseCursor(juce::MouseCursor{ cursor });
 
         width.onValueChange = [this]() {
+            getBoxModel().setWidth(calculateExplicitLength(width.get().getWithDefault()));
             updateViewportSize();
         };
+        getBoxModel().setWidth(calculateExplicitLength(width.get().getWithDefault()));
+
         height.onValueChange = [this]() {
+            getBoxModel().setHeight(calculateExplicitLength(height.get().getWithDefault()));
             updateViewportSize();
         };
+        getBoxModel().setHeight(calculateExplicitLength(height.get().getWithDefault()));
+
         overflow.onValueChange = [this]() {
             updateComponentSize();
         };
@@ -244,28 +250,6 @@ namespace jive
         return boxModel;
     }
 
-    float GuiItem::getWidth() const
-    {
-        if (hasAutoWidth())
-            return -1.0f;
-
-        auto length = width.get();
-        length.setCorrespondingGuiItem(*this);
-
-        return length;
-    }
-
-    float GuiItem::getHeight() const
-    {
-        if (hasAutoHeight())
-            return -1.0f;
-
-        auto length = height.get();
-        length.setCorrespondingGuiItem(*this);
-
-        return length;
-    }
-
     GuiItem::Display GuiItem::getDisplay() const
     {
         return display;
@@ -273,18 +257,12 @@ namespace jive
 
     bool GuiItem::hasAutoWidth() const
     {
-        if (width.get().isPercent())
-            return false;
-
-        return static_cast<int>(width.get()) == -1;
+        return width.get().isAuto();
     }
 
     bool GuiItem::hasAutoHeight() const
     {
-        if (height.get().isPercent())
-            return false;
-
-        return static_cast<int>(height.get()) == -1;
+        return height.get().isAuto();
     }
 
     //==================================================================================================================
@@ -321,19 +299,29 @@ namespace jive
 
         if (isTopLevel())
         {
-            const auto bounds = getViewport().getLocalBounds();
-            const auto w = juce::roundToInt(getWidth());
-            const auto h = juce::roundToInt(getHeight());
+            const auto bounds = getViewport().getBounds();
+            const auto explicitWidth = juce::roundToInt(boxModel.getWidth());
 
-            if (w != bounds.getWidth())
-                width = Width::fromPixels(static_cast<float>(bounds.getWidth()));
+            if (explicitWidth != bounds.getWidth())
+                boxModel.setWidth(static_cast<float>(bounds.getWidth()));
 
-            if (h != bounds.getHeight())
-                height = Height::fromPixels(static_cast<float>(bounds.getHeight()));
+            const auto explicitHeight = juce::roundToInt(boxModel.getHeight());
+
+            if (explicitHeight != bounds.getHeight())
+                boxModel.setHeight(static_cast<float>(bounds.getHeight()));
         }
 
         if (&componentThatWasMovedOrResized == component.get())
+        {
+            if (!isTopLevel())
+            {
+                const auto contentBounds = getBoxModel().calculateContentBounds(getComponent());
+                boxModel.setWidth(contentBounds.getWidth());
+                boxModel.setHeight(contentBounds.getHeight());
+            }
+
             updateLayout();
+        }
 
         updateComponentSize();
     }
@@ -366,6 +354,13 @@ namespace jive
     }
 
     //==================================================================================================================
+    template <typename ConcreteLength>
+    float GuiItem::calculateExplicitLength(ConcreteLength length) const
+    {
+        length.setCorrespondingGuiItem(*this);
+        return juce::jmax(0.0f, static_cast<float>(length));
+    }
+
     void GuiItem::updateViewportSize()
     {
         const auto borderBounds = boxModel.getBorderBounds();
@@ -522,19 +517,21 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
             expect(item->hasAutoWidth());
             expect(item->hasAutoHeight());
-            expect(item->getViewport().getWidth() == 0);
-            expect(item->getViewport().getHeight() == 0);
+            expectEquals(item->getBoxModel().getWidth(), 0.0f);
+            expectEquals(item->getBoxModel().getHeight(), 0.0f);
+            expectEquals(item->getViewport().getWidth(), 0);
+            expectEquals(item->getViewport().getHeight(), 0);
 
             tree.setProperty("width", 100.11f, nullptr);
             tree.setProperty("height", 50.55f, nullptr);
-
-            expect(item->getWidth() == 100.11f);
-            expect(item->getHeight() == 50.55f);
-            expect(item->getViewport().getWidth() == 100);
-            expect(item->getViewport().getHeight() == 51);
+            expect(!item->hasAutoWidth());
+            expect(!item->hasAutoHeight());
+            expectEquals(item->getBoxModel().getWidth(), 100.11f);
+            expectEquals(item->getBoxModel().getHeight(), 50.55f);
+            expectEquals(item->getViewport().getWidth(), 100);
+            expectEquals(item->getViewport().getHeight(), 51);
         }
         {
             juce::ValueTree tree{
@@ -547,8 +544,14 @@ private:
             auto item = createGuiItem(tree);
             expect(!item->hasAutoWidth());
             expect(!item->hasAutoHeight());
+            expectEquals(item->getBoxModel().getWidth(), 100.0f);
+            expectEquals(item->getBoxModel().getHeight(), 389.0f);
             expectEquals(item->getViewport().getWidth(), 100);
             expectEquals(item->getViewport().getHeight(), 389);
+
+            item->getViewport().setSize(312, 1203);
+            expectEquals(tree["explicit-width"], juce::var{ 312 });
+            expectEquals(tree["explicit-height"], juce::var{ 1203 });
         }
     }
 
@@ -564,14 +567,13 @@ private:
             },
         };
         auto item = createGuiItem(tree);
-
         expect(item->getViewport().getWidth() == 200);
         expect(item->getViewport().getHeight() == 150);
 
         item->getViewport().setSize(400, 300);
 
-        expectEquals(item->getWidth(), 400.f);
-        expectEquals(item->getHeight(), 300.f);
+        expectEquals(item->getBoxModel().getWidth(), 400.f);
+        expectEquals(item->getBoxModel().getHeight(), 300.f);
     }
 
     void testName()
