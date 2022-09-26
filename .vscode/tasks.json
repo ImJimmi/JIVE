@@ -1,9 +1,0 @@
-{
-    "tasks": [
-        {
-            "type": "shell",
-            "label": "deleteGCDA",
-            "command": "find ${command:cmake.buildDirectory} -name '*.gcda' -type f -delete",
-        }
-    ]
-}
