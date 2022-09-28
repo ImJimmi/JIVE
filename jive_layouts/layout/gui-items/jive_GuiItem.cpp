@@ -128,6 +128,7 @@ namespace jive
 
         component->addComponentListener(this);
         updateViewportSize();
+
         tree.addListener(this);
     }
 
@@ -170,6 +171,11 @@ namespace jive
     }
 
     //==================================================================================================================
+    juce::ValueTree GuiItem::getState()
+    {
+        return tree;
+    }
+
     const juce::Component& GuiItem::getComponent() const
     {
         return *component;

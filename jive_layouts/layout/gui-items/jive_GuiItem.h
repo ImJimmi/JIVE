@@ -48,6 +48,7 @@ namespace jive
         virtual void informContentChanged();
 
         //==============================================================================================================
+        juce::ValueTree getState();
         const juce::Component& getComponent() const;
         juce::Component& getComponent();
         const juce::Viewport& getViewport() const;
