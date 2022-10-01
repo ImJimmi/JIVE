@@ -12,6 +12,9 @@ namespace jive
         ComponentFactory& getComponentFactory();
         void setComponentFactory(const ComponentFactory& newFactory);
 
+        template <typename Decorator>
+        void addDecorator(const juce::Identifier& itemType);
+
         //==============================================================================================================
         std::unique_ptr<GuiItem> interpret(juce::ValueTree tree) const;
 
@@ -27,6 +30,7 @@ namespace jive
 
         //==============================================================================================================
         ComponentFactory componentFactory;
+        std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(Interpreter)
