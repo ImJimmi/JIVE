@@ -11,7 +11,9 @@
             "logging": {
                 "moduleLoad": false
             },
-            "preLaunchTask": "deleteGCDA"
+            "initCommands": [
+                "command script import ${workspaceFolder}/.vscode/lldb/juce_lldb_xcode.py"
+            ]
         },
         {
             "name": "Launch (Windows)",

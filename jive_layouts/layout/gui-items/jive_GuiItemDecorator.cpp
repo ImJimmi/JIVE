@@ -50,16 +50,6 @@ namespace jive
         return item->getChild(index);
     }
 
-    float GuiItemDecorator::getWidth() const
-    {
-        return item->getWidth();
-    }
-
-    float GuiItemDecorator::getHeight() const
-    {
-        return item->getHeight();
-    }
-
     //==================================================================================================================
     GuiItem::Iterator GuiItemDecorator::begin()
     {

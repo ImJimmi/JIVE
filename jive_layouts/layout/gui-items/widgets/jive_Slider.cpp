@@ -5,6 +5,11 @@ namespace jive
 {
     //==================================================================================================================
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate)
+        : Slider{ std::move(itemToDecorate), 75.0f, 25.0f }
+    {
+    }
+
+    Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , value{ tree, "value" }
         , min{ tree, "min" }
@@ -20,6 +25,8 @@ namespace jive
         , velocityThreshold{ tree, "velocity-threshold", 1 }
         , velocityOffset{ tree, "velocity-offset" }
         , snapToMouse{ tree, "snap-to-mouse", true }
+        , explicitWidth{ tree, "explicit-width" }
+        , explicitHeight{ tree, "explicit-height" }
     {
         min.onValueChange = [this]() {
             updateRange();
@@ -79,28 +86,17 @@ namespace jive
 
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
+
+        if (!explicitWidth.exists() || explicitWidth.get() == 0.0f)
+            explicitWidth = defaultWidth;
+        if (!explicitHeight.exists() || explicitHeight.get() == 0.0f)
+            explicitHeight = defaultHeight;
     }
 
     //==================================================================================================================
     bool Slider::isContainer() const
     {
         return false;
-    }
-
-    float Slider::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getWidth();
-
-        return 75.f;
-    }
-
-    float Slider::getHeight() const
-    {
-        if (!hasAutoHeight())
-            return GuiItemDecorator::getHeight();
-
-        return 25.f;
     }
 
     //==================================================================================================================
@@ -121,7 +117,7 @@ namespace jive
 
         if (orientation.get().isAuto())
         {
-            if (getWidth() < getHeight())
+            if (getBoxModel().getWidth() < getBoxModel().getHeight())
                 ori = Orientation::vertical;
             else
                 ori = Orientation::horizontal;
@@ -439,14 +435,14 @@ private:
 
         juce::ValueTree tree{ "Slider" };
         auto item = createSlider(tree);
-        expectEquals(item->getWidth(), 75.0f);
-        expectEquals(item->getHeight(), 25.0f);
+        expectEquals(item->getBoxModel().getWidth(), 75.0f);
+        expectEquals(item->getBoxModel().getHeight(), 25.0f);
 
         tree.setProperty("width", 123.f, nullptr);
-        expectEquals(item->getWidth(), 123.f);
+        expectEquals(item->getBoxModel().getWidth(), 123.f);
 
         tree.setProperty("height", 8839.f, nullptr);
-        expectEquals(item->getHeight(), 8839.f);
+        expectEquals(item->getBoxModel().getHeight(), 8839.f);
     }
 };
 

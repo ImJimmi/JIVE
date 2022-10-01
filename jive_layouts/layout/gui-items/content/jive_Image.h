@@ -11,13 +11,10 @@ namespace jive
         explicit Image(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        float getWidth() const override;
-        float getHeight() const override;
-
         bool isContainer() const override;
         bool isContent() const override;
 
-        Drawable getDrawable();
+        Drawable getDrawable() const;
 
     protected:
         //==============================================================================================================
@@ -27,16 +24,24 @@ namespace jive
         //==============================================================================================================
         float calculateAspectRatio(const juce::ImageComponent& image) const;
         float calculateAutoWidth(const juce::ImageComponent& image) const;
+        float calculateAutoWidth(const juce::Drawable& drawable) const;
+        float calculateAutoWidth() const;
         float calculateAutoHeight(const juce::ImageComponent& image) const;
+        float calculateAutoHeight(const juce::Drawable& drawable) const;
+        float calculateAutoHeight() const;
+        std::unique_ptr<juce::ImageComponent> createImageComponent(const juce::Image& image) const;
+        std::unique_ptr<juce::Drawable> createSVG(const juce::String& svgString) const;
+        std::unique_ptr<juce::Component> createChildComponent() const;
+        void setChildComponent(std::unique_ptr<juce::Component> newComponent);
 
         //==============================================================================================================
-        void updateChildComponent();
-        void updateChildBounds();
-        void updatePlacement();
+        void updateExplicitSize();
 
         //==============================================================================================================
         TypedValue<Drawable> source;
         TypedValue<juce::RectanglePlacement> placement;
+        TypedValue<float> explicitWidth;
+        TypedValue<float> explicitHeight;
 
         std::unique_ptr<juce::Component> childComponent;
 

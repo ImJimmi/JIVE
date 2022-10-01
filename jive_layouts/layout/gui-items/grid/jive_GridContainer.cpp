@@ -20,33 +20,24 @@ namespace jive
     {
         jassert(tree.hasProperty("display"));
         jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
-    }
 
-    //==================================================================================================================
-    float GridContainer::getWidth() const
-    {
-        if (hasAutoWidth())
-        {
-            const auto contentWidth = getMinimumContentWidth();
-            const auto box = getBoxModel();
+        const auto setExplicitWidthAndHeight = [this]() {
+            auto box = getBoxModel();
+            box.setWidth(juce::jmax(box.getWidth(), calculateMinimumContentWidth()));
+            box.setHeight(juce::jmax(box.getHeight(), calculateMinimumContentHeight()));
+        };
 
-            return contentWidth + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
-        }
-
-        return GuiItemDecorator::getWidth();
-    }
-
-    float GridContainer::getHeight() const
-    {
-        if (hasAutoHeight())
-        {
-            const auto contentHeight = getMinimumContentHeight();
-            const auto box = getBoxModel();
-
-            return contentHeight + box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
-        }
-
-        return GuiItemDecorator::getHeight();
+        justifyItems.onValueChange = setExplicitWidthAndHeight;
+        alignItems.onValueChange = setExplicitWidthAndHeight;
+        justifyContent.onValueChange = setExplicitWidthAndHeight;
+        alignContent.onValueChange = setExplicitWidthAndHeight;
+        autoFlow.onValueChange = setExplicitWidthAndHeight;
+        templateColumns.onValueChange = setExplicitWidthAndHeight;
+        templateRows.onValueChange = setExplicitWidthAndHeight;
+        templateAreas.onValueChange = setExplicitWidthAndHeight;
+        autoRows.onValueChange = setExplicitWidthAndHeight;
+        autoColumns.onValueChange = setExplicitWidthAndHeight;
+        gap.onValueChange = setExplicitWidthAndHeight;
     }
 
     //==================================================================================================================
@@ -56,6 +47,16 @@ namespace jive
         const auto bounds = getBoxModel().getContentBounds().toNearestInt();
 
         grid.performLayout(bounds);
+    }
+
+    //==================================================================================================================
+    void GridContainer::addChild(std::unique_ptr<GuiItem> child)
+    {
+        GuiItemDecorator::addChild(std::move(child));
+
+        auto box = getBoxModel();
+        box.setWidth(juce::jmax(box.getWidth(), calculateMinimumContentWidth()));
+        box.setHeight(juce::jmax(box.getHeight(), calculateMinimumContentHeight()));
     }
 
     //==================================================================================================================
@@ -120,7 +121,7 @@ namespace jive
         grid.performLayout(juce::Rectangle<int>{ 0, 0, 0, 0 });
     }
 
-    float GridContainer::getMinimumContentWidth() const
+    float GridContainer::calculateMinimumContentWidth() const
     {
         auto grid = getGridWithDummyItems();
         performDummyLayout(grid);
@@ -136,7 +137,7 @@ namespace jive
         return contentWidth;
     }
 
-    float GridContainer::getMinimumContentHeight() const
+    float GridContainer::calculateMinimumContentHeight() const
     {
         auto grid = getGridWithDummyItems();
         performDummyLayout(grid);
@@ -583,8 +584,8 @@ private:
         item->addChild(createGridItem(item.get()));
 
         item->getViewport().setSize(200, 200);
-        expect(item->getChild(0).getViewport().getWidth() > 0);
-        expect(item->getChild(1).getViewport().getWidth() > 0);
+        expectGreaterThan(item->getChild(0).getViewport().getWidth(), 0);
+        expectGreaterThan(item->getChild(1).getViewport().getWidth(), 0);
     }
 
     void testAutoSize()
@@ -605,8 +606,8 @@ private:
         item->addChild(createGridItem(item.get()));
         item->addChild(createGridItem(item.get()));
 
-        expect(item->getWidth() == 25.f);
-        expect(item->getHeight() == 15.f);
+        expectEquals(item->getBoxModel().getWidth(), 25.f);
+        expectEquals(item->getBoxModel().getHeight(), 15.f);
     }
 };
 

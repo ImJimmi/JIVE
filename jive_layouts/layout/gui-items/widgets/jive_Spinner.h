@@ -10,10 +10,6 @@ namespace jive
         //==============================================================================================================
         explicit Spinner(std::unique_ptr<GuiItem> itemToDecorate);
 
-        //==============================================================================================================
-        float getWidth() const override;
-        float getHeight() const override;
-
     private:
         //==============================================================================================================
         juce::Slider::SliderStyle getStyleForOrientation(Orientation orientation) final;

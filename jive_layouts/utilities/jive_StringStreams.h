@@ -36,4 +36,9 @@ namespace juce
     {
         return str << "Drawable{}";
     }
+
+    JUCE_API String& JUCE_CALLTYPE operator<<(String& str, const var& value)
+    {
+        return str << "juce::var{ " << value.toString() << " }";
+    }
 } // namespace juce

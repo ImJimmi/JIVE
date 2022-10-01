@@ -8,11 +8,13 @@ namespace jive
     {
     public:
         //==============================================================================================================
-        BoxModel(const GuiItem& owningItem, juce::ValueTree valueTree);
+        explicit BoxModel(GuiItem& owningItem);
 
         //==============================================================================================================
         float getWidth() const;
+        void setWidth(float width);
         float getHeight() const;
+        void setHeight(float height);
 
         juce::BorderSize<float> getPadding() const;
         juce::BorderSize<float> getBorder() const;
@@ -21,6 +23,9 @@ namespace jive
         juce::Rectangle<float> getBorderBounds() const;
         juce::Rectangle<float> getPaddingBounds() const;
         juce::Rectangle<float> getContentBounds() const;
+
+        //==============================================================================================================
+        juce::Rectangle<float> calculateContentBounds(const juce::Component& component);
 
     private:
         //==============================================================================================================
@@ -34,5 +39,11 @@ namespace jive
         TypedValue<juce::BorderSize<float>> padding;
         TypedValue<juce::BorderSize<float>> border;
         TypedValue<juce::BorderSize<float>> margin;
+        TypedValue<Width> width;
+        TypedValue<Height> height;
+        TypedValue<float> explicitWidth;
+        TypedValue<float> explicitHeight;
+        std::shared_ptr<TypedValue<float>> parentWidth;
+        std::shared_ptr<TypedValue<float>> parentHeight;
     };
 } // namespace jive

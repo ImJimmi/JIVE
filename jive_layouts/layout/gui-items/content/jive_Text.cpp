@@ -17,6 +17,8 @@ namespace jive
         , justification{ tree, "justification", juce::Justification::centredLeft }
         , wordWrap{ tree, "word-wrap", juce::AttributedString::WordWrap::byWord }
         , direction{ tree, "direction", juce::AttributedString::ReadingDirection::natural }
+        , explicitWidth{ tree, "explicit-width" }
+        , explicitHeight{ tree, "explicit-height" }
     {
         text.onValueChange = [this]() {
             updateTextComponent();
@@ -52,6 +54,13 @@ namespace jive
             updateFont();
         };
 
+        explicitWidth.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        explicitHeight.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+
         updateTextComponent();
     }
 
@@ -68,22 +77,6 @@ namespace jive
     bool Text::isContent() const
     {
         return true;
-    }
-
-    float Text::getWidth() const
-    {
-        if (!hasAutoWidth())
-            return GuiItemDecorator::getWidth();
-
-        return std::ceil(buildTextLayout().getWidth());
-    }
-
-    float Text::getHeight() const
-    {
-        if (!hasAutoHeight())
-            return GuiItemDecorator::getHeight();
-
-        return std::ceil(buildTextLayout().getHeight());
     }
 
     //==================================================================================================================
@@ -187,6 +180,21 @@ namespace jive
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
         }
+
+        updateExplicitSize();
+    }
+
+    void Text::updateExplicitSize()
+    {
+        auto textLayout = buildTextLayout();
+
+        if (hasAutoWidth())
+            explicitWidth = juce::jmax<float>(explicitWidth,
+                                              std::ceil(textLayout.getWidth()));
+
+        if (hasAutoHeight())
+            explicitHeight = juce::jmax<float>(explicitHeight,
+                                               std::ceil(textLayout.getHeight()));
     }
 
     //==================================================================================================================
@@ -586,8 +594,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
-                    { "width", 10000.0f },
-                    { "height", 10000.0f },
+                    // { "width", 10000.0f },
+                    // { "height", 10000.0f },
                 },
                 {
                     textTree,
@@ -600,21 +608,22 @@ private:
                                   .getAttribute(0)
                                   .font;
 
-            expectEquals(item->getChild(0).getWidth(), std::ceil(font.getStringWidthFloat("This side up.")));
-            expectEquals(item->getChild(0).getHeight(), std::ceil(font.getHeight()));
+            expectEquals(item->getChild(0).getBoxModel().getWidth(),
+                         std::ceil(font.getStringWidthFloat("This side up.")));
+            expectEquals(item->getChild(0).getBoxModel().getHeight(), std::ceil(font.getHeight()));
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
-            expectEquals(item->getChild(0).getWidth(),
+            expectEquals(item->getChild(0).getBoxModel().getWidth(),
                          std::ceil(std::max({ font.getStringWidthFloat("This one spans"),
                                               font.getStringWidthFloat("multiple lines.") })));
-            expectEquals(item->getChild(0).getHeight(), std::ceil(font.getHeight()) * 2.0f);
+            expectEquals(item->getChild(0).getBoxModel().getHeight(), std::ceil(font.getHeight()) * 2.0f);
 
             textTree.setProperty("width", 100.0f, nullptr);
             textTree.setProperty("text",
                                  "A very very very very very very very very very "
                                  "very very long line.",
                                  nullptr);
-            expectGreaterThan(item->getChild(0).getHeight(), font.getHeight());
+            expectGreaterThan(item->getChild(0).getBoxModel().getHeight(), font.getHeight());
         }
         {
             juce::ValueTree tree{
@@ -637,8 +646,8 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
             auto& item = dynamic_cast<jive::Text&>(parent->getChild(0));
-            expectLessThan(item.getWidth(), 40.0f);
-            expectGreaterThan(item.getWidth(), 0.0f);
+            expectLessOrEqual(item.getBoxModel().getWidth(), 40.0f);
+            expectGreaterThan(item.getBoxModel().getWidth(), 0.0f);
         }
     }
 

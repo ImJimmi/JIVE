@@ -11,6 +11,8 @@ namespace jive
         , flexJustifyContent{ tree, "justify-content", juce::FlexBox::JustifyContent::flexStart }
         , flexAlignItems{ tree, "align-items", juce::FlexBox::AlignItems::stretch }
         , flexAlignContent{ tree, "align-content", juce::FlexBox::AlignContent::stretch }
+        , explicitWidth{ tree, "explicit-width" }
+        , explicitHeight{ tree, "explicit-height" }
     {
         jassert(tree.hasProperty("display"));
         jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
@@ -30,23 +32,8 @@ namespace jive
         flexAlignContent.onValueChange = [this]() {
             updateLayout();
         };
-    }
 
-    //==================================================================================================================
-    float FlexContainer::getWidth() const
-    {
-        if (hasAutoWidth())
-            return getMinimumContentWidth();
-
-        return GuiItemDecorator::getWidth();
-    }
-
-    float FlexContainer::getHeight() const
-    {
-        if (hasAutoHeight())
-            return getMinimumContentHeight();
-
-        return GuiItemDecorator::getHeight();
+        updateExplicitSize();
     }
 
     //==================================================================================================================
@@ -54,6 +41,14 @@ namespace jive
     {
         auto flex = static_cast<juce::FlexBox>(*this);
         flex.performLayout(getBoxModel().getContentBounds());
+    }
+
+    //==================================================================================================================
+    void FlexContainer::addChild(std::unique_ptr<GuiItem> child)
+    {
+        GuiItemDecorator::addChild(std::move(child));
+
+        updateExplicitSize();
     }
 
     //==================================================================================================================
@@ -100,19 +95,8 @@ namespace jive
         return flex;
     }
 
-    float FlexContainer::getMinimumContentWidth() const
+    float FlexContainer::calculateMinimumContentWidth(juce::FlexBox flex) const
     {
-        auto flex = getFlexBoxWithDummyItems();
-
-        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
-        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
-
-        flex.performLayout(juce::Rectangle<float>{
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-        });
-
         auto rightOfFarthestItem = -1.0f;
 
         for (const auto& flexItem : flex.items)
@@ -129,19 +113,8 @@ namespace jive
         return rightOfFarthestItem;
     }
 
-    float FlexContainer::getMinimumContentHeight() const
+    float FlexContainer::calculateMinimumContentHeight(juce::FlexBox flex) const
     {
-        auto flex = getFlexBoxWithDummyItems();
-
-        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
-        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
-
-        flex.performLayout(juce::Rectangle<float>{
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-        });
-
         auto bottomOfLowestItem = -1.0f;
 
         for (const auto& flexItem : flex.items)
@@ -156,6 +129,28 @@ namespace jive
         }
 
         return bottomOfLowestItem;
+    }
+
+    void FlexContainer::updateExplicitSize()
+    {
+        auto flex = getFlexBoxWithDummyItems();
+
+        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
+        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+        flex.performLayout(juce::Rectangle<float>{
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max(),
+        });
+
+        auto box = getBoxModel();
+
+        if (hasAutoWidth())
+            box.setWidth(juce::jmax<float>(box.getWidth(), calculateMinimumContentWidth(flex)));
+
+        if (hasAutoHeight())
+            box.setHeight(juce::jmax<float>(box.getHeight(), calculateMinimumContentHeight(flex)));
     }
 } // namespace jive
 
@@ -321,6 +316,7 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
+                    { "id", "parent-item" },
                     { "justify-content", "centre" },
                     { "padding", 10 },
                     { "border-width", 5 },
@@ -330,6 +326,7 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
+                            { "id", "child1" },
                             { "width", 100 },
                             { "height", 25 },
                             { "padding", 7 },
@@ -339,6 +336,7 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
+                            { "id", "child2" },
                             { "width", 130 },
                             { "height", 14 },
                             { "margin", 18 },
@@ -347,8 +345,8 @@ private:
                 },
             };
             auto item = createFlexContainer(tree);
-            expectEquals(item->getHeight(), 95.0f);
-            expectEquals(item->getWidth(), 166.0f);
+            expectEquals(item->getBoxModel().getHeight(), 95.0f);
+            expectEquals(item->getBoxModel().getWidth(), 166.0f);
         }
     }
 };

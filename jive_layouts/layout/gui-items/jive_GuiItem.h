@@ -49,6 +49,7 @@ namespace jive
 
         //==============================================================================================================
         juce::ValueTree getState();
+
         const juce::Component& getComponent() const;
         juce::Component& getComponent();
         const juce::Viewport& getViewport() const;
@@ -65,30 +66,7 @@ namespace jive
         virtual bool isContent() const;
 
         BoxModel getBoxModel() const;
-
-        juce::String getName() const;
-        juce::Identifier getID() const;
-        juce::String getDescription() const;
-        juce::String getTooltip() const;
-
-        bool isEnabled() const;
-        bool isVisible() const;
-        bool isAlwaysOnTop() const;
-        bool isBufferedToImage() const;
-        bool isOpaque() const;
-        bool isFocusable() const;
-        bool getClickingGrabsFocus() const;
-        bool hasFocusOutline() const;
-
-        int getFocusOrder() const;
-        float getOpacity() const;
-        juce::MouseCursor getCursor() const;
-
-        virtual float getWidth() const;
-        virtual float getHeight() const;
-
         Display getDisplay() const;
-
         bool hasAutoWidth() const;
         bool hasAutoHeight() const;
 
@@ -126,13 +104,16 @@ namespace jive
                 GuiItem* parent);
 
         //==============================================================================================================
+        template <typename ConcreteLength>
+        float calculateExplicitLength(ConcreteLength length) const;
+
         void updateViewportSize();
         void updateComponentSize();
 
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
-        BoxModel boxModel{ *this, tree };
+        BoxModel boxModel{ *this };
 
         TypedValue<juce::String> name;
         TypedValue<juce::Identifier> id;
@@ -149,8 +130,8 @@ namespace jive
         TypedValue<int> focusOrder;
         TypedValue<float> opacity;
         TypedValue<juce::MouseCursor::StandardCursorType> cursor;
-        TypedValue<Width> width;
-        TypedValue<Height> height;
+        TypedValue<AutoValue<Width>> width;
+        TypedValue<AutoValue<Height>> height;
         TypedValue<Display> display;
         TypedValue<Overflow> overflow;
 

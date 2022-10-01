@@ -38,23 +38,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    float BlockItem::getWidth() const
-    {
-        if (hasAutoWidth())
-            return 0.f;
-
-        return GuiItemDecorator::getWidth();
-    }
-
-    float BlockItem::getHeight() const
-    {
-        if (hasAutoHeight())
-            return 0.f;
-
-        return GuiItemDecorator::getHeight();
-    }
-
-    //==================================================================================================================
     int BlockItem::calculateX() const
     {
         if (centreX.exists())
@@ -62,7 +45,7 @@ namespace jive
             auto length = centreX.get();
             length.setCorrespondingGuiItem(*item);
 
-            return juce::roundToInt(length - getWidth() / 2.f);
+            return juce::roundToInt(length - getBoxModel().getWidth() / 2.f);
         }
 
         auto length = x.get();
@@ -78,7 +61,7 @@ namespace jive
             auto length = centreY.get();
             length.setCorrespondingGuiItem(*item);
 
-            return juce::roundToInt(length - getHeight() / 2.f);
+            return juce::roundToInt(length - getBoxModel().getHeight() / 2.f);
         }
 
         auto length = y.get();

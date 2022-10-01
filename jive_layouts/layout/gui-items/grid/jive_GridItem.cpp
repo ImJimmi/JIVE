@@ -12,10 +12,8 @@ namespace jive
         , column{ tree, "column", {} }
         , row{ tree, "row", {} }
         , area{ tree, "area" }
-        , width{ tree, "width", juce::GridItem::notAssigned }
         , minWidth{ tree, "min-width" }
         , maxWidth{ tree, "max-width", juce::GridItem::notAssigned }
-        , height{ tree, "height", juce::GridItem::notAssigned }
         , minHeight{ tree, "min-height" }
         , maxHeight{ tree, "max-height", juce::GridItem::notAssigned }
     {
@@ -47,10 +45,13 @@ namespace jive
         gridItem.row = row;
         gridItem.area = area;
 
-        gridItem.width = hasAutoWidth() ? juce::GridItem::notAssigned : getWidth();
+        if (!hasAutoWidth())
+            gridItem.width = getBoxModel().getWidth();
+        if (!hasAutoHeight())
+            gridItem.height = getBoxModel().getHeight();
+
         gridItem.minWidth = minWidth;
         gridItem.maxWidth = maxWidth;
-        gridItem.height = hasAutoHeight() ? juce::GridItem::notAssigned : getHeight();
         gridItem.minHeight = minHeight;
         gridItem.maxHeight = maxHeight;
 
@@ -352,12 +353,12 @@ private:
             auto item = createGridItem(tree);
 
             auto gridItem = static_cast<juce::GridItem>(*item);
-            expect(gridItem.width == juce::GridItem::notAssigned);
+            expectEquals<float>(gridItem.width, juce::GridItem::notAssigned);
 
             tree.setProperty("width", 112.f, nullptr);
 
             gridItem = static_cast<juce::GridItem>(*item);
-            expect(gridItem.width == 112.f);
+            expectEquals(gridItem.width, 112.f);
         }
         {
             juce::ValueTree tree{

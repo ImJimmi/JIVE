@@ -11,11 +11,10 @@ namespace jive
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        float getWidth() const override;
-        float getHeight() const override;
+        void updateLayout() override;
 
         //==============================================================================================================
-        void updateLayout() override;
+        void addChild(std::unique_ptr<GuiItem> child) override;
 
         //==============================================================================================================
         operator juce::FlexBox();
@@ -25,8 +24,10 @@ namespace jive
         juce::FlexBox getFlexBox();
         juce::FlexBox getFlexBoxWithDummyItems() const;
 
-        float getMinimumContentWidth() const;
-        float getMinimumContentHeight() const;
+        float calculateMinimumContentWidth(juce::FlexBox flex) const;
+        float calculateMinimumContentHeight(juce::FlexBox flex) const;
+
+        void updateExplicitSize();
 
         //==============================================================================================================
         TypedValue<juce::FlexBox::Direction> flexDirection;
@@ -34,6 +35,8 @@ namespace jive
         TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
         TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
         TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
+        TypedValue<float> explicitWidth;
+        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)
