@@ -2,3 +2,5 @@
 
 //======================================================================================================================
 #include "logging/jive_StringStreams.cpp"
+
+#include "values/jive_TypedValue.cpp"

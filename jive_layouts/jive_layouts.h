@@ -27,13 +27,11 @@ namespace jive
 #include "components/jive_NormalisedProgressBar.h"
 #include "components/jive_TextComponent.h"
 
-#include "utilities/jive_AutoValue.h"
 #include "utilities/jive_ComponentFactory.h"
 #include "utilities/jive_Drawable.h"
 #include "utilities/jive_Length.h"
 #include "utilities/jive_Orientation.h"
 #include "utilities/jive_Overflow.h"
-#include "utilities/jive_TypedValue.h"
 
 #include "layout/jive_BoxModel.h"
 

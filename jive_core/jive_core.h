@@ -17,3 +17,6 @@ END_JUCE_MODULE_DECLARATION */
 
 //======================================================================================================================
 #include "logging/jive_StringStreams.h"
+
+#include "values/jive_AutoValue.h"
+#include "values/jive_TypedValue.h"

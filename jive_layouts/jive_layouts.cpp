@@ -10,7 +10,6 @@
 #include "utilities/jive_Drawable.cpp"
 #include "utilities/jive_Length.cpp"
 #include "utilities/jive_Overflow.cpp"
-#include "utilities/jive_TypedValue.cpp"
 
 #include "layout/jive_BoxModel.cpp"
 
