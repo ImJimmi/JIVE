@@ -19,6 +19,14 @@ namespace jive
         componentFactory = newFactory;
     }
 
+    template <typename Decorator>
+    void Interpreter::addDecorator(const juce::Identifier& itemType)
+    {
+        customDecorators.emplace_back(itemType, [](std::unique_ptr<GuiItem> item) {
+            return std::make_unique<Decorator>(std::move(item));
+        });
+    }
+
     //==================================================================================================================
     std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree) const
     {
@@ -93,11 +101,31 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item)
+    using DecoratorCreator = std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>;
+
+    std::vector<const DecoratorCreator*> collectDecoratorCreators(const juce::Identifier& itemType,
+                                                                  const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& decorators)
+    {
+        std::vector<const DecoratorCreator*> creators;
+
+        for (const auto& decorator : decorators)
+        {
+            if (decorator.first == itemType)
+                creators.push_back(&decorator.second);
+        }
+
+        return creators;
+    }
+
+    std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
+                                      const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
     {
         item = decorateWithDisplayBehaviour(std::move(item));
         item = decorateWithHereditaryBehaviour(std::move(item));
         item = decorateWithWidgetBehaviour(std::move(item));
+
+        for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->getState().getType(), customDecorators))
+            item = (*decorateWithCustomDecorations)(std::move(item));
 
         return item;
     }
@@ -108,7 +136,7 @@ namespace jive
 
         if (item != nullptr)
         {
-            item = decorate(std::move(item));
+            item = decorate(std::move(item), customDecorators);
             appendChildItems(*item);
         }
 
@@ -163,6 +191,7 @@ public:
         testDisplayTypes();
         testInitialLayout();
         testWindowContent();
+        testCustomDecorators();
     }
 
 private:
@@ -342,6 +371,35 @@ private:
         });
         expect(dynamic_cast<jive::Window*>(view.get()) != nullptr);
         expect(dynamic_cast<jive::Window*>(view.get())->getWindow().getContentComponent() != nullptr);
+    }
+
+    void testCustomDecorators()
+    {
+        beginTest("custom decorators");
+
+        struct MyDecorator : public jive::GuiItemDecorator
+        {
+            using jive::GuiItemDecorator::GuiItemDecorator;
+        };
+
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(juce::ValueTree{ "Button" });
+        expect(dynamic_cast<MyDecorator*>(item.get()) == nullptr);
+
+        interpreter.addDecorator<MyDecorator>("Button");
+        item = interpreter.interpret(juce::ValueTree{ "Button" });
+        auto* decorator = dynamic_cast<jive::GuiItemDecorator*>(item.get());
+        expect(decorator->toType<MyDecorator>() != nullptr);
+
+        struct MyOtherDecorator : public jive::GuiItemDecorator
+        {
+            using jive::GuiItemDecorator::GuiItemDecorator;
+        };
+        interpreter.addDecorator<MyOtherDecorator>("Button");
+        item = interpreter.interpret(juce::ValueTree{ "Button" });
+        decorator = dynamic_cast<jive::GuiItemDecorator*>(item.get());
+        expect(decorator->toType<MyDecorator>() != nullptr);
+        expect(decorator->toType<MyOtherDecorator>() != nullptr);
     }
 };
 
