@@ -116,6 +116,7 @@ namespace jive
         BoxModel boxModel{ *this };
 
         TypedValue<juce::String> name;
+        TypedValue<juce::String> title;
         TypedValue<juce::Identifier> id;
         TypedValue<juce::String> description;
         TypedValue<juce::String> tooltip;
