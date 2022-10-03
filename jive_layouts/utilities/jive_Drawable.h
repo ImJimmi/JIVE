@@ -46,4 +46,7 @@ namespace juce
         static jive::Drawable fromVar(const var& v);
         static var toVar(const jive::Drawable& drawable);
     };
+
+    //==================================================================================================================
+    String& operator<<(String& str, const jive::Drawable& drawable);
 } // namespace juce

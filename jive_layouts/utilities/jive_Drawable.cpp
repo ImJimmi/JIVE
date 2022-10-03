@@ -114,4 +114,10 @@ namespace juce
 
         return {};
     }
+
+    //==================================================================================================================
+    String& operator<<(String& str, const jive::Drawable& /* drawable */)
+    {
+        return str << "Drawable{}";
+    }
 } // namespace juce
