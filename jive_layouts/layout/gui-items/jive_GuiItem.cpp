@@ -13,6 +13,7 @@ namespace jive
         , viewport{ std::move(vp) }
         , parent{ parentItem }
         , name{ tree, "name" }
+        , title{ tree, "title" }
         , id{ tree, "id" }
         , description{ tree, "description" }
         , tooltip{ tree, "tooltip" }
@@ -41,10 +42,13 @@ namespace jive
 
         name.onValueChange = [this]() {
             getComponent().setName(name);
-            getComponent().setTitle(name);
         };
         getComponent().setName(name);
-        getComponent().setTitle(name);
+
+        title.onValueChange = [this]() {
+            getComponent().setTitle(title);
+        };
+        getComponent().setTitle(title);
 
         id.onValueChange = [this]() {
             getComponent().setComponentID(id.get().toString());
@@ -463,6 +467,7 @@ public:
         testTopLevelSize();
 
         testName();
+        testTitle();
         testID();
         testDescription();
         testTooltip();
@@ -583,14 +588,10 @@ private:
         {
             juce::ValueTree tree{ "Component" };
             auto item = createGuiItem(tree);
-
             expect(item->getComponent().getName().isEmpty());
-            expect(item->getComponent().getTitle().isEmpty());
 
             tree.setProperty("name", "Zaphod Beeblebrox", nullptr);
-
             expectEquals<juce::String>(item->getComponent().getName(), "Zaphod Beeblebrox");
-            expectEquals<juce::String>(item->getComponent().getTitle(), "Zaphod Beeblebrox");
         }
         {
             juce::ValueTree tree{
@@ -600,9 +601,31 @@ private:
                 },
             };
             auto item = createGuiItem(tree);
-
             expectEquals<juce::String>(item->getComponent().getName(), "Ford Prefect");
-            expectEquals<juce::String>(item->getComponent().getTitle(), "Ford Prefect");
+        }
+    }
+
+    void testTitle()
+    {
+        beginTest("title");
+
+        {
+            juce::ValueTree tree{ "Component" };
+            auto item = createGuiItem(tree);
+            expect(item->getComponent().getTitle().isEmpty());
+
+            tree.setProperty("title", "Captain", nullptr);
+            expectEquals<juce::String>(item->getComponent().getTitle(), "Captain");
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "title", "Lord" },
+                },
+            };
+            auto item = createGuiItem(tree);
+            expectEquals<juce::String>(item->getComponent().getTitle(), "Lord");
         }
     }
 
