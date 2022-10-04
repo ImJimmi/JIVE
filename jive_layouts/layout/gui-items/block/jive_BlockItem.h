@@ -20,10 +20,10 @@ namespace jive
         juce::Point<int> calculatePosition() const;
 
         //==============================================================================================================
-        TypedValue<Width> x;
-        TypedValue<Height> y;
-        TypedValue<Width> centreX;
-        TypedValue<Height> centreY;
+        Length x;
+        Length y;
+        Length centreX;
+        Length centreY;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BlockItem)

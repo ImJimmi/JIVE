@@ -5,11 +5,13 @@ namespace jive
 {
     //==================================================================================================================
     template <typename ValueType>
-    class TypedValue : private juce::Value::Listener
+    class TypedValue : protected juce::Value::Listener
     {
     public:
+        //==============================================================================================================
         using VariantConverter = juce::VariantConverter<ValueType>;
 
+        //==============================================================================================================
         TypedValue(juce::ValueTree sourceTree,
                    const juce::Identifier& propertyID)
             : id{ propertyID }
@@ -28,7 +30,8 @@ namespace jive
                 value = VariantConverter::toVar(initialValue);
         }
 
-        ValueType get() const
+        //==============================================================================================================
+        virtual ValueType get() const
         {
             return VariantConverter::fromVar(value);
         }
@@ -43,6 +46,7 @@ namespace jive
             return tree.hasProperty(id);
         }
 
+        //==============================================================================================================
         operator ValueType() const
         {
             return get();
@@ -54,10 +58,12 @@ namespace jive
             return *this;
         }
 
+        //==============================================================================================================
         const juce::Identifier id;
         std::function<void(void)> onValueChange = nullptr;
 
-    private:
+    protected:
+        //==============================================================================================================
         void valueChanged(juce::Value& valueThatChanged) override
         {
             jassertquiet(valueThatChanged.refersToSameSourceAs(value));
@@ -66,6 +72,7 @@ namespace jive
                 onValueChange();
         }
 
+        //==============================================================================================================
         juce::ValueTree tree;
         juce::Value value;
     };

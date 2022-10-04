@@ -4,117 +4,28 @@
 namespace jive
 {
     //==================================================================================================================
-    class Length
+    class Length : public TypedValue<juce::String>
     {
     public:
         //==============================================================================================================
-        void setCorrespondingGuiItem(const GuiItem& correspondingItem);
+        using TypedValue<juce::String>::TypedValue;
 
-        void setPixels(float pixels);
-        float getPixels() const;
+        //==============================================================================================================
+        float calculatePixelValue() const;
+
+        //==============================================================================================================
+        bool isAuto() const;
         bool isPixels() const;
-
-        void setPercent(float percent);
-        float getPercent() const;
         bool isPercent() const;
 
         //==============================================================================================================
-        operator float() const;
-
-    protected:
-        //==============================================================================================================
-        virtual float getRelativeParentLength() const = 0;
+        using TypedValue<juce::String>::operator=;
 
         //==============================================================================================================
-        template <typename LengthType>
-        static LengthType createFromPixels(float pixels)
-        {
-            LengthType length;
-            length.setPixels(pixels);
-
-            return length;
-        }
-
-        template <typename LengthType>
-        static LengthType createFromPercent(float percent, const GuiItem& correspondingItem)
-        {
-            LengthType length;
-            length.setCorrespondingGuiItem(correspondingItem);
-            length.setPercent(percent);
-
-            return length;
-        }
-
-        //==============================================================================================================
-        const GuiItem* item = nullptr;
+        static const float pixelValueWhenAuto;
 
     private:
         //==============================================================================================================
-        enum class Unit
-        {
-            pixels,
-            percent,
-        };
-
-        //==============================================================================================================
-        float magnitude{ 0.f };
-        Unit unit;
-
-        //==============================================================================================================
-        JUCE_LEAK_DETECTOR(Length)
-    };
-
-    //==================================================================================================================
-    class Width : public Length
-    {
-    public:
-        //==============================================================================================================
-        using Length::Length;
-
-        //==============================================================================================================
-        static Width fromPixels(float pixels);
-        static Width fromPercent(float percent, const GuiItem& correspondingItem);
-
-    protected:
-        //==============================================================================================================
-        float getRelativeParentLength() const final;
-    };
-
-    //==================================================================================================================
-    class Height : public Length
-    {
-    public:
-        //==============================================================================================================
-        using Length::Length;
-
-        //==============================================================================================================
-        static Height fromPixels(float pixels);
-        static Height fromPercent(float percent, const GuiItem& correspondingItem);
-
-    protected:
-        //==============================================================================================================
-        float getRelativeParentLength() const final;
+        double getRelativeParentLength() const;
     };
 } // namespace jive
-
-//======================================================================================================================
-namespace juce
-{
-    //==================================================================================================================
-    template <>
-    struct VariantConverter<jive::Width>
-    {
-        //==============================================================================================================
-        static jive::Width fromVar(const var& v);
-        static var toVar(const jive::Width& width);
-    };
-
-    //==================================================================================================================
-    template <>
-    struct VariantConverter<jive::Height>
-    {
-        //==============================================================================================================
-        static jive::Height fromVar(const var& v);
-        static var toVar(const jive::Height& width);
-    };
-} // namespace juce

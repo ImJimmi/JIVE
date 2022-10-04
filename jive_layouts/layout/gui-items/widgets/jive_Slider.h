@@ -43,8 +43,8 @@ namespace jive
         TypedValue<juce::String> mid;
         TypedValue<juce::String> interval;
         TypedValue<AutoValue<Orientation>> orientation;
-        TypedValue<Width> width;
-        TypedValue<Height> height;
+        Length width;
+        Length height;
         TypedValue<double> sensitivity;
         TypedValue<bool> isInVelocityMode;
         TypedValue<double> velocitySensitivity;

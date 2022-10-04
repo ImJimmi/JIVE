@@ -19,16 +19,12 @@ namespace jive
         {
             parentWidth = std::make_shared<TypedValue<float>>(tree.getParent(), "explicit-width");
             parentWidth->onValueChange = [this]() {
-                auto implicitWidth = width.get();
-                implicitWidth.setCorrespondingGuiItem(item);
-                setWidth(static_cast<float>(implicitWidth));
+                setWidth(width.calculatePixelValue());
             };
 
             parentHeight = std::make_shared<TypedValue<float>>(tree.getParent(), "explicit-height");
             parentHeight->onValueChange = [this]() {
-                auto implicitHeight = height.get();
-                implicitHeight.setCorrespondingGuiItem(item);
-                setHeight(static_cast<float>(implicitHeight));
+                setHeight(height.calculatePixelValue());
             };
         }
     }

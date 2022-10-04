@@ -41,33 +41,17 @@ namespace jive
     int BlockItem::calculateX() const
     {
         if (centreX.exists())
-        {
-            auto length = centreX.get();
-            length.setCorrespondingGuiItem(*item);
+            return juce::roundToInt(centreX.calculatePixelValue() - getBoxModel().getWidth() / 2.f);
 
-            return juce::roundToInt(length - getBoxModel().getWidth() / 2.f);
-        }
-
-        auto length = x.get();
-        length.setCorrespondingGuiItem(*item);
-
-        return juce::roundToInt(length);
+        return juce::roundToInt(x.calculatePixelValue());
     }
 
     int BlockItem::calculateY() const
     {
         if (centreY.exists())
-        {
-            auto length = centreY.get();
-            length.setCorrespondingGuiItem(*item);
+            return juce::roundToInt(centreY.calculatePixelValue() - getBoxModel().getHeight() / 2.f);
 
-            return juce::roundToInt(length - getBoxModel().getHeight() / 2.f);
-        }
-
-        auto length = y.get();
-        length.setCorrespondingGuiItem(*item);
-
-        return juce::roundToInt(length);
+        return juce::roundToInt(y.calculatePixelValue());
     }
 
     juce::Point<int> BlockItem::calculatePosition() const
@@ -151,39 +135,38 @@ private:
             };
             const auto container = createBlockContainer(tree);
             const auto item = container->getChild(0);
-
             expectEquals(item.getViewport().getX(), 40);
             expectEquals(item.getViewport().getY(), 50);
         }
         {
-            juce::ValueTree parentTree{
+            juce::ValueTree tree{
                 "Component",
                 {
+                    { "display", "block" },
                     { "width", 50 },
                     { "height", 60 },
                 },
-            };
-            auto parent = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          parentTree);
-
-            juce::ValueTree childTree{
-                "Component",
                 {
-                    { "x", "20%" },
-                    { "y", "50%" },
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "x", "20%" },
+                            { "y", "50%" },
+                        },
+                    },
                 }
             };
-            auto child = std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                           childTree,
-                                                                                           parent.get()));
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(tree);
+            auto child = parent->getChild(0);
 
-            expectEquals(child->getViewport().getX(), 10);
-            expectEquals(child->getViewport().getY(), 30);
+            expectEquals(child.getViewport().getX(), 10);
+            expectEquals(child.getViewport().getY(), 30);
 
-            childTree.setProperty("x", "10%", nullptr);
-            childTree.setProperty("y", "33.3333333333333%", nullptr);
-            expectEquals(child->getViewport().getX(), 5);
-            expectEquals(child->getViewport().getY(), 20);
+            tree.getChild(0).setProperty("x", "10%", nullptr);
+            tree.getChild(0).setProperty("y", "33.3333333333333%", nullptr);
+            expectEquals(child.getViewport().getX(), 5);
+            expectEquals(child.getViewport().getY(), 20);
         }
     }
 
@@ -250,34 +233,34 @@ private:
             expectEquals(item.getViewport().getBounds().getCentreX(), 44);
         }
         {
-            juce::ValueTree parentTree{
+            juce::ValueTree tree{
                 "Component",
                 {
+                    { "display", "block" },
                     { "width", 100 },
                     { "height", 250 },
                 },
-            };
-            auto parent = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          parentTree);
-
-            juce::ValueTree childTree{
-                "Component",
                 {
-                    { "x", "1%" },
-                    { "y", "37.3%" },
-                }
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "x", "1%" },
+                            { "y", "37.3%" },
+                        },
+                    },
+                },
             };
-            auto child = std::make_unique<jive::BlockItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                           childTree,
-                                                                                           parent.get()));
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(tree);
+            auto child = parent->getChild(0);
 
-            expectEquals(child->getViewport().getX(), 1);
-            expectEquals(child->getViewport().getY(), 93);
+            expectEquals(child.getViewport().getX(), 1);
+            expectEquals(child.getViewport().getY(), 93);
 
-            childTree.setProperty("x", "97.8%", nullptr);
-            childTree.setProperty("y", "10%", nullptr);
-            expectEquals(child->getViewport().getX(), 98);
-            expectEquals(child->getViewport().getY(), 25);
+            tree.getChild(0).setProperty("x", "97.8%", nullptr);
+            tree.getChild(0).setProperty("y", "10%", nullptr);
+            expectEquals(child.getViewport().getX(), 98);
+            expectEquals(child.getViewport().getY(), 25);
         }
     }
 

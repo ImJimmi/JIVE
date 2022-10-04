@@ -4,146 +4,48 @@
 namespace jive
 {
     //==================================================================================================================
-    void Length::setCorrespondingGuiItem(const GuiItem& correspondingItem)
+    const float Length::pixelValueWhenAuto = 0.0f;
+
+    //==================================================================================================================
+    float Length::calculatePixelValue() const
     {
-        item = &correspondingItem;
+        if (isAuto())
+            return pixelValueWhenAuto;
+
+        if (isPixels())
+            return get().getFloatValue();
+
+        const auto scale = static_cast<double>(get().getFloatValue()) * 0.01;
+        return scale * getRelativeParentLength();
     }
 
-    void Length::setPixels(float pixels)
+    //==================================================================================================================
+    bool Length::isAuto() const
     {
-        unit = Unit::pixels;
-        magnitude = pixels;
-    }
-
-    float Length::getPixels() const
-    {
-        jassert(isPixels());
-        return magnitude;
+        return (!exists()) || get() == "auto";
     }
 
     bool Length::isPixels() const
     {
-        return unit == Unit::pixels;
-    }
-
-    void Length::setPercent(float percent)
-    {
-        unit = Unit::percent;
-        magnitude = percent;
-    }
-
-    float Length::getPercent() const
-    {
-        jassert(isPercent());
-        jassert(item != nullptr);
-        jassert(item->getParent() != nullptr);
-
-        const auto scale = static_cast<double>(magnitude) * 0.01;
-        return static_cast<float>(scale * static_cast<double>(getRelativeParentLength()));
+        return !isAuto() && !isPercent();
     }
 
     bool Length::isPercent() const
     {
-        return unit == Unit::percent;
+        return !isAuto() && get().endsWith("%");
     }
 
     //==================================================================================================================
-    Length::operator float() const
+    double Length::getRelativeParentLength() const
     {
-        if (isPixels())
-            return getPixels();
+        jassert(tree.getParent().isValid());
 
-        if (isPercent())
-            return getPercent();
+        if (id.toString().contains("width") || id.toString().contains("x"))
+            return static_cast<double>(tree.getParent()["explicit-width"]);
 
-        jassertfalse;
-        return 0.f;
-    }
-
-    //==================================================================================================================
-    Width Width::fromPixels(float pixels)
-    {
-        return createFromPixels<Width>(pixels);
-    }
-
-    Width Width::fromPercent(float percent, const GuiItem& correspondingItem)
-    {
-        return createFromPercent<Width>(percent, correspondingItem);
-    }
-
-    float Width::getRelativeParentLength() const
-    {
-        return static_cast<float>(item->getParent()->getBoxModel().getWidth());
-    }
-
-    //==================================================================================================================
-    Height Height::fromPixels(float pixels)
-    {
-        return createFromPixels<Height>(pixels);
-    }
-
-    Height Height::fromPercent(float percent, const GuiItem& correspondingItem)
-    {
-        return createFromPercent<Height>(percent, correspondingItem);
-    }
-
-    float Height::getRelativeParentLength() const
-    {
-        return static_cast<float>(item->getParent()->getBoxModel().getHeight());
+        return static_cast<double>(tree.getParent()["explicit-height"]);
     }
 } // namespace jive
-
-//======================================================================================================================
-namespace juce
-{
-    //==================================================================================================================
-    jive::Width VariantConverter<jive::Width>::fromVar(const var& v)
-    {
-        jive::Width width;
-        const auto text = v.toString();
-
-        if (text.endsWith("%"))
-        {
-            width.setPercent(text.getFloatValue());
-            return width;
-        }
-
-        width.setPixels(static_cast<float>(v));
-        return width;
-    }
-
-    var VariantConverter<jive::Width>::toVar(const jive::Width& width)
-    {
-        if (width.isPixels())
-            return width.getPixels();
-
-        return juce::String{ width.getPercent() } + "%";
-    }
-
-    //==================================================================================================================
-    jive::Height VariantConverter<jive::Height>::fromVar(const var& v)
-    {
-        jive::Height height;
-        const auto text = v.toString();
-
-        if (text.endsWith("%"))
-        {
-            height.setPercent(text.getFloatValue());
-            return height;
-        }
-
-        height.setPixels(static_cast<float>(v));
-        return height;
-    }
-
-    var VariantConverter<jive::Height>::toVar(const jive::Height& height)
-    {
-        if (height.isPixels())
-            return height.getPixels();
-
-        return juce::String{ height.getPercent() } + "%";
-    }
-} // namespace juce
 
 //======================================================================================================================
 #if JIVE_UNIT_TESTS
@@ -174,15 +76,16 @@ private:
         beginTest("pixels");
 
         juce::ValueTree tree{ "Component" };
-        auto item = createGuiItem(tree);
-        jive::Width width;
-        width.setCorrespondingGuiItem(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        jive::Length width{ tree, "width" };
+        expect(width.isAuto());
 
-        width.setPixels(10.f);
-        expectEquals<float>(width, 10.f);
+        width = "10";
+        expectEquals(width.calculatePixelValue(), 10.f);
 
-        width.setPixels(-312.65f);
-        expectEquals<float>(width, -312.65f);
+        width = "312.65";
+        expectEquals(width.calculatePixelValue(), 312.65f);
     }
 
     void testPercent()
@@ -200,22 +103,17 @@ private:
                     juce::ValueTree{ "Component" },
                 }
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            jive::Length width{ tree.getChild(0), "width" };
+            width = "50%";
+            expectEquals(width.calculatePixelValue(), 20.f);
 
-            jive::Width width;
-            width.setCorrespondingGuiItem(item->getChild(0));
-            width.setPercent(50.f);
-            expectEquals<float>(width, 20.f);
-
-            jive::Height height;
-            height.setCorrespondingGuiItem(item->getChild(0));
-            height.setPercent(20.f);
-            expectWithinAbsoluteError<float>(height,
-                                             4.f,
-                                             0.000001f);
+            jive::Length height{ tree.getChild(0), "height" };
+            height = "20%";
+            expectWithinAbsoluteError(height.calculatePixelValue(), 4.f, 0.000001f);
         }
         {
-            jive::Interpreter interpreter;
             juce::ValueTree tree{
                 "Component",
                 {
@@ -241,13 +139,11 @@ private:
                     },
                 },
             };
-
+            jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-
-            jive::Width width;
-            width.setCorrespondingGuiItem(item->getChild(0).getChild(0));
-            width.setPercent(25.f);
-            expectEquals<float>(width, 10.f);
+            jive::Length width{ tree.getChild(0).getChild(0), "width" };
+            width = "25%";
+            expectEquals(width.calculatePixelValue(), 10.f);
         }
     }
 };

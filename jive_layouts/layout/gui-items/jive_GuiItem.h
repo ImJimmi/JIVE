@@ -97,9 +97,6 @@ namespace jive
                 GuiItem* parent);
 
         //==============================================================================================================
-        template <typename ConcreteLength>
-        float calculateExplicitLength(ConcreteLength length) const;
-
         void updateViewportSize();
         void updateComponentSize();
 
@@ -124,8 +121,8 @@ namespace jive
         TypedValue<int> focusOrder;
         TypedValue<float> opacity;
         TypedValue<juce::MouseCursor::StandardCursorType> cursor;
-        TypedValue<AutoValue<Width>> width;
-        TypedValue<AutoValue<Height>> height;
+        Length width;
+        Length height;
         TypedValue<Display> display;
         TypedValue<Overflow> overflow;
 

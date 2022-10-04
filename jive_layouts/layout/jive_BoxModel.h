@@ -39,8 +39,8 @@ namespace jive
         TypedValue<juce::BorderSize<float>> padding;
         TypedValue<juce::BorderSize<float>> border;
         TypedValue<juce::BorderSize<float>> margin;
-        TypedValue<Width> width;
-        TypedValue<Height> height;
+        Length width;
+        Length height;
         TypedValue<float> explicitWidth;
         TypedValue<float> explicitHeight;
         std::shared_ptr<TypedValue<float>> parentWidth;

@@ -28,8 +28,8 @@ namespace jive
         , focusOrder{ tree, "focus-order" }
         , opacity{ tree, "opacity", 1.f }
         , cursor{ tree, "cursor", juce::MouseCursor::NormalCursor }
-        , width{ tree, "width" }
-        , height{ tree, "height" }
+        , width{ tree, "width", "auto" }
+        , height{ tree, "height", "auto" }
         , display{ tree, "display", Display::flex }
         , overflow{ tree, "overflow", Overflow::hidden }
     {
@@ -121,16 +121,16 @@ namespace jive
         getComponent().setMouseCursor(juce::MouseCursor{ cursor });
 
         width.onValueChange = [this]() {
-            getBoxModel().setWidth(calculateExplicitLength(width.get().getWithDefault()));
+            getBoxModel().setWidth(width.calculatePixelValue());
             updateViewportSize();
         };
-        getBoxModel().setWidth(calculateExplicitLength(width.get().getWithDefault()));
+        getBoxModel().setWidth(width.calculatePixelValue());
 
         height.onValueChange = [this]() {
-            getBoxModel().setHeight(calculateExplicitLength(height.get().getWithDefault()));
+            getBoxModel().setHeight(height.calculatePixelValue());
             updateViewportSize();
         };
-        getBoxModel().setHeight(calculateExplicitLength(height.get().getWithDefault()));
+        getBoxModel().setHeight(height.calculatePixelValue());
 
         overflow.onValueChange = [this]() {
             updateComponentSize();
@@ -261,12 +261,12 @@ namespace jive
 
     bool GuiItem::hasAutoWidth() const
     {
-        return width.get().isAuto();
+        return width.isAuto();
     }
 
     bool GuiItem::hasAutoHeight() const
     {
-        return height.get().isAuto();
+        return height.isAuto();
     }
 
     //==================================================================================================================
@@ -358,13 +358,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    template <typename ConcreteLength>
-    float GuiItem::calculateExplicitLength(ConcreteLength length) const
-    {
-        length.setCorrespondingGuiItem(*this);
-        return juce::jmax(0.0f, static_cast<float>(length));
-    }
-
     void GuiItem::updateViewportSize()
     {
         const auto borderBounds = boxModel.getBorderBounds();
