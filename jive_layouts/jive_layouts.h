@@ -7,11 +7,13 @@
     name:               JIVE Layouts
     license:            MIT
     minimumCppStandard: 14
-    dependencies:       juce_gui_basics
+    dependencies:       jive_core
 END_JUCE_MODULE_DECLARATION */
 
+#define JIVE_LAYOUTS_H_INCLUDED
+
 //======================================================================================================================
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <jive_core/jive_core.h>
 
 //======================================================================================================================
 namespace jive
@@ -25,17 +27,12 @@ namespace jive
 #include "components/jive_NormalisedProgressBar.h"
 #include "components/jive_TextComponent.h"
 
-#include "utilities/jive_AutoValue.h"
 #include "utilities/jive_ComponentFactory.h"
+#include "utilities/jive_Display.h"
 #include "utilities/jive_Drawable.h"
 #include "utilities/jive_Length.h"
 #include "utilities/jive_Orientation.h"
 #include "utilities/jive_Overflow.h"
-#include "utilities/jive_TypedValue.h"
-
-#if JIVE_UNIT_TESTS
-    #include "utilities/jive_StringStreams.h"
-#endif
 
 #include "layout/jive_BoxModel.h"
 
@@ -62,4 +59,3 @@ namespace jive
 #include "layout/gui-items/widgets/jive_Spinner.h"
 
 #include "layout/jive_Interpreter.h"
-#include "utilities/jive_VariantConverters.h"

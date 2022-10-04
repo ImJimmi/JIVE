@@ -29,13 +29,6 @@ namespace jive
             GuiItem* const* item;
         };
 
-        enum class Display
-        {
-            flex,
-            grid,
-            block
-        };
-
         //==============================================================================================================
         GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent = nullptr);
         GuiItem(const GuiItem& other);

@@ -96,3 +96,25 @@ namespace jive
         float getRelativeParentLength() const final;
     };
 } // namespace jive
+
+//======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<jive::Width>
+    {
+        //==============================================================================================================
+        static jive::Width fromVar(const var& v);
+        static var toVar(const jive::Width& width);
+    };
+
+    //==================================================================================================================
+    template <>
+    struct VariantConverter<jive::Height>
+    {
+        //==============================================================================================================
+        static jive::Height fromVar(const var& v);
+        static var toVar(const jive::Height& width);
+    };
+} // namespace juce

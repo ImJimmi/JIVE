@@ -4,10 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
-    enum class Orientation
+    enum class Display
     {
-        horizontal,
-        vertical,
+        flex,
+        grid,
+        block
     };
 } // namespace jive
 
@@ -16,12 +17,11 @@ namespace juce
 {
     //==================================================================================================================
     template <>
-    class VariantConverter<jive::Orientation>
+    struct VariantConverter<jive::Display>
     {
-    public:
         //==============================================================================================================
-        static jive::Orientation fromVar(const var& v);
-        static var toVar(const jive::Orientation& orientation);
+        static jive::Display fromVar(const var& v);
+        static var toVar(jive::Display display);
 
     private:
         //==============================================================================================================

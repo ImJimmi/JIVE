@@ -38,11 +38,11 @@ namespace jive
     {
         switch (item->getDisplay())
         {
-        case GuiItem::Display::flex:
+        case Display::flex:
             return std::make_unique<FlexContainer>(std::move(item));
-        case GuiItem::Display::grid:
+        case Display::grid:
             return std::make_unique<GridContainer>(std::move(item));
-        case GuiItem::Display::block:
+        case Display::block:
             return std::make_unique<BlockContainer>(std::move(item));
         }
 
@@ -58,11 +58,11 @@ namespace jive
 
         switch (item->getParent()->getDisplay())
         {
-        case GuiItem::Display::flex:
+        case Display::flex:
             return std::make_unique<FlexItem>(std::move(item));
-        case GuiItem::Display::grid:
+        case Display::grid:
             return std::make_unique<GridItem>(std::move(item));
-        case GuiItem::Display::block:
+        case Display::block:
             return std::make_unique<BlockItem>(std::move(item));
         }
 
@@ -279,7 +279,7 @@ private:
         auto flexView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
-                { "display", juce::VariantConverter<jive::GuiItem::Display>::toVar(jive::GuiItem::Display::flex) },
+                { "display", juce::VariantConverter<jive::Display>::toVar(jive::Display::flex) },
             },
             {
                 juce::ValueTree{ "Label" },

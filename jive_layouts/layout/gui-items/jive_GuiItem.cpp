@@ -254,7 +254,7 @@ namespace jive
         return boxModel;
     }
 
-    GuiItem::Display GuiItem::getDisplay() const
+    Display GuiItem::getDisplay() const
     {
         return display;
     }
