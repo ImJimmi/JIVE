@@ -28,6 +28,7 @@ namespace jive
 #include "components/jive_TextComponent.h"
 
 #include "utilities/jive_ComponentFactory.h"
+#include "utilities/jive_Display.h"
 #include "utilities/jive_Drawable.h"
 #include "utilities/jive_Length.h"
 #include "utilities/jive_Orientation.h"
@@ -58,4 +59,3 @@ namespace jive
 #include "layout/gui-items/widgets/jive_Spinner.h"
 
 #include "layout/jive_Interpreter.h"
-#include "utilities/jive_VariantConverters.h"

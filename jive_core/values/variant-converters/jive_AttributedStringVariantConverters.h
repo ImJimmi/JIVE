@@ -1,27 +1,30 @@
 #pragma once
 
 //======================================================================================================================
-namespace jive
-{
-    //==================================================================================================================
-    enum class Orientation
-    {
-        horizontal,
-        vertical,
-    };
-} // namespace jive
-
-//======================================================================================================================
 namespace juce
 {
     //==================================================================================================================
     template <>
-    class VariantConverter<jive::Orientation>
+    class VariantConverter<AttributedString::ReadingDirection>
     {
     public:
         //==============================================================================================================
-        static jive::Orientation fromVar(const var& v);
-        static var toVar(const jive::Orientation& orientation);
+        static AttributedString::ReadingDirection fromVar(const var& v);
+        static var toVar(const AttributedString::ReadingDirection& direction);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> options;
+    };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<AttributedString::WordWrap>
+    {
+    public:
+        //==============================================================================================================
+        static AttributedString::WordWrap fromVar(const var& v);
+        static var toVar(const AttributedString::WordWrap& wordWrap);
 
     private:
         //==============================================================================================================

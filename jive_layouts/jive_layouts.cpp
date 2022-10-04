@@ -7,8 +7,10 @@
 #include "components/jive_TextComponent.cpp"
 
 #include "utilities/jive_ComponentFactory.cpp"
+#include "utilities/jive_Display.cpp"
 #include "utilities/jive_Drawable.cpp"
 #include "utilities/jive_Length.cpp"
+#include "utilities/jive_Orientation.cpp"
 #include "utilities/jive_Overflow.cpp"
 
 #include "layout/jive_BoxModel.cpp"
@@ -36,4 +38,3 @@
 #include "layout/gui-items/widgets/jive_Spinner.cpp"
 
 #include "layout/jive_Interpreter.cpp"
-#include "utilities/jive_VariantConverters.cpp"

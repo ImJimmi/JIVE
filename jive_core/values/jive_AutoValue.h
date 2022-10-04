@@ -83,3 +83,29 @@ namespace jive
         T value;
     };
 } // namespace jive
+
+//======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    template <typename T>
+    struct VariantConverter<jive::AutoValue<T>>
+    {
+        //==============================================================================================================
+        static jive::AutoValue<T> fromVar(const var& v)
+        {
+            if (v.isVoid() || v.toString().compareIgnoreCase("auto") == 0)
+                return jive::AutoValue<T>{};
+
+            return jive::AutoValue<T>{ VariantConverter<T>::fromVar(v) };
+        }
+
+        static var toVar(const jive::AutoValue<T>& value)
+        {
+            if (value.isAuto())
+                return "auto";
+
+            return VariantConverter<T>::toVar(*value.get());
+        }
+    };
+} // namespace juce

@@ -44,3 +44,21 @@ namespace jive
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)
     };
 } // namespace jive
+
+//======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    template <>
+    class VariantConverter<jive::Button::TriggerEvent>
+    {
+    public:
+        //==============================================================================================================
+        static jive::Button::TriggerEvent fromVar(const var& v);
+        static var toVar(const jive::Button::TriggerEvent& event);
+
+    private:
+        //==============================================================================================================
+        static const Array<var> options;
+    };
+} // namespace juce

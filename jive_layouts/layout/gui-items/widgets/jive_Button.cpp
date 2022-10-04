@@ -72,6 +72,30 @@ namespace jive
 } // namespace jive
 
 //======================================================================================================================
+namespace juce
+{
+    //==================================================================================================================
+    const Array<var> VariantConverter<jive::Button::TriggerEvent>::options = {
+        "mouse-up",
+        "mouse-down",
+    };
+
+    jive::Button::TriggerEvent VariantConverter<jive::Button::TriggerEvent>::fromVar(const var& v)
+    {
+        jassert(options.contains(v));
+        return static_cast<jive::Button::TriggerEvent>(options.indexOf(v));
+    }
+
+    var VariantConverter<jive::Button::TriggerEvent>::toVar(const jive::Button::TriggerEvent& event)
+    {
+        const auto index = static_cast<int>(event);
+
+        jassert(options.size() >= index);
+        return options[index];
+    }
+} // namespace juce
+
+//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ButtonTest : public juce::UnitTest
 {

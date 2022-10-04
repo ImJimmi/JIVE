@@ -20,3 +20,7 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "values/jive_AutoValue.h"
 #include "values/jive_TypedValue.h"
+#include "values/variant-converters/jive_AttributedStringVariantConverters.h"
+#include "values/variant-converters/jive_FlexVariantConverters.h"
+#include "values/variant-converters/jive_GridVariantConverters.h"
+#include "values/variant-converters/jive_MiscVariantConverters.h"
