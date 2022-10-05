@@ -12,6 +12,7 @@ namespace jive
         , component{ std::move(comp) }
         , viewport{ std::move(vp) }
         , parent{ parentItem }
+        , boxModel{ valueTree }
         , name{ tree, "name" }
         , title{ tree, "title" }
         , id{ tree, "id" }

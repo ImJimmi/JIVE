@@ -8,7 +8,7 @@ namespace jive
     {
     public:
         //==============================================================================================================
-        explicit BoxModel(GuiItem& owningItem);
+        explicit BoxModel(juce::ValueTree sourceMarkup);
 
         //==============================================================================================================
         float getWidth() const;
@@ -33,8 +33,7 @@ namespace jive
         float calculateBorderBoundsHeight() const;
 
         //==============================================================================================================
-        const GuiItem& item;
-        juce::ValueTree tree;
+        juce::ValueTree markup;
 
         TypedValue<juce::BorderSize<float>> padding;
         TypedValue<juce::BorderSize<float>> border;

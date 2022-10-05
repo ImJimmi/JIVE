@@ -103,7 +103,7 @@ namespace jive
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
-        BoxModel boxModel{ *this };
+        BoxModel boxModel;
 
         TypedValue<juce::String> name;
         TypedValue<juce::String> title;

@@ -4,25 +4,24 @@
 namespace jive
 {
     //==================================================================================================================
-    BoxModel::BoxModel(GuiItem& owningItem)
-        : item{ owningItem }
-        , tree{ owningItem.getState() }
-        , padding{ tree, "padding" }
-        , border{ tree, "border-width" }
-        , margin{ tree, "margin" }
-        , width{ tree, "width" }
-        , height{ tree, "height" }
-        , explicitWidth{ tree, "explicit-width" }
-        , explicitHeight{ tree, "explicit-height" }
+    BoxModel::BoxModel(juce::ValueTree sourceMarkup)
+        : markup{ sourceMarkup }
+        , padding{ markup, "padding" }
+        , border{ markup, "border-width" }
+        , margin{ markup, "margin" }
+        , width{ markup, "width" }
+        , height{ markup, "height" }
+        , explicitWidth{ markup, "explicit-width" }
+        , explicitHeight{ markup, "explicit-height" }
     {
-        if (tree.getParent().isValid())
+        if (markup.getParent().isValid())
         {
-            parentWidth = std::make_shared<TypedValue<float>>(tree.getParent(), "explicit-width");
+            parentWidth = std::make_shared<TypedValue<float>>(markup.getParent(), "explicit-width");
             parentWidth->onValueChange = [this]() {
                 setWidth(width.calculatePixelValue());
             };
 
-            parentHeight = std::make_shared<TypedValue<float>>(tree.getParent(), "explicit-height");
+            parentHeight = std::make_shared<TypedValue<float>>(markup.getParent(), "explicit-height");
             parentHeight->onValueChange = [this]() {
                 setHeight(height.calculatePixelValue());
             };
@@ -97,18 +96,18 @@ namespace jive
     //==================================================================================================================
     float BoxModel::calculateBorderBoundsWidth() const
     {
-        if (item.isTopLevel())
-            return getWidth();
+        if (markup.getParent().isValid())
+            return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
 
-        return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
+        return getWidth();
     }
 
     float BoxModel::calculateBorderBoundsHeight() const
     {
-        if (item.isTopLevel())
-            return getHeight();
+        if (markup.getParent().isValid())
+            return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();
 
-        return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();
+        return getHeight();
     }
 } // namespace jive
 
@@ -142,7 +141,7 @@ private:
 
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ item };
+        jive::BoxModel box{ tree };
         expectEquals(box.getWidth(), 0.0f);
         expectEquals(box.getHeight(), 0.0f);
 
@@ -158,7 +157,7 @@ private:
 
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ item };
+        jive::BoxModel box{ tree };
 
         expect(box.getPadding() == juce::BorderSize<float>{ 0.f });
 
@@ -181,7 +180,7 @@ private:
 
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ item };
+        jive::BoxModel box{ tree };
 
         expect(box.getBorder() == juce::BorderSize<float>{ 0.f });
 
@@ -196,7 +195,7 @@ private:
 
         juce::ValueTree tree{ "Component" };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ item };
+        jive::BoxModel box{ tree };
 
         expect(box.getMargin() == juce::BorderSize<float>{ 0.f });
 
@@ -211,16 +210,22 @@ private:
 
         juce::ValueTree tree{
             "Component",
+            {},
             {
-                { "width", 100 },
-                { "height", 25 },
-                { "padding", "10 20" },
-                { "border-width", "5" },
-            }
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 100 },
+                        { "height", 25 },
+                        { "padding", "10 20" },
+                        { "border-width", "5" },
+                    },
+                },
+            },
         };
-        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
-        jive::BoxModel box{ item };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        jive::BoxModel box{ tree.getChild(0) };
 
         expectEquals(box.getBorderBounds(), juce::Rectangle<float>{ 0.f, 0.f, 150.f, 55.f });
     }
@@ -231,14 +236,22 @@ private:
 
         juce::ValueTree tree{
             "Component",
-            { { "width", 130 },
-              { "height", 20 },
-              { "padding", "15 5" },
-              { "border-width", "10" } }
+            {},
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 130 },
+                        { "height", 20 },
+                        { "padding", "15 5" },
+                        { "border-width", "10" },
+                    },
+                },
+            },
         };
-        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
-        jive::BoxModel box{ item };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        jive::BoxModel box{ tree.getChild(0) };
 
         expect(box.getPaddingBounds() == juce::Rectangle<float>{ 10.f, 10.f, 140.f, 50.f });
     }
@@ -249,14 +262,22 @@ private:
 
         juce::ValueTree tree{
             "Component",
-            { { "width", 75 },
-              { "height", 55 },
-              { "padding", "30" },
-              { "border-width", "5 10 15 20" } }
+            {},
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", 75 },
+                        { "height", 55 },
+                        { "padding", "30" },
+                        { "border-width", "5 10 15 20" },
+                    },
+                },
+            }
         };
-        jive::GuiItem parentItem{ std::make_unique<juce::Component>(), juce::ValueTree{ "Component" } };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree, &parentItem };
-        jive::BoxModel box{ item };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        jive::BoxModel box{ tree.getChild(0) };
 
         expect(box.getContentBounds() == juce::Rectangle<float>{ 50.f, 35.f, 75.f, 55.f });
     }
@@ -273,7 +294,7 @@ private:
               { "border-width", "5 10 15 20" } }
         };
         jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ item };
+        jive::BoxModel box{ tree };
 
         expect(box.getBorderBounds().getWidth() == 100.f);
         expect(box.getBorderBounds().getHeight() == 100.f);
