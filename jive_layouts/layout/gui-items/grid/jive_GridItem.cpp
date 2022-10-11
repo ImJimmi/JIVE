@@ -6,16 +6,18 @@ namespace jive
     //==================================================================================================================
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , order{ tree, "order" }
-        , justifySelf{ tree, "justify-self", juce::GridItem::JustifySelf::autoValue }
-        , alignSelf{ tree, "align-self", juce::GridItem::AlignSelf::autoValue }
-        , column{ tree, "column", {} }
-        , row{ tree, "row", {} }
-        , area{ tree, "area" }
-        , minWidth{ tree, "min-width" }
-        , maxWidth{ tree, "max-width", juce::GridItem::notAssigned }
-        , minHeight{ tree, "min-height" }
-        , maxHeight{ tree, "max-height", juce::GridItem::notAssigned }
+        , order{ state, "order" }
+        , justifySelf{ state, "justify-self", juce::GridItem::JustifySelf::autoValue }
+        , alignSelf{ state, "align-self", juce::GridItem::AlignSelf::autoValue }
+        , column{ state, "column", {} }
+        , row{ state, "row", {} }
+        , area{ state, "area" }
+        , minWidth{ state, "min-width" }
+        , maxWidth{ state, "max-width", juce::GridItem::notAssigned }
+        , minHeight{ state, "min-height" }
+        , maxHeight{ state, "max-height", juce::GridItem::notAssigned }
+        , width{ state, "width", "auto" }
+        , height{ state, "height", "auto" }
     {
     }
 
@@ -34,7 +36,7 @@ namespace jive
 
     GridItem::operator juce::GridItem()
     {
-        juce::GridItem gridItem{ getViewport() };
+        juce::GridItem gridItem{ getComponent() };
 
         gridItem.order = order;
 
@@ -45,17 +47,25 @@ namespace jive
         gridItem.row = row;
         gridItem.area = area;
 
-        if (!hasAutoWidth())
-            gridItem.width = getBoxModel().getWidth();
-        if (!hasAutoHeight())
-            gridItem.height = getBoxModel().getHeight();
+        if (getTopLevelDecorator().isContent())
+        {
+            gridItem.width = static_cast<float>(boxModel.getWidth());
+            gridItem.height = static_cast<float>(boxModel.getHeight());
+        }
+        else
+        {
+            if (!hasAutoWidth())
+                gridItem.width = width.calculatePixelValue();
+            if (!hasAutoHeight())
+                gridItem.height = height.calculatePixelValue();
+        }
 
         gridItem.minWidth = minWidth;
         gridItem.maxWidth = maxWidth;
         gridItem.minHeight = minHeight;
         gridItem.maxHeight = maxHeight;
 
-        gridItem.margin = boxModelToGridItemMargin(getBoxModel());
+        gridItem.margin = boxModelToGridItemMargin(boxModel);
 
         return gridItem;
     }
@@ -121,7 +131,7 @@ private:
         auto item = createGridItem(tree);
 
         auto gridItem = static_cast<juce::GridItem>(*item);
-        expect(gridItem.associatedComponent == &item->getViewport());
+        expect(gridItem.associatedComponent == &item->getComponent());
     }
 
     void testOrder()

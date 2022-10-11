@@ -63,9 +63,9 @@ namespace jive
     //==================================================================================================================
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator(std::move(itemToDecorate))
-        , editable{ tree, "editable" }
-        , tooltip{ tree, "tooltip" }
-        , selected{ tree, "selected" }
+        , editable{ state, "editable" }
+        , tooltip{ state, "tooltip" }
+        , selected{ state, "selected" }
     {
         editable.onValueChange = [this]() {
             getComboBox().setEditableText(editable);
@@ -80,7 +80,7 @@ namespace jive
         selected.onValueChange = [this]() {
             getComboBox().setSelectedItemIndex(selected);
 
-            auto currentlySelectedOption = tree.getChildWithProperty("selected", true);
+            auto currentlySelectedOption = state.getChildWithProperty("selected", true);
 
             if (currentlySelectedOption.isValid())
                 currentlySelectedOption.setProperty("selected", false, nullptr);
@@ -124,29 +124,29 @@ namespace jive
         options.clear();
         getComboBox().clear();
 
-        for (auto child : tree)
+        for (auto childState : state)
         {
-            if (child.hasType("Option"))
-                options.add(std::make_unique<Option>(child, options.size(), getComboBox()));
-            else if (child.hasType("Header"))
-                headers.add(std::make_unique<Header>(child, *this));
-            else if (child.hasType("Separator"))
+            if (childState.hasType("Option"))
+                options.add(std::make_unique<Option>(childState, options.size(), getComboBox()));
+            else if (childState.hasType("Header"))
+                headers.add(std::make_unique<Header>(childState, *this));
+            else if (childState.hasType("Separator"))
                 getComboBox().addSeparator();
         }
     }
 
     //==================================================================================================================
-    void ComboBox::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& /* child */)
+    void ComboBox::valueTreeChildAdded(juce::ValueTree& parentState, juce::ValueTree& /* child */)
     {
-        if (parentTree != tree)
+        if (parentState != state)
             return;
 
         updateItems();
     }
 
-    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& /* child */, int /* index */)
+    void ComboBox::valueTreeChildRemoved(juce::ValueTree& parentState, juce::ValueTree& /* child */, int /* index */)
     {
-        if (parentTree != tree)
+        if (parentState != state)
             return;
 
         updateItems();

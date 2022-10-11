@@ -30,7 +30,7 @@ namespace jive
         };
 
         //==============================================================================================================
-        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree tree, GuiItem* parent = nullptr);
+        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree stateSource, GuiItem* parent = nullptr);
         GuiItem(const GuiItem& other);
         ~GuiItem();
 
@@ -41,12 +41,8 @@ namespace jive
         virtual void informContentChanged();
 
         //==============================================================================================================
-        juce::ValueTree getState();
-
         const juce::Component& getComponent() const;
         juce::Component& getComponent();
-        const juce::Viewport& getViewport() const;
-        juce::Viewport& getViewport();
 
         virtual void addChild(std::unique_ptr<GuiItem> child);
         virtual int getNumChildren() const;
@@ -58,8 +54,6 @@ namespace jive
         virtual bool isContainer() const;
         virtual bool isContent() const;
 
-        BoxModel getBoxModel() const;
-        Display getDisplay() const;
         bool hasAutoWidth() const;
         bool hasAutoHeight() const;
 
@@ -69,9 +63,12 @@ namespace jive
         virtual Iterator end();
         virtual const Iterator end() const;
 
+        //==============================================================================================================
+        juce::ValueTree state;
+        BoxModel boxModel;
+
     protected:
         //==============================================================================================================
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
@@ -80,10 +77,7 @@ namespace jive
         virtual void contentChanged();
 
         //==============================================================================================================
-        juce::ValueTree tree;
-
         const std::shared_ptr<juce::Component> component;
-        const std::shared_ptr<juce::Viewport> viewport;
         GuiItem* const parent;
 
     private:
@@ -91,19 +85,10 @@ namespace jive
         friend class GuiItemDecorator;
 
         //==============================================================================================================
-        GuiItem(std::shared_ptr<juce::Component> component,
-                std::shared_ptr<juce::Viewport> viewport,
-                juce::ValueTree tree,
-                GuiItem* parent);
-
-        //==============================================================================================================
-        void updateViewportSize();
-        void updateComponentSize();
+        GuiItem(std::shared_ptr<juce::Component> component, GuiItem* parent, juce::ValueTree stateSource);
 
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
-
-        BoxModel boxModel;
 
         TypedValue<juce::String> name;
         TypedValue<juce::String> title;
@@ -124,7 +109,6 @@ namespace jive
         Length width;
         Length height;
         TypedValue<Display> display;
-        TypedValue<Overflow> overflow;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

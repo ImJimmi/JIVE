@@ -4,24 +4,40 @@
 namespace jive
 {
     //==================================================================================================================
-    BoxModel::BoxModel(juce::ValueTree sourceMarkup)
-        : markup{ sourceMarkup }
-        , padding{ markup, "padding" }
-        , border{ markup, "border-width" }
-        , margin{ markup, "margin" }
-        , width{ markup, "width" }
-        , height{ markup, "height" }
-        , explicitWidth{ markup, "explicit-width" }
-        , explicitHeight{ markup, "explicit-height" }
+    BoxModel::BoxModel(std::shared_ptr<juce::Component> comp,
+                       juce::ValueTree stateSource)
+        : state{ stateSource }
+        , component{ comp }
+        , width{ state, "width", "auto" }
+        , height{ state, "height", "auto" }
+        , padding{ state, "padding" }
+        , border{ state, "border-width" }
+        , margin{ state, "margin" }
     {
-        if (markup.getParent().isValid())
+        jassert(component != nullptr);
+
+        width.onValueChange = [this]() {
+            if (!width.isAuto())
+                setWidth(width.calculatePixelValue());
+        };
+        if (!width.isAuto())
+            setWidth(width.calculatePixelValue());
+
+        height.onValueChange = [this]() {
+            if (!height.isAuto())
+                setHeight(height.calculatePixelValue());
+        };
+        if (!height.isAuto())
+            setHeight(height.calculatePixelValue());
+
+        if (state.getParent().isValid())
         {
-            parentWidth = std::make_shared<TypedValue<float>>(markup.getParent(), "explicit-width");
+            parentWidth = std::make_shared<TypedValue<float>>(state.getParent(), "width");
             parentWidth->onValueChange = [this]() {
                 setWidth(width.calculatePixelValue());
             };
 
-            parentHeight = std::make_shared<TypedValue<float>>(markup.getParent(), "explicit-height");
+            parentHeight = std::make_shared<TypedValue<float>>(state.getParent(), "height");
             parentHeight->onValueChange = [this]() {
                 setHeight(height.calculatePixelValue());
             };
@@ -31,24 +47,34 @@ namespace jive
     //==================================================================================================================
     float BoxModel::getWidth() const
     {
-        return explicitWidth;
+        return juce::jmax(0.0f, getContentBounds().getWidth());
     }
 
     void BoxModel::setWidth(float newWidth)
     {
         jassert(newWidth >= 0.0f);
-        explicitWidth = newWidth;
+
+        if (state.getParent().isValid())
+            newWidth += padding.get().getLeftAndRight() + border.get().getLeftAndRight();
+
+        component->setSize(juce::roundToInt(newWidth),
+                           component->getHeight());
     }
 
     float BoxModel::getHeight() const
     {
-        return explicitHeight;
+        return juce::jmax(0.0f, getContentBounds().getHeight());
     }
 
     void BoxModel::setHeight(float newHeight)
     {
         jassert(newHeight >= 0.0f);
-        explicitHeight = newHeight;
+
+        if (state.getParent().isValid())
+            newHeight += padding.get().getTopAndBottom() + border.get().getTopAndBottom();
+
+        component->setSize(component->getWidth(),
+                           juce::roundToInt(newHeight));
     }
 
     juce::BorderSize<float> BoxModel::getPadding() const
@@ -68,7 +94,7 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getBorderBounds() const
     {
-        return { calculateBorderBoundsWidth(), calculateBorderBoundsHeight() };
+        return component->getLocalBounds().toFloat();
     }
 
     juce::Rectangle<float> BoxModel::getPaddingBounds() const
@@ -79,35 +105,6 @@ namespace jive
     juce::Rectangle<float> BoxModel::getContentBounds() const
     {
         return padding.get().subtractedFrom(getPaddingBounds());
-    }
-
-    //==================================================================================================================
-    juce::Rectangle<float> BoxModel::calculateContentBounds(const juce::Component& component)
-    {
-        const auto contentBounds = getBorder().subtractedFrom(getPadding().subtractedFrom(component.getLocalBounds().toFloat()));
-        return {
-            juce::jmax(0.0f, contentBounds.getX()),
-            juce::jmax(0.0f, contentBounds.getY()),
-            juce::jmax(0.0f, contentBounds.getWidth()),
-            juce::jmax(0.0f, contentBounds.getHeight()),
-        };
-    }
-
-    //==================================================================================================================
-    float BoxModel::calculateBorderBoundsWidth() const
-    {
-        if (markup.getParent().isValid())
-            return getWidth() + padding.get().getLeftAndRight() + border.get().getLeftAndRight();
-
-        return getWidth();
-    }
-
-    float BoxModel::calculateBorderBoundsHeight() const
-    {
-        if (markup.getParent().isValid())
-            return getHeight() + padding.get().getTopAndBottom() + border.get().getTopAndBottom();
-
-        return getHeight();
     }
 } // namespace jive
 
@@ -130,7 +127,6 @@ public:
         testBorderBounds();
         testPaddingBounds();
         testContentBounds();
-        testTopLevelItems();
         testParentResizing();
     }
 
@@ -139,16 +135,42 @@ private:
     {
         beginTest("width and height");
 
-        juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ tree };
-        expectEquals(box.getWidth(), 0.0f);
-        expectEquals(box.getHeight(), 0.0f);
+        {
+            juce::ValueTree tree{ "Component" };
+            jive::BoxModel box{ std::make_shared<juce::Component>(), tree };
+            expectEquals(box.getWidth(), 0.0f);
+            expectEquals(box.getHeight(), 0.0f);
 
-        tree.setProperty("width", 312.4f, nullptr);
-        tree.setProperty("height", 846.2f, nullptr);
-        expectEquals(box.getWidth(), 312.4f);
-        expectEquals(box.getHeight(), 846.2f);
+            tree.setProperty("width", 312.4f, nullptr);
+            expectEquals(box.getWidth(), 312.0f);
+
+            tree.setProperty("height", 846.2f, nullptr);
+            expectEquals(box.getHeight(), 846.0f);
+
+            box.setWidth(112.8f);
+            expectEquals(box.getWidth(), 113.0f);
+
+            box.setHeight(839.49f);
+            expectEquals(box.getHeight(), 839.0f);
+        }
+        {
+            juce::ValueTree tree{ "Component" };
+            auto component = std::make_shared<juce::Component>();
+            jive::BoxModel box{ component, tree };
+
+            component->setSize(100, 200);
+            expectEquals(tree["width"], juce::var{ "auto" });
+            expectEquals(tree["height"], juce::var{ "auto" });
+
+            tree.setProperty("width", 334, nullptr);
+            expectEquals(component->getWidth(), 334);
+
+            tree.setProperty("width", "auto", nullptr);
+            expectEquals(component->getWidth(), 334);
+
+            tree.setProperty("height", 990, nullptr);
+            expectEquals(component->getHeight(), 990);
+        }
     }
 
     void testPadding()
@@ -156,9 +178,7 @@ private:
         beginTest("padding");
 
         juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ tree };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree };
         expect(box.getPadding() == juce::BorderSize<float>{ 0.f });
 
         tree.setProperty("padding", 14, nullptr);
@@ -179,13 +199,10 @@ private:
         beginTest("border");
 
         juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ tree };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree };
         expect(box.getBorder() == juce::BorderSize<float>{ 0.f });
 
         tree.setProperty("border-width", "9 8 7 6", nullptr);
-
         expect(box.getBorder() == juce::BorderSize<float>{ 9.f, 6.f, 7.f, 8.f });
     }
 
@@ -194,13 +211,10 @@ private:
         beginTest("margin");
 
         juce::ValueTree tree{ "Component" };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ tree };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree };
         expect(box.getMargin() == juce::BorderSize<float>{ 0.f });
 
         tree.setProperty("margin", "2 4 6 8", nullptr);
-
         expect(box.getMargin() == juce::BorderSize<float>{ 2.f, 8.f, 6.f, 4.f });
     }
 
@@ -223,10 +237,7 @@ private:
                 },
             },
         };
-        jive::Interpreter interpreter;
-        auto item = interpreter.interpret(tree);
-        jive::BoxModel box{ tree.getChild(0) };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree.getChild(0) };
         expectEquals(box.getBorderBounds(), juce::Rectangle<float>{ 0.f, 0.f, 150.f, 55.f });
     }
 
@@ -249,10 +260,7 @@ private:
                 },
             },
         };
-        jive::Interpreter interpreter;
-        auto item = interpreter.interpret(tree);
-        jive::BoxModel box{ tree.getChild(0) };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree.getChild(0) };
         expect(box.getPaddingBounds() == juce::Rectangle<float>{ 10.f, 10.f, 140.f, 50.f });
     }
 
@@ -275,29 +283,8 @@ private:
                 },
             }
         };
-        jive::Interpreter interpreter;
-        auto item = interpreter.interpret(tree);
-        jive::BoxModel box{ tree.getChild(0) };
-
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree.getChild(0) };
         expect(box.getContentBounds() == juce::Rectangle<float>{ 50.f, 35.f, 75.f, 55.f });
-    }
-
-    void testTopLevelItems()
-    {
-        beginTest("top-level-items");
-
-        juce::ValueTree tree{
-            "Component",
-            { { "width", 100 },
-              { "height", 100 },
-              { "padding", "25" },
-              { "border-width", "5 10 15 20" } }
-        };
-        jive::GuiItem item{ std::make_unique<juce::Component>(), tree };
-        jive::BoxModel box{ tree };
-
-        expect(box.getBorderBounds().getWidth() == 100.f);
-        expect(box.getBorderBounds().getHeight() == 100.f);
     }
 
     void testParentResizing()
@@ -320,9 +307,7 @@ private:
                 },
             },
         };
-        jive::Interpreter interpreter;
-        const auto parent = interpreter.interpret(tree);
-        const auto box = parent->getChild(0).getBoxModel();
+        jive::BoxModel box{ std::make_shared<juce::Component>(), tree.getChild(0) };
         expectWithinAbsoluteError(box.getWidth(), 5.0f, 0.00001f);
         expectWithinAbsoluteError(box.getHeight(), 10.0f, 0.00001f);
 

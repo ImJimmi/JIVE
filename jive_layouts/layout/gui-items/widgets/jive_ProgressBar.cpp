@@ -6,7 +6,7 @@ namespace jive
     //==================================================================================================================
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ tree, "value" }
+        , value{ state, "value" }
     {
         value.onValueChange = [this]() {
             getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));

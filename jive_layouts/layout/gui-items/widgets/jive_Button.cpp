@@ -6,12 +6,12 @@ namespace jive
     //==================================================================================================================
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , toggleable{ tree, "toggleable" }
-        , toggled{ tree, "toggled" }
-        , toggleOnClick{ tree, "toggle-on-click" }
-        , radioGroup{ tree, "radio-group" }
-        , triggerEvent{ tree, "trigger-event", TriggerEvent::mouseUp }
-        , tooltip{ tree, "tooltip" }
+        , toggleable{ state, "toggleable" }
+        , toggled{ state, "toggled" }
+        , toggleOnClick{ state, "toggle-on-click" }
+        , radioGroup{ state, "radio-group" }
+        , triggerEvent{ state, "trigger-event", TriggerEvent::mouseUp }
+        , tooltip{ state, "tooltip" }
     {
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);

@@ -51,8 +51,6 @@ namespace jive
         TypedValue<int> velocityThreshold;
         TypedValue<double> velocityOffset;
         TypedValue<bool> snapToMouse;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Slider)

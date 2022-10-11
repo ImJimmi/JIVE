@@ -23,6 +23,8 @@ namespace jive
         TypedValue<float> flexItemShrink;
         TypedValue<float> flexItemBasis;
         TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
+        Length width;
+        Length height;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)

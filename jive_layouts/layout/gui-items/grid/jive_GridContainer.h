@@ -19,6 +19,12 @@ namespace jive
         //==============================================================================================================
         operator juce::Grid();
 
+    protected:
+        //==============================================================================================================
+        void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                     bool wasMoved,
+                                     bool wasResized) override;
+
     private:
         //==============================================================================================================
         juce::Grid getGrid();

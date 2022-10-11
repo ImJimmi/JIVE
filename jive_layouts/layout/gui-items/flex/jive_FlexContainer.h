@@ -19,6 +19,12 @@ namespace jive
         //==============================================================================================================
         operator juce::FlexBox();
 
+    protected:
+        //==============================================================================================================
+        void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                     bool wasMoved,
+                                     bool wasResized) override;
+
     private:
         //==============================================================================================================
         juce::FlexBox getFlexBox();
@@ -35,8 +41,6 @@ namespace jive
         TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
         TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
         TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)

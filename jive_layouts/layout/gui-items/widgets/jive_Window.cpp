@@ -11,23 +11,23 @@ namespace jive
     //==================================================================================================================
     Window::Window(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , hasShadow{ tree, "shadow", true }
-        , isNative{ tree, "native", true }
-        , isResizable{ tree, "resizable", true }
-        , useCornerResizer{ tree, "corner-resizer" }
-        , minWidth{ tree, "min-width", 128.f }
-        , minHeight{ tree, "min-height", 128.f }
-        , maxWidth{ tree, "max-width", 32768.f }
-        , maxHeight{ tree, "max-height", 32768.f }
-        , isDraggable{ tree, "draggable", true }
-        , isFullScreen{ tree, "full-screen" }
-        , isMinimised{ tree, "minimised" }
-        , name{ tree, "name", JUCE_APPLICATION_NAME }
-        , titleBarHeight{ tree, "title-bar-height", 26 }
-        , titleBarButtons{ tree, "title-bar-buttons", juce::DocumentWindow::allButtons }
+        , hasShadow{ state, "shadow", true }
+        , isNative{ state, "native", true }
+        , isResizable{ state, "resizable", true }
+        , useCornerResizer{ state, "corner-resizer" }
+        , minWidth{ state, "min-width", 128.f }
+        , minHeight{ state, "min-height", 128.f }
+        , maxWidth{ state, "max-width", 32768.f }
+        , maxHeight{ state, "max-height", 32768.f }
+        , isDraggable{ state, "draggable", true }
+        , isFullScreen{ state, "full-screen" }
+        , isMinimised{ state, "minimised" }
+        , name{ state, "name", JUCE_APPLICATION_NAME }
+        , titleBarHeight{ state, "title-bar-height", 26 }
+        , titleBarButtons{ state, "title-bar-buttons", juce::DocumentWindow::allButtons }
     {
         static constexpr auto resizeWindowWhenViewportSizeChanges = true;
-        getWindow().setContentNonOwned(&getViewport(), resizeWindowWhenViewportSizeChanges);
+        getWindow().setContentNonOwned(&getComponent(), resizeWindowWhenViewportSizeChanges);
 
         hasShadow.onValueChange = [this]() {
             getWindow().setDropShadowEnabled(hasShadow);

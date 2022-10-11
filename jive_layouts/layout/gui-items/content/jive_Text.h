@@ -45,8 +45,6 @@ namespace jive
         TypedValue<juce::Justification> justification;
         TypedValue<juce::AttributedString::WordWrap> wordWrap;
         TypedValue<juce::AttributedString::ReadingDirection> direction;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)

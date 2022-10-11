@@ -16,7 +16,7 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , border{ tree, "border-width" }
+        , border{ state, "border-width" }
     {
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));

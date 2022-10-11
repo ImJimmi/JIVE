@@ -40,8 +40,6 @@ namespace jive
         //==============================================================================================================
         TypedValue<Drawable> source;
         TypedValue<juce::RectanglePlacement> placement;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
 
         std::unique_ptr<juce::Component> childComponent;
 

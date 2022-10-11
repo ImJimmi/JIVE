@@ -11,22 +11,20 @@ namespace jive
 
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ tree, "value" }
-        , min{ tree, "min" }
-        , max{ tree, "max", "1.0" }
-        , mid{ tree, "mid" }
-        , interval{ tree, "interval" }
-        , orientation{ tree, "orientation" }
-        , width{ tree, "width" }
-        , height{ tree, "height" }
-        , sensitivity{ tree, "sensitivity", 1.0 }
-        , isInVelocityMode{ tree, "velocity-mode" }
-        , velocitySensitivity{ tree, "velocity-sensitivity", 1.0 }
-        , velocityThreshold{ tree, "velocity-threshold", 1 }
-        , velocityOffset{ tree, "velocity-offset" }
-        , snapToMouse{ tree, "snap-to-mouse", true }
-        , explicitWidth{ tree, "explicit-width" }
-        , explicitHeight{ tree, "explicit-height" }
+        , value{ state, "value" }
+        , min{ state, "min" }
+        , max{ state, "max", "1.0" }
+        , mid{ state, "mid" }
+        , interval{ state, "interval" }
+        , orientation{ state, "orientation" }
+        , width{ state, "width" }
+        , height{ state, "height" }
+        , sensitivity{ state, "sensitivity", 1.0 }
+        , isInVelocityMode{ state, "velocity-mode" }
+        , velocitySensitivity{ state, "velocity-sensitivity", 1.0 }
+        , velocityThreshold{ state, "velocity-threshold", 1 }
+        , velocityOffset{ state, "velocity-offset" }
+        , snapToMouse{ state, "snap-to-mouse", true }
     {
         min.onValueChange = [this]() {
             updateRange();
@@ -87,10 +85,10 @@ namespace jive
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
 
-        if (!explicitWidth.exists() || explicitWidth.get() == 0.0f)
-            explicitWidth = defaultWidth;
-        if (!explicitHeight.exists() || explicitHeight.get() == 0.0f)
-            explicitHeight = defaultHeight;
+        if (hasAutoWidth())
+            boxModel.setWidth(defaultWidth);
+        if (hasAutoHeight())
+            boxModel.setHeight(defaultHeight);
     }
 
     //==================================================================================================================
@@ -117,7 +115,7 @@ namespace jive
 
         if (orientation.get().isAuto())
         {
-            if (getBoxModel().getWidth() < getBoxModel().getHeight())
+            if (boxModel.getWidth() < boxModel.getHeight())
                 ori = Orientation::vertical;
             else
                 ori = Orientation::horizontal;
@@ -435,14 +433,14 @@ private:
 
         juce::ValueTree tree{ "Slider" };
         auto item = createSlider(tree);
-        expectEquals(item->getBoxModel().getWidth(), 75.0f);
-        expectEquals(item->getBoxModel().getHeight(), 25.0f);
+        expectEquals(item->boxModel.getWidth(), 75.0f);
+        expectEquals(item->boxModel.getHeight(), 25.0f);
 
         tree.setProperty("width", 123.f, nullptr);
-        expectEquals(item->getBoxModel().getWidth(), 123.f);
+        expectEquals(item->boxModel.getWidth(), 123.f);
 
         tree.setProperty("height", 8839.f, nullptr);
-        expectEquals(item->getBoxModel().getHeight(), 8839.f);
+        expectEquals(item->boxModel.getHeight(), 8839.f);
     }
 };
 

@@ -6,7 +6,7 @@ namespace jive
     //==================================================================================================================
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
         : Slider{ std::move(itemToDecorate), 50.0f, 20.0f }
-        , draggable{ tree, "draggable" }
+        , draggable{ state, "draggable" }
     {
         draggable.onValueChange = [this]() {
             getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
@@ -70,14 +70,14 @@ private:
 
         juce::ValueTree tree{ "Spinner" };
         auto item = createSpinner(tree);
-        expectEquals(item->getBoxModel().getWidth(), 50.0f);
-        expectEquals(item->getBoxModel().getHeight(), 20.0f);
+        expectEquals(item->boxModel.getWidth(), 50.0f);
+        expectEquals(item->boxModel.getHeight(), 20.0f);
 
         tree.setProperty("width", 38.0f, nullptr);
-        expectEquals(item->getBoxModel().getWidth(), 38.0f);
+        expectEquals(item->boxModel.getWidth(), 38.0f);
 
         tree.setProperty("height", 73.0f, nullptr);
-        expectEquals(item->getBoxModel().getHeight(), 73.0f);
+        expectEquals(item->boxModel.getHeight(), 73.0f);
     }
 };
 

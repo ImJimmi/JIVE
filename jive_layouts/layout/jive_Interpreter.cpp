@@ -36,7 +36,9 @@ namespace jive
     //==================================================================================================================
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
-        switch (item->getDisplay())
+        TypedValue<Display> display{ item->state, "display" };
+
+        switch (display.get())
         {
         case Display::flex:
             return std::make_unique<FlexContainer>(std::move(item));
@@ -56,7 +58,9 @@ namespace jive
         if (item->getParent() == nullptr)
             return item;
 
-        switch (item->getParent()->getDisplay())
+        TypedValue<Display> display{ item->state.getParent(), "display" };
+
+        switch (display.get())
         {
         case Display::flex:
             return std::make_unique<FlexItem>(std::move(item));
@@ -73,7 +77,7 @@ namespace jive
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item)
     {
-        const auto name = item->getState().getType().toString();
+        const auto name = item->state.getType().toString();
 
         if (name == "Button" || name == "Checkbox")
             return std::make_unique<Button>(std::move(item));
@@ -124,7 +128,7 @@ namespace jive
         item = decorateWithHereditaryBehaviour(std::move(item));
         item = decorateWithWidgetBehaviour(std::move(item));
 
-        for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->getState().getType(), customDecorators))
+        for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->state.getType(), customDecorators))
             item = (*decorateWithCustomDecorations)(std::move(item));
 
         return item;
@@ -164,7 +168,7 @@ namespace jive
 
     void Interpreter::appendChildItems(GuiItem& item) const
     {
-        for (auto childTree : item.getState())
+        for (auto childTree : item.state)
             appendChild(item, childTree);
     }
 
@@ -343,8 +347,8 @@ private:
                 },
             },
         });
-
-        expectNotEquals(view->getChild(1).getViewport().getPosition(), juce::Point<int>{});
+        expectNotEquals(view->getChild(1).getComponent().getPosition(),
+                        juce::Point<int>{});
     }
 
     void testWindowContent()

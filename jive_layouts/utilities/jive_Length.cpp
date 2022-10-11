@@ -41,9 +41,13 @@ namespace jive
         jassert(tree.getParent().isValid());
 
         if (id.toString().contains("width") || id.toString().contains("x"))
-            return static_cast<double>(tree.getParent()["explicit-width"]);
+        {
+            Length parentWidth{ tree.getParent(), "width" };
+            return static_cast<double>(parentWidth.calculatePixelValue());
+        }
 
-        return static_cast<double>(tree.getParent()["explicit-height"]);
+        Length parentHeight{ tree.getParent(), "height" };
+        return static_cast<double>(parentHeight.calculatePixelValue());
     }
 } // namespace jive
 
@@ -76,8 +80,6 @@ private:
         beginTest("pixels");
 
         juce::ValueTree tree{ "Component" };
-        jive::Interpreter interpreter;
-        auto item = interpreter.interpret(tree);
         jive::Length width{ tree, "width" };
         expect(width.isAuto());
 
@@ -103,8 +105,6 @@ private:
                     juce::ValueTree{ "Component" },
                 }
             };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
             jive::Length width{ tree.getChild(0), "width" };
             width = "50%";
             expectEquals(width.calculatePixelValue(), 20.f);
@@ -112,38 +112,6 @@ private:
             jive::Length height{ tree.getChild(0), "height" };
             height = "20%";
             expectWithinAbsoluteError(height.calculatePixelValue(), 4.f, 0.000001f);
-        }
-        {
-            juce::ValueTree tree{
-                "Component",
-                {
-                    { "width", 40.f },
-                    { "height", 60.f },
-                    { "id", "top-level" },
-                },
-                {
-                    juce::ValueTree{
-                        "Component",
-                        {
-                            { "height", 20.f },
-                            { "id", "mid-level" },
-                        },
-                        {
-                            juce::ValueTree{
-                                "Component",
-                                {
-                                    { "id", "bottom-level" },
-                                },
-                            },
-                        },
-                    },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            jive::Length width{ tree.getChild(0).getChild(0), "width" };
-            width = "25%";
-            expectEquals(width.calculatePixelValue(), 10.f);
         }
     }
 };

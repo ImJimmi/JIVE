@@ -6,16 +6,14 @@ namespace jive
     //==================================================================================================================
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexDirection{ tree, "flex-direction", juce::FlexBox::Direction::column }
-        , flexWrap{ tree, "flex-wrap", juce::FlexBox::Wrap::noWrap }
-        , flexJustifyContent{ tree, "justify-content", juce::FlexBox::JustifyContent::flexStart }
-        , flexAlignItems{ tree, "align-items", juce::FlexBox::AlignItems::stretch }
-        , flexAlignContent{ tree, "align-content", juce::FlexBox::AlignContent::stretch }
-        , explicitWidth{ tree, "explicit-width" }
-        , explicitHeight{ tree, "explicit-height" }
+        , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::column }
+        , flexWrap{ state, "flex-wrap", juce::FlexBox::Wrap::noWrap }
+        , flexJustifyContent{ state, "justify-content", juce::FlexBox::JustifyContent::flexStart }
+        , flexAlignItems{ state, "align-items", juce::FlexBox::AlignItems::stretch }
+        , flexAlignContent{ state, "align-content", juce::FlexBox::AlignContent::stretch }
     {
-        jassert(tree.hasProperty("display"));
-        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
+        jassert(state.hasProperty("display"));
+        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this]() {
             updateLayout();
@@ -33,14 +31,20 @@ namespace jive
             updateLayout();
         };
 
-        updateExplicitSize();
+        if (getNumChildren() > 0)
+            updateExplicitSize();
     }
 
     //==================================================================================================================
     void FlexContainer::updateLayout()
     {
+        const auto bounds = boxModel.getContentBounds();
+
+        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
+            return;
+
         auto flex = static_cast<juce::FlexBox>(*this);
-        flex.performLayout(getBoxModel().getContentBounds());
+        flex.performLayout(bounds);
     }
 
     //==================================================================================================================
@@ -55,6 +59,19 @@ namespace jive
     FlexContainer::operator juce::FlexBox()
     {
         return getFlexBox();
+    }
+
+    //==================================================================================================================
+    void FlexContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                                bool wasMoved,
+                                                bool wasResized)
+    {
+        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+
+        if (!wasResized)
+            return;
+
+        updateLayout();
     }
 
     //==================================================================================================================
@@ -144,13 +161,13 @@ namespace jive
             std::numeric_limits<float>::max(),
         });
 
-        auto box = getBoxModel();
-
         if (hasAutoWidth())
-            box.setWidth(juce::jmax<float>(box.getWidth(), calculateMinimumContentWidth(flex)));
+            boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth(flex)));
 
         if (hasAutoHeight())
-            box.setHeight(juce::jmax<float>(box.getHeight(), calculateMinimumContentHeight(flex)));
+            boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight(flex)));
+
+        updateLayout();
     }
 } // namespace jive
 
@@ -180,7 +197,7 @@ private:
     {
         jive::Interpreter interpreter;
 
-        return std::make_unique<jive::FlexContainer>(interpreter.interpret(tree));
+        return std::unique_ptr<jive::FlexContainer>(dynamic_cast<jive::FlexContainer*>(interpreter.interpret(tree).release()));
     }
 
     void testDirection()
@@ -300,12 +317,12 @@ private:
             },
         };
         auto item = createFlexContainer(tree);
-        expectEquals(item->getChild(0).getViewport().getPosition(), juce::Point<int>{ 0, 0 });
+        expectEquals(item->getChild(0).getComponent().getPosition(), juce::Point<int>{ 0, 0 });
 
         tree.setProperty("padding", "10 20 30 40", nullptr);
-        item->getComponent().setSize(220, 330);
-
-        expectEquals(item->getChild(0).getViewport().getPosition(), juce::Point<int>{ 40, 10 });
+        tree.setProperty("width", 220, nullptr);
+        tree.setProperty("height", 330, nullptr);
+        expectEquals(item->getChild(0).getComponent().getPosition(), juce::Point<int>{ 40, 10 });
     }
 
     void testAutoSize()
@@ -316,37 +333,52 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
-                    { "id", "parent-item" },
-                    { "justify-content", "centre" },
-                    { "padding", 10 },
-                    { "border-width", 5 },
-                    { "margin", 15 },
-                },
-                {
-                    juce::ValueTree{
-                        "Component",
-                        {
-                            { "id", "child1" },
-                            { "width", 100 },
-                            { "height", 25 },
-                            { "padding", 7 },
-                            { "border-width", 3 },
-                        },
-                    },
-                    juce::ValueTree{
-                        "Component",
-                        {
-                            { "id", "child2" },
-                            { "width", 130 },
-                            { "height", 14 },
-                            { "margin", 18 },
-                        },
-                    },
+                    { "display", "flex" },
                 },
             };
             auto item = createFlexContainer(tree);
-            expectEquals(item->getBoxModel().getHeight(), 95.0f);
-            expectEquals(item->getBoxModel().getWidth(), 166.0f);
+            expectEquals(item->boxModel.getWidth(), 0.0f);
+            expectEquals(item->boxModel.getHeight(), 0.0f);
+
+            tree.appendChild(juce::ValueTree{
+                                 "Component",
+                                 {
+                                     { "width", 43 },
+                                     { "height", 84 },
+                                 },
+                             },
+                             nullptr);
+            item = createFlexContainer(tree);
+            expectEquals(item->boxModel.getWidth(), 43.0f);
+            expectEquals(item->boxModel.getHeight(), 84.0f);
+            expectEquals(item->getChild(0).boxModel.getWidth(), 43.0f);
+            expectEquals(item->getChild(0).boxModel.getHeight(), 84.0f);
+
+            tree.appendChild(juce::ValueTree{
+                                 "Component",
+                                 {
+                                     { "width", 37 },
+                                     { "height", 99 },
+                                     { "margin", 5 },
+                                 },
+                             },
+                             nullptr);
+            item = createFlexContainer(tree);
+            expectEquals(item->boxModel.getWidth(), 47.0f);
+            expectEquals(item->boxModel.getHeight(), 193.0f);
+            expectEquals(item->getChild(0).boxModel.getWidth(), 43.0f);
+            expectEquals(item->getChild(0).boxModel.getHeight(), 84.0f);
+            expectEquals(item->getChild(1).boxModel.getWidth(), 37.0f);
+            expectEquals(item->getChild(1).boxModel.getHeight(), 99.0f);
+
+            tree.setProperty("flex-direction", "row", nullptr);
+            item = createFlexContainer(tree);
+            expectEquals(item->boxModel.getWidth(), 90.0f);
+            expectEquals(item->boxModel.getHeight(), 109.0f);
+            expectEquals(item->getChild(0).boxModel.getWidth(), 43.0f);
+            expectEquals(item->getChild(0).boxModel.getHeight(), 84.0f);
+            expectEquals(item->getChild(1).boxModel.getWidth(), 37.0f);
+            expectEquals(item->getChild(1).boxModel.getHeight(), 99.0f);
         }
     }
 };

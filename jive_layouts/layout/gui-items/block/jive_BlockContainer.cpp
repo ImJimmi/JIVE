@@ -7,8 +7,8 @@ namespace jive
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
     {
-        jassert(tree.hasProperty("display"));
-        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::block));
+        jassert(state.hasProperty("display"));
+        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
     //==================================================================================================================
@@ -21,6 +21,17 @@ namespace jive
             child.updatePosition();
             child.updateSize();
         }
+    }
+
+    //==================================================================================================================
+    void BlockContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                                 bool wasMoved,
+                                                 bool wasResized)
+    {
+        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+
+        for (auto& child : *this)
+            child.updatePosition();
     }
 } // namespace jive
 
@@ -66,14 +77,14 @@ private:
             },
         };
         auto item = createBlockContainer(tree);
-        expectEquals(item->getChild(0).getViewport().getX(), 0);
-        expectEquals(item->getChild(0).getViewport().getHeight(), 0);
+        expectEquals(item->getChild(0).getComponent().getX(), 0);
+        expectEquals(item->getChild(0).getComponent().getHeight(), 0);
 
         tree.setProperty("width", 300, nullptr);
-        expectEquals(item->getChild(0).getViewport().getX(), 150);
+        expectEquals(item->getChild(0).getComponent().getX(), 150);
 
         tree.setProperty("height", 100, nullptr);
-        expectEquals(item->getChild(0).getViewport().getHeight(), 10);
+        expectEquals(item->getChild(0).getComponent().getHeight(), 10);
     }
 };
 

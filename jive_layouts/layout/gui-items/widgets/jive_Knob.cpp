@@ -64,14 +64,14 @@ private:
 
         juce::ValueTree tree{ "Knob" };
         auto item = createKnob(tree);
-        expectEquals(item->getBoxModel().getWidth(), 55.0f);
-        expectEquals(item->getBoxModel().getHeight(), 55.0f);
+        expectEquals(item->boxModel.getWidth(), 55.0f);
+        expectEquals(item->boxModel.getHeight(), 55.0f);
 
         tree.setProperty("width", 100.0f, nullptr);
-        expectEquals(item->getBoxModel().getWidth(), 100.0f);
+        expectEquals(item->boxModel.getWidth(), 100.0f);
 
         tree.setProperty("height", 78.0f, nullptr);
-        expectEquals(item->getBoxModel().getHeight(), 78.0f);
+        expectEquals(item->boxModel.getHeight(), 78.0f);
     }
 };
 

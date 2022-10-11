@@ -6,10 +6,10 @@ namespace jive
     //==================================================================================================================
     BlockItem::BlockItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , x{ tree, "x" }
-        , y{ tree, "y" }
-        , centreX{ tree, "centre-x" }
-        , centreY{ tree, "centre-y" }
+        , x{ state, "x" }
+        , y{ state, "y" }
+        , centreX{ state, "centre-x" }
+        , centreY{ state, "centre-y" }
     {
         x.onValueChange = [this]() {
             centreX.clear();
@@ -34,14 +34,14 @@ namespace jive
     void BlockItem::updatePosition()
     {
         GuiItemDecorator::updatePosition();
-        getViewport().setTopLeftPosition(calculatePosition());
+        getComponent().setTopLeftPosition(calculatePosition());
     }
 
     //==================================================================================================================
     int BlockItem::calculateX() const
     {
         if (centreX.exists())
-            return juce::roundToInt(centreX.calculatePixelValue() - getBoxModel().getWidth() / 2.f);
+            return juce::roundToInt(centreX.calculatePixelValue() - boxModel.getWidth() / 2.f);
 
         return juce::roundToInt(x.calculatePixelValue());
     }
@@ -49,14 +49,14 @@ namespace jive
     int BlockItem::calculateY() const
     {
         if (centreY.exists())
-            return juce::roundToInt(centreY.calculatePixelValue() - getBoxModel().getHeight() / 2.f);
+            return juce::roundToInt(centreY.calculatePixelValue() - boxModel.getHeight() / 2.f);
 
         return juce::roundToInt(y.calculatePixelValue());
     }
 
     juce::Point<int> BlockItem::calculatePosition() const
     {
-        return getParent()->getBoxModel().getContentBounds().getPosition().roundToInt()
+        return getParent()->boxModel.getContentBounds().getPosition().roundToInt()
              + juce::Point<int>{ calculateX(), calculateY() };
     }
 } // namespace jive
@@ -82,7 +82,6 @@ private:
     std::unique_ptr<jive::BlockContainer> createBlockContainer(juce::ValueTree tree)
     {
         jive::Interpreter interpreter;
-
         return std::make_unique<jive::BlockContainer>(interpreter.interpret(tree));
     }
 
@@ -106,14 +105,13 @@ private:
             };
             const auto container = createBlockContainer(tree);
             const auto item = container->getChild(0);
-
-            expectEquals(item.getViewport().getX(), 25);
-            expectEquals(item.getViewport().getY(), 25);
+            expectEquals(item.getComponent().getX(), 25);
+            expectEquals(item.getComponent().getY(), 25);
 
             tree.getChild(0).setProperty("x", 10.4f, nullptr);
             tree.getChild(0).setProperty("y", 20.89f, nullptr);
-            expectEquals(item.getViewport().getX(), 35);
-            expectEquals(item.getViewport().getY(), 46);
+            expectEquals(item.getComponent().getX(), 35);
+            expectEquals(item.getComponent().getY(), 46);
         }
         {
             juce::ValueTree tree{
@@ -135,8 +133,8 @@ private:
             };
             const auto container = createBlockContainer(tree);
             const auto item = container->getChild(0);
-            expectEquals(item.getViewport().getX(), 40);
-            expectEquals(item.getViewport().getY(), 50);
+            expectEquals(item.getComponent().getX(), 40);
+            expectEquals(item.getComponent().getY(), 50);
         }
         {
             juce::ValueTree tree{
@@ -160,13 +158,13 @@ private:
             auto parent = interpreter.interpret(tree);
             auto child = parent->getChild(0);
 
-            expectEquals(child.getViewport().getX(), 10);
-            expectEquals(child.getViewport().getY(), 30);
+            expectEquals(child.getComponent().getX(), 10);
+            expectEquals(child.getComponent().getY(), 30);
 
             tree.getChild(0).setProperty("x", "10%", nullptr);
             tree.getChild(0).setProperty("y", "33.3333333333333%", nullptr);
-            expectEquals(child.getViewport().getX(), 5);
-            expectEquals(child.getViewport().getY(), 20);
+            expectEquals(child.getComponent().getX(), 5);
+            expectEquals(child.getComponent().getY(), 20);
         }
     }
 
@@ -193,14 +191,14 @@ private:
             const auto container = createBlockContainer(tree);
             const auto item = container->getChild(0);
 
-            expectEquals(item.getViewport().getBounds().getCentreX(), 25);
-            expectEquals(item.getViewport().getBounds().getCentreY(), 25);
+            expectEquals(item.getComponent().getBounds().getCentreX(), 25);
+            expectEquals(item.getComponent().getBounds().getCentreY(), 25);
 
             tree.getChild(0).setProperty("centre-x", 12.3f, nullptr);
             tree.getChild(0).setProperty("centre-y", 98.7f, nullptr);
 
-            expectEquals(item.getViewport().getBounds().getCentreX(), 12);
-            expectEquals(item.getViewport().getBounds().getCentreY(), 99);
+            expectEquals(item.getComponent().getBounds().getCentreX(), 12);
+            expectEquals(item.getComponent().getBounds().getCentreY(), 99);
         }
         {
             juce::ValueTree tree{
@@ -223,14 +221,14 @@ private:
             const auto container = createBlockContainer(tree);
             const auto item = container->getChild(0);
 
-            expect(item.getViewport().getBounds().getCentreX() == 85);
-            expect(item.getViewport().getBounds().getCentreY() == 43);
+            expect(item.getComponent().getBounds().getCentreX() == 85);
+            expect(item.getComponent().getBounds().getCentreY() == 43);
 
             tree.getChild(0).setProperty("x", 66, nullptr);
-            expectEquals(item.getViewport().getX(), 66);
+            expectEquals(item.getComponent().getX(), 66);
 
             tree.getChild(0).setProperty("centre-x", 44, nullptr);
-            expectEquals(item.getViewport().getBounds().getCentreX(), 44);
+            expectEquals(item.getComponent().getBounds().getCentreX(), 44);
         }
         {
             juce::ValueTree tree{
@@ -254,13 +252,13 @@ private:
             auto parent = interpreter.interpret(tree);
             auto child = parent->getChild(0);
 
-            expectEquals(child.getViewport().getX(), 1);
-            expectEquals(child.getViewport().getY(), 93);
+            expectEquals(child.getComponent().getX(), 1);
+            expectEquals(child.getComponent().getY(), 93);
 
             tree.getChild(0).setProperty("x", "97.8%", nullptr);
             tree.getChild(0).setProperty("y", "10%", nullptr);
-            expectEquals(child.getViewport().getX(), 98);
-            expectEquals(child.getViewport().getY(), 25);
+            expectEquals(child.getComponent().getX(), 98);
+            expectEquals(child.getComponent().getY(), 25);
         }
     }
 
@@ -282,13 +280,13 @@ private:
         const auto container = createBlockContainer(tree);
         const auto item = container->getChild(0);
 
-        expectEquals(item.getViewport().getWidth(), 0);
-        expectEquals(item.getViewport().getHeight(), 0);
+        expectEquals(item.getComponent().getWidth(), 0);
+        expectEquals(item.getComponent().getHeight(), 0);
 
         tree.getChild(0).setProperty("width", 10.4f, nullptr);
         tree.getChild(0).setProperty("height", 20.89f, nullptr);
-        expectEquals(item.getViewport().getWidth(), 10);
-        expectEquals(item.getViewport().getHeight(), 21);
+        expectEquals(item.getComponent().getWidth(), 10);
+        expectEquals(item.getComponent().getHeight(), 21);
     }
 };
 

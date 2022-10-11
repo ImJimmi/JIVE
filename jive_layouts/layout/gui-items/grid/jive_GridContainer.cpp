@@ -6,25 +6,24 @@ namespace jive
     //==================================================================================================================
     GridContainer::GridContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator(std::move(itemToDecorate))
-        , justifyItems{ tree, "justify-items", juce::Grid::JustifyItems::stretch }
-        , alignItems{ tree, "align-items", juce::Grid::AlignItems::stretch }
-        , justifyContent{ tree, "justify-content", juce::Grid::JustifyContent::stretch }
-        , alignContent{ tree, "align-content", juce::Grid::AlignContent::stretch }
-        , autoFlow{ tree, "auto-flow", juce::Grid::AutoFlow::row }
-        , templateColumns{ tree, "template-columns" }
-        , templateRows{ tree, "template-rows" }
-        , templateAreas{ tree, "template-areas" }
-        , autoRows{ tree, "auto-rows", {} }
-        , autoColumns{ tree, "auto-columns", {} }
-        , gap{ tree, "gap" }
+        , justifyItems{ state, "justify-items", juce::Grid::JustifyItems::stretch }
+        , alignItems{ state, "align-items", juce::Grid::AlignItems::stretch }
+        , justifyContent{ state, "justify-content", juce::Grid::JustifyContent::stretch }
+        , alignContent{ state, "align-content", juce::Grid::AlignContent::stretch }
+        , autoFlow{ state, "auto-flow", juce::Grid::AutoFlow::row }
+        , templateColumns{ state, "template-columns" }
+        , templateRows{ state, "template-rows" }
+        , templateAreas{ state, "template-areas" }
+        , autoRows{ state, "auto-rows", {} }
+        , autoColumns{ state, "auto-columns", {} }
+        , gap{ state, "gap" }
     {
-        jassert(tree.hasProperty("display"));
-        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
+        jassert(state.hasProperty("display"));
+        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
 
         const auto setExplicitWidthAndHeight = [this]() {
-            auto box = getBoxModel();
-            box.setWidth(juce::jmax(box.getWidth(), calculateMinimumContentWidth()));
-            box.setHeight(juce::jmax(box.getHeight(), calculateMinimumContentHeight()));
+            boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth()));
+            boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight()));
         };
 
         justifyItems.onValueChange = setExplicitWidthAndHeight;
@@ -44,7 +43,7 @@ namespace jive
     void GridContainer::updateLayout()
     {
         auto grid = getGrid();
-        const auto bounds = getBoxModel().getContentBounds().toNearestInt();
+        const auto bounds = boxModel.getContentBounds().toNearestInt();
 
         grid.performLayout(bounds);
     }
@@ -54,15 +53,27 @@ namespace jive
     {
         GuiItemDecorator::addChild(std::move(child));
 
-        auto box = getBoxModel();
-        box.setWidth(juce::jmax(box.getWidth(), calculateMinimumContentWidth()));
-        box.setHeight(juce::jmax(box.getHeight(), calculateMinimumContentHeight()));
+        boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth()));
+        boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight()));
     }
 
     //==================================================================================================================
     GridContainer::operator juce::Grid()
     {
         return getGrid();
+    }
+
+    //==================================================================================================================
+    void GridContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                                bool wasMoved,
+                                                bool wasResized)
+    {
+        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+
+        if (!wasResized)
+            return;
+
+        updateLayout();
     }
 
     //==================================================================================================================
@@ -583,9 +594,9 @@ private:
         item->addChild(createGridItem(item.get()));
         item->addChild(createGridItem(item.get()));
 
-        item->getViewport().setSize(200, 200);
-        expectGreaterThan(item->getChild(0).getViewport().getWidth(), 0);
-        expectGreaterThan(item->getChild(1).getViewport().getWidth(), 0);
+        item->getComponent().setSize(200, 200);
+        expectGreaterThan(item->getChild(0).getComponent().getWidth(), 0);
+        expectGreaterThan(item->getChild(1).getComponent().getWidth(), 0);
     }
 
     void testAutoSize()
@@ -606,8 +617,8 @@ private:
         item->addChild(createGridItem(item.get()));
         item->addChild(createGridItem(item.get()));
 
-        expectEquals(item->getBoxModel().getWidth(), 25.f);
-        expectEquals(item->getBoxModel().getHeight(), 15.f);
+        expectEquals(item->boxModel.getWidth(), 25.f);
+        expectEquals(item->boxModel.getHeight(), 15.f);
     }
 };
 

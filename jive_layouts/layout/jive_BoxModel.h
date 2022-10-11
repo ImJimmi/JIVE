@@ -4,11 +4,12 @@
 namespace jive
 {
     //==================================================================================================================
-    class BoxModel
+    class BoxModel : private juce::ComponentListener
     {
     public:
         //==============================================================================================================
-        explicit BoxModel(juce::ValueTree sourceMarkup);
+        BoxModel(std::shared_ptr<juce::Component> component,
+                 juce::ValueTree stateSource);
 
         //==============================================================================================================
         float getWidth() const;
@@ -27,22 +28,22 @@ namespace jive
         //==============================================================================================================
         juce::Rectangle<float> calculateContentBounds(const juce::Component& component);
 
+        //==============================================================================================================
+        juce::ValueTree state;
+
     private:
         //==============================================================================================================
-        float calculateBorderBoundsWidth() const;
-        float calculateBorderBoundsHeight() const;
+        const std::shared_ptr<juce::Component> component;
 
-        //==============================================================================================================
-        juce::ValueTree markup;
-
+        Length width;
+        Length height;
         TypedValue<juce::BorderSize<float>> padding;
         TypedValue<juce::BorderSize<float>> border;
         TypedValue<juce::BorderSize<float>> margin;
-        Length width;
-        Length height;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
         std::shared_ptr<TypedValue<float>> parentWidth;
         std::shared_ptr<TypedValue<float>> parentHeight;
+
+        //==============================================================================================================
+        JUCE_LEAK_DETECTOR(BoxModel)
     };
 } // namespace jive
