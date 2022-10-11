@@ -73,12 +73,12 @@ namespace jive
     //==================================================================================================================
     TextComponent& Text::getTextComponent()
     {
-        return dynamic_cast<TextComponent&>(getComponent());
+        return dynamic_cast<TextComponent&>(*component);
     }
 
     const TextComponent& Text::getTextComponent() const
     {
-        return dynamic_cast<const TextComponent&>(getComponent());
+        return dynamic_cast<const TextComponent&>(*component);
     }
 
     //==================================================================================================================
@@ -89,7 +89,7 @@ namespace jive
 
     void Text::componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged)
     {
-        if (&componentWhoseParentHierarchyChanged != &getComponent())
+        if (&componentWhoseParentHierarchyChanged != component.get())
             return;
 
         if (auto* parentItem = getParent())
@@ -499,7 +499,7 @@ private:
                              nullptr);
             expectEquals<juce::String>(item->getTextComponent().getAttributedString().getText(),
                                        "Nested.");
-            expectEquals(item->getComponent().getNumChildComponents(), 0);
+            expectEquals(item->getComponent()->getNumChildComponents(), 0);
             tree.appendChild(juce::ValueTree{
                                  "Text",
                                  {
@@ -509,7 +509,7 @@ private:
                              nullptr);
             expectEquals<juce::String>(item->getTextComponent().getAttributedString().getText(),
                                        "Nested. Sentence two.");
-            expectEquals(item->getComponent().getNumChildComponents(), 0);
+            expectEquals(item->getComponent()->getNumChildComponents(), 0);
         }
         {
             juce::ValueTree tree{
@@ -559,10 +559,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            expectEquals(item->getComponent()
-                             .getNumChildComponents(),
+            expectEquals(item->getComponent()->getNumChildComponents(),
                          1);
-            expectEquals(item->getChild(0).getComponent().getNumChildComponents(),
+            expectEquals(item->getChild(0).getComponent()->getNumChildComponents(),
                          0);
             expectEquals(item->getChild(0).getNumChildren(),
                          0);
@@ -592,7 +591,7 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            const auto font = dynamic_cast<jive::TextComponent&>(item->getChild(0).getComponent())
+            const auto font = dynamic_cast<jive::TextComponent&>(*item->getChild(0).getComponent())
                                   .getAttributedString()
                                   .getAttribute(0)
                                   .font;

@@ -100,12 +100,12 @@ namespace jive
     //==================================================================================================================
     juce::Slider& Slider::getSlider()
     {
-        return *dynamic_cast<juce::Slider*>(&getComponent());
+        return *dynamic_cast<juce::Slider*>(component.get());
     }
 
     const juce::Slider& Slider::getSlider() const
     {
-        return *dynamic_cast<const juce::Slider*>(&getComponent());
+        return *dynamic_cast<const juce::Slider*>(component.get());
     }
 
     //==================================================================================================================

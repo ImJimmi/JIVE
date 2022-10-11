@@ -21,6 +21,9 @@ namespace jive
         int getNumChildren() const override;
         GuiItem& getChild(int index) const override;
 
+        GuiItemDecorator& getTopLevelDecorator();
+        const GuiItemDecorator& getTopLevelDecorator() const;
+
         template <typename ItemType>
         ItemType* toType()
         {
@@ -37,11 +40,6 @@ namespace jive
         const Iterator begin() const override;
         Iterator end() override;
         const Iterator end() const override;
-
-    protected:
-        //==============================================================================================================
-        GuiItemDecorator& getTopLevelDecorator();
-        const GuiItemDecorator& getTopLevelDecorator() const;
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

@@ -4,12 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
-    class BoxModel : private juce::ComponentListener
+    class BoxModel
     {
     public:
         //==============================================================================================================
-        BoxModel(std::shared_ptr<juce::Component> component,
-                 juce::ValueTree stateSource);
+        explicit BoxModel(juce::ValueTree stateSource);
 
         //==============================================================================================================
         float getWidth() const;
@@ -26,15 +25,10 @@ namespace jive
         juce::Rectangle<float> getContentBounds() const;
 
         //==============================================================================================================
-        juce::Rectangle<float> calculateContentBounds(const juce::Component& component);
-
-        //==============================================================================================================
         juce::ValueTree state;
 
     private:
         //==============================================================================================================
-        const std::shared_ptr<juce::Component> component;
-
         Length width;
         Length height;
         TypedValue<juce::BorderSize<float>> padding;
@@ -42,6 +36,9 @@ namespace jive
         TypedValue<juce::BorderSize<float>> margin;
         std::shared_ptr<TypedValue<float>> parentWidth;
         std::shared_ptr<TypedValue<float>> parentHeight;
+        TypedValue<float> componentWidth;
+        TypedValue<float> componentHeight;
+        std::unique_ptr<BoxModel> parentBoxModel;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(BoxModel)

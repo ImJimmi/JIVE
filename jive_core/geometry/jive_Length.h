@@ -11,7 +11,7 @@ namespace jive
         using TypedValue<juce::String>::TypedValue;
 
         //==============================================================================================================
-        float calculatePixelValue() const;
+        float toPixels(const juce::Rectangle<float>& parentBounds) const;
 
         //==============================================================================================================
         bool isAuto() const;
@@ -26,6 +26,6 @@ namespace jive
 
     private:
         //==============================================================================================================
-        double getRelativeParentLength() const;
+        double getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const;
     };
 } // namespace jive

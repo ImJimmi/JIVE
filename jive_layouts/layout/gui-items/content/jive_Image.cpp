@@ -19,7 +19,7 @@ namespace jive
         };
 
         setChildComponent(createChildComponent());
-        getComponent().setInterceptsMouseClicks(false, false);
+        component->setInterceptsMouseClicks(false, false);
         updateExplicitSize();
     }
 
@@ -46,13 +46,13 @@ namespace jive
     {
         GuiItemDecorator::componentMovedOrResized(componentThatMovedOrResized, wasMoved, wasResized);
 
-        if (&componentThatMovedOrResized != &getComponent())
+        if (&componentThatMovedOrResized != component.get())
             return;
         if (!wasResized)
             return;
 
         if (childComponent != nullptr)
-            childComponent->setBounds(getComponent().getLocalBounds());
+            childComponent->setBounds(component->getLocalBounds());
 
         updateExplicitSize();
     }
@@ -147,8 +147,8 @@ namespace jive
         if (childComponent == nullptr)
             return;
 
-        getComponent().addAndMakeVisible(*childComponent);
-        childComponent->setBounds(getComponent().getLocalBounds());
+        component->addAndMakeVisible(*childComponent);
+        childComponent->setBounds(component->getLocalBounds());
 
         if (auto* parentItem = getParent())
             parentItem->informContentChanged();
@@ -209,7 +209,7 @@ private:
             expectEquals(static_cast<juce::Image>(item->getDrawable()).getWidth(), image.getWidth());
             expectEquals(static_cast<juce::Image>(item->getDrawable()).getHeight(), image.getHeight());
             expect(static_cast<juce::Image>(item->getDrawable()).getPixelData() == image.getPixelData());
-            expect(dynamic_cast<juce::ImageComponent*>(item->getComponent().getChildComponent(0)) != nullptr);
+            expect(dynamic_cast<juce::ImageComponent*>(item->getComponent()->getChildComponent(0)) != nullptr);
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
@@ -239,7 +239,7 @@ private:
                 },
             };
             auto item = createImage(tree);
-            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent().getChildComponent(0));
+            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent()->getChildComponent(0));
             expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::centred));
 
             tree.setProperty("placement", "top right reduce-only", nullptr);
@@ -256,7 +256,7 @@ private:
                 },
             };
             auto item = createImage(tree);
-            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent().getChildComponent(0));
+            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent()->getChildComponent(0));
             expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::stretchToFit
                                                        + juce::RectanglePlacement::fillDestination
                                                        + juce::RectanglePlacement::onlyIncreaseInSize));
@@ -280,16 +280,16 @@ private:
                 },
             };
             auto item = createImage(tree);
-            expectEquals(item->getComponent().getNumChildComponents(), 1);
+            expectEquals(item->getComponent()->getNumChildComponents(), 1);
 
-            auto& child = *item->getComponent().getChildComponent(0);
+            auto& child = *item->getComponent()->getChildComponent(0);
             expectEquals(child.getBounds(),
-                         { 0, 0, item->getComponent().getWidth(), item->getComponent().getHeight() });
+                         { 0, 0, item->getComponent()->getWidth(), item->getComponent()->getHeight() });
 
             tree.setProperty("width", 134, nullptr);
             tree.setProperty("height", 590, nullptr);
             expectEquals(child.getBounds(),
-                         { 0, 0, item->getComponent().getWidth(), item->getComponent().getHeight() });
+                         { 0, 0, item->getComponent()->getWidth(), item->getComponent()->getHeight() });
         }
     }
 
@@ -310,7 +310,7 @@ private:
 
             tree.setProperty("source", svg, nullptr);
             expect(item->getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(item->getComponent().getChildComponent(0)) != nullptr);
+            expect(dynamic_cast<juce::Drawable*>(item->getComponent()->getChildComponent(0)) != nullptr);
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
@@ -342,7 +342,7 @@ private:
             };
             auto item = createImage(tree);
             expect(item->getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(item->getComponent().getChildComponent(0)) != nullptr);
+            expect(dynamic_cast<juce::Drawable*>(item->getComponent()->getChildComponent(0)) != nullptr);
         }
     }
 

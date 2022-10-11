@@ -19,7 +19,11 @@ namespace jive
         for (auto& child : *this)
         {
             child.updatePosition();
-            child.updateSize();
+
+            BoxModel childBoxModel{ child.state };
+            const auto childContentBounds = childBoxModel.getContentBounds();
+            child.getComponent()->setSize(juce::roundToInt(childContentBounds.getWidth()),
+                                          juce::roundToInt(childContentBounds.getHeight()));
         }
     }
 
@@ -30,8 +34,10 @@ namespace jive
     {
         GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
 
-        for (auto& child : *this)
-            child.updatePosition();
+        if (!wasResized)
+            return;
+
+        updateLayout();
     }
 } // namespace jive
 
@@ -50,22 +56,15 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::BlockContainer> createBlockContainer(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-
-        tree.setProperty("display", "block", nullptr);
-
-        return std::make_unique<jive::BlockContainer>(interpreter.interpret(tree));
-    }
-
     void testLayout()
     {
         beginTest("layout");
 
-        juce::ValueTree tree{
+        juce::ValueTree state{
             "Component",
-            {},
+            {
+                { "display", "block" },
+            },
             {
                 juce::ValueTree{
                     "Component",
@@ -76,15 +75,16 @@ private:
                 },
             },
         };
-        auto item = createBlockContainer(tree);
-        expectEquals(item->getChild(0).getComponent().getX(), 0);
-        expectEquals(item->getChild(0).getComponent().getHeight(), 0);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(state);
+        expectEquals(item->getChild(0).getComponent()->getX(), 0);
+        expectEquals(item->getChild(0).getComponent()->getHeight(), 0);
 
-        tree.setProperty("width", 300, nullptr);
-        expectEquals(item->getChild(0).getComponent().getX(), 150);
+        state.setProperty("width", 300, nullptr);
+        expectEquals(item->getChild(0).getComponent()->getX(), 150);
 
-        tree.setProperty("height", 100, nullptr);
-        expectEquals(item->getChild(0).getComponent().getHeight(), 10);
+        state.setProperty("height", 100, nullptr);
+        expectEquals(item->getChild(0).getComponent()->getHeight(), 10);
     }
 };
 

@@ -236,7 +236,7 @@ private:
             auto view = interpreter.interpret(juce::ValueTree{ "Component" });
 
             expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
         }
         {
             juce::ValueTree tree{
@@ -248,7 +248,7 @@ private:
             auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
         }
         {
             juce::ValueTree tree{
@@ -264,10 +264,10 @@ private:
             auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
 
             expect(view->getChild(0).getNumChildren() == tree.getChild(0).getNumChildren());
-            expect(view->getChild(0).getComponent().getNumChildComponents() == tree.getChild(0).getNumChildren());
+            expect(view->getChild(0).getComponent()->getNumChildComponents() == tree.getChild(0).getNumChildren());
         }
     }
 
@@ -347,7 +347,7 @@ private:
                 },
             },
         });
-        expectNotEquals(view->getChild(1).getComponent().getPosition(),
+        expectNotEquals(view->getChild(1).getComponent()->getPosition(),
                         juce::Point<int>{});
     }
 

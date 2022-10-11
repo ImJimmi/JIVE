@@ -14,6 +14,10 @@ namespace jive
         juce::DocumentWindow& getWindow();
         const juce::DocumentWindow& getWindow() const;
 
+    protected:
+        //==============================================================================================================
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+
     private:
         //==============================================================================================================
         int getStyleFlags() const;
@@ -35,6 +39,8 @@ namespace jive
         TypedValue<juce::String> name;
         TypedValue<float> titleBarHeight;
         TypedValue<juce::DocumentWindow::TitleBarButtons> titleBarButtons;
+        Length width;
+        Length height;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Window)

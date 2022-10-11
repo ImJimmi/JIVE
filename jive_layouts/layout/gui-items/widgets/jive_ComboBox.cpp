@@ -110,12 +110,12 @@ namespace jive
     //==================================================================================================================
     juce::ComboBox& ComboBox::getComboBox()
     {
-        return *dynamic_cast<juce::ComboBox*>(&getComponent());
+        return *dynamic_cast<juce::ComboBox*>(component.get());
     }
 
     const juce::ComboBox& ComboBox::getComboBox() const
     {
-        return *dynamic_cast<const juce::ComboBox*>(&getComponent());
+        return *dynamic_cast<const juce::ComboBox*>(component.get());
     }
 
     //==================================================================================================================

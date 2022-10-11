@@ -49,6 +49,22 @@ namespace jive
         return item->getChild(index);
     }
 
+    GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
+    }
+
+    const GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator() const
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
+    }
+
     //==================================================================================================================
     GuiItem::Iterator GuiItemDecorator::begin()
     {
@@ -68,22 +84,5 @@ namespace jive
     const GuiItem::Iterator GuiItemDecorator::end() const
     {
         return std::end(*item);
-    }
-
-    //==================================================================================================================
-    GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
-    {
-        if (owner != nullptr)
-            return owner->getTopLevelDecorator();
-
-        return *this;
-    }
-
-    const GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator() const
-    {
-        if (owner != nullptr)
-            return owner->getTopLevelDecorator();
-
-        return *this;
     }
 } // namespace jive

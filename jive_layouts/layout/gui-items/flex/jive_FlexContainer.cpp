@@ -16,19 +16,19 @@ namespace jive
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this]() {
-            updateLayout();
+            updateExplicitSize();
         };
         flexWrap.onValueChange = [this]() {
-            updateLayout();
+            updateExplicitSize();
         };
         flexJustifyContent.onValueChange = [this]() {
-            updateLayout();
+            updateExplicitSize();
         };
         flexAlignItems.onValueChange = [this]() {
-            updateLayout();
+            updateExplicitSize();
         };
         flexAlignContent.onValueChange = [this]() {
-            updateLayout();
+            updateExplicitSize();
         };
 
         if (getNumChildren() > 0)
@@ -162,10 +162,10 @@ namespace jive
         });
 
         if (hasAutoWidth())
-            boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth(flex)));
+            boxModel.setWidth(juce::jmax(0.0f, calculateMinimumContentWidth(flex)));
 
         if (hasAutoHeight())
-            boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight(flex)));
+            boxModel.setHeight(juce::jmax(0.0f, calculateMinimumContentHeight(flex)));
 
         updateLayout();
     }
@@ -317,12 +317,12 @@ private:
             },
         };
         auto item = createFlexContainer(tree);
-        expectEquals(item->getChild(0).getComponent().getPosition(), juce::Point<int>{ 0, 0 });
+        expectEquals(item->getChild(0).getComponent()->getPosition(), juce::Point<int>{ 0, 0 });
 
         tree.setProperty("padding", "10 20 30 40", nullptr);
         tree.setProperty("width", 220, nullptr);
         tree.setProperty("height", 330, nullptr);
-        expectEquals(item->getChild(0).getComponent().getPosition(), juce::Point<int>{ 40, 10 });
+        expectEquals(item->getChild(0).getComponent()->getPosition(), juce::Point<int>{ 40, 10 });
     }
 
     void testAutoSize()
@@ -372,7 +372,6 @@ private:
             expectEquals(item->getChild(1).boxModel.getHeight(), 99.0f);
 
             tree.setProperty("flex-direction", "row", nullptr);
-            item = createFlexContainer(tree);
             expectEquals(item->boxModel.getWidth(), 90.0f);
             expectEquals(item->boxModel.getHeight(), 109.0f);
             expectEquals(item->getChild(0).boxModel.getWidth(), 43.0f);

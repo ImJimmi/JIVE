@@ -25,10 +25,9 @@ namespace jive
         , name{ state, "name", JUCE_APPLICATION_NAME }
         , titleBarHeight{ state, "title-bar-height", 26 }
         , titleBarButtons{ state, "title-bar-buttons", juce::DocumentWindow::allButtons }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
-        static constexpr auto resizeWindowWhenViewportSizeChanges = true;
-        getWindow().setContentNonOwned(&getComponent(), resizeWindowWhenViewportSizeChanges);
-
         hasShadow.onValueChange = [this]() {
             getWindow().setDropShadowEnabled(hasShadow);
         };
@@ -112,6 +111,8 @@ namespace jive
         };
         getWindow().setTitleBarButtonsRequired(titleBarButtons, leftAlignButtons);
 
+        static constexpr auto resizeWindowWhenViewportSizeChanges = true;
+        getWindow().setContentNonOwned(component.get(), resizeWindowWhenViewportSizeChanges);
         getWindow().centreWithSize(getWindow().getWidth(), getWindow().getHeight());
     }
 
@@ -124,6 +125,20 @@ namespace jive
     const juce::DocumentWindow& Window::getWindow() const
     {
         return window;
+    }
+
+    //==================================================================================================================
+    void Window::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
+                                         bool wasMoved,
+                                         bool wasResized)
+    {
+        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+
+        if (!wasResized)
+            return;
+
+        boxModel.setWidth(static_cast<float>(component->getWidth()));
+        boxModel.setHeight(static_cast<float>(component->getHeight()));
     }
 } // namespace jive
 

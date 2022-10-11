@@ -53,12 +53,12 @@ namespace jive
     //==================================================================================================================
     juce::Button& Button::getButton()
     {
-        return *dynamic_cast<juce::Button*>(&getComponent());
+        return *dynamic_cast<juce::Button*>(component.get());
     }
 
     const juce::Button& Button::getButton() const
     {
-        return *dynamic_cast<const juce::Button*>(&getComponent());
+        return *dynamic_cast<const juce::Button*>(component.get());
     }
 
     //==================================================================================================================

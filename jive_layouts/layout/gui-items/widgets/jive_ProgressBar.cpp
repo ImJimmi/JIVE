@@ -19,12 +19,12 @@ namespace jive
     //==================================================================================================================
     NormalisedProgressBar& ProgressBar::getProgressBar()
     {
-        return *dynamic_cast<NormalisedProgressBar*>(&getComponent());
+        return *dynamic_cast<NormalisedProgressBar*>(component.get());
     }
 
     const NormalisedProgressBar& ProgressBar::getProgressBar() const
     {
-        return *dynamic_cast<const NormalisedProgressBar*>(&getComponent());
+        return *dynamic_cast<const NormalisedProgressBar*>(component.get());
     }
 } // namespace jive
 

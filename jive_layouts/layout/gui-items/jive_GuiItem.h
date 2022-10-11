@@ -41,8 +41,8 @@ namespace jive
         virtual void informContentChanged();
 
         //==============================================================================================================
-        const juce::Component& getComponent() const;
-        juce::Component& getComponent();
+        const std::shared_ptr<const juce::Component> getComponent() const;
+        const std::shared_ptr<juce::Component> getComponent();
 
         virtual void addChild(std::unique_ptr<GuiItem> child);
         virtual int getNumChildren() const;
@@ -69,6 +69,7 @@ namespace jive
 
     protected:
         //==============================================================================================================
+        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
@@ -106,9 +107,11 @@ namespace jive
         TypedValue<int> focusOrder;
         TypedValue<float> opacity;
         TypedValue<juce::MouseCursor::StandardCursorType> cursor;
+        TypedValue<Display> display;
         Length width;
         Length height;
-        TypedValue<Display> display;
+        TypedValue<float> componentWidth;
+        TypedValue<float> componentHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

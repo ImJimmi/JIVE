@@ -7,7 +7,7 @@ namespace jive
     const float Length::pixelValueWhenAuto = 0.0f;
 
     //==================================================================================================================
-    float Length::calculatePixelValue() const
+    float Length::toPixels(const juce::Rectangle<float>& parentBounds) const
     {
         if (isAuto())
             return pixelValueWhenAuto;
@@ -16,7 +16,7 @@ namespace jive
             return get().getFloatValue();
 
         const auto scale = static_cast<double>(get().getFloatValue()) * 0.01;
-        return scale * getRelativeParentLength();
+        return scale * getRelativeParentLength(parentBounds.toDouble());
     }
 
     //==================================================================================================================
@@ -36,18 +36,14 @@ namespace jive
     }
 
     //==================================================================================================================
-    double Length::getRelativeParentLength() const
+    double Length::getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const
     {
         jassert(tree.getParent().isValid());
 
         if (id.toString().contains("width") || id.toString().contains("x"))
-        {
-            Length parentWidth{ tree.getParent(), "width" };
-            return static_cast<double>(parentWidth.calculatePixelValue());
-        }
+            return parentBounds.getWidth();
 
-        Length parentHeight{ tree.getParent(), "height" };
-        return static_cast<double>(parentHeight.calculatePixelValue());
+        return parentBounds.getHeight();
     }
 } // namespace jive
 
@@ -84,10 +80,10 @@ private:
         expect(width.isAuto());
 
         width = "10";
-        expectEquals(width.calculatePixelValue(), 10.f);
+        expectEquals(width.toPixels({}), 10.f);
 
         width = "312.65";
-        expectEquals(width.calculatePixelValue(), 312.65f);
+        expectEquals(width.toPixels({}), 312.65f);
     }
 
     void testPercent()
@@ -107,11 +103,11 @@ private:
             };
             jive::Length width{ tree.getChild(0), "width" };
             width = "50%";
-            expectEquals(width.calculatePixelValue(), 20.f);
+            expectEquals(width.toPixels({ 40.0f, 20.0f }), 20.f);
 
             jive::Length height{ tree.getChild(0), "height" };
             height = "20%";
-            expectWithinAbsoluteError(height.calculatePixelValue(), 4.f, 0.000001f);
+            expectWithinAbsoluteError(height.toPixels({ 40.0f, 20.0f }), 4.f, 0.000001f);
         }
     }
 };

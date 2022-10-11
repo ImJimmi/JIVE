@@ -44,7 +44,7 @@ namespace jive
 
     FlexItem::operator juce::FlexItem()
     {
-        juce::FlexItem flexItem{ getComponent() };
+        juce::FlexItem flexItem{ *component };
 
         if (getTopLevelDecorator().isContent())
         {
@@ -53,10 +53,12 @@ namespace jive
         }
         else
         {
+            const auto parentContentBounds = getParent()->boxModel.getContentBounds();
+
             if (!hasAutoWidth())
-                flexItem.width = width.calculatePixelValue();
+                flexItem.width = width.toPixels(parentContentBounds);
             if (!hasAutoHeight())
-                flexItem.height = height.calculatePixelValue();
+                flexItem.height = height.toPixels(parentContentBounds);
         }
 
         flexItem.order = flexItemOrder;
@@ -103,36 +105,47 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::FlexItem> createFlexItem(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-
-        return std::make_unique<jive::FlexItem>(interpreter.interpret(tree));
-    }
-
     void testComponent()
     {
         beginTest("component");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
-
-        expect(flexItem.associatedComponent == &item->getComponent());
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        const auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                               .toType<jive::FlexItem>());
+        expect(flexItem.associatedComponent == item.getComponent().get());
     }
 
     void testOrder()
     {
         beginTest("order");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.order == 0);
 
-        tree.setProperty("order", 10, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("order", 10, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.order == 10);
     }
@@ -141,14 +154,24 @@ private:
     {
         beginTest("flex-grow");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.flexGrow == 0.f);
 
-        tree.setProperty("flex-grow", 5.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-grow", 5.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.flexGrow == 5.f);
     }
@@ -157,14 +180,24 @@ private:
     {
         beginTest("flex-shrink");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.flexShrink == 1.f);
 
-        tree.setProperty("flex-shrink", 3.4f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-shrink", 3.4f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.flexShrink == 3.4f);
     }
@@ -173,14 +206,24 @@ private:
     {
         beginTest("flex-basis");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.flexBasis == 0.f);
 
-        tree.setProperty("flex-basis", 4.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-basis", 4.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.flexBasis == 4.f);
     }
@@ -189,14 +232,24 @@ private:
     {
         beginTest("align-self");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {},
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign);
 
-        tree.setProperty("align-self", "centre", nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("align-self", "centre", nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::center);
     }
@@ -205,20 +258,28 @@ private:
     {
         beginTest("size");
 
-        juce::ValueTree tree{
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
             "Component",
-            { { "width", 100 },
-              { "height", 200 } }
+            {
+                { "width", 100 },
+                { "height", 200 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
         };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
+        expectEquals(flexItem.width, juce::FlexItem{}.width);
+        expectEquals(flexItem.height, juce::FlexItem{}.height);
 
-        expect(flexItem.width == 100.f);
-        expect(flexItem.height == 200.f);
-
-        tree.setProperty("width", 50.f, nullptr);
-        tree.setProperty("height", 175.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("width", 50.f, nullptr);
+        state.getChild(0).setProperty("height", 175.f, nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.width == 50.f);
         expect(flexItem.height == 175.f);
@@ -228,17 +289,30 @@ private:
     {
         beginTest("margin");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 200 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                         .toType<jive::FlexItem>());
 
         expect(flexItem.margin.top == 0.f);
         expect(flexItem.margin.right == 0.f);
         expect(flexItem.margin.bottom == 0.f);
         expect(flexItem.margin.left == 0.f);
 
-        tree.setProperty("margin", "1 2 3 4", nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("margin", "1 2 3 4", nullptr);
+        flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
+                                                    .toType<jive::FlexItem>());
 
         expect(flexItem.margin.top == 1.f);
         expect(flexItem.margin.right == 2.f);
