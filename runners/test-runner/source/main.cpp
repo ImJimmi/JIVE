@@ -45,11 +45,11 @@ protected:
     //==================================================================================================================
     void logMessage(const juce::String& message) final
     {
-        if (message.contains("Starting test: "))
+        if (message.contains("Starting test"))
         {
             static constexpr auto includeSubstring = false;
             static constexpr auto ignoreCase = true;
-            latestTestName = message.fromFirstOccurrenceOf("Starting test: ", includeSubstring, ignoreCase);
+            latestTestName = message.fromFirstOccurrenceOf(": ", includeSubstring, ignoreCase);
             latestTestName = latestTestName.upToLastOccurrenceOf("...", includeSubstring, ignoreCase);
 
             return;
@@ -58,7 +58,8 @@ protected:
         if (message.contains("-----------------------------------------------------------------")
             || message.contains("All tests completed successfully")
             || message.contains("FAILED!!")
-            || message.trim().isEmpty())
+            || message.trim().isEmpty()
+            || message.contains("Completed test"))
         {
             return;
         }
