@@ -223,4 +223,64 @@ namespace juce
 
         return stringFlagPair->first;
     }
+
+    //==================================================================================================================
+    StringArray getTokensBetweenParentheses(const String& text)
+    {
+        static constexpr auto includeSubString = false;
+        static constexpr auto ignoreCase = true;
+        const auto values = text.fromLastOccurrenceOf("(", includeSubString, ignoreCase)
+                                .upToFirstOccurrenceOf(")", includeSubString, ignoreCase);
+        return StringArray::fromTokens(values, ",", "");
+    }
+
+    Colour parseRgbColourString(const String& text)
+    {
+        const auto tokens = getTokensBetweenParentheses(text);
+        jassert(tokens.size() >= 3);
+
+        const auto red = static_cast<uint8>(tokens[0].getIntValue());
+        const auto green = static_cast<uint8>(tokens[1].getIntValue());
+        const auto blue = static_cast<uint8>(tokens[2].getIntValue());
+        const auto alpha = static_cast<uint8>(roundToInt(255.0f * (tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f)));
+
+        return Colour::fromRGBA(red, green, blue, alpha);
+    }
+
+    Colour parseHslColourString(const String& text)
+    {
+        const auto tokens = getTokensBetweenParentheses(text);
+        jassert(tokens.size() >= 3);
+
+        const auto hue = tokens[0].getFloatValue() / 360.0f;
+        const auto saturation = tokens[1].getFloatValue() / 100.0f;
+        const auto lightness = tokens[2].getFloatValue() / 100.0f;
+        const auto alpha = tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f;
+
+        return Colour::fromHSL(hue, saturation, lightness, alpha);
+    }
+
+    Colour VariantConverter<Colour>::fromVar(const var& v)
+    {
+        if (v.isString())
+        {
+            auto text = v.toString();
+
+            if (text.startsWith("rgb"))
+                return parseRgbColourString(text);
+            if (text.startsWith("hsl"))
+                return parseHslColourString(text);
+
+            if (text.startsWith("#"))
+                text = text.replace("#", "0xFF");
+
+            return Colour::fromString(text);
+        }
+
+        if (v.isInt() || v.isInt64())
+            return Colour{ static_cast<uint32>(static_cast<int64>(v)) };
+
+        jassertfalse;
+        return Colour{};
+    }
 } // namespace juce

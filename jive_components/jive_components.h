@@ -18,7 +18,11 @@ END_JUCE_MODULE_DECLARATION */
 //======================================================================================================================
 #include "accessibility/jive_IgnoredComponent.h"
 
+#include "canvases/jive_BackgroundCanvas.h"
+
 #include "containers/jive_DocumentWindow.h"
+
+#include "utilities/jive_HierarchyTraversal.h"
 
 #include "widgets/jive_NormalisedProgressBar.h"
 #include "widgets/jive_TextComponent.h"

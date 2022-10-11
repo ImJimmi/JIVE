@@ -15,7 +15,7 @@ PRIVATE
 target_link_libraries(jive-test-runner
 PRIVATE
     jive::jive_layouts
-    juce::juce_gui_basics
+    jive::jive_style_sheets
 )
 
 target_include_directories(jive-test-runner

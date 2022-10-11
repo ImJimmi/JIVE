@@ -191,4 +191,14 @@ namespace juce
         //==============================================================================================================
         static const std::unordered_map<String, RectanglePlacement::Flags> map;
     };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<Colour>
+    {
+    public:
+        //==============================================================================================================
+        static Colour fromVar(const var& v);
+        static var toVar(const Colour& colour);
+    };
 } // namespace juce
