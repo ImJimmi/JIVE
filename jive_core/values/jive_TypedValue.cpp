@@ -16,6 +16,7 @@ public:
         testWriting();
         testCallback();
         testInitialValue();
+        testHereditaryValues();
     }
 
 private:
@@ -81,6 +82,107 @@ private:
             jive::TypedValue<int> value{ tree, "value", 9226 };
 
             expect(value == 574);
+        }
+    }
+
+    void testHereditaryValues()
+    {
+        beginTest("hereditary values");
+
+        {
+            juce::ValueTree root{
+                "Root",
+                {
+                    { "value", 111 },
+                },
+                {
+                    juce::ValueTree{
+                        "Parent",
+                        {
+                            { "value", 222 },
+                        },
+                        {
+                            juce::ValueTree{ "Child" },
+                        },
+                    },
+                },
+            };
+            jive::TypedValue<int, jive::HereditaryValueBehaviour::inheritFromParent> value{
+                root.getChild(0).getChild(0),
+                "value",
+            };
+            expectEquals(value.get(), 222);
+
+            root.setProperty("value", 999, nullptr);
+            expectEquals(value.get(), 222);
+
+            root.getChild(0).setProperty("value", 888, nullptr);
+            expectEquals(value.get(), 888);
+
+            root.getChild(0).getChild(0).setProperty("value", 777, nullptr);
+            expectEquals(value.get(), 777);
+        }
+        {
+            juce::ValueTree root{
+                "Root",
+                {
+                    { "value", 111 },
+                },
+                {
+                    juce::ValueTree{
+                        "Parent",
+                        {},
+                        {
+                            juce::ValueTree{ "Child" },
+                        },
+                    },
+                },
+            };
+            jive::TypedValue<int, jive::HereditaryValueBehaviour::inheritFromAncestors> value{
+                root.getChild(0).getChild(0),
+                "value",
+            };
+            expectEquals(value.get(), 111);
+
+            root.setProperty("value", 999, nullptr);
+            expectEquals(value.get(), 999);
+
+            root.getChild(0).setProperty("value", 888, nullptr);
+            expectEquals(value.get(), 888);
+
+            root.getChild(0).getChild(0).setProperty("value", 777, nullptr);
+            expectEquals(value.get(), 777);
+        }
+        {
+            juce::ValueTree root{
+                "Root",
+                {
+                    { "value", 111 },
+                },
+                {
+                    juce::ValueTree{
+                        "Parent",
+                        {},
+                        {
+                            juce::ValueTree{ "Child" },
+                        },
+                    },
+                },
+            };
+            jive::TypedValue<int, jive::HereditaryValueBehaviour::doNotInherit> value{
+                root.getChild(0).getChild(0),
+                "value",
+            };
+            expectEquals(value.get(), 0);
+
+            root.setProperty("value", 999, nullptr);
+            expectEquals(value.get(), 0);
+
+            root.getChild(0).setProperty("value", 888, nullptr);
+            expectEquals(value.get(), 0);
+
+            root.getChild(0).getChild(0).setProperty("value", 777, nullptr);
+            expectEquals(value.get(), 777);
         }
     }
 };
