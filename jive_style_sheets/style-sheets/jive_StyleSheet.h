@@ -13,9 +13,20 @@ namespace jive
 
     private:
         //==============================================================================================================
+        struct Style
+        {
+            juce::FillType background;
+        };
+
+        //==============================================================================================================
         void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                      bool wasMoved,
                                      bool wasResized) final;
+
+        //==============================================================================================================
+        juce::FillType getBackgroundFill() const;
+        Style collateStyle() const;
+        void setStyle(Style style);
 
         //==============================================================================================================
         std::shared_ptr<juce::Component> component;
@@ -23,7 +34,7 @@ namespace jive
 
         BackgroundCanvas background;
 
-        Property<juce::var> style;
+        Property<juce::var, HereditaryValueBehaviour::inheritFromAncestors> style;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(StyleSheet)

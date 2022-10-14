@@ -280,7 +280,6 @@ namespace juce
         if (v.isInt() || v.isInt64())
             return Colour{ static_cast<uint32>(static_cast<int64>(v)) };
 
-        jassertfalse;
         return Colour{};
     }
 } // namespace juce

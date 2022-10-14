@@ -19,5 +19,6 @@ namespace jive
     void BackgroundCanvas::setFill(const juce::FillType& newFill)
     {
         fill = newFill;
+        repaint();
     }
 } // namespace jive
