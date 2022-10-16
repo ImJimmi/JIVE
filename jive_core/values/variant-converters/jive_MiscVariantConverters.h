@@ -201,4 +201,14 @@ namespace juce
         static Colour fromVar(const var& v);
         static var toVar(const Colour& colour);
     };
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    class VariantConverter<Point<Arithmetic>>
+    {
+    public:
+        //==============================================================================================================
+        static Point<Arithmetic> fromVar(const var& v);
+        static var toVar(const Point<Arithmetic>& point);
+    };
 } // namespace juce

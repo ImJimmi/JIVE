@@ -14,12 +14,12 @@ namespace jive
         void paint(juce::Graphics& g) final;
 
         //==============================================================================================================
-        juce::FillType getFill() const;
-        void setFill(const juce::FillType& newFill);
+        Fill getFill() const;
+        void setFill(const Fill& newFill);
 
     private:
         //==============================================================================================================
-        juce::FillType fill{ juce::Colours::transparentBlack };
+        Fill fill{ juce::Colours::transparentBlack };
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BackgroundCanvas)

@@ -15,7 +15,7 @@ namespace jive
         };
         setStyle(collateStyle());
 
-        component->addAndMakeVisible(background);
+        component->addAndMakeVisible(background, 0);
         background.setBounds(sourceComponent->getLocalBounds());
 
         component->addComponentListener(this);
@@ -92,7 +92,7 @@ namespace jive
     {
         Style collatedStyle;
 
-        collatedStyle.background = juce::VariantConverter<juce::Colour>::fromVar(findPropertyOfStyleSheet(state, "background"));
+        collatedStyle.background = juce::VariantConverter<Fill>::fromVar(findPropertyOfStyleSheet(state, "background"));
 
         return collatedStyle;
     }
@@ -119,6 +119,14 @@ bool compare(const juce::Image& image, juce::Colour colour)
     return true;
 }
 
+bool withinAbsoluteError(juce::Colour lhs, juce::Colour rhs, juce::uint8 tolerance)
+{
+    return std::abs(lhs.getAlpha() - rhs.getAlpha()) <= tolerance
+        && std::abs(lhs.getRed() - rhs.getRed()) <= tolerance
+        && std::abs(lhs.getGreen() - rhs.getGreen()) <= tolerance
+        && std::abs(lhs.getBlue() - rhs.getBlue()) <= tolerance;
+}
+
 class StyleSheetTest : public juce::UnitTest
 {
 public:
@@ -130,6 +138,7 @@ public:
     void runTest() final
     {
         testBackgroundColour();
+        testLinearBackgroundGradient();
         testTypeStyling();
         testHereditaryStyling();
     }
@@ -215,6 +224,57 @@ private:
                           nullptr);
         snapshot = component->createComponentSnapshot(component->getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF84B84C }));
+    }
+
+    void testLinearBackgroundGradient()
+    {
+        beginTest("linear background gradient");
+
+        auto component = std::make_shared<juce::Component>();
+        juce::ValueTree state{ "Component" };
+        jive::StyleSheet styleSheet{ component, state };
+        component->setBounds(0, 0, 10, 10);
+        state.setProperty("style",
+                          juce::JSON::parse(R"(
+                              {
+                                  "background": {
+                                      "gradient": "linear",
+                                      "stops": {
+                                          "0": "#111111",
+                                          "1": "#999999",
+                                      }
+                                  },
+                              },
+                          )"),
+                          nullptr);
+        auto snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 });
+        expectEquals(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF161616 });
+        expectEquals(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF949494 });
+        expectEquals(snapshot.getPixelAt(9, 9), juce::Colour{ 0xFF949494 });
+
+        state.setProperty("style",
+                          juce::JSON::parse(R"(
+                              {
+                                  "background": {
+                                      "gradient": "linear",
+                                      "orientation": "horizontal",
+                                      "stops": {
+                                          "0": "#111111",
+                                          "1": "#999999",
+                                      }
+                                  },
+                              },
+                          )"),
+                          nullptr);
+        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        juce::PNGImageFormat format;
+        auto stream = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("snapshot.png").createOutputStream();
+        format.writeImageToStream(snapshot, *stream);
+        expect(withinAbsoluteError(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 }, 1));
+        expect(withinAbsoluteError(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF161616 }, 1));
+        expect(withinAbsoluteError(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF949494 }, 1));
+        expect(withinAbsoluteError(snapshot.getPixelAt(9, 9), juce::Colour{ 0xFF949494 }, 1));
     }
 
     void testTypeStyling()

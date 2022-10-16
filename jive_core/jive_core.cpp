@@ -13,4 +13,6 @@
 #include "geometry/jive_Length.cpp"
 #include "geometry/jive_Orientation.cpp"
 
+#include "graphics/jive_Fill.cpp"
+#include "graphics/jive_Gradient.cpp"
 #include "graphics/jive_LookAndFeel.cpp"

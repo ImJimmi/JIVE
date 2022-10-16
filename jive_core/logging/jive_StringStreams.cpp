@@ -2,6 +2,11 @@
 
 namespace juce
 {
+    String& operator<<(String& str, const Colour& colour)
+    {
+        return str << "juce::Colour { 0x" << colour.toDisplayString(true) << " }";
+    }
+
     String& operator<<(String& str, const Image& image)
     {
         return str << "juce::Image { "

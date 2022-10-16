@@ -29,4 +29,7 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "geometry/jive_BoxModel.h"
 
+#include "graphics/jive_Gradient.h"
 #include "graphics/jive_LookAndFeel.h"
+
+#include "graphics/jive_Fill.h"

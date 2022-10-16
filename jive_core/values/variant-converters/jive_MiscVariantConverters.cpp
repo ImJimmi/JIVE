@@ -282,4 +282,28 @@ namespace juce
 
         return Colour{};
     }
+
+    var VariantConverter<Colour>::toVar(const Colour& colour)
+    {
+        return colour.toString();
+    }
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    Point<Arithmetic> VariantConverter<Point<Arithmetic>>::fromVar(const var& value)
+    {
+        const auto tokens = StringArray::fromTokens(value.toString(), ",", "");
+        jassert(tokens.size() == 2);
+
+        return Point<Arithmetic>{
+            static_cast<Arithmetic>(tokens[0].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[1].getDoubleValue()),
+        };
+    }
+
+    template <typename Arithmetic>
+    var VariantConverter<Point<Arithmetic>>::toVar(const Point<Arithmetic>& point)
+    {
+        return point.toString();
+    }
 } // namespace juce
