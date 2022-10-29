@@ -11,7 +11,7 @@ namespace jive
     {
         source.onValueChange = [this]() {
             setChildComponent(createChildComponent());
-            updateExplicitSize();
+            boxModel.setSize(calculateAutoWidth(), calculateAutoHeight());
         };
         placement.onValueChange = [this]() {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
@@ -20,7 +20,12 @@ namespace jive
 
         setChildComponent(createChildComponent());
         component->setInterceptsMouseClicks(false, false);
-        updateExplicitSize();
+
+        boxModel.setSize(calculateAutoWidth(), calculateAutoHeight());
+        boxModel.addListener(*this);
+
+        if (childComponent != nullptr)
+            childComponent->setBounds(component->getLocalBounds());
     }
 
     //==================================================================================================================
@@ -34,27 +39,43 @@ namespace jive
         return true;
     }
 
+    float Image::calculateAutoWidth() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateRequiredWidth(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateRequiredWidth(*image);
+
+        return 0.0f;
+    }
+
+    float Image::calculateAutoHeight() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateRequiredHeight(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateRequiredHeight(*image);
+
+        return 0.0f;
+    }
+
     Drawable Image::getDrawable() const
     {
         return source.get();
     }
 
     //==================================================================================================================
-    void Image::componentMovedOrResized(juce::Component& componentThatMovedOrResized,
-                                        bool wasMoved,
-                                        bool wasResized)
+    void Image::boxModelChanged(BoxModel& boxModelThatChanged)
     {
-        GuiItemDecorator::componentMovedOrResized(componentThatMovedOrResized, wasMoved, wasResized);
+        GuiItemDecorator::boxModelChanged(boxModelThatChanged);
 
-        if (&componentThatMovedOrResized != component.get())
-            return;
-        if (!wasResized)
+        if (boxModelThatChanged.state != state)
             return;
 
         if (childComponent != nullptr)
             childComponent->setBounds(component->getLocalBounds());
-
-        updateExplicitSize();
     }
 
     //==================================================================================================================
@@ -63,52 +84,30 @@ namespace jive
         return image.getImage().getBounds().toFloat().getAspectRatio();
     }
 
-    float Image::calculateAutoWidth(const juce::ImageComponent& image) const
+    float Image::calculateRequiredWidth(const juce::ImageComponent& image) const
     {
-        if (hasAutoHeight())
+        if (boxModel.hasAutoHeight())
             return static_cast<float>(image.getImage().getWidth());
 
         return boxModel.getHeight() * calculateAspectRatio(image);
     }
 
-    float Image::calculateAutoWidth(const juce::Drawable& drawable) const
+    float Image::calculateRequiredWidth(const juce::Drawable& drawable) const
     {
         return drawable.getDrawableBounds().getWidth();
     }
 
-    float Image::calculateAutoWidth() const
+    float Image::calculateRequiredHeight(const juce::ImageComponent& image) const
     {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateAutoWidth(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateAutoWidth(*image);
-
-        return 0.0f;
-    }
-
-    float Image::calculateAutoHeight(const juce::ImageComponent& image) const
-    {
-        if (hasAutoWidth())
+        if (boxModel.hasAutoWidth())
             return static_cast<float>(image.getImage().getHeight());
 
         return boxModel.getWidth() / calculateAspectRatio(image);
     }
 
-    float Image::calculateAutoHeight(const juce::Drawable& drawable) const
+    float Image::calculateRequiredHeight(const juce::Drawable& drawable) const
     {
         return drawable.getDrawableBounds().getHeight();
-    }
-
-    float Image::calculateAutoHeight() const
-    {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateAutoHeight(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateAutoHeight(*image);
-
-        return 0.0f;
     }
 
     std::unique_ptr<juce::ImageComponent> Image::createImageComponent(const juce::Image& image) const
@@ -149,19 +148,6 @@ namespace jive
 
         component->addAndMakeVisible(*childComponent);
         childComponent->setBounds(component->getLocalBounds());
-
-        if (auto* parentItem = getParent())
-            parentItem->informContentChanged();
-    }
-
-    //==================================================================================================================
-    void Image::updateExplicitSize()
-    {
-        if (hasAutoWidth())
-            boxModel.setWidth(calculateAutoWidth());
-
-        if (hasAutoHeight())
-            boxModel.setHeight(calculateAutoHeight());
     }
 } // namespace jive
 
@@ -182,7 +168,6 @@ public:
         testAutoSize();
         testChildComponent();
         testSVG();
-        testContentChanged();
     }
 
 private:
@@ -199,7 +184,13 @@ private:
         beginTest("image");
 
         {
-            juce::ValueTree tree{ "Image" };
+            juce::ValueTree tree{
+                "Image",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                }
+            };
             auto item = createImage(tree);
             expectEquals(item->getDrawable(), jive::Drawable{});
 
@@ -216,6 +207,8 @@ private:
             juce::ValueTree tree{
                 "Image",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "source", juce::VariantConverter<juce::Image>::toVar(image) },
                 },
             };
@@ -235,6 +228,8 @@ private:
             juce::ValueTree tree{
                 "Image",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "source", juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 51, 54, true }) },
                 },
             };
@@ -251,6 +246,8 @@ private:
             juce::ValueTree tree{
                 "Image",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "source", juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 51, 54, true }) },
                     { "placement", "stretch fill increase-only" },
                 },
@@ -268,28 +265,37 @@ private:
         beginTest("child-component");
 
         {
-            juce::ValueTree tree{
-                "Image",
+            juce::Image image{ juce::Image::ARGB, 78, 27, true };
+            juce::ValueTree parentState{
+                "Component",
                 {
-                    {
-                        "source",
-                        juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 78, 27, true }),
-                    },
                     { "width", 489 },
                     { "height", 307 },
                 },
+                {
+                    juce::ValueTree{
+                        "Image",
+                        {
+                            {
+                                "source",
+                                juce::VariantConverter<juce::Image>::toVar(image),
+                            },
+                        },
+                    },
+                },
             };
-            auto item = createImage(tree);
-            expectEquals(item->getComponent()->getNumChildComponents(), 1);
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
+            expectEquals(item.getComponent()->getNumChildComponents(), 1);
+            expectEquals(item.getComponent()->getLocalBounds(), image.getBounds());
 
-            auto& child = *item->getComponent()->getChildComponent(0);
-            expectEquals(child.getBounds(),
-                         { 0, 0, item->getComponent()->getWidth(), item->getComponent()->getHeight() });
+            auto& childComponent = *item.getComponent()->getChildComponent(0);
+            expectEquals(childComponent.getBounds(), item.getComponent()->getLocalBounds());
 
-            tree.setProperty("width", 134, nullptr);
-            tree.setProperty("height", 590, nullptr);
-            expectEquals(child.getBounds(),
-                         { 0, 0, item->getComponent()->getWidth(), item->getComponent()->getHeight() });
+            parentState.getChild(0).setProperty("width", 134, nullptr);
+            parentState.getChild(0).setProperty("height", 590, nullptr);
+            expectEquals(childComponent.getBounds(), item.getComponent()->getLocalBounds());
         }
     }
 
@@ -304,7 +310,13 @@ private:
                              style="fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;"/>
                 </svg>
             )";
-            juce::ValueTree tree{ "Image" };
+            juce::ValueTree tree{
+                "Image",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                }
+            };
             auto item = createImage(tree);
             expectEquals(item->getDrawable(), jive::Drawable{});
 
@@ -317,6 +329,8 @@ private:
             juce::ValueTree tree{
                 "Image",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     {
                         "source",
                         R"(
@@ -353,14 +367,22 @@ private:
         {
             juce::ValueTree tree{
                 "Component",
-                {},
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
                 {
                     juce::ValueTree{
                         "Image",
                         {
                             {
                                 "source",
-                                juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 80, 40, true }),
+                                juce::VariantConverter<juce::Image>::toVar(juce::Image{
+                                    juce::Image::ARGB,
+                                    80,
+                                    40,
+                                    true,
+                                }),
                             },
                         },
                     },
@@ -383,6 +405,8 @@ private:
             juce::ValueTree tree{
                 "Image",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     {
                         "source",
                         R"(
@@ -403,58 +427,6 @@ private:
             expectEquals(item->boxModel.getWidth(), 155.0f);
             expectEquals(item->boxModel.getHeight(), 155.0f);
         }
-    }
-
-    void testContentChanged()
-    {
-        beginTest("parent-content-changed");
-
-        class SpyGuiItem : public jive::GuiItem
-        {
-        public:
-            using jive::GuiItem::GuiItem;
-
-            std::function<void()> onContentChanged = nullptr;
-
-        protected:
-            void contentChanged() final
-            {
-                if (onContentChanged != nullptr)
-                    onContentChanged();
-            }
-        };
-
-        juce::Image image{ juce::Image::ARGB, 10, 10, false };
-        juce::ValueTree tree{
-            "Spy",
-            {},
-            {
-                juce::ValueTree{
-                    "Image",
-                    {
-                        { "source", juce::VariantConverter<juce::Image>::toVar(image) },
-                    },
-                },
-            },
-        };
-        SpyGuiItem item{
-            std::make_unique<juce::Component>(),
-            tree,
-        };
-
-        auto parentContentChangedCalled = false;
-        item.onContentChanged = [&parentContentChangedCalled]() {
-            parentContentChangedCalled = true;
-        };
-
-        item.addChild(std::make_unique<jive::Image>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                                                    tree.getChild(0),
-                                                                                    &item)));
-        expect(parentContentChangedCalled);
-        parentContentChangedCalled = false;
-
-        tree.getChild(0).setProperty("source", "<svg/>", nullptr);
-        expect(parentContentChangedCalled);
     }
 };
 

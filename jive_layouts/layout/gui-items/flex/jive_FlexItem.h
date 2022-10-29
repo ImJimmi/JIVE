@@ -15,9 +15,6 @@ namespace jive
 
     private:
         //==============================================================================================================
-        void updateParentLayout();
-
-        //==============================================================================================================
         TypedValue<int> flexItemOrder;
         TypedValue<float> flexItemGrow;
         TypedValue<float> flexItemShrink;

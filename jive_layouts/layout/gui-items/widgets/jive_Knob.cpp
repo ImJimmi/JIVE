@@ -48,6 +48,8 @@ private:
         juce::ValueTree tree{
             "Knob",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "orientation", "horizontal" },
             },
         };
@@ -62,16 +64,27 @@ private:
     {
         beginTest("auto size");
 
-        juce::ValueTree tree{ "Knob" };
-        auto item = createKnob(tree);
-        expectEquals(item->boxModel.getWidth(), 55.0f);
-        expectEquals(item->boxModel.getHeight(), 55.0f);
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Knob" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& item = parent->getChild(0);
+        expectEquals(item.boxModel.getWidth(), 55.0f);
+        expectEquals(item.boxModel.getHeight(), 55.0f);
 
-        tree.setProperty("width", 100.0f, nullptr);
-        expectEquals(item->boxModel.getWidth(), 100.0f);
+        parentState.getChild(0).setProperty("width", 100.0f, nullptr);
+        expectEquals(item.boxModel.getWidth(), 100.0f);
 
-        tree.setProperty("height", 78.0f, nullptr);
-        expectEquals(item->boxModel.getHeight(), 78.0f);
+        parentState.getChild(0).setProperty("height", 78.0f, nullptr);
+        expectEquals(item.boxModel.getHeight(), 78.0f);
     }
 };
 

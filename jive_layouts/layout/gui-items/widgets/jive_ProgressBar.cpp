@@ -56,7 +56,13 @@ private:
         beginTest("value");
 
         {
-            juce::ValueTree tree{ "ProgressBar" };
+            juce::ValueTree tree{
+                "ProgressBar",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createProgressBar(tree);
             expectEquals(item->getProgressBar().getValue(), 0.0);
 
@@ -73,6 +79,8 @@ private:
             juce::ValueTree tree{
                 "ProgressBar",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "value", 0.463 },
                 },
             };

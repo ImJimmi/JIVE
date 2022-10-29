@@ -61,7 +61,13 @@ private:
     {
         beginTest("gui-item");
 
-        auto item = createHyperlink(juce::ValueTree{ "Hyperlink" });
+        auto item = createHyperlink(juce::ValueTree{
+            "Hyperlink",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         expect(!item->isContainer());
     }
 
@@ -70,7 +76,13 @@ private:
         beginTest("url");
 
         {
-            juce::ValueTree tree{ "Hyperlink" };
+            juce::ValueTree tree{
+                "Hyperlink",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto hyperlink = createHyperlink(tree);
             expect(hyperlink->getHyperlink().getURL().isEmpty());
 
@@ -81,6 +93,8 @@ private:
             juce::ValueTree tree{
                 "Hyperlink",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "url", "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" },
                 },
             };

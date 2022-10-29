@@ -7,6 +7,7 @@ namespace jive
     class GuiItem
         : protected juce::ValueTree::Listener
         , protected juce::ComponentListener
+        , protected BoxModel::Listener
     {
     public:
         //==============================================================================================================
@@ -35,12 +36,6 @@ namespace jive
         ~GuiItem();
 
         //==============================================================================================================
-        virtual void updateLayout();
-        virtual void updateSize();
-        virtual void updatePosition();
-        virtual void informContentChanged();
-
-        //==============================================================================================================
         const std::shared_ptr<const juce::Component> getComponent() const;
         const std::shared_ptr<juce::Component> getComponent();
 
@@ -53,9 +48,11 @@ namespace jive
 
         virtual bool isContainer() const;
         virtual bool isContent() const;
+        virtual float calculateAutoWidth() const;
+        virtual float calculateAutoHeight() const;
 
-        bool hasAutoWidth() const;
-        bool hasAutoHeight() const;
+        //==============================================================================================================
+        virtual void layOutChildren() {}
 
         //==============================================================================================================
         virtual Iterator begin();
@@ -69,13 +66,13 @@ namespace jive
 
     protected:
         //==============================================================================================================
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
         void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
-
-        //==============================================================================================================
-        virtual void contentChanged();
+        void componentChildrenChanged(juce::Component& component) override;
+        void boxModelChanged(BoxModel& boxModel) override;
 
         //==============================================================================================================
         const std::shared_ptr<juce::Component> component;

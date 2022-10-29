@@ -23,7 +23,6 @@ namespace jive
     protected:
         //==============================================================================================================
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
-        void componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged) override;
 
     private:
         //==============================================================================================================

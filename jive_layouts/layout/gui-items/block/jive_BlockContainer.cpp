@@ -12,32 +12,13 @@ namespace jive
     }
 
     //==================================================================================================================
-    void BlockContainer::updateLayout()
+    void BlockContainer::layOutChildren()
     {
-        GuiItemDecorator::updateLayout();
-
         for (auto& child : *this)
         {
-            child.updatePosition();
-
-            BoxModel childBoxModel{ child.state };
-            const auto childContentBounds = childBoxModel.getContentBounds();
-            child.getComponent()->setSize(juce::roundToInt(childContentBounds.getWidth()),
-                                          juce::roundToInt(childContentBounds.getHeight()));
+            auto& blockItem = *dynamic_cast<GuiItemDecorator&>(child).toType<BlockItem>();
+            child.getComponent()->setBounds(blockItem.calculateBounds());
         }
-    }
-
-    //==================================================================================================================
-    void BlockContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                                 bool wasMoved,
-                                                 bool wasResized)
-    {
-        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
-
-        if (!wasResized)
-            return;
-
-        updateLayout();
     }
 } // namespace jive
 
@@ -63,6 +44,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "block" },
             },
             {
@@ -77,8 +60,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(state);
-        expectEquals(item->getChild(0).getComponent()->getX(), 0);
-        expectEquals(item->getChild(0).getComponent()->getHeight(), 0);
+        expectEquals(item->getChild(0).getComponent()->getX(), 111);
+        expectEquals(item->getChild(0).getComponent()->getHeight(), 33);
 
         state.setProperty("width", 300, nullptr);
         expectEquals(item->getChild(0).getComponent()->getX(), 150);

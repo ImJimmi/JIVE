@@ -15,10 +15,10 @@ namespace jive
         , isNative{ state, "native", true }
         , isResizable{ state, "resizable", true }
         , useCornerResizer{ state, "corner-resizer" }
-        , minWidth{ state, "min-width", 128.f }
-        , minHeight{ state, "min-height", 128.f }
-        , maxWidth{ state, "max-width", 32768.f }
-        , maxHeight{ state, "max-height", 32768.f }
+        , minWidth{ state, "min-width", 1.0f }
+        , minHeight{ state, "min-height", 1.0f }
+        , maxWidth{ state, "max-width", static_cast<float>(std::numeric_limits<juce::int16>::max()) }
+        , maxHeight{ state, "max-height", static_cast<float>(std::numeric_limits<juce::int16>::max()) }
         , isDraggable{ state, "draggable", true }
         , isFullScreen{ state, "full-screen" }
         , isMinimised{ state, "minimised" }
@@ -111,9 +111,12 @@ namespace jive
         };
         getWindow().setTitleBarButtonsRequired(titleBarButtons, leftAlignButtons);
 
-        static constexpr auto resizeWindowWhenViewportSizeChanges = true;
-        getWindow().setContentNonOwned(component.get(), resizeWindowWhenViewportSizeChanges);
-        getWindow().centreWithSize(getWindow().getWidth(), getWindow().getHeight());
+        const auto windowWidth = juce::roundToInt(boxModel.getWidth());
+        const auto windowHeight = juce::roundToInt(boxModel.getHeight());
+
+        static constexpr auto resizeWindowWhenComponentSizeChanges = true;
+        getWindow().setContentNonOwned(component.get(), resizeWindowWhenComponentSizeChanges);
+        getWindow().centreWithSize(windowWidth, windowHeight);
     }
 
     //==================================================================================================================
@@ -213,30 +216,36 @@ private:
         beginTest("native");
 
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Window",
                 {
                     { "width", 100 },
                     { "height", 150 },
                 },
             };
-            auto item = createWindow(tree);
-            expect(item->getWindow().isUsingNativeTitleBar());
-
-            tree.setProperty("native", false, nullptr);
-            expect(!item->getWindow().isUsingNativeTitleBar());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
+            expect(dynamic_cast<jive::Window&>(*item).getWindow().isUsingNativeTitleBar());
+            expectEquals(item->getComponent()->getWidth(), 100);
+            expectEquals(item->getComponent()->getHeight(), 150);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Window",
                 {
                     { "native", false },
-                    { "width", 100 },
-                    { "height", 100 },
+                    { "width", 338 },
+                    { "height", 894 },
                 },
             };
-            auto item = createWindow(tree);
-            expect(!item->getWindow().isUsingNativeTitleBar());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
+            auto& window = dynamic_cast<jive::Window&>(*item).getWindow();
+            expect(!window.isUsingNativeTitleBar());
+            expectEquals(item->getComponent()->getWidth(),
+                         338 - window.getBorderThickness().getLeftAndRight());
+            expectEquals(item->getComponent()->getHeight(),
+                         894 - window.getBorderThickness().getTopAndBottom() - window.getTitleBarHeight());
         }
     }
 
@@ -285,10 +294,12 @@ private:
                 },
             };
             auto item = createWindow(tree);
-            expectEquals(item->getWindow().getConstrainer()->getMinimumWidth(), 128);
-            expectEquals(item->getWindow().getConstrainer()->getMinimumHeight(), 128);
-            expectEquals(item->getWindow().getConstrainer()->getMaximumWidth(), 32768);
-            expectEquals(item->getWindow().getConstrainer()->getMaximumHeight(), 32768);
+            expectEquals(item->getWindow().getConstrainer()->getMinimumWidth(), 1);
+            expectEquals(item->getWindow().getConstrainer()->getMinimumHeight(), 1);
+            expectEquals<int>(item->getWindow().getConstrainer()->getMaximumWidth(),
+                              std::numeric_limits<juce::int16>::max());
+            expectEquals<int>(item->getWindow().getConstrainer()->getMaximumHeight(),
+                              std::numeric_limits<juce::int16>::max());
 
             tree.setProperty("min-width", 256, nullptr);
             expectEquals(item->getWindow().getConstrainer()->getMinimumWidth(), 256);
@@ -442,7 +453,7 @@ private:
                     { "native", false },
                     { "title-bar-height", 100 },
                     { "width", 100 },
-                    { "height", 100 },
+                    { "height", 222 },
                 },
             };
             auto item = createWindow(tree);

@@ -17,6 +17,10 @@ namespace jive
         if (state.getParent().isValid())
             parentBoxModel = std::make_unique<BoxModel>(state.getParent());
 
+        const auto callListeners = [this]() {
+            listeners.call(&Listener::boxModelChanged, *this);
+        };
+
         const auto recalculateWidth = [this]() {
             if (!width.isAuto())
             {
@@ -24,7 +28,10 @@ namespace jive
                 setWidth(width.toPixels(parentBounds));
             }
         };
-        width.onValueChange = recalculateWidth;
+        width.onValueChange = [callListeners, recalculateWidth]() {
+            recalculateWidth();
+            callListeners();
+        };
         recalculateWidth();
 
         const auto recalculateHeight = [this]() {
@@ -34,8 +41,15 @@ namespace jive
                 setHeight(height.toPixels(parentBounds));
             }
         };
-        height.onValueChange = recalculateHeight;
+        height.onValueChange = [callListeners, recalculateHeight]() {
+            recalculateHeight();
+            callListeners();
+        };
         recalculateHeight();
+
+        padding.onValueChange = callListeners;
+        border.onValueChange = callListeners;
+        margin.onValueChange = callListeners;
     }
 
     //==================================================================================================================
@@ -54,6 +68,11 @@ namespace jive
         componentWidth = newWidth;
     }
 
+    bool BoxModel::hasAutoWidth() const
+    {
+        return width.isAuto();
+    }
+
     float BoxModel::getHeight() const
     {
         return juce::jmax(0.0f, getContentBounds().getHeight());
@@ -67,6 +86,17 @@ namespace jive
             newHeight += padding.get().getTopAndBottom() + border.get().getTopAndBottom();
 
         componentHeight = newHeight;
+    }
+
+    bool BoxModel::hasAutoHeight() const
+    {
+        return height.isAuto();
+    }
+
+    void BoxModel::setSize(float newWidth, float newHeight)
+    {
+        setWidth(newWidth);
+        setHeight(newHeight);
     }
 
     juce::BorderSize<float> BoxModel::getPadding() const
@@ -97,6 +127,16 @@ namespace jive
     juce::Rectangle<float> BoxModel::getContentBounds() const
     {
         return padding.get().subtractedFrom(getPaddingBounds());
+    }
+
+    void BoxModel::addListener(Listener& listener) const
+    {
+        const_cast<juce::ListenerList<Listener>*>(&listeners)->add(&listener);
+    }
+
+    void BoxModel::removeListener(Listener& listener) const
+    {
+        const_cast<juce::ListenerList<Listener>*>(&listeners)->remove(&listener);
     }
 } // namespace jive
 

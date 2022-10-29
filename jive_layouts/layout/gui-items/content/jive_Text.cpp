@@ -34,22 +34,22 @@ namespace jive
             updateTextComponent();
         };
         typefaceName.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
         fontWeight.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
         fontHeight.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
         fontStyle.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
         kerning.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
         horizontalScale.onValueChange = [this]() {
-            updateFont();
+            updateTextComponent();
         };
 
         updateTextComponent();
@@ -87,15 +87,6 @@ namespace jive
         updateTextComponent();
     }
 
-    void Text::componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged)
-    {
-        if (&componentWhoseParentHierarchyChanged != component.get())
-            return;
-
-        if (auto* parentItem = getParent())
-            parentItem->informContentChanged();
-    }
-
     //==================================================================================================================
     juce::TextLayout Text::buildTextLayout() const
     {
@@ -103,7 +94,7 @@ namespace jive
 
         if (auto* parentItem = getParent())
         {
-            if (!parentItem->hasAutoWidth())
+            if (!parentItem->boxModel.hasAutoWidth())
                 maxWidth = parentItem->boxModel.getContentBounds().getWidth();
         }
 
@@ -156,7 +147,8 @@ namespace jive
         for (auto childState : state)
         {
             Text childItem{ std::make_unique<GuiItem>(std::make_unique<TextComponent>(),
-                                                      childState) };
+                                                      childState,
+                                                      this) };
             getTextComponent().append(childItem.getTextComponent().getAttributedString());
         }
 
@@ -166,8 +158,6 @@ namespace jive
 
         if (auto* parentItem = getParent())
         {
-            parentItem->informContentChanged();
-
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
         }
@@ -179,11 +169,11 @@ namespace jive
     {
         auto textLayout = buildTextLayout();
 
-        if (hasAutoWidth())
-            boxModel.setWidth(juce::jmax(boxModel.getWidth(), std::ceil(textLayout.getWidth())));
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(juce::jmax(0.0f, std::ceil(textLayout.getWidth())));
 
-        if (hasAutoHeight())
-            boxModel.setHeight(juce::jmax(boxModel.getHeight(), std::ceil(textLayout.getHeight())));
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(juce::jmax(0.0f, std::ceil(textLayout.getHeight())));
     }
 
     //==================================================================================================================
@@ -224,14 +214,15 @@ public:
         testLineSpacing();
         testNested();
         testAutoSize();
-        testContentChanged();
     }
 
 private:
     std::unique_ptr<jive::Text> createText(juce::ValueTree tree)
     {
         jive::Interpreter interpreter;
-        return std::unique_ptr<jive::Text>(dynamic_cast<jive::Text*>(interpreter.interpret(tree).release()));
+        return std::unique_ptr<jive::Text>{
+            dynamic_cast<jive::Text*>(interpreter.interpret(tree).release())
+        };
     }
 
     void testText()
@@ -239,7 +230,13 @@ private:
         beginTest("text");
 
         {
-            juce::ValueTree tree{ "Text" };
+            juce::ValueTree tree{
+                "Text",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createText(tree);
             expectEquals(item->getTextComponent().getAttributedString().getNumAttributes(), 0);
 
@@ -251,6 +248,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Not empty" },
                 },
             };
@@ -268,6 +267,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "The font of all knowledge if Comic Sans" },
                 },
             };
@@ -354,6 +355,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Do not read." },
                 },
             };
@@ -370,6 +373,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "justification", "bottom-right" },
                     { "text", "Do read." },
                 },
@@ -389,6 +394,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "All that glitters is gold." },
                 },
             };
@@ -404,6 +411,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Please stand by." },
                     { "word-wrap", "none" },
                 },
@@ -422,6 +431,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "One step at a time." },
                 },
             };
@@ -437,6 +448,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Chicken tendies." },
                     { "direction", "right-to-left" },
                 },
@@ -455,6 +468,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Bottle o' rum." },
                 },
             };
@@ -470,6 +485,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "First of all..." },
                     { "line-spacing", 4.389f },
                 },
@@ -485,7 +502,13 @@ private:
         beginTest("nested");
 
         {
-            juce::ValueTree tree{ "Text" };
+            juce::ValueTree tree{
+                "Text",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createText(tree);
             expectEquals(item->getTextComponent().getAttributedString().getNumAttributes(),
                          0);
@@ -515,6 +538,8 @@ private:
             juce::ValueTree tree{
                 "Text",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "text", "Setup... " },
                 },
                 {
@@ -539,7 +564,10 @@ private:
         {
             juce::ValueTree tree{
                 "Component",
-                {},
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
                 {
                     juce::ValueTree{
                         "Text",
@@ -582,8 +610,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
-                    // { "width", 10000.0f },
-                    // { "height", 10000.0f },
+                    { "width", 222 },
+                    { "height", 333 },
                 },
                 {
                     textTree,
@@ -637,57 +665,6 @@ private:
             expectLessOrEqual(item.boxModel.getWidth(), 40.0f);
             expectGreaterThan(item.boxModel.getWidth(), 0.0f);
         }
-    }
-
-    void testContentChanged()
-    {
-        beginTest("parent-content-changed");
-
-        class SpyGuiItem : public jive::GuiItem
-        {
-        public:
-            using jive::GuiItem::GuiItem;
-
-            std::function<void()> onContentChanged = nullptr;
-
-        protected:
-            void contentChanged() final
-            {
-                if (onContentChanged != nullptr)
-                    onContentChanged();
-            }
-        };
-
-        juce::ValueTree tree{
-            "Spy",
-            {},
-            {
-                juce::ValueTree{
-                    "Text",
-                    {
-                        { "text", "Some text..." },
-                    },
-                },
-            },
-        };
-        SpyGuiItem item{
-            std::make_unique<juce::Component>(),
-            tree,
-        };
-
-        auto parentContentChangedCalled = false;
-        item.onContentChanged = [&parentContentChangedCalled]() {
-            parentContentChangedCalled = true;
-        };
-
-        item.addChild(std::make_unique<jive::Text>(std::make_unique<jive::GuiItem>(std::make_unique<jive::TextComponent>(),
-                                                                                   tree.getChild(0),
-                                                                                   &item)));
-        expect(parentContentChangedCalled);
-        parentContentChangedCalled = false;
-
-        tree.getChild(0).setProperty("text", "Some more text...", nullptr);
-        expect(parentContentChangedCalled);
     }
 };
 

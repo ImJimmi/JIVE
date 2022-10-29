@@ -14,28 +14,27 @@ namespace jive
         bool isContainer() const override;
         bool isContent() const override;
 
+        float calculateAutoWidth() const override;
+        float calculateAutoHeight() const override;
+
         Drawable getDrawable() const;
 
     protected:
         //==============================================================================================================
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+        void boxModelChanged(BoxModel& boxModelThatChanged) override;
 
     private:
         //==============================================================================================================
         float calculateAspectRatio(const juce::ImageComponent& image) const;
-        float calculateAutoWidth(const juce::ImageComponent& image) const;
-        float calculateAutoWidth(const juce::Drawable& drawable) const;
-        float calculateAutoWidth() const;
-        float calculateAutoHeight(const juce::ImageComponent& image) const;
-        float calculateAutoHeight(const juce::Drawable& drawable) const;
-        float calculateAutoHeight() const;
+        float calculateRequiredWidth(const juce::ImageComponent& image) const;
+        float calculateRequiredWidth(const juce::Drawable& drawable) const;
+        float calculateRequiredHeight(const juce::ImageComponent& image) const;
+        float calculateRequiredHeight(const juce::Drawable& drawable) const;
+        float calculateRequiredHeight() const;
         std::unique_ptr<juce::ImageComponent> createImageComponent(const juce::Image& image) const;
         std::unique_ptr<juce::Drawable> createSVG(const juce::String& svgString) const;
         std::unique_ptr<juce::Component> createChildComponent() const;
         void setChildComponent(std::unique_ptr<juce::Component> newComponent);
-
-        //==============================================================================================================
-        void updateExplicitSize();
 
         //==============================================================================================================
         TypedValue<Drawable> source;

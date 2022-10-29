@@ -10,31 +10,27 @@ namespace jive
         , y{ state, "y" }
         , centreX{ state, "centre-x" }
         , centreY{ state, "centre-y" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
+        jassert(getParent() != nullptr);
+
         x.onValueChange = [this]() {
             centreX.clear();
-            updatePosition();
+            getParent()->layOutChildren();
         };
         y.onValueChange = [this]() {
             centreY.clear();
-            updatePosition();
+            getParent()->layOutChildren();
         };
         centreX.onValueChange = [this]() {
             x.clear();
-            updatePosition();
+            getParent()->layOutChildren();
         };
         centreY.onValueChange = [this]() {
             y.clear();
-            updatePosition();
+            getParent()->layOutChildren();
         };
-        updatePosition();
-    }
-
-    //==================================================================================================================
-    void BlockItem::updatePosition()
-    {
-        GuiItemDecorator::updatePosition();
-        component->setTopLeftPosition(calculatePosition());
     }
 
     //==================================================================================================================
@@ -58,10 +54,18 @@ namespace jive
         return juce::roundToInt(y.toPixels(parentContentBounds));
     }
 
-    juce::Point<int> BlockItem::calculatePosition() const
+    juce::Rectangle<int> BlockItem::calculateBounds() const
     {
-        return getParent()->boxModel.getContentBounds().getPosition().roundToInt()
-             + juce::Point<int>{ calculateX(), calculateY() };
+        juce::Rectangle<int> bounds;
+        const auto parentBounds = BoxModel{ state.getParent() }.getContentBounds();
+
+        if (!width.isAuto())
+            bounds.setWidth(juce::roundToInt(width.toPixels(parentBounds)));
+        if (!height.isAuto())
+            bounds.setHeight(juce::roundToInt(height.toPixels(parentBounds)));
+
+        return bounds.withPosition(getParent()->boxModel.getContentBounds().getPosition().roundToInt()
+                                   + juce::Point<int>{ calculateX(), calculateY() });
     }
 } // namespace jive
 
@@ -97,6 +101,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "block" },
                     { "border-width", 10 },
                     { "padding", 15 },
@@ -121,6 +127,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "block" },
                     { "border-width", 10 },
                     { "padding", 15 },
@@ -180,6 +188,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "block" },
                 },
                 {
@@ -208,6 +218,8 @@ private:
             juce::ValueTree tree{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "block" },
                 },
                 {
@@ -273,6 +285,8 @@ private:
         juce::ValueTree tree{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "block" },
             },
             {

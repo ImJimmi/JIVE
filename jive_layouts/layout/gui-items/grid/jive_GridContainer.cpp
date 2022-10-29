@@ -21,62 +21,94 @@ namespace jive
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
 
-        const auto setExplicitWidthAndHeight = [this]() {
-            boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth()));
-            boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight()));
+        justifyItems.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        alignItems.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        justifyContent.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        alignContent.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        autoFlow.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        templateColumns.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        templateRows.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        templateAreas.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        autoRows.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        autoColumns.onValueChange = [this]() {
+            updateExplicitSize();
+        };
+        gap.onValueChange = [this]() {
+            updateExplicitSize();
         };
 
-        justifyItems.onValueChange = setExplicitWidthAndHeight;
-        alignItems.onValueChange = setExplicitWidthAndHeight;
-        justifyContent.onValueChange = setExplicitWidthAndHeight;
-        alignContent.onValueChange = setExplicitWidthAndHeight;
-        autoFlow.onValueChange = setExplicitWidthAndHeight;
-        templateColumns.onValueChange = setExplicitWidthAndHeight;
-        templateRows.onValueChange = setExplicitWidthAndHeight;
-        templateAreas.onValueChange = setExplicitWidthAndHeight;
-        autoRows.onValueChange = setExplicitWidthAndHeight;
-        autoColumns.onValueChange = setExplicitWidthAndHeight;
-        gap.onValueChange = setExplicitWidthAndHeight;
-
-        updateLayout();
+        if (getNumChildren() > 0)
+            updateExplicitSize();
     }
 
     //==================================================================================================================
-    void GridContainer::updateLayout()
+    void GridContainer::layOutChildren()
     {
-        auto grid = getGrid();
         const auto bounds = boxModel.getContentBounds().toNearestInt();
 
-        grid.performLayout(bounds);
+        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
+            return;
+
+        buildGrid().performLayout(bounds);
     }
 
     //==================================================================================================================
     void GridContainer::addChild(std::unique_ptr<GuiItem> child)
     {
         GuiItemDecorator::addChild(std::move(child));
+        updateExplicitSize();
+    }
 
-        boxModel.setWidth(juce::jmax(boxModel.getWidth(), calculateMinimumContentWidth()));
-        boxModel.setHeight(juce::jmax(boxModel.getHeight(), calculateMinimumContentHeight()));
-        updateLayout();
+    float GridContainer::calculateAutoWidth() const
+    {
+        const auto grid = buildGridWithDummyItems();
+        auto contentWidth = 0.f;
+
+        for (const auto& gridItem : grid.items)
+        {
+            if (gridItem.currentBounds.getRight() > contentWidth)
+                contentWidth = gridItem.currentBounds.getRight();
+        }
+
+        return contentWidth;
+    }
+
+    float GridContainer::calculateAutoHeight() const
+    {
+        const auto grid = buildGridWithDummyItems();
+        auto contentHeight = 0.f;
+
+        for (const auto& gridItem : grid.items)
+        {
+            if (gridItem.currentBounds.getBottom() > contentHeight)
+                contentHeight = gridItem.currentBounds.getBottom();
+        }
+
+        return contentHeight;
     }
 
     //==================================================================================================================
     GridContainer::operator juce::Grid()
     {
-        return getGrid();
-    }
-
-    //==================================================================================================================
-    void GridContainer::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                                bool wasMoved,
-                                                bool wasResized)
-    {
-        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
-
-        if (!wasResized)
-            return;
-
-        updateLayout();
+        return buildGrid();
     }
 
     //==================================================================================================================
@@ -92,7 +124,7 @@ namespace jive
         }
     }
 
-    juce::Grid GridContainer::getGrid()
+    juce::Grid GridContainer::buildGrid()
     {
         juce::Grid grid;
 
@@ -117,54 +149,28 @@ namespace jive
         return grid;
     }
 
-    juce::Grid GridContainer::getGridWithDummyItems() const
+    juce::Grid GridContainer::buildGridWithDummyItems() const
     {
-        auto grid = const_cast<GridContainer*>(this)->getGrid();
+        auto grid = const_cast<GridContainer*>(this)->buildGrid();
+
+        grid.autoRows = juce::Grid::Px{ 1 };
+        grid.autoColumns = juce::Grid::Px{ 1 };
 
         for (auto& gridItem : grid.items)
             gridItem.associatedComponent = nullptr;
 
+        grid.performLayout(juce::Rectangle<int>{ 0, 0, 0, 0 });
+
         return grid;
     }
 
-    void performDummyLayout(juce::Grid& grid)
+    void GridContainer::updateExplicitSize()
     {
-        grid.autoRows = juce::Grid::Px{ 1 };
-        grid.autoColumns = juce::Grid::Px{ 1 };
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(juce::jmax(0.0f, calculateAutoWidth()));
 
-        grid.performLayout(juce::Rectangle<int>{ 0, 0, 0, 0 });
-    }
-
-    float GridContainer::calculateMinimumContentWidth() const
-    {
-        auto grid = getGridWithDummyItems();
-        performDummyLayout(grid);
-
-        auto contentWidth = 0.f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            if (gridItem.currentBounds.getRight() > contentWidth)
-                contentWidth = gridItem.currentBounds.getRight();
-        }
-
-        return contentWidth;
-    }
-
-    float GridContainer::calculateMinimumContentHeight() const
-    {
-        auto grid = getGridWithDummyItems();
-        performDummyLayout(grid);
-
-        auto contentHeight = 0.f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            if (gridItem.currentBounds.getBottom() > contentHeight)
-                contentHeight = gridItem.currentBounds.getBottom();
-        }
-
-        return contentHeight;
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(juce::jmax(0.0f, calculateAutoHeight()));
     }
 } // namespace jive
 
@@ -229,6 +235,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -266,6 +274,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -303,6 +313,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -355,6 +367,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -407,6 +421,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -444,6 +460,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -501,6 +519,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -558,6 +578,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -580,6 +602,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -607,6 +631,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -634,6 +660,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
         };
@@ -665,6 +693,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
             };
@@ -678,6 +708,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -694,6 +726,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -738,25 +772,36 @@ private:
     {
         beginTest("auto-size");
 
-        juce::ValueTree state{
+        juce::ValueTree parentState{
             "Component",
             {
-                { "display", "grid" },
-                { "template-columns", "10px 10px" },
-                { "template-rows", "10px 1fr" },
-                { "gap", "5" },
+                { "width", 222 },
+                { "height", 333 },
+                { "align-items", "flex-start" },
             },
             {
-                juce::ValueTree{ "Component" },
-                juce::ValueTree{ "Component" },
-                juce::ValueTree{ "Component" },
-                juce::ValueTree{ "Component" },
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "display", "grid" },
+                        { "template-columns", "10px 10px" },
+                        { "template-rows", "10px 1fr" },
+                        { "gap", "5" },
+                    },
+                    {
+                        juce::ValueTree{ "Component" },
+                        juce::ValueTree{ "Component" },
+                        juce::ValueTree{ "Component" },
+                        juce::ValueTree{ "Component" },
+                    },
+                },
             },
         };
         jive::Interpreter interpreter;
-        auto item = interpreter.interpret(state);
-        expectEquals(item->boxModel.getWidth(), 25.f);
-        expectEquals(item->boxModel.getHeight(), 15.f);
+        auto parent = interpreter.interpret(parentState);
+        auto& item = parent->getChild(0);
+        expectEquals(item.boxModel.getWidth(), 25.f);
+        expectEquals(item.boxModel.getHeight(), 15.f);
     }
 };
 

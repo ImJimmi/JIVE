@@ -24,10 +24,6 @@ namespace jive
         juce::Button& getButton();
         const juce::Button& getButton() const;
 
-    protected:
-        //==============================================================================================================
-        void contentChanged() override;
-
     private:
         //==============================================================================================================
         void updateTriggerEvent();

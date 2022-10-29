@@ -11,27 +11,21 @@ namespace jive
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updateLayout() override;
+        void addChild(std::unique_ptr<GuiItem> child) override;
+
+        float calculateAutoWidth() const override;
+        float calculateAutoHeight() const override;
 
         //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child) override;
+        void layOutChildren() override;
 
         //==============================================================================================================
         operator juce::FlexBox();
 
-    protected:
-        //==============================================================================================================
-        void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                     bool wasMoved,
-                                     bool wasResized) override;
-
     private:
         //==============================================================================================================
-        juce::FlexBox getFlexBox();
-        juce::FlexBox getFlexBoxWithDummyItems() const;
-
-        float calculateMinimumContentWidth(juce::FlexBox flex) const;
-        float calculateMinimumContentHeight(juce::FlexBox flex) const;
+        juce::FlexBox buildFlexBox();
+        juce::FlexBox buildFlexBoxWithDummyItems() const;
 
         void updateExplicitSize();
 

@@ -21,8 +21,7 @@ namespace jive
     {
         jassert(getParent() != nullptr);
 
-        const auto updateParentLayout = [this]() {
-            getParent()->updateLayout();
+        const auto updateParentLayout = []() {
         };
         order.onValueChange = updateParentLayout;
         justifySelf.onValueChange = updateParentLayout;
@@ -71,11 +70,11 @@ namespace jive
         }
         else
         {
-            const auto parentContentBounds = BoxModel{ state.getParent() }.getContentBounds();
+            const auto parentContentBounds = getParent()->boxModel.getContentBounds();
 
-            if (!hasAutoWidth())
+            if (!boxModel.hasAutoWidth())
                 gridItem.width = width.toPixels(parentContentBounds);
-            if (!hasAutoHeight())
+            if (!boxModel.hasAutoHeight())
                 gridItem.height = height.toPixels(parentContentBounds);
         }
 
@@ -143,6 +142,8 @@ private:
         juce::ValueTree state{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
             {
@@ -165,6 +166,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -187,6 +190,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -215,6 +220,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -257,6 +264,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -285,6 +294,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -327,6 +338,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -355,6 +368,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -377,6 +392,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                     { "template-columns", "auto auto auto auto" },
                 },
@@ -406,6 +423,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -428,6 +447,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -456,6 +477,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                     { "template-areas", "just-here" },
                 },
@@ -479,6 +502,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                     { "template-areas", "xyz abc" },
                 },
@@ -508,6 +533,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -530,6 +557,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -558,6 +587,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -581,6 +612,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -609,6 +642,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -631,6 +666,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                     { "justify-self", "end" },
                 },
@@ -660,6 +697,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -682,6 +721,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -710,6 +751,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -732,6 +775,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -760,6 +805,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -782,6 +829,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -810,6 +859,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {
@@ -832,6 +883,8 @@ private:
             juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "display", "grid" },
                 },
                 {

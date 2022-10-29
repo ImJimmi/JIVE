@@ -11,13 +11,7 @@ namespace jive
         explicit BlockContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updateLayout() override;
-
-    protected:
-        //==============================================================================================================
-        void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                     bool wasMoved,
-                                     bool wasResized) override;
+        void layOutChildren() override;
 
     private:
         //==============================================================================================================

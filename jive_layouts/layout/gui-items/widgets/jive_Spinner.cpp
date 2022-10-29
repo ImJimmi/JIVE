@@ -54,6 +54,8 @@ private:
         juce::ValueTree tree{
             "Spinner",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "orientation", "horizontal" },
             },
         };
@@ -68,16 +70,27 @@ private:
     {
         beginTest("auto size");
 
-        juce::ValueTree tree{ "Spinner" };
-        auto item = createSpinner(tree);
-        expectEquals(item->boxModel.getWidth(), 50.0f);
-        expectEquals(item->boxModel.getHeight(), 20.0f);
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Spinner" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& item = parent->getChild(0);
+        expectEquals(item.boxModel.getWidth(), 50.0f);
+        expectEquals(item.boxModel.getHeight(), 20.0f);
 
-        tree.setProperty("width", 38.0f, nullptr);
-        expectEquals(item->boxModel.getWidth(), 38.0f);
+        parentState.getChild(0).setProperty("width", 38.0f, nullptr);
+        expectEquals(item.boxModel.getWidth(), 38.0f);
 
-        tree.setProperty("height", 73.0f, nullptr);
-        expectEquals(item->boxModel.getHeight(), 73.0f);
+        parentState.getChild(0).setProperty("height", 73.0f, nullptr);
+        expectEquals(item.boxModel.getHeight(), 73.0f);
     }
 };
 

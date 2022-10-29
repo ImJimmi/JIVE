@@ -113,20 +113,24 @@ namespace jive
         };
         component->setMouseCursor(juce::MouseCursor{ cursor });
 
-        if (!isTopLevel())
+        if (isTopLevel())
         {
-            componentWidth.onValueChange = [this]() {
-                component->setSize(juce::roundToInt(boxModel.getBorderBounds().getWidth()),
-                                   component->getHeight());
-            };
-            componentHeight.onValueChange = [this]() {
-                component->setSize(component->getWidth(),
-                                   juce::roundToInt(boxModel.getBorderBounds().getHeight()));
-            };
+            // Top-level items must have an explicit size!
+            jassert(!boxModel.hasAutoWidth());
+            jassert(!boxModel.hasAutoHeight());
         }
 
+        componentWidth.onValueChange = [this]() {
+            component->setSize(juce::roundToInt(boxModel.getBorderBounds().getWidth()),
+                               component->getHeight());
+        };
         component->setSize(juce::roundToInt(boxModel.getBorderBounds().getWidth()),
                            component->getHeight());
+
+        componentHeight.onValueChange = [this]() {
+            component->setSize(component->getWidth(),
+                               juce::roundToInt(boxModel.getBorderBounds().getHeight()));
+        };
         component->setSize(component->getWidth(),
                            juce::roundToInt(boxModel.getBorderBounds().getHeight()));
 
@@ -150,24 +154,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItem::updateLayout()
-    {
-    }
-
-    void GuiItem::updateSize()
-    {
-    }
-
-    void GuiItem::updatePosition()
-    {
-    }
-
-    void GuiItem::informContentChanged()
-    {
-        contentChanged();
-    }
-
-    //==================================================================================================================
     const std::shared_ptr<const juce::Component> GuiItem::getComponent() const
     {
         return component;
@@ -182,6 +168,7 @@ namespace jive
     {
         auto* newlyAddedChild = children.add(std::move(child));
         component->addChildComponent(*newlyAddedChild->getComponent());
+        newlyAddedChild->boxModel.addListener(*this);
     }
 
     int GuiItem::getNumChildren() const
@@ -220,14 +207,14 @@ namespace jive
         return false;
     }
 
-    bool GuiItem::hasAutoWidth() const
+    float GuiItem::calculateAutoWidth() const
     {
-        return width.isAuto();
+        return 0.0f;
     }
 
-    bool GuiItem::hasAutoHeight() const
+    float GuiItem::calculateAutoHeight() const
     {
-        return height.isAuto();
+        return 0.0f;
     }
 
     //==================================================================================================================
@@ -252,6 +239,38 @@ namespace jive
     }
 
     //==================================================================================================================
+    GuiItem* findChildWithState(juce::ValueTree& state, GuiItem& parentItem)
+    {
+        for (auto& child : parentItem)
+        {
+            if (child.state == state)
+                return &child;
+        }
+
+        return nullptr;
+    }
+
+    void GuiItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (tree == state)
+        {
+            if (property == juce::Identifier{ "padding" }
+                || property == juce::Identifier{ "border-width" })
+            {
+                layOutChildren();
+            }
+        }
+
+        if (auto* child = findChildWithState(tree, *this))
+        {
+            if ((property == componentWidth.id && !child->boxModel.hasAutoWidth())
+                && (property == componentHeight.id && !child->boxModel.hasAutoHeight()))
+            {
+                layOutChildren();
+            }
+        }
+    }
+
     void GuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                           bool /*wasMoved*/,
                                           bool wasResized)
@@ -260,11 +279,10 @@ namespace jive
 
         if (!wasResized)
             return;
-        if (!isTopLevel())
-            return;
 
         boxModel.setWidth(static_cast<float>(component->getWidth()));
         boxModel.setHeight(static_cast<float>(component->getHeight()));
+        layOutChildren();
     }
 
     void GuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
@@ -285,9 +303,20 @@ namespace jive
         enabled = component->isEnabled();
     }
 
-    //==================================================================================================================
-    void GuiItem::contentChanged()
+    void GuiItem::componentChildrenChanged(juce::Component& componentThatsChildrenChanged)
     {
+        jassertquiet(&componentThatsChildrenChanged == component.get());
+        layOutChildren();
+    }
+
+    void GuiItem::boxModelChanged(BoxModel& /*boxModelThatChanged*/)
+    {
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(calculateAutoWidth());
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(calculateAutoHeight());
+
+        layOutChildren();
     }
 
     //==================================================================================================================
@@ -360,28 +389,35 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree) const
-    {
-        jive::Interpreter interpreter;
-        return interpreter.interpret(tree);
-    }
-
     void testChildren()
     {
         beginTest("children");
 
-        auto item = createGuiItem(juce::ValueTree{ "Component" });
-        expect(item->getNumChildren() == 0);
-        expect(item->getComponent()->getNumChildComponents() == item->getNumChildren());
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(juce::ValueTree{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+        });
+        expectEquals(item->getNumChildren(), 0);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getNumChildren());
 
-        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
-        expect(item->getNumChildren() == 1);
-        expect(item->getComponent()->getNumChildComponents() == item->getNumChildren());
+        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                       juce::ValueTree{ "Component" },
+                                                       item.get()));
+        expectEquals(item->getNumChildren(), 1);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getNumChildren());
 
-        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
-        item->addChild(createGuiItem(juce::ValueTree{ "Component" }));
-        expect(item->getNumChildren() == 3);
-        expect(item->getComponent()->getNumChildComponents() == item->getNumChildren());
+        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                       juce::ValueTree{ "Component" },
+                                                       item.get()));
+        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                       juce::ValueTree{ "Component" },
+                                                       item.get()));
+        expectEquals(item->getNumChildren(), 3);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getNumChildren());
     }
 
     void testWidthAndHeight()
@@ -389,37 +425,25 @@ private:
         beginTest("width and height");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
-            expect(item->hasAutoWidth());
-            expect(item->hasAutoHeight());
-            expectEquals(item->getComponent()->getWidth(), 0);
-            expectEquals(item->getComponent()->getHeight(), 0);
-
-            tree.setProperty("width", 100.11f, nullptr);
-            tree.setProperty("height", 50.55f, nullptr);
-            expect(!item->hasAutoWidth());
-            expect(!item->hasAutoHeight());
-            expectEquals(item->getComponent()->getWidth(), 100);
-            expectEquals(item->getComponent()->getHeight(), 51);
-        }
-        {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
-                    { "width", 100.0f },
-                    { "height", 389.0f },
+                    { "width", 222 },
+                    { "height", 333 },
                 },
             };
-            auto item = createGuiItem(tree);
-            expect(!item->hasAutoWidth());
-            expect(!item->hasAutoHeight());
-            expectEquals(item->getComponent()->getWidth(), 100);
-            expectEquals(item->getComponent()->getHeight(), 389);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
+            expect(!item->boxModel.hasAutoWidth());
+            expect(!item->boxModel.hasAutoHeight());
+            expectEquals(item->getComponent()->getWidth(), 222);
+            expectEquals(item->getComponent()->getHeight(), 333);
 
-            item->getComponent()->setSize(312, 1203);
-            expectEquals(tree["width"], juce::var{ 100.0f });
-            expectEquals(tree["height"], juce::var{ 389.0f });
+            state.setProperty("width", 100.11f, nullptr);
+            expectEquals(item->getComponent()->getWidth(), 100);
+
+            state.setProperty("height", 50.55f, nullptr);
+            expectEquals(item->getComponent()->getHeight(), 51);
         }
     }
 
@@ -427,14 +451,15 @@ private:
     {
         beginTest("top-level item's size");
 
-        juce::ValueTree tree{
+        juce::ValueTree state{
             "Component",
             {
                 { "width", 200 },
                 { "height", 150 },
             },
         };
-        auto item = createGuiItem(tree);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(state);
         expect(item->getComponent()->getWidth() == 200);
         expect(item->getComponent()->getHeight() == 150);
 
@@ -449,21 +474,31 @@ private:
         beginTest("name");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getName().isEmpty());
 
-            tree.setProperty("name", "Zaphod Beeblebrox", nullptr);
+            state.setProperty("name", "Zaphod Beeblebrox", nullptr);
             expectEquals<juce::String>(item->getComponent()->getName(), "Zaphod Beeblebrox");
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "name", "Ford Prefect" },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getName(), "Ford Prefect");
         }
     }
@@ -473,21 +508,31 @@ private:
         beginTest("title");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getTitle().isEmpty());
 
-            tree.setProperty("title", "Captain", nullptr);
+            state.setProperty("title", "Captain", nullptr);
             expectEquals<juce::String>(item->getComponent()->getTitle(), "Captain");
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "title", "Lord" },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getTitle(), "Lord");
         }
     }
@@ -497,24 +542,31 @@ private:
         beginTest("ID");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
-
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getComponentID().isEmpty());
 
-            tree.setProperty("id", "comp123", nullptr);
-
+            state.setProperty("id", "comp123", nullptr);
             expectEquals<juce::String>(item->getComponent()->getComponentID(), "comp123");
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "id", "specified" },
                 },
             };
-            auto item = createGuiItem(tree);
-
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getComponentID(), "specified");
         }
     }
@@ -524,24 +576,31 @@ private:
         beginTest("description");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
-
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getDescription().isEmpty());
 
-            tree.setProperty("description", "Don't panic!", nullptr);
-
+            state.setProperty("description", "Don't panic!", nullptr);
             expectEquals<juce::String>(item->getComponent()->getDescription(), "Don't panic!");
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "description", "You live and learn. At any rate, you live." },
                 },
             };
-            auto item = createGuiItem(tree);
-
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getDescription(),
                                        "You live and learn. At any rate, you live.");
         }
@@ -552,28 +611,37 @@ private:
         beginTest("tooltip");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
-
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getHelpText().isEmpty());
 
-            tree.setProperty("tooltip",
-                             "I love deadlines. I love the whooshing noise they make as they go by.",
-                             nullptr);
-
+            state.setProperty("tooltip",
+                              "I love deadlines. I love the whooshing noise they make as they go by.",
+                              nullptr);
             expectEquals<juce::String>(item->getComponent()->getHelpText(),
                                        "I love deadlines. I love the whooshing noise they make as they go by.");
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
-                    { "tooltip",
-                      "I may not have gone where I intended to go, but I think I have ended up where I needed to be." },
+                    { "width", 222 },
+                    { "height", 333 },
+                    {
+                        "tooltip",
+                        "I may not have gone where I intended to go, but I think I have ended up where I needed to be.",
+                    },
                 },
             };
-            auto item = createGuiItem(tree);
-
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getHelpText(),
                                        "I may not have gone where I intended to go, but I think I have ended up where I needed to be.");
         }
@@ -584,41 +652,57 @@ private:
         beginTest("visibility");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
-
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->isVisible());
 
-            tree.setProperty("visible", false, nullptr);
+            state.setProperty("visible", false, nullptr);
             expect(!item->getComponent()->isVisible());
 
             juce::ValueTree childTree1{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "visible", true },
                 },
             };
-            item->addChild(createGuiItem(childTree1));
+            item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                           childTree1,
+                                                           item.get()));
             expect(item->getChild(0).getComponent()->isVisible());
 
             juce::ValueTree childTree2{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "visible", false },
                 },
             };
-            item->addChild(createGuiItem(childTree2));
+            item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                           childTree2,
+                                                           item.get()));
             expect(!item->getChild(1).getComponent()->isVisible());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "visible", false },
                 },
             };
-            auto item = createGuiItem(tree);
-
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->isVisible());
         }
     }
@@ -628,22 +712,32 @@ private:
         beginTest("always-on-top");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->isAlwaysOnTop());
 
-            tree.setProperty("always-on-top", true, nullptr);
+            state.setProperty("always-on-top", true, nullptr);
             expect(item->getComponent()->isAlwaysOnTop());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "always-on-top", true },
                 },
             };
-            auto item = createGuiItem(tree);
-            expect(item->getComponent()->isAlwaysOnTop() == static_cast<bool>(tree["always-on-top"]));
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
+            expect(item->getComponent()->isAlwaysOnTop() == static_cast<bool>(state["always-on-top"]));
         }
     }
 
@@ -652,21 +746,31 @@ private:
         beginTest("buffered-to-image");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getCachedComponentImage() == nullptr);
 
-            tree.setProperty("buffered-to-image", true, nullptr);
+            state.setProperty("buffered-to-image", true, nullptr);
             expect(item->getComponent()->getCachedComponentImage() != nullptr);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "buffered-to-image", true },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getCachedComponentImage() != nullptr);
         }
     }
@@ -676,21 +780,31 @@ private:
         beginTest("opaque");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->isOpaque());
 
-            tree.setProperty("opaque", true, nullptr);
+            state.setProperty("opaque", true, nullptr);
             expect(item->getComponent()->isOpaque());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "opaque", true },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->isOpaque());
         }
     }
@@ -700,21 +814,31 @@ private:
         beginTest("focus-order");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getExplicitFocusOrder() == 0);
 
-            tree.setProperty("focus-order", 12, nullptr);
+            state.setProperty("focus-order", 12, nullptr);
             expect(item->getComponent()->getExplicitFocusOrder() == 12);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "focus-order", 4 },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getExplicitFocusOrder() == 4);
         }
     }
@@ -724,21 +848,31 @@ private:
         beginTest("focusable");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->getWantsKeyboardFocus());
 
-            tree.setProperty("focusable", true, nullptr);
+            state.setProperty("focusable", true, nullptr);
             expect(item->getComponent()->getWantsKeyboardFocus());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "focusable", true },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getWantsKeyboardFocus());
         }
     }
@@ -748,21 +882,31 @@ private:
         beginTest("clicking-grabs-focus");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getMouseClickGrabsKeyboardFocus());
 
-            tree.setProperty("clicking-grabs-focus", false, nullptr);
+            state.setProperty("clicking-grabs-focus", false, nullptr);
             expect(!item->getComponent()->getMouseClickGrabsKeyboardFocus());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "clicking-grabs-focus", false },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->getMouseClickGrabsKeyboardFocus());
         }
     }
@@ -772,21 +916,31 @@ private:
         beginTest("focus-outline");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->hasFocusOutline());
 
-            tree.setProperty("focus-outline", true, nullptr);
+            state.setProperty("focus-outline", true, nullptr);
             expect(item->getComponent()->hasFocusOutline());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "focus-outline", true },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->hasFocusOutline());
         }
     }
@@ -796,21 +950,31 @@ private:
         beginTest("enablement");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->isEnabled());
 
-            tree.setProperty("enabled", false, nullptr);
+            state.setProperty("enabled", false, nullptr);
             expect(!item->getComponent()->isEnabled());
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "enabled", false },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(!item->getComponent()->isEnabled());
         }
     }
@@ -820,21 +984,31 @@ private:
         beginTest("opacity");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getAlpha() == 1.f);
 
-            tree.setProperty("opacity", 0.42f, nullptr);
+            state.setProperty("opacity", 0.42f, nullptr);
             expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "opacity", 0.123f },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.123f, 1.f / 256.f);
         }
     }
@@ -844,21 +1018,31 @@ private:
         beginTest("cursor");
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto item = createGuiItem(tree);
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getMouseCursor() == juce::MouseCursor::NormalCursor);
 
-            tree.setProperty("cursor", "left-right", nullptr);
+            state.setProperty("cursor", "left-right", nullptr);
             expect(item->getComponent()->getMouseCursor() == juce::MouseCursor::LeftRightResizeCursor);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree state{
                 "Component",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "cursor", "wait" },
                 },
             };
-            auto item = createGuiItem(tree);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
             expect(item->getComponent()->getMouseCursor() == juce::MouseCursor::WaitCursor);
         }
     }

@@ -17,10 +17,6 @@ namespace jive
         juce::Label& getLabel();
         const juce::Label& getLabel() const;
 
-    protected:
-        //==============================================================================================================
-        void contentChanged() override;
-
     private:
         //==============================================================================================================
         TypedValue<juce::BorderSize<float>> border;
