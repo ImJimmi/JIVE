@@ -14,6 +14,17 @@ namespace jive
         getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
 
         getProgressBar().setPercentageDisplay(false);
+
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(135.0f);
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(20.0f);
+    }
+
+    //==================================================================================================================
+    bool ProgressBar::isContainer() const
+    {
+        return false;
     }
 
     //==================================================================================================================
@@ -41,6 +52,7 @@ public:
     void runTest() final
     {
         testValue();
+        testDefaultSize();
     }
 
 private:
@@ -87,6 +99,28 @@ private:
             auto item = createProgressBar(tree);
             expectEquals(item->getProgressBar().getValue(), 0.463);
         }
+    }
+
+    void testDefaultSize()
+    {
+        beginTest("default size");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 999 },
+                { "height", 999 },
+            },
+            {
+                juce::ValueTree{ "ProgressBar" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& progressBar = dynamic_cast<jive::ProgressBar&>(parent->getChild(0));
+        expect(!progressBar.isContainer());
+        expectEquals(progressBar.boxModel.getWidth(), 135.0f);
+        expectEquals(progressBar.boxModel.getHeight(), 20.0f);
     }
 };
 

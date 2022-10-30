@@ -5,7 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 50.0f, 20.0f }
+        : Slider{ std::move(itemToDecorate), 70.0f, 20.0f }
         , draggable{ state, "draggable" }
     {
         draggable.onValueChange = [this]() {
@@ -83,7 +83,7 @@ private:
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 50.0f);
+        expectEquals(item.boxModel.getWidth(), 70.0f);
         expectEquals(item.boxModel.getHeight(), 20.0f);
 
         parentState.getChild(0).setProperty("width", 38.0f, nullptr);

@@ -10,6 +10,9 @@ namespace jive
         //==============================================================================================================
         explicit ProgressBar(std::unique_ptr<GuiItem> itemToDecorate);
 
+        //==================================================================================================================
+        bool isContainer() const override;
+
         //==============================================================================================================
         NormalisedProgressBar& getProgressBar();
         const NormalisedProgressBar& getProgressBar() const;

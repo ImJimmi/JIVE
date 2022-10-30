@@ -5,7 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 75.0f, 25.0f }
+        : Slider{ std::move(itemToDecorate), 135.0f, 20.0f }
     {
     }
 
@@ -504,8 +504,8 @@ private:
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 75.0f);
-        expectEquals(item.boxModel.getHeight(), 25.0f);
+        expectEquals(item.boxModel.getWidth(), 135.0f);
+        expectEquals(item.boxModel.getHeight(), 20.0f);
 
         parentState.getChild(0).setProperty("width", 123.f, nullptr);
         expectEquals(item.boxModel.getWidth(), 123.f);

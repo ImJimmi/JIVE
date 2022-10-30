@@ -21,7 +21,8 @@ namespace jive
     {
         jassert(getParent() != nullptr);
 
-        const auto updateParentLayout = []() {
+        const auto updateParentLayout = [this]() {
+            getParent()->layOutChildren();
         };
         order.onValueChange = updateParentLayout;
         justifySelf.onValueChange = updateParentLayout;
@@ -63,7 +64,7 @@ namespace jive
         gridItem.row = row;
         gridItem.area = area;
 
-        if (getTopLevelDecorator().isContent())
+        if (!getTopLevelDecorator().isContainer())
         {
             gridItem.width = static_cast<float>(boxModel.getWidth());
             gridItem.height = static_cast<float>(boxModel.getHeight());
@@ -74,8 +75,13 @@ namespace jive
 
             if (!boxModel.hasAutoWidth())
                 gridItem.width = width.toPixels(parentContentBounds);
+            else
+                gridItem.minWidth = static_cast<float>(boxModel.getWidth());
+
             if (!boxModel.hasAutoHeight())
                 gridItem.height = height.toPixels(parentContentBounds);
+            else
+                gridItem.minHeight = static_cast<float>(boxModel.getHeight());
         }
 
         gridItem.minWidth = minWidth;

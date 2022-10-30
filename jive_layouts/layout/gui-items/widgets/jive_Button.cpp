@@ -42,6 +42,11 @@ namespace jive
             getButton().setTooltip(tooltip);
         };
         getButton().setTooltip(tooltip);
+
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(50.0f);
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(20.0f);
     }
 
     //==================================================================================================================
@@ -103,6 +108,7 @@ public:
         testClickingTogglesState();
         testRadioGroup();
         testTooltip();
+        testDefaultSize();
     }
 
 private:
@@ -326,6 +332,27 @@ private:
             auto item = createButton(tree);
             expectEquals(item->getButton().getTooltip(), juce::String{ "OneTwoThree" });
         }
+    }
+
+    void testDefaultSize()
+    {
+        beginTest("default size");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 999 },
+                { "height", 999 },
+            },
+            {
+                juce::ValueTree{ "Button" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& button = dynamic_cast<jive::Button&>(parent->getChild(0));
+        expectEquals(button.boxModel.getWidth(), 50.0f);
+        expectEquals(button.boxModel.getHeight(), 20.0f);
     }
 };
 

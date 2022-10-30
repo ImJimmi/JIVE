@@ -99,6 +99,11 @@ namespace jive
         updateItems();
         getComboBox().setSelectedItemIndex(selected);
         getComboBox().addListener(this);
+
+        if (boxModel.hasAutoWidth())
+            boxModel.setWidth(50.0f);
+        if (boxModel.hasAutoHeight())
+            boxModel.setHeight(20.0f);
     }
 
     //==================================================================================================================
