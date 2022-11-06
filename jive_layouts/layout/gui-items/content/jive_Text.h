@@ -30,7 +30,6 @@ namespace jive
 
         void updateFont();
         void updateTextComponent();
-        void updateExplicitSize();
 
         //==============================================================================================================
         TypedValue<juce::String> text;
@@ -44,6 +43,8 @@ namespace jive
         TypedValue<juce::Justification> justification;
         TypedValue<juce::AttributedString::WordWrap> wordWrap;
         TypedValue<juce::AttributedString::ReadingDirection> direction;
+        Length autoMinWidth;
+        Length autoMinHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)

@@ -13,9 +13,6 @@ namespace jive
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
 
-        float calculateAutoWidth() const override;
-        float calculateAutoHeight() const override;
-
         //==============================================================================================================
         void layOutChildren() override;
 
@@ -27,7 +24,10 @@ namespace jive
         juce::Grid buildGrid();
         juce::Grid buildGridWithDummyItems() const;
 
-        void updateExplicitSize();
+        float calculateMinWidth() const;
+        float calculateMinHeight() const;
+
+        void layoutChanged();
 
         //==============================================================================================================
         TypedValue<juce::Grid::JustifyItems> justifyItems;
@@ -41,6 +41,8 @@ namespace jive
         TypedValue<juce::Grid::TrackInfo> autoRows;
         TypedValue<juce::Grid::TrackInfo> autoColumns;
         TypedValue<juce::Array<juce::Grid::Px>> gap;
+        Length autoMinWidth;
+        Length autoMinHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)

@@ -66,6 +66,8 @@ namespace jive
         , editable{ state, "editable" }
         , tooltip{ state, "tooltip" }
         , selected{ state, "selected" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
         editable.onValueChange = [this]() {
             getComboBox().setEditableText(editable);
@@ -100,10 +102,10 @@ namespace jive
         getComboBox().setSelectedItemIndex(selected);
         getComboBox().addListener(this);
 
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(50.0f);
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(20.0f);
+        if (width.isAuto())
+            width = "50";
+        if (height.isAuto())
+            height = "20";
     }
 
     //==================================================================================================================

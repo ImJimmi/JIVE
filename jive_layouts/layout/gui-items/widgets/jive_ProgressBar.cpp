@@ -7,6 +7,8 @@ namespace jive
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , value{ state, "value" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
         value.onValueChange = [this]() {
             getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
@@ -15,10 +17,10 @@ namespace jive
 
         getProgressBar().setPercentageDisplay(false);
 
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(135.0f);
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(20.0f);
+        if (width.isAuto())
+            width = "135";
+        if (height.isAuto())
+            height = "20";
     }
 
     //==================================================================================================================

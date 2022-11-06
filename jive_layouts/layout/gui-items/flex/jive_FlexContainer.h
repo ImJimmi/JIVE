@@ -13,9 +13,6 @@ namespace jive
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
 
-        float calculateAutoWidth() const override;
-        float calculateAutoHeight() const override;
-
         //==============================================================================================================
         void layOutChildren() override;
 
@@ -27,7 +24,10 @@ namespace jive
         juce::FlexBox buildFlexBox();
         juce::FlexBox buildFlexBoxWithDummyItems() const;
 
-        void updateExplicitSize();
+        float calculateMinWidth() const;
+        float calculateMinHeight() const;
+
+        void layoutChanged();
 
         //==============================================================================================================
         TypedValue<juce::FlexBox::Direction> flexDirection;
@@ -35,6 +35,8 @@ namespace jive
         TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
         TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
         TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
+        Length autoMinWidth;
+        Length autoMinHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)

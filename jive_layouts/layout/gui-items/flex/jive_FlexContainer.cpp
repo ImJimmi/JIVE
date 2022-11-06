@@ -7,77 +7,38 @@ namespace jive
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::column }
-        , flexWrap{ state, "flex-wrap", juce::FlexBox::Wrap::noWrap }
-        , flexJustifyContent{ state, "justify-content", juce::FlexBox::JustifyContent::flexStart }
-        , flexAlignItems{ state, "align-items", juce::FlexBox::AlignItems::stretch }
-        , flexAlignContent{ state, "align-content", juce::FlexBox::AlignContent::stretch }
+        , flexWrap{ state, "flex-wrap", juce::FlexBox{}.flexWrap }
+        , flexJustifyContent{ state, "justify-content", juce::FlexBox{}.justifyContent }
+        , flexAlignItems{ state, "align-items", juce::FlexBox{}.alignItems }
+        , flexAlignContent{ state, "align-content", juce::FlexBox{}.alignContent }
+        , autoMinWidth{ state, "auto-min-width" }
+        , autoMinHeight{ state, "auto-min-height" }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         flexWrap.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         flexJustifyContent.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         flexAlignItems.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         flexAlignContent.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
-
-        if (getNumChildren() > 0)
-            updateExplicitSize();
     }
 
     //==================================================================================================================
     void FlexContainer::addChild(std::unique_ptr<GuiItem> child)
     {
         GuiItemDecorator::addChild(std::move(child));
-        updateExplicitSize();
-    }
-
-    float FlexContainer::calculateAutoWidth() const
-    {
-        const auto flex = buildFlexBoxWithDummyItems();
-        auto rightOfFarthestItem = -1.0f;
-
-        for (const auto& flexItem : flex.items)
-        {
-            if (flexItem.currentBounds.getWidth() == 0)
-                continue;
-
-            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
-
-            if (right > rightOfFarthestItem)
-                rightOfFarthestItem = right;
-        }
-
-        return rightOfFarthestItem;
-    }
-
-    float FlexContainer::calculateAutoHeight() const
-    {
-        const auto flex = buildFlexBoxWithDummyItems();
-        auto bottomOfLowestItem = -1.0f;
-
-        for (const auto& flexItem : flex.items)
-        {
-            if (flexItem.currentBounds.getHeight() == 0)
-                continue;
-
-            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
-
-            if (bottom > bottomOfLowestItem)
-                bottomOfLowestItem = bottom;
-        }
-
-        return bottomOfLowestItem;
+        layoutChanged();
     }
 
     //==================================================================================================================
@@ -147,13 +108,45 @@ namespace jive
         return flex;
     }
 
-    void FlexContainer::updateExplicitSize()
+    float FlexContainer::calculateMinWidth() const
     {
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(juce::jmax(0.0f, calculateAutoWidth()));
+        const auto flex = buildFlexBoxWithDummyItems();
+        auto rightOfFarthestItem = -1.0f;
 
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(juce::jmax(0.0f, calculateAutoHeight()));
+        for (const auto& flexItem : flex.items)
+        {
+            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
+
+            if (right > rightOfFarthestItem)
+                rightOfFarthestItem = right;
+        }
+
+        return rightOfFarthestItem;
+    }
+
+    float FlexContainer::calculateMinHeight() const
+    {
+        const auto flex = buildFlexBoxWithDummyItems();
+        auto bottomOfLowestItem = -1.0f;
+
+        for (const auto& flexItem : flex.items)
+        {
+            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
+
+            if (bottom > bottomOfLowestItem)
+                bottomOfLowestItem = bottom;
+        }
+
+        return bottomOfLowestItem;
+    }
+
+    void FlexContainer::layoutChanged()
+    {
+        autoMinWidth = juce::String{ calculateMinWidth() };
+        autoMinHeight = juce::String{ calculateMinHeight() };
+
+        if (auto parent = getParent())
+            parent->layOutChildren();
     }
 } // namespace jive
 
@@ -453,8 +446,8 @@ private:
             expectEquals(item.getChild(1).boxModel.getHeight(), 99.0f);
 
             item.state.setProperty("flex-direction", "row", nullptr);
-            expectEquals(item.boxModel.getWidth(), 90.0f);
-            expectEquals(item.boxModel.getHeight(), 109.0f);
+            expectGreaterOrEqual(item.boxModel.getWidth(), 90.0f);
+            expectGreaterOrEqual(item.boxModel.getHeight(), 109.0f);
             expectEquals(item.getChild(0).boxModel.getWidth(), 43.0f);
             expectEquals(item.getChild(0).boxModel.getHeight(), 84.0f);
             expectEquals(item.getChild(1).boxModel.getWidth(), 37.0f);

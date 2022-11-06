@@ -68,6 +68,8 @@ namespace jive
         TypedValue<bool> editable;
         TypedValue<juce::String> tooltip;
         TypedValue<int> selected;
+        Length width;
+        Length height;
 
         juce::OwnedArray<Option> options;
         juce::OwnedArray<Header> headers;

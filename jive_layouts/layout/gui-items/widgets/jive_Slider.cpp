@@ -85,10 +85,10 @@ namespace jive
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
 
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(defaultWidth);
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(defaultHeight);
+        if (width.isAuto())
+            width = juce::String{ defaultWidth };
+        if (height.isAuto())
+            height = juce::String{ defaultHeight };
     }
 
     //==================================================================================================================

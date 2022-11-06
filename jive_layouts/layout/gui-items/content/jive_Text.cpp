@@ -17,6 +17,8 @@ namespace jive
         , justification{ state, "justification", juce::Justification::centredLeft }
         , wordWrap{ state, "word-wrap", juce::AttributedString::WordWrap::byWord }
         , direction{ state, "direction", juce::AttributedString::ReadingDirection::natural }
+        , autoMinWidth{ state, "auto-min-width" }
+        , autoMinHeight{ state, "auto-min-height" }
     {
         text.onValueChange = [this]() {
             updateTextComponent();
@@ -156,24 +158,17 @@ namespace jive
 
         updateFont();
 
+        const auto layout = buildTextLayout();
+        autoMinWidth = juce::String{ std::ceil(layout.getWidth()) };
+        autoMinHeight = juce::String{ std::ceil(layout.getHeight()) };
+
         if (auto* parentItem = getParent())
         {
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
+
+            parentItem->layOutChildren();
         }
-
-        updateExplicitSize();
-    }
-
-    void Text::updateExplicitSize()
-    {
-        auto textLayout = buildTextLayout();
-
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(juce::jmax(0.0f, std::ceil(textLayout.getWidth())));
-
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(juce::jmax(0.0f, std::ceil(textLayout.getHeight())));
     }
 
     //==================================================================================================================
@@ -612,34 +607,36 @@ private:
                 {
                     { "width", 222 },
                     { "height", 333 },
+                    { "align-items", "flex-start" },
                 },
                 {
                     textTree,
                 },
             };
             jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            const auto font = dynamic_cast<jive::TextComponent&>(*item->getChild(0).getComponent())
+            auto parentItem = interpreter.interpret(tree);
+            auto& item = dynamic_cast<jive::Text&>(parentItem->getChild(0));
+            const auto font = dynamic_cast<jive::TextComponent&>(*item.getComponent())
                                   .getAttributedString()
                                   .getAttribute(0)
                                   .font;
 
-            expectEquals(item->getChild(0).boxModel.getWidth(),
+            expectEquals(item.boxModel.getWidth(),
                          std::ceil(font.getStringWidthFloat("This side up.")));
-            expectEquals(item->getChild(0).boxModel.getHeight(), std::ceil(font.getHeight()));
+            expectEquals(item.boxModel.getHeight(), std::ceil(font.getHeight()));
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
-            expectEquals(item->getChild(0).boxModel.getWidth(),
+            expectEquals(item.boxModel.getWidth(),
                          std::ceil(std::max({ font.getStringWidthFloat("This one spans"),
                                               font.getStringWidthFloat("multiple lines.") })));
-            expectEquals(item->getChild(0).boxModel.getHeight(), std::ceil(font.getHeight()) * 2.0f);
+            expectEquals(item.boxModel.getHeight(), std::ceil(font.getHeight()) * 2.0f);
 
             textTree.setProperty("width", 100.0f, nullptr);
             textTree.setProperty("text",
                                  "A very very very very very very very very very "
                                  "very very long line.",
                                  nullptr);
-            expectGreaterThan(item->getChild(0).boxModel.getHeight(), font.getHeight());
+            expectGreaterThan(item.boxModel.getHeight(), font.getHeight());
         }
         {
             juce::ValueTree tree{

@@ -12,12 +12,14 @@ namespace jive
         , column{ state, "column", juce::GridItem{}.column }
         , row{ state, "row", juce::GridItem{}.row }
         , area{ state, "area", juce::GridItem{}.area }
-        , minWidth{ state, "min-width", juce::GridItem{}.minWidth }
         , maxWidth{ state, "max-width", juce::GridItem{}.maxWidth }
-        , minHeight{ state, "min-height", juce::GridItem{}.minHeight }
         , maxHeight{ state, "max-height", juce::GridItem{}.maxHeight }
         , width{ state, "width", "auto" }
         , height{ state, "height", "auto" }
+        , minWidth{ state, "min-width" }
+        , minHeight{ state, "min-height" }
+        , autoMinWidth{ state, "auto-min-width" }
+        , autoMinHeight{ state, "auto-min-height" }
     {
         jassert(getParent() != nullptr);
 
@@ -54,6 +56,25 @@ namespace jive
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ *component };
+        const auto parentContentBounds = getParent()->boxModel.getContentBounds();
+
+        if (!width.isAuto())
+            gridItem.width = width.toPixels(parentContentBounds);
+        if (!height.isAuto())
+            gridItem.height = height.toPixels(parentContentBounds);
+
+        if (!minWidth.isAuto())
+            gridItem.minWidth = minWidth.toPixels(parentContentBounds);
+        else
+            gridItem.minWidth = autoMinWidth.toPixels(parentContentBounds);
+
+        if (!minHeight.isAuto())
+            gridItem.minHeight = minHeight.toPixels(parentContentBounds);
+        else
+            gridItem.minHeight = autoMinHeight.toPixels(parentContentBounds);
+
+        gridItem.maxWidth = maxWidth;
+        gridItem.maxHeight = maxHeight;
 
         gridItem.order = order;
 
@@ -63,31 +84,6 @@ namespace jive
         gridItem.column = column;
         gridItem.row = row;
         gridItem.area = area;
-
-        if (!getTopLevelDecorator().isContainer())
-        {
-            gridItem.width = static_cast<float>(boxModel.getWidth());
-            gridItem.height = static_cast<float>(boxModel.getHeight());
-        }
-        else
-        {
-            const auto parentContentBounds = getParent()->boxModel.getContentBounds();
-
-            if (!boxModel.hasAutoWidth())
-                gridItem.width = width.toPixels(parentContentBounds);
-            else
-                gridItem.minWidth = static_cast<float>(boxModel.getWidth());
-
-            if (!boxModel.hasAutoHeight())
-                gridItem.height = height.toPixels(parentContentBounds);
-            else
-                gridItem.minHeight = static_cast<float>(boxModel.getHeight());
-        }
-
-        gridItem.minWidth = minWidth;
-        gridItem.maxWidth = maxWidth;
-        gridItem.minHeight = minHeight;
-        gridItem.maxHeight = maxHeight;
 
         gridItem.margin = boxModelToGridItemMargin(boxModel);
 

@@ -17,46 +17,45 @@ namespace jive
         , autoRows{ state, "auto-rows", juce::Grid{}.autoRows }
         , autoColumns{ state, "auto-columns", juce::Grid{}.autoColumns }
         , gap{ state, "gap" }
+        , autoMinWidth{ state, "auto-min-width" }
+        , autoMinHeight{ state, "auto-min-height" }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
 
         justifyItems.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         alignItems.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         justifyContent.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         alignContent.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         autoFlow.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         templateColumns.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         templateRows.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         templateAreas.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         autoRows.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         autoColumns.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
         gap.onValueChange = [this]() {
-            updateExplicitSize();
+            layoutChanged();
         };
-
-        if (getNumChildren() > 0)
-            updateExplicitSize();
     }
 
     //==================================================================================================================
@@ -74,35 +73,7 @@ namespace jive
     void GridContainer::addChild(std::unique_ptr<GuiItem> child)
     {
         GuiItemDecorator::addChild(std::move(child));
-        updateExplicitSize();
-    }
-
-    float GridContainer::calculateAutoWidth() const
-    {
-        const auto grid = buildGridWithDummyItems();
-        auto contentWidth = 0.f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            if (gridItem.currentBounds.getRight() > contentWidth)
-                contentWidth = gridItem.currentBounds.getRight();
-        }
-
-        return contentWidth;
-    }
-
-    float GridContainer::calculateAutoHeight() const
-    {
-        const auto grid = buildGridWithDummyItems();
-        auto contentHeight = 0.f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            if (gridItem.currentBounds.getBottom() > contentHeight)
-                contentHeight = gridItem.currentBounds.getBottom();
-        }
-
-        return contentHeight;
+        layoutChanged();
     }
 
     //==================================================================================================================
@@ -164,13 +135,45 @@ namespace jive
         return grid;
     }
 
-    void GridContainer::updateExplicitSize()
+    float GridContainer::calculateMinWidth() const
     {
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(juce::jmax(0.0f, calculateAutoWidth()));
+        const auto grid = buildGridWithDummyItems();
+        auto rightOfFarthestItem = -1.0f;
 
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(juce::jmax(0.0f, calculateAutoHeight()));
+        for (const auto& gridItem : grid.items)
+        {
+            const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
+
+            if (right > rightOfFarthestItem)
+                rightOfFarthestItem = right;
+        }
+
+        return rightOfFarthestItem;
+    }
+
+    float GridContainer::calculateMinHeight() const
+    {
+        const auto grid = buildGridWithDummyItems();
+        auto bottomOfLowestItem = -1.0f;
+
+        for (const auto& gridItem : grid.items)
+        {
+            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
+
+            if (bottom > bottomOfLowestItem)
+                bottomOfLowestItem = bottom;
+        }
+
+        return bottomOfLowestItem;
+    }
+
+    void GridContainer::layoutChanged()
+    {
+        autoMinWidth = juce::String{ calculateMinWidth() };
+        autoMinHeight = juce::String{ calculateMinHeight() };
+
+        if (auto parent = getParent())
+            parent->layOutChildren();
     }
 } // namespace jive
 

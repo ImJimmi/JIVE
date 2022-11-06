@@ -48,8 +48,6 @@ namespace jive
 
         virtual bool isContainer() const;
         virtual bool isContent() const;
-        virtual float calculateAutoWidth() const;
-        virtual float calculateAutoHeight() const;
 
         //==============================================================================================================
         virtual void layOutChildren() {}

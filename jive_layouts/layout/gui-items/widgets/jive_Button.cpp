@@ -12,6 +12,8 @@ namespace jive
         , radioGroup{ state, "radio-group" }
         , triggerEvent{ state, "trigger-event", TriggerEvent::mouseUp }
         , tooltip{ state, "tooltip" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -43,10 +45,10 @@ namespace jive
         };
         getButton().setTooltip(tooltip);
 
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(50.0f);
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(20.0f);
+        if (width.isAuto())
+            width = "50";
+        if (height.isAuto())
+            height = "20";
     }
 
     //==================================================================================================================

@@ -21,12 +21,14 @@ namespace jive
         TypedValue<juce::GridItem::StartAndEndProperty> column;
         TypedValue<juce::GridItem::StartAndEndProperty> row;
         TypedValue<juce::String> area;
-        TypedValue<float> minWidth;
         TypedValue<float> maxWidth;
-        TypedValue<float> minHeight;
         TypedValue<float> maxHeight;
         Length width;
         Length height;
+        Length minWidth;
+        Length minHeight;
+        Length autoMinWidth;
+        Length autoMinHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)

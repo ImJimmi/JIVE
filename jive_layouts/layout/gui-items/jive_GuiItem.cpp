@@ -207,16 +207,6 @@ namespace jive
         return false;
     }
 
-    float GuiItem::calculateAutoWidth() const
-    {
-        return 0.0f;
-    }
-
-    float GuiItem::calculateAutoHeight() const
-    {
-        return 0.0f;
-    }
-
     //==================================================================================================================
     GuiItem::Iterator GuiItem::begin()
     {
@@ -311,11 +301,6 @@ namespace jive
 
     void GuiItem::boxModelChanged(BoxModel& /*boxModelThatChanged*/)
     {
-        if (boxModel.hasAutoWidth())
-            boxModel.setWidth(calculateAutoWidth());
-        if (boxModel.hasAutoHeight())
-            boxModel.setHeight(calculateAutoHeight());
-
         layOutChildren();
     }
 

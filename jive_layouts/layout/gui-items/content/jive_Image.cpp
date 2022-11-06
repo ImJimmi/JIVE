@@ -8,10 +8,13 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , source{ state, "source" }
         , placement{ state, "placement", juce::RectanglePlacement::centred }
+        , width{ state, "width" }
+        , height{ state, "height" }
+        , autoMinWidth{ state, "auto-min-width" }
+        , autoMinHeight{ state, "auto-min-height" }
     {
         source.onValueChange = [this]() {
             setChildComponent(createChildComponent());
-            boxModel.setSize(calculateAutoWidth(), calculateAutoHeight());
         };
         placement.onValueChange = [this]() {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
@@ -21,11 +24,7 @@ namespace jive
         setChildComponent(createChildComponent());
         component->setInterceptsMouseClicks(false, false);
 
-        boxModel.setSize(calculateAutoWidth(), calculateAutoHeight());
         boxModel.addListener(*this);
-
-        if (childComponent != nullptr)
-            childComponent->setBounds(component->getLocalBounds());
     }
 
     //==================================================================================================================
@@ -39,34 +38,23 @@ namespace jive
         return true;
     }
 
-    float Image::calculateAutoWidth() const
-    {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateRequiredWidth(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateRequiredWidth(*image);
-
-        return 0.0f;
-    }
-
-    float Image::calculateAutoHeight() const
-    {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateRequiredHeight(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateRequiredHeight(*image);
-
-        return 0.0f;
-    }
-
     Drawable Image::getDrawable() const
     {
         return source.get();
     }
 
     //==================================================================================================================
+    void Image::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool wasMoved, bool wasResized)
+    {
+        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
+
+        if (&componentThatWasMovedOrResized != component.get())
+            return;
+
+        if (childComponent != nullptr)
+            childComponent->setBounds(component->getLocalBounds());
+    }
+
     void Image::boxModelChanged(BoxModel& boxModelThatChanged)
     {
         GuiItemDecorator::boxModelChanged(boxModelThatChanged);
@@ -97,6 +85,17 @@ namespace jive
         return drawable.getDrawableBounds().getWidth();
     }
 
+    float Image::calculateRequiredWidth() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateRequiredWidth(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateRequiredWidth(*image);
+
+        return 0.0f;
+    }
+
     float Image::calculateRequiredHeight(const juce::ImageComponent& image) const
     {
         if (boxModel.hasAutoWidth())
@@ -108,6 +107,17 @@ namespace jive
     float Image::calculateRequiredHeight(const juce::Drawable& drawable) const
     {
         return drawable.getDrawableBounds().getHeight();
+    }
+
+    float Image::calculateRequiredHeight() const
+    {
+        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            return calculateRequiredHeight(*drawable);
+
+        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
+            return calculateRequiredHeight(*image);
+
+        return 0.0f;
     }
 
     std::unique_ptr<juce::ImageComponent> Image::createImageComponent(const juce::Image& image) const
@@ -148,6 +158,12 @@ namespace jive
 
         component->addAndMakeVisible(*childComponent);
         childComponent->setBounds(component->getLocalBounds());
+
+        autoMinWidth = juce::String{ calculateRequiredWidth() };
+        autoMinHeight = juce::String{ calculateRequiredHeight() };
+
+        if (auto* parent = getParent())
+            parent->layOutChildren();
     }
 } // namespace jive
 
@@ -271,6 +287,7 @@ private:
                 {
                     { "width", 489 },
                     { "height", 307 },
+                    { "align-items", "flex-start" },
                 },
                 {
                     juce::ValueTree{
@@ -370,6 +387,7 @@ private:
                 {
                     { "width", 222 },
                     { "height", 333 },
+                    { "align-items", "flex-start" },
                 },
                 {
                     juce::ValueTree{
@@ -393,39 +411,42 @@ private:
             auto& item = parent->getChild(0);
             expectEquals(item.boxModel.getWidth(), 80.0f);
             expectEquals(item.boxModel.getHeight(), 40.0f);
-
-            tree.getChild(0).setProperty("width", 120.0f, nullptr);
-            expectEquals(item.boxModel.getHeight(), 60.0f);
-
-            tree.getChild(0).setProperty("width", "auto", nullptr);
-            tree.getChild(0).setProperty("height", 47.0f, nullptr);
-            expectEquals(item.boxModel.getWidth(), 94.0f);
         }
         {
             juce::ValueTree tree{
-                "Image",
+                "Component",
                 {
                     { "width", 222 },
                     { "height", 333 },
-                    {
-                        "source",
-                        R"(
-                            <svg width="400" height="180">
-                                <rect x="50"
-                                    y="20"
-                                    rx="20"
-                                    ry="20"
-                                    width="150"
-                                    height="150"
-                                    style="fill:red;stroke:black;stroke-width:5;opacity:0.5" />
-                            </svg>
-                        )",
-                    },
+                    { "align-items", "flex-start" },
                 },
+                {
+                    juce::ValueTree{
+                        "Image",
+                        {
+                            {
+                                "source",
+                                R"(
+                                    <svg width="400" height="180">
+                                        <rect x="50"
+                                            y="20"
+                                            rx="20"
+                                            ry="20"
+                                            width="150"
+                                            height="150"
+                                            style="fill:red;stroke:black;stroke-width:5;opacity:0.5" />
+                                    </svg>
+                                )",
+                            },
+                        },
+                    },
+                }
             };
-            auto item = createImage(tree);
-            expectEquals(item->boxModel.getWidth(), 155.0f);
-            expectEquals(item->boxModel.getHeight(), 155.0f);
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(tree);
+            auto& item = parent->getChild(0);
+            expectEquals(item.boxModel.getWidth(), 155.0f);
+            expectEquals(item.boxModel.getHeight(), 155.0f);
         }
     }
 };
