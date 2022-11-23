@@ -4,34 +4,28 @@
 namespace jive
 {
     //==================================================================================================================
-    class FlexContainer : public ContainerItem
+    class ContainerItem : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
-        explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
+        explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void layOutChildren() override;
-
-        //==============================================================================================================
-        operator juce::FlexBox();
+        void addChild(std::unique_ptr<GuiItem> child) override;
 
     protected:
         //==============================================================================================================
-        juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
+        void boxModelInvalidated(BoxModel& boxModel) override;
+
+        //==============================================================================================================
+        virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;
+
+        //==============================================================================================================
+        void layoutChanged();
 
     private:
         //==============================================================================================================
-        juce::FlexBox buildFlexBox(juce::Rectangle<float> bounds, LayoutStrategy strategy);
-
-        //==============================================================================================================
-        TypedValue<juce::FlexBox::Direction> flexDirection;
-        TypedValue<juce::FlexBox::Wrap> flexWrap;
-        TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
-        TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
-        TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
-
-        //==============================================================================================================
-        JUCE_LEAK_DETECTOR(FlexContainer)
+        TypedValue<float> idealWidth;
+        TypedValue<float> idealHeight;
     };
 } // namespace jive

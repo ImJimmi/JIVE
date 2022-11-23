@@ -162,7 +162,7 @@ namespace jive
     //==================================================================================================================
     void ComboBox::comboBoxChanged(juce::ComboBox* box)
     {
-        jassert(box == &getComboBox());
+        jassertquiet(box == &getComboBox());
 
         if (onComboBoxChanged != nullptr)
             onComboBoxChanged();

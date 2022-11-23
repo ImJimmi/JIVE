@@ -10,8 +10,8 @@ namespace jive
         , placement{ state, "placement", juce::RectanglePlacement::centred }
         , width{ state, "width" }
         , height{ state, "height" }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
+        , idealWidth{ state, "ideal-width" }
+        , idealHeight{ state, "ideal-height" }
     {
         source.onValueChange = [this]() {
             setChildComponent(createChildComponent());
@@ -159,11 +159,8 @@ namespace jive
         component->addAndMakeVisible(*childComponent);
         childComponent->setBounds(component->getLocalBounds());
 
-        autoMinWidth = juce::String{ calculateRequiredWidth() };
-        autoMinHeight = juce::String{ calculateRequiredHeight() };
-
-        if (auto* parent = getParent())
-            parent->layOutChildren();
+        idealWidth = juce::String{ calculateRequiredWidth() };
+        idealHeight = juce::String{ calculateRequiredHeight() };
     }
 } // namespace jive
 

@@ -5,7 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     GridContainer::GridContainer(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItemDecorator(std::move(itemToDecorate))
+        : ContainerItem(std::move(itemToDecorate))
         , justifyItems{ state, "justify-items", juce::Grid{}.justifyItems }
         , alignItems{ state, "align-items", juce::Grid{}.alignItems }
         , justifyContent{ state, "justify-content", juce::Grid{}.justifyContent }
@@ -17,8 +17,6 @@ namespace jive
         , autoRows{ state, "auto-rows", juce::Grid{}.autoRows }
         , autoColumns{ state, "auto-columns", juce::Grid{}.autoColumns }
         , gap{ state, "gap" }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
@@ -70,16 +68,32 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GridContainer::addChild(std::unique_ptr<GuiItem> child)
-    {
-        GuiItemDecorator::addChild(std::move(child));
-        layoutChanged();
-    }
-
-    //==================================================================================================================
     GridContainer::operator juce::Grid()
     {
         return buildGrid();
+    }
+
+    //==================================================================================================================
+    juce::Rectangle<float> GridContainer::calculateIdealSize(juce::Rectangle<float>) const
+    {
+        const auto grid = buildGridWithDummyItems();
+        juce::Point<float> extremities{ -1.0f, -1.0f };
+
+        for (const auto& gridItem : grid.items)
+        {
+            const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
+            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
+
+            if (right > extremities.x)
+                extremities.x = right;
+            if (bottom > extremities.y)
+                extremities.y = bottom;
+        }
+
+        return {
+            extremities.x + boxModel.getPadding().getLeftAndRight() + boxModel.getBorder().getLeftAndRight(),
+            extremities.y + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom(),
+        };
     }
 
     //==================================================================================================================
@@ -130,50 +144,9 @@ namespace jive
         for (auto& gridItem : grid.items)
             gridItem.associatedComponent = nullptr;
 
-        grid.performLayout(juce::Rectangle<int>{ 0, 0, 0, 0 });
+        grid.performLayout(juce::Rectangle<int>{ 0, 0 });
 
         return grid;
-    }
-
-    float GridContainer::calculateMinWidth() const
-    {
-        const auto grid = buildGridWithDummyItems();
-        auto rightOfFarthestItem = -1.0f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
-
-            if (right > rightOfFarthestItem)
-                rightOfFarthestItem = right;
-        }
-
-        return rightOfFarthestItem;
-    }
-
-    float GridContainer::calculateMinHeight() const
-    {
-        const auto grid = buildGridWithDummyItems();
-        auto bottomOfLowestItem = -1.0f;
-
-        for (const auto& gridItem : grid.items)
-        {
-            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
-
-            if (bottom > bottomOfLowestItem)
-                bottomOfLowestItem = bottom;
-        }
-
-        return bottomOfLowestItem;
-    }
-
-    void GridContainer::layoutChanged()
-    {
-        autoMinWidth = juce::String{ calculateMinWidth() };
-        autoMinHeight = juce::String{ calculateMinHeight() };
-
-        if (auto parent = getParent())
-            parent->layOutChildren();
     }
 } // namespace jive
 

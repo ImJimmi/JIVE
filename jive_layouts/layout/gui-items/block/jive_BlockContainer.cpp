@@ -5,7 +5,7 @@ namespace jive
 {
     //==================================================================================================================
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItemDecorator{ std::move(itemToDecorate) }
+        : ContainerItem{ std::move(itemToDecorate) }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
@@ -19,6 +19,12 @@ namespace jive
             auto& blockItem = *dynamic_cast<GuiItemDecorator&>(child).toType<BlockItem>();
             child.getComponent()->setBounds(blockItem.calculateBounds());
         }
+    }
+
+    //==================================================================================================================
+    juce::Rectangle<float> BlockContainer::calculateIdealSize(juce::Rectangle<float>) const
+    {
+        return { 0.0f, 0.0f };
     }
 } // namespace jive
 

@@ -17,8 +17,8 @@ namespace jive
         , justification{ state, "justification", juce::Justification::centredLeft }
         , wordWrap{ state, "word-wrap", juce::AttributedString::WordWrap::byWord }
         , direction{ state, "direction", juce::AttributedString::ReadingDirection::natural }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
+        , idealWidth{ state, "ideal-width" }
+        , idealHeight{ state, "ideal-height" }
     {
         text.onValueChange = [this]() {
             updateTextComponent();
@@ -90,14 +90,15 @@ namespace jive
     }
 
     //==================================================================================================================
-    juce::TextLayout Text::buildTextLayout() const
+    juce::TextLayout Text::buildTextLayout(float maxWidth) const
     {
-        auto maxWidth = std::numeric_limits<float>::max();
-
-        if (auto* parentItem = getParent())
+        if (maxWidth < 0.0f)
         {
-            if (!parentItem->boxModel.hasAutoWidth())
-                maxWidth = parentItem->boxModel.getContentBounds().getWidth();
+            if (auto* parentItem = getParent())
+            {
+                if (!parentItem->boxModel.hasAutoWidth())
+                    maxWidth = parentItem->boxModel.getContentBounds().getWidth();
+            }
         }
 
         juce::TextLayout layout;
@@ -158,9 +159,16 @@ namespace jive
 
         updateFont();
 
-        const auto layout = buildTextLayout();
-        autoMinWidth = juce::String{ std::ceil(layout.getWidth()) };
-        autoMinHeight = juce::String{ std::ceil(layout.getHeight()) };
+        const auto layout = buildTextLayout(std::numeric_limits<float>::max());
+        idealWidth = std::ceil(layout.getWidth());
+        // idealHeight = std::ceil(layout.getHeight());
+        state.setProperty(
+            "ideal-height",
+            juce::var{ [this](const juce::var::NativeFunctionArgs& args) {
+                const auto layout = buildTextLayout(args.arguments[0]);
+                return std::ceil(layout.getHeight());
+            } },
+            nullptr);
 
         if (auto* parentItem = getParent())
         {
@@ -658,7 +666,7 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
-            auto& item = dynamic_cast<jive::Text&>(parent->getChild(0));
+            auto& item = parent->getChild(0);
             expectLessOrEqual(item.boxModel.getWidth(), 40.0f);
             expectGreaterThan(item.boxModel.getWidth(), 0.0f);
         }

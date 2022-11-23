@@ -28,6 +28,22 @@ namespace jive
         return item->getChild(index);
     }
 
+    const GuiItem* GuiItemDecorator::getParent() const
+    {
+        return const_cast<GuiItemDecorator*>(this)->getParent();
+    }
+
+    GuiItem* GuiItemDecorator::getParent()
+    {
+        if (auto* parentItem = item->getParent())
+        {
+            if (auto* decoratedParent = dynamic_cast<GuiItemDecorator*>(parentItem))
+                return &decoratedParent->getTopLevelDecorator();
+        }
+
+        return item->getParent();
+    }
+
     GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
     {
         if (owner != nullptr)
@@ -42,6 +58,12 @@ namespace jive
             return owner->getTopLevelDecorator();
 
         return *this;
+    }
+
+    //==================================================================================================================
+    void GuiItemDecorator::layOutChildren()
+    {
+        item->layOutChildren();
     }
 
     //==================================================================================================================

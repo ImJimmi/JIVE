@@ -42,8 +42,8 @@ namespace jive
         virtual void addChild(std::unique_ptr<GuiItem> child);
         virtual int getNumChildren() const;
         virtual GuiItem& getChild(int index) const;
-        const GuiItem* getParent() const;
-        GuiItem* getParent();
+        virtual const GuiItem* getParent() const;
+        virtual GuiItem* getParent();
         bool isTopLevel() const;
 
         virtual bool isContainer() const;

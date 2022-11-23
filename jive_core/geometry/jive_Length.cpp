@@ -16,7 +16,7 @@ namespace jive
             return get().getFloatValue();
 
         const auto scale = static_cast<double>(get().getFloatValue()) * 0.01;
-        return scale * getRelativeParentLength(parentBounds.toDouble());
+        return static_cast<float>(scale * getRelativeParentLength(parentBounds.toDouble()));
     }
 
     //==================================================================================================================

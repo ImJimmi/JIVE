@@ -12,8 +12,11 @@ namespace jive
         , radioGroup{ state, "radio-group" }
         , triggerEvent{ state, "trigger-event", TriggerEvent::mouseUp }
         , tooltip{ state, "tooltip" }
-        , width{ state, "width" }
-        , height{ state, "height" }
+        , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::row }
+        , justifyContent{ state, "justify-content", juce::FlexBox::JustifyContent::center }
+        , padding{ state, "padding", juce::BorderSize<float>{ 0.0f, 5.0f, 0.0f, 5.0f } }
+        , minWidth{ state, "min-width", 50.0f }
+        , minHeight{ state, "min-height", 20.0f }
     {
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -44,11 +47,6 @@ namespace jive
             getButton().setTooltip(tooltip);
         };
         getButton().setTooltip(tooltip);
-
-        if (width.isAuto())
-            width = "50";
-        if (height.isAuto())
-            height = "20";
     }
 
     //==================================================================================================================
@@ -343,6 +341,8 @@ private:
         juce::ValueTree parentState{
             "Component",
             {
+                { "display", "flex" },
+                { "align-items", "flex-start" },
                 { "width", 999 },
                 { "height", 999 },
             },

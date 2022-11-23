@@ -4,14 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
-    class GridContainer : public GuiItemDecorator
+    class GridContainer : public ContainerItem
     {
     public:
         //==============================================================================================================
         explicit GridContainer(std::unique_ptr<GuiItem> itemToDecorate);
-
-        //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child) override;
 
         //==============================================================================================================
         void layOutChildren() override;
@@ -19,15 +16,14 @@ namespace jive
         //==============================================================================================================
         operator juce::Grid();
 
+    protected:
+        //==============================================================================================================
+        juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
+
     private:
         //==============================================================================================================
         juce::Grid buildGrid();
         juce::Grid buildGridWithDummyItems() const;
-
-        float calculateMinWidth() const;
-        float calculateMinHeight() const;
-
-        void layoutChanged();
 
         //==============================================================================================================
         TypedValue<juce::Grid::JustifyItems> justifyItems;
@@ -41,8 +37,6 @@ namespace jive
         TypedValue<juce::Grid::TrackInfo> autoRows;
         TypedValue<juce::Grid::TrackInfo> autoColumns;
         TypedValue<juce::Array<juce::Grid::Px>> gap;
-        Length autoMinWidth;
-        Length autoMinHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)

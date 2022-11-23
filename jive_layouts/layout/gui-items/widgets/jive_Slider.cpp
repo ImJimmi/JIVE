@@ -510,8 +510,8 @@ private:
         parentState.getChild(0).setProperty("width", 123.f, nullptr);
         expectEquals(item.boxModel.getWidth(), 123.f);
 
-        parentState.getChild(0).setProperty("height", 8839.f, nullptr);
-        expectEquals(item.boxModel.getHeight(), 8839.f);
+        parentState.getChild(0).setProperty("height", 311.f, nullptr);
+        expectEquals(item.boxModel.getHeight(), 311.f);
     }
 };
 

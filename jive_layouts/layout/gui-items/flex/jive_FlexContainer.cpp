@@ -5,14 +5,12 @@ namespace jive
 {
     //==================================================================================================================
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItemDecorator{ std::move(itemToDecorate) }
+        : ContainerItem{ std::move(itemToDecorate) }
         , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::column }
-        , flexWrap{ state, "flex-wrap", juce::FlexBox{}.flexWrap }
-        , flexJustifyContent{ state, "justify-content", juce::FlexBox{}.justifyContent }
-        , flexAlignItems{ state, "align-items", juce::FlexBox{}.alignItems }
-        , flexAlignContent{ state, "align-content", juce::FlexBox{}.alignContent }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
+        , flexWrap{ state, "flex-wrap" }
+        , flexJustifyContent{ state, "justify-content" }
+        , flexAlignItems{ state, "align-items" }
+        , flexAlignContent{ state, "align-content" }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
@@ -35,13 +33,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    void FlexContainer::addChild(std::unique_ptr<GuiItem> child)
-    {
-        GuiItemDecorator::addChild(std::move(child));
-        layoutChanged();
-    }
-
-    //==================================================================================================================
     void FlexContainer::layOutChildren()
     {
         const auto bounds = boxModel.getContentBounds();
@@ -49,104 +40,99 @@ namespace jive
         if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
             return;
 
-        buildFlexBox().performLayout(bounds);
+        buildFlexBox(bounds, LayoutStrategy::real).performLayout(bounds);
     }
 
     //==================================================================================================================
     FlexContainer::operator juce::FlexBox()
     {
-        return buildFlexBox();
+        return buildFlexBox(boxModel.getContentBounds(), LayoutStrategy::real);
     }
 
     //==================================================================================================================
-    void appendChildren(GuiItem& container, juce::FlexBox& flex)
+    juce::Rectangle<float> FlexContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
+    {
+        switch (flexDirection.getOr(juce::FlexBox{}.flexDirection))
+        {
+        case juce::FlexBox::Direction::column:
+        case juce::FlexBox::Direction::columnReverse:
+            constraints.setHeight(std::numeric_limits<float>::max());
+            break;
+        case juce::FlexBox::Direction::row:
+        case juce::FlexBox::Direction::rowReverse:
+            constraints.setWidth(std::numeric_limits<float>::max());
+            break;
+        default:
+            jassertfalse;
+        }
+
+        const auto flex = const_cast<FlexContainer&>(*this)
+                              .buildFlexBox(constraints, LayoutStrategy::dummy);
+        juce::Point<float> extremities{ -1.0f, -1.0f };
+
+        for (const auto& flexItem : flex.items)
+        {
+            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
+            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
+
+            if (right > extremities.x)
+                extremities.x = right;
+            if (bottom > extremities.y)
+                extremities.y = bottom;
+        }
+
+        return {
+            extremities.x + boxModel.getPadding().getLeftAndRight() + boxModel.getBorder().getLeftAndRight(),
+            extremities.y + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom(),
+        };
+    }
+
+    //==================================================================================================================
+    void appendChildren(GuiItem& container,
+                        juce::FlexBox& flex,
+                        juce::Rectangle<float> bounds,
+                        LayoutStrategy strategy)
     {
         for (auto& child : container)
         {
             if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
             {
                 if (auto* const flexItem = decoratedItem->toType<FlexItem>())
-                    flex.items.add(*flexItem);
+                    flex.items.add(flexItem->toJuceFlexItem(bounds, strategy));
             }
         }
     }
 
-    juce::FlexBox FlexContainer::buildFlexBox()
+    juce::FlexBox FlexContainer::buildFlexBox(juce::Rectangle<float> bounds,
+                                              LayoutStrategy strategy)
     {
         juce::FlexBox flex;
 
         flex.flexDirection = flexDirection;
         flex.flexWrap = flexWrap;
-        flex.justifyContent = flexJustifyContent;
-        flex.alignItems = flexAlignItems;
-        flex.alignContent = flexAlignContent;
 
-        appendChildren(*this, flex);
+        appendChildren(*this, flex, bounds, strategy);
+
+        switch (strategy)
+        {
+        case LayoutStrategy::real:
+            flex.justifyContent = flexJustifyContent;
+            flex.alignItems = flexAlignItems;
+            flex.alignContent = flexAlignContent;
+            break;
+        case LayoutStrategy::dummy:
+            flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+            flex.alignItems = juce::FlexBox::AlignItems::flexStart;
+            flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+            flex.performLayout(bounds);
+
+            break;
+        default:
+            jassertfalse;
+        }
 
         return flex;
-    }
-
-    juce::FlexBox FlexContainer::buildFlexBoxWithDummyItems() const
-    {
-        auto flex = const_cast<FlexContainer*>(this)->buildFlexBox();
-
-        flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
-        flex.alignContent = juce::FlexBox::AlignContent::flexStart;
-
-        for (auto& flexItem : flex.items)
-        {
-            flexItem.associatedComponent = nullptr;
-            flexItem.alignSelf = juce::FlexItem::AlignSelf::autoAlign;
-        }
-
-        flex.performLayout(juce::Rectangle<float>{
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-        });
-
-        return flex;
-    }
-
-    float FlexContainer::calculateMinWidth() const
-    {
-        const auto flex = buildFlexBoxWithDummyItems();
-        auto rightOfFarthestItem = -1.0f;
-
-        for (const auto& flexItem : flex.items)
-        {
-            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
-
-            if (right > rightOfFarthestItem)
-                rightOfFarthestItem = right;
-        }
-
-        return rightOfFarthestItem;
-    }
-
-    float FlexContainer::calculateMinHeight() const
-    {
-        const auto flex = buildFlexBoxWithDummyItems();
-        auto bottomOfLowestItem = -1.0f;
-
-        for (const auto& flexItem : flex.items)
-        {
-            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
-
-            if (bottom > bottomOfLowestItem)
-                bottomOfLowestItem = bottom;
-        }
-
-        return bottomOfLowestItem;
-    }
-
-    void FlexContainer::layoutChanged()
-    {
-        autoMinWidth = juce::String{ calculateMinWidth() };
-        autoMinHeight = juce::String{ calculateMinHeight() };
-
-        if (auto parent = getParent())
-            parent->layOutChildren();
     }
 } // namespace jive
 
@@ -169,6 +155,7 @@ public:
         testChildren();
         testPadding();
         testAutoSize();
+        testNestedWidgetWithText();
     }
 
 private:
@@ -381,12 +368,14 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
+                            { "id", "item" },
                             { "display", "flex" },
                         },
                         {
                             juce::ValueTree{
                                 "Component",
                                 {
+                                    { "id", "child" },
                                     { "width", 43 },
                                     { "height", 84 },
                                 },
@@ -452,6 +441,100 @@ private:
             expectEquals(item.getChild(0).boxModel.getHeight(), 84.0f);
             expectEquals(item.getChild(1).boxModel.getWidth(), 37.0f);
             expectEquals(item.getChild(1).boxModel.getHeight(), 99.0f);
+        }
+    }
+
+    void testNestedWidgetWithText()
+    {
+        beginTest("nested widget with text");
+
+        juce::ValueTree containerState{
+            "Component",
+            {
+                { "display", "flex" },
+            },
+        };
+        juce::ValueTree windowState{
+            "Window",
+            {
+                { "width", 150 },
+                { "height", 1000 },
+                { "align-items", "flex-start" },
+            },
+            {
+                containerState,
+            },
+        };
+        const jive::Interpreter interpreter;
+
+        {
+            const auto window = interpreter.interpret(windowState);
+            jassert(window != nullptr);
+
+            const auto& container = window->getChild(0);
+            expectEquals(container.boxModel.getWidth(), 0.0f);
+            expectEquals(container.boxModel.getHeight(), 0.0f);
+        }
+
+        juce::ValueTree buttonState{
+            "Button",
+            {
+                { "width", 50 },
+                { "height", 20 },
+                { "min-height", 0 },
+                { "min-width", 0 },
+                { "padding", 0 },
+            },
+        };
+        containerState.appendChild(buttonState, nullptr);
+
+        {
+            const auto window = interpreter.interpret(windowState);
+            jassert(window != nullptr);
+
+            const auto& container = window->getChild(0);
+            expectEquals(container.boxModel.getWidth(), 50.0f);
+            expectEquals(container.boxModel.getHeight(), 20.0f);
+        }
+
+        buttonState.removeProperty("width", nullptr);
+        buttonState.removeProperty("height", nullptr);
+
+        const juce::Font font;
+
+        juce::ValueTree textState{
+            "Text",
+            {
+                { "text", "Lorem ipsum" },
+                { "typeface-name", font.getTypefaceName() },
+                { "font-height", font.getHeightInPoints() },
+            },
+        };
+        buttonState.appendChild(textState, nullptr);
+
+        {
+            const auto window = interpreter.interpret(windowState);
+            jassert(window != nullptr);
+
+            const auto& container = window->getChild(0);
+            expectEquals(container.boxModel.getWidth(), std::ceil(font.getStringWidthFloat(textState["text"])));
+            expectEquals(container.boxModel.getHeight(), font.getHeight());
+        }
+
+        const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+        textState.setProperty("text", lorumIpsumSentence, nullptr);
+
+        {
+            const auto window = interpreter.interpret(windowState);
+            jassert(window != nullptr);
+
+            const juce::AttributedString attributedString{ lorumIpsumSentence };
+            juce::TextLayout layout;
+            layout.createLayout(attributedString, 150.0f);
+
+            const auto& container = window->getChild(0);
+            expectEquals(container.boxModel.getWidth(), 150.0f);
+            expectEquals(container.boxModel.getHeight(), std::ceil(layout.getHeight()));
         }
     }
 };

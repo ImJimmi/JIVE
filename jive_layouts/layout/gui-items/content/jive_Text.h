@@ -26,7 +26,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        juce::TextLayout buildTextLayout() const;
+        juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
 
         void updateFont();
         void updateTextComponent();
@@ -43,8 +43,8 @@ namespace jive
         TypedValue<juce::Justification> justification;
         TypedValue<juce::AttributedString::WordWrap> wordWrap;
         TypedValue<juce::AttributedString::ReadingDirection> direction;
-        Length autoMinWidth;
-        Length autoMinHeight;
+        TypedValue<float> idealWidth;
+        TypedValue<float> idealHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)

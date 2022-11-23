@@ -73,6 +73,14 @@ namespace jive
             return Converter::fromVar(juce::var{});
         }
 
+        ValueType getOr(const ValueType& valueIfNotExists) const
+        {
+            if (!exists())
+                return valueIfNotExists;
+
+            return get();
+        }
+
         void clear()
         {
             tree.removeProperty(id, nullptr);

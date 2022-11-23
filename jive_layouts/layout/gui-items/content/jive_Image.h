@@ -41,8 +41,8 @@ namespace jive
         TypedValue<juce::RectanglePlacement> placement;
         Length width;
         Length height;
-        Length autoMinWidth;
-        Length autoMinHeight;
+        Length idealWidth;
+        Length idealHeight;
 
         std::unique_ptr<juce::Component> childComponent;
 

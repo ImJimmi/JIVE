@@ -11,7 +11,8 @@ namespace jive
         explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        operator juce::FlexItem();
+        juce::FlexItem toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
+                                      LayoutStrategy strategy) const;
 
     private:
         //==============================================================================================================
@@ -20,12 +21,12 @@ namespace jive
         TypedValue<float> flexItemShrink;
         TypedValue<float> flexItemBasis;
         TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
-        Length width;
-        Length height;
-        Length minWidth;
-        Length minHeight;
-        Length autoMinWidth;
-        Length autoMinHeight;
+        const Length width;
+        const Length height;
+        const Length minWidth;
+        const Length minHeight;
+        const TypedValue<float> idealWidth;
+        const TypedValue<float> idealHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)

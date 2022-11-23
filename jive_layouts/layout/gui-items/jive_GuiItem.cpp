@@ -121,21 +121,22 @@ namespace jive
         }
 
         componentWidth.onValueChange = [this]() {
-            component->setSize(juce::roundToInt(boxModel.getBorderBounds().getWidth()),
-                               component->getHeight());
+            component->setSize(juce::roundToInt(boxModel.getBounds().getWidth()),
+                               juce::roundToInt(boxModel.getBounds().getHeight()));
         };
-        component->setSize(juce::roundToInt(boxModel.getBorderBounds().getWidth()),
+        component->setSize(juce::roundToInt(boxModel.getBounds().getWidth()),
                            component->getHeight());
 
         componentHeight.onValueChange = [this]() {
-            component->setSize(component->getWidth(),
-                               juce::roundToInt(boxModel.getBorderBounds().getHeight()));
+            component->setSize(juce::roundToInt(boxModel.getBounds().getWidth()),
+                               juce::roundToInt(boxModel.getBounds().getHeight()));
         };
         component->setSize(component->getWidth(),
-                           juce::roundToInt(boxModel.getBorderBounds().getHeight()));
+                           juce::roundToInt(boxModel.getBounds().getHeight()));
 
         component->addComponentListener(this);
         state.addListener(this);
+        boxModel.addListener(*this);
     }
 
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree sourceState, GuiItem* parentItem)
@@ -265,42 +266,58 @@ namespace jive
                                           bool /*wasMoved*/,
                                           bool wasResized)
     {
-        jassertquiet(&componentThatWasMovedOrResized == component.get());
+        if (&componentThatWasMovedOrResized != component.get())
+            return;
 
         if (!wasResized)
             return;
 
-        boxModel.setWidth(static_cast<float>(component->getWidth()));
-        boxModel.setHeight(static_cast<float>(component->getHeight()));
+        const auto componentBounds = component->getBounds().toFloat();
+        boxModel.setWidth(componentBounds.getWidth());
+        boxModel.setHeight(componentBounds.getHeight());
         layOutChildren();
     }
 
     void GuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
     {
-        jassertquiet(&componentThatChangedVisiblity == component.get());
+        if (&componentThatChangedVisiblity != component.get())
+            return;
+
         visible = component->isVisible();
     }
 
     void GuiItem::componentNameChanged(juce::Component& componentThatChangedName)
     {
-        jassertquiet(&componentThatChangedName == component.get());
+        if (&componentThatChangedName != component.get())
+            return;
+
         name = component->getName();
     }
 
     void GuiItem::componentEnablementChanged(juce::Component& componentThatChangedEnablement)
     {
-        jassertquiet(&componentThatChangedEnablement == component.get());
+        if (&componentThatChangedEnablement != component.get())
+            return;
+
         enabled = component->isEnabled();
     }
 
     void GuiItem::componentChildrenChanged(juce::Component& componentThatsChildrenChanged)
     {
-        jassertquiet(&componentThatsChildrenChanged == component.get());
+        if (&componentThatsChildrenChanged != component.get())
+            return;
+
         layOutChildren();
     }
 
-    void GuiItem::boxModelChanged(BoxModel& /*boxModelThatChanged*/)
+    void GuiItem::boxModelChanged(BoxModel& boxModelThatChanged)
     {
+        if (&boxModelThatChanged == &boxModel)
+        {
+            component->setSize(juce::roundToInt(boxModel.getWidth()),
+                               juce::roundToInt(boxModel.getHeight()));
+        }
+
         layOutChildren();
     }
 
@@ -449,7 +466,6 @@ private:
         expect(item->getComponent()->getHeight() == 150);
 
         item->getComponent()->setSize(400, 300);
-
         expectEquals(item->boxModel.getWidth(), 400.f);
         expectEquals(item->boxModel.getHeight(), 300.f);
     }

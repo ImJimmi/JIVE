@@ -87,18 +87,12 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::BlockContainer> createBlockContainer(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-        return std::make_unique<jive::BlockContainer>(interpreter.interpret(tree));
-    }
-
     void testPosition()
     {
         beginTest("position");
 
         {
-            juce::ValueTree tree{
+            juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -108,23 +102,22 @@ private:
                     { "padding", 15 },
                 },
                 {
-                    juce::ValueTree{
-                        "Component",
-                    },
+                    juce::ValueTree{ "Component" },
                 },
             };
-            const auto container = createBlockContainer(tree);
-            const auto item = container->getChild(0);
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
             expectEquals(item.getComponent()->getX(), 25);
             expectEquals(item.getComponent()->getY(), 25);
 
-            tree.getChild(0).setProperty("x", 10.4f, nullptr);
-            tree.getChild(0).setProperty("y", 20.89f, nullptr);
+            parentState.getChild(0).setProperty("x", 10.4f, nullptr);
+            parentState.getChild(0).setProperty("y", 20.89f, nullptr);
             expectEquals(item.getComponent()->getX(), 35);
             expectEquals(item.getComponent()->getY(), 46);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -143,8 +136,9 @@ private:
                     },
                 },
             };
-            const auto container = createBlockContainer(tree);
-            const auto item = container->getChild(0);
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
             expectEquals(item.getComponent()->getX(), 40);
             expectEquals(item.getComponent()->getY(), 50);
         }
@@ -185,7 +179,7 @@ private:
         beginTest("centre");
 
         {
-            juce::ValueTree tree{
+            juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -202,20 +196,19 @@ private:
                     },
                 },
             };
-            const auto container = createBlockContainer(tree);
-            const auto item = container->getChild(0);
-
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
             expectEquals(item.getComponent()->getBounds().getCentreX(), 25);
             expectEquals(item.getComponent()->getBounds().getCentreY(), 25);
 
-            tree.getChild(0).setProperty("centre-x", 12.3f, nullptr);
-            tree.getChild(0).setProperty("centre-y", 98.7f, nullptr);
-
+            parentState.getChild(0).setProperty("centre-x", 12.3f, nullptr);
+            parentState.getChild(0).setProperty("centre-y", 98.7f, nullptr);
             expectEquals(item.getComponent()->getBounds().getCentreX(), 12);
             expectEquals(item.getComponent()->getBounds().getCentreY(), 99);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -234,20 +227,20 @@ private:
                     },
                 },
             };
-            const auto container = createBlockContainer(tree);
-            const auto item = container->getChild(0);
-
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
             expect(item.getComponent()->getBounds().getCentreX() == 85);
             expect(item.getComponent()->getBounds().getCentreY() == 43);
 
-            tree.getChild(0).setProperty("x", 66, nullptr);
+            parentState.getChild(0).setProperty("x", 66, nullptr);
             expectEquals(item.getComponent()->getX(), 66);
 
-            tree.getChild(0).setProperty("centre-x", 44, nullptr);
+            parentState.getChild(0).setProperty("centre-x", 44, nullptr);
             expectEquals(item.getComponent()->getBounds().getCentreX(), 44);
         }
         {
-            juce::ValueTree tree{
+            juce::ValueTree parentState{
                 "Component",
                 {
                     { "display", "block" },
@@ -265,16 +258,15 @@ private:
                 },
             };
             jive::Interpreter interpreter;
-            auto parent = interpreter.interpret(tree);
-            auto child = parent->getChild(0);
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = parent->getChild(0);
+            expectEquals(item.getComponent()->getX(), 1);
+            expectEquals(item.getComponent()->getY(), 93);
 
-            expectEquals(child.getComponent()->getX(), 1);
-            expectEquals(child.getComponent()->getY(), 93);
-
-            tree.getChild(0).setProperty("x", "97.8%", nullptr);
-            tree.getChild(0).setProperty("y", "10%", nullptr);
-            expectEquals(child.getComponent()->getX(), 98);
-            expectEquals(child.getComponent()->getY(), 25);
+            parentState.getChild(0).setProperty("x", "97.8%", nullptr);
+            parentState.getChild(0).setProperty("y", "10%", nullptr);
+            expectEquals(item.getComponent()->getX(), 98);
+            expectEquals(item.getComponent()->getY(), 25);
         }
     }
 
@@ -282,7 +274,7 @@ private:
     {
         beginTest("size");
 
-        juce::ValueTree tree{
+        juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },
@@ -295,15 +287,16 @@ private:
                 },
             },
         };
-        const auto container = createBlockContainer(tree);
-        const auto item = container->getChild(0);
-
+        jive::Interpreter interpreter;
+        const auto parent = interpreter.interpret(parentState);
+        auto& item = parent->getChild(0);
         expectEquals(item.getComponent()->getWidth(), 0);
         expectEquals(item.getComponent()->getHeight(), 0);
 
-        tree.getChild(0).setProperty("width", 10.4f, nullptr);
-        tree.getChild(0).setProperty("height", 20.89f, nullptr);
+        parentState.getChild(0).setProperty("width", 10.4f, nullptr);
         expectEquals(item.getComponent()->getWidth(), 10);
+
+        parentState.getChild(0).setProperty("height", 20.89f, nullptr);
         expectEquals(item.getComponent()->getHeight(), 21);
     }
 };

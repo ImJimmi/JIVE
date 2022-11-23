@@ -56,22 +56,16 @@ namespace jive
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ *component };
-        const auto parentContentBounds = getParent()->boxModel.getContentBounds();
+        const auto parentBounds = getParent()->boxModel.getBounds();
 
         if (!width.isAuto())
-            gridItem.width = width.toPixels(parentContentBounds);
+            gridItem.width = width.toPixels(parentBounds);
         if (!height.isAuto())
-            gridItem.height = height.toPixels(parentContentBounds);
+            gridItem.height = height.toPixels(parentBounds);
 
-        if (!minWidth.isAuto())
-            gridItem.minWidth = minWidth.toPixels(parentContentBounds);
-        else
-            gridItem.minWidth = autoMinWidth.toPixels(parentContentBounds);
-
-        if (!minHeight.isAuto())
-            gridItem.minHeight = minHeight.toPixels(parentContentBounds);
-        else
-            gridItem.minHeight = autoMinHeight.toPixels(parentContentBounds);
+        const auto minBounds = boxModel.getMinimumBounds();
+        gridItem.minWidth = minBounds.getWidth();
+        gridItem.minHeight = minBounds.getHeight();
 
         gridItem.maxWidth = maxWidth;
         gridItem.maxHeight = maxHeight;
