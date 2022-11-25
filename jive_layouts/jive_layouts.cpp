@@ -1,11 +1,6 @@
 #include "jive_layouts.h"
 
 //======================================================================================================================
-#include "components/jive_DocumentWindow.cpp"
-#include "components/jive_IgnoredComponent.cpp"
-#include "components/jive_NormalisedProgressBar.cpp"
-#include "components/jive_TextComponent.cpp"
-
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"
 #include "utilities/jive_Drawable.cpp"
