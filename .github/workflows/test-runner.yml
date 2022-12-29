@@ -1,4 +1,4 @@
-name: CMake
+name: Test Runner
 
 on:
   pull_request:
