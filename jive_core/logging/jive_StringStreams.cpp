@@ -13,6 +13,9 @@ namespace juce
 
     String& operator<<(String& str, const var& value)
     {
+        if (value.isString())
+            return str << "juce::var{ \"" << value.toString() << "\" }";
+
         return str << "juce::var{ " << value.toString() << " }";
     }
 } // namespace juce

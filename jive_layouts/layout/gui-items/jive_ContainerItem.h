@@ -4,26 +4,28 @@
 namespace jive
 {
     //==================================================================================================================
-    class ProgressBar : public GuiItemDecorator
+    class ContainerItem : public GuiItemDecorator
     {
     public:
         //==============================================================================================================
-        explicit ProgressBar(std::unique_ptr<GuiItem> itemToDecorate);
-
-        //==================================================================================================================
-        bool isContainer() const override;
+        explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        NormalisedProgressBar& getProgressBar();
-        const NormalisedProgressBar& getProgressBar() const;
+        void addChild(std::unique_ptr<GuiItem> child) override;
+
+    protected:
+        //==============================================================================================================
+        void boxModelInvalidated(BoxModel& boxModel) override;
+
+        //==============================================================================================================
+        virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;
+
+        //==============================================================================================================
+        void layoutChanged();
 
     private:
         //==============================================================================================================
-        TypedValue<double> value;
-        Length width;
-        Length height;
-
-        //==============================================================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressBar)
+        TypedValue<float> idealWidth;
+        TypedValue<float> idealHeight;
     };
 } // namespace jive

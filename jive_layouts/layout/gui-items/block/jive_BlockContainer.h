@@ -4,14 +4,18 @@
 namespace jive
 {
     //==================================================================================================================
-    class BlockContainer : public GuiItemDecorator
+    class BlockContainer : public ContainerItem
     {
     public:
         //==============================================================================================================
         explicit BlockContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updateLayout() override;
+        void layOutChildren() override;
+
+    protected:
+        //==============================================================================================================
+        juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
 
     private:
         //==============================================================================================================

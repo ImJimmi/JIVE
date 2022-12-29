@@ -4,14 +4,13 @@
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"
 #include "utilities/jive_Drawable.cpp"
-#include "utilities/jive_Length.cpp"
 #include "utilities/jive_Orientation.cpp"
 #include "utilities/jive_Overflow.cpp"
 
-#include "layout/jive_BoxModel.cpp"
-
 #include "layout/gui-items/jive_GuiItem.cpp"
 #include "layout/gui-items/jive_GuiItemDecorator.cpp"
+
+#include "layout/gui-items/jive_ContainerItem.cpp"
 
 #include "layout/gui-items/block/jive_BlockContainer.cpp"
 #include "layout/gui-items/block/jive_BlockItem.cpp"

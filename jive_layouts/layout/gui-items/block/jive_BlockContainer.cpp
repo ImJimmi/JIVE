@@ -5,22 +5,26 @@ namespace jive
 {
     //==================================================================================================================
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItemDecorator{ std::move(itemToDecorate) }
+        : ContainerItem{ std::move(itemToDecorate) }
     {
-        jassert(tree.hasProperty("display"));
-        jassert(tree["display"] == juce::VariantConverter<Display>::toVar(Display::block));
+        jassert(state.hasProperty("display"));
+        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
     //==================================================================================================================
-    void BlockContainer::updateLayout()
+    void BlockContainer::layOutChildren()
     {
-        GuiItemDecorator::updateLayout();
-
         for (auto& child : *this)
         {
-            child.updatePosition();
-            child.updateSize();
+            auto& blockItem = *dynamic_cast<GuiItemDecorator&>(child).toType<BlockItem>();
+            child.getComponent()->setBounds(blockItem.calculateBounds());
         }
+    }
+
+    //==================================================================================================================
+    juce::Rectangle<float> BlockContainer::calculateIdealSize(juce::Rectangle<float>) const
+    {
+        return { 0.0f, 0.0f };
     }
 } // namespace jive
 
@@ -39,22 +43,17 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::BlockContainer> createBlockContainer(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-
-        tree.setProperty("display", "block", nullptr);
-
-        return std::make_unique<jive::BlockContainer>(interpreter.interpret(tree));
-    }
-
     void testLayout()
     {
         beginTest("layout");
 
-        juce::ValueTree tree{
+        juce::ValueTree state{
             "Component",
-            {},
+            {
+                { "width", 222 },
+                { "height", 333 },
+                { "display", "block" },
+            },
             {
                 juce::ValueTree{
                     "Component",
@@ -65,15 +64,16 @@ private:
                 },
             },
         };
-        auto item = createBlockContainer(tree);
-        expectEquals(item->getChild(0).getViewport().getX(), 0);
-        expectEquals(item->getChild(0).getViewport().getHeight(), 0);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(state);
+        expectEquals(item->getChild(0).getComponent()->getX(), 111);
+        expectEquals(item->getChild(0).getComponent()->getHeight(), 33);
 
-        tree.setProperty("width", 300, nullptr);
-        expectEquals(item->getChild(0).getViewport().getX(), 150);
+        state.setProperty("width", 300, nullptr);
+        expectEquals(item->getChild(0).getComponent()->getX(), 150);
 
-        tree.setProperty("height", 100, nullptr);
-        expectEquals(item->getChild(0).getViewport().getHeight(), 10);
+        state.setProperty("height", 100, nullptr);
+        expectEquals(item->getChild(0).getComponent()->getHeight(), 10);
     }
 };
 

@@ -6,12 +6,17 @@ namespace jive
     //==================================================================================================================
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , toggleable{ tree, "toggleable" }
-        , toggled{ tree, "toggled" }
-        , toggleOnClick{ tree, "toggle-on-click" }
-        , radioGroup{ tree, "radio-group" }
-        , triggerEvent{ tree, "trigger-event", TriggerEvent::mouseUp }
-        , tooltip{ tree, "tooltip" }
+        , toggleable{ state, "toggleable" }
+        , toggled{ state, "toggled" }
+        , toggleOnClick{ state, "toggle-on-click" }
+        , radioGroup{ state, "radio-group" }
+        , triggerEvent{ state, "trigger-event", TriggerEvent::mouseUp }
+        , tooltip{ state, "tooltip" }
+        , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::row }
+        , justifyContent{ state, "justify-content", juce::FlexBox::JustifyContent::center }
+        , padding{ state, "padding", juce::BorderSize<float>{ 0.0f, 5.0f, 0.0f, 5.0f } }
+        , minWidth{ state, "min-width", 50.0f }
+        , minHeight{ state, "min-height", 20.0f }
     {
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -53,21 +58,12 @@ namespace jive
     //==================================================================================================================
     juce::Button& Button::getButton()
     {
-        return *dynamic_cast<juce::Button*>(&getComponent());
+        return *dynamic_cast<juce::Button*>(component.get());
     }
 
     const juce::Button& Button::getButton() const
     {
-        return *dynamic_cast<const juce::Button*>(&getComponent());
-    }
-
-    //==================================================================================================================
-    void Button::contentChanged()
-    {
-        GuiItemDecorator::contentChanged();
-
-        if (auto* text = findFirstTextContent(*this))
-            getButton().setButtonText(text->getTextComponent().getText());
+        return *dynamic_cast<const juce::Button*>(component.get());
     }
 } // namespace jive
 
@@ -112,7 +108,7 @@ public:
         testClickingTogglesState();
         testRadioGroup();
         testTooltip();
-        testContentChanged();
+        testDefaultSize();
     }
 
 private:
@@ -127,7 +123,13 @@ private:
     {
         beginTest("gui-item");
 
-        auto item = createButton(juce::ValueTree{ "Button" });
+        auto item = createButton(juce::ValueTree{
+            "Button",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         expect(!item->isContainer());
     }
 
@@ -136,7 +138,13 @@ private:
         beginTest("toggleable");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
 
             expect(!item->getButton().isToggleable());
@@ -149,6 +157,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "toggleable", true },
                 },
             };
@@ -163,7 +173,13 @@ private:
         beginTest("toggled");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
 
             expect(!item->getButton().getToggleState());
@@ -176,6 +192,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "toggled", true },
                 },
             };
@@ -190,7 +208,13 @@ private:
         beginTest("toggle-on-click");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
             expect(!item->getButton().getClickingTogglesState());
 
@@ -201,6 +225,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "toggle-on-click", true },
                 },
             };
@@ -214,7 +240,13 @@ private:
         beginTest("radio-group");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
             expectEquals(item->getButton().getRadioGroupId(), 0);
 
@@ -225,6 +257,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "radio-group", 12 },
                 },
             };
@@ -238,7 +272,13 @@ private:
         beginTest("trigger-event");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
             expect(!item->getButton().getTriggeredOnMouseDown());
 
@@ -249,6 +289,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "trigger-event", "mouse-down" },
                 },
             };
@@ -265,7 +307,13 @@ private:
         beginTest("tooltip");
 
         {
-            juce::ValueTree tree{ "Button" };
+            juce::ValueTree tree{
+                "Button",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createButton(tree);
             expect(item->getButton().getTooltip().isEmpty());
 
@@ -276,6 +324,8 @@ private:
             juce::ValueTree tree{
                 "Button",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "tooltip", "OneTwoThree" },
                 },
             };
@@ -284,27 +334,27 @@ private:
         }
     }
 
-    void testContentChanged()
+    void testDefaultSize()
     {
-        beginTest("content-changed");
+        beginTest("default size");
 
-        juce::ValueTree tree{
-            "Button",
-            {},
+        juce::ValueTree parentState{
+            "Component",
             {
-                juce::ValueTree{
-                    "Text",
-                    {
-                        { "text", "Some text..." },
-                    },
-                },
+                { "display", "flex" },
+                { "align-items", "flex-start" },
+                { "width", 999 },
+                { "height", 999 },
+            },
+            {
+                juce::ValueTree{ "Button" },
             },
         };
-        auto button = createButton(tree);
-        expectEquals<juce::String>(button->getButton().getButtonText(), "Some text...");
-
-        tree.getChild(0).setProperty("text", "Some different text!", nullptr);
-        expectEquals<juce::String>(button->getButton().getButtonText(), "Some different text!");
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& button = dynamic_cast<jive::Button&>(parent->getChild(0));
+        expectEquals(button.boxModel.getWidth(), 50.0f);
+        expectEquals(button.boxModel.getHeight(), 20.0f);
     }
 };
 

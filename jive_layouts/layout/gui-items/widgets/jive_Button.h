@@ -24,10 +24,6 @@ namespace jive
         juce::Button& getButton();
         const juce::Button& getButton() const;
 
-    protected:
-        //==============================================================================================================
-        void contentChanged() override;
-
     private:
         //==============================================================================================================
         void updateTriggerEvent();
@@ -39,6 +35,11 @@ namespace jive
         TypedValue<int> radioGroup;
         TypedValue<TriggerEvent> triggerEvent;
         TypedValue<juce::String> tooltip;
+        TypedValue<juce::FlexBox::Direction> flexDirection;
+        TypedValue<juce::FlexBox::JustifyContent> justifyContent;
+        TypedValue<juce::BorderSize<float>> padding;
+        TypedValue<float> minWidth;
+        TypedValue<float> minHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)

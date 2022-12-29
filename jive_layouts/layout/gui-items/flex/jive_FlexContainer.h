@@ -4,30 +4,25 @@
 namespace jive
 {
     //==================================================================================================================
-    class FlexContainer : public GuiItemDecorator
+    class FlexContainer : public ContainerItem
     {
     public:
         //==============================================================================================================
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updateLayout() override;
-
-        //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child) override;
+        void layOutChildren() override;
 
         //==============================================================================================================
         operator juce::FlexBox();
 
+    protected:
+        //==============================================================================================================
+        juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
+
     private:
         //==============================================================================================================
-        juce::FlexBox getFlexBox();
-        juce::FlexBox getFlexBoxWithDummyItems() const;
-
-        float calculateMinimumContentWidth(juce::FlexBox flex) const;
-        float calculateMinimumContentHeight(juce::FlexBox flex) const;
-
-        void updateExplicitSize();
+        juce::FlexBox buildFlexBox(juce::Rectangle<float> bounds, LayoutStrategy strategy);
 
         //==============================================================================================================
         TypedValue<juce::FlexBox::Direction> flexDirection;
@@ -35,8 +30,6 @@ namespace jive
         TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
         TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
         TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)

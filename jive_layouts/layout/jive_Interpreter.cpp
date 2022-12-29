@@ -36,7 +36,9 @@ namespace jive
     //==================================================================================================================
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
-        switch (item->getDisplay())
+        TypedValue<Display> display{ item->state, "display" };
+
+        switch (display.get())
         {
         case Display::flex:
             return std::make_unique<FlexContainer>(std::move(item));
@@ -56,7 +58,9 @@ namespace jive
         if (item->getParent() == nullptr)
             return item;
 
-        switch (item->getParent()->getDisplay())
+        TypedValue<Display> display{ item->state.getParent(), "display" };
+
+        switch (display.get())
         {
         case Display::flex:
             return std::make_unique<FlexItem>(std::move(item));
@@ -73,7 +77,7 @@ namespace jive
 
     std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item)
     {
-        const auto name = item->getState().getType().toString();
+        const auto name = item->state.getType().toString();
 
         if (name == "Button" || name == "Checkbox")
             return std::make_unique<Button>(std::move(item));
@@ -124,7 +128,7 @@ namespace jive
         item = decorateWithHereditaryBehaviour(std::move(item));
         item = decorateWithWidgetBehaviour(std::move(item));
 
-        for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->getState().getType(), customDecorators))
+        for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->state.getType(), customDecorators))
             item = (*decorateWithCustomDecorations)(std::move(item));
 
         return item;
@@ -164,7 +168,7 @@ namespace jive
 
     void Interpreter::appendChildItems(GuiItem& item) const
     {
-        for (auto childTree : item.getState())
+        for (auto childTree : item.state)
             appendChild(item, childTree);
     }
 
@@ -228,42 +232,60 @@ private:
         const jive::Interpreter interpreter;
 
         {
-            juce::ValueTree tree{ "Component" };
-            auto view = interpreter.interpret(juce::ValueTree{ "Component" });
+            auto view = interpreter.interpret(juce::ValueTree{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            });
 
-            expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expectEquals(view->getNumChildren(), 0);
+            expectEquals(view->getComponent()->getNumChildComponents(), 0);
         }
         {
             juce::ValueTree tree{
                 "Component",
-                {},
-                { juce::ValueTree{ "Component" },
-                  juce::ValueTree{ "Component" } }
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                    juce::ValueTree{ "Component" },
+                },
             };
             auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
         }
         {
             juce::ValueTree tree{
                 "Component",
-                {},
-                { juce::ValueTree{
-                    "Component",
-                    {},
-                    { juce::ValueTree{ "Component" },
-                      juce::ValueTree{ "Component" },
-                      juce::ValueTree{ "Component" } } } }
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+                {
+                    juce::ValueTree{
+                        "Component",
+                        {},
+                        {
+                            juce::ValueTree{ "Component" },
+                            juce::ValueTree{ "Component" },
+                            juce::ValueTree{ "Component" },
+                        },
+                    },
+                },
             };
             auto view = interpreter.interpret(tree);
 
             expect(view->getNumChildren() == tree.getNumChildren());
-            expect(view->getComponent().getNumChildComponents() == tree.getNumChildren());
+            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
 
             expect(view->getChild(0).getNumChildren() == tree.getChild(0).getNumChildren());
-            expect(view->getChild(0).getComponent().getNumChildComponents() == tree.getChild(0).getNumChildren());
+            expect(view->getChild(0).getComponent()->getNumChildComponents() == tree.getChild(0).getNumChildren());
         }
     }
 
@@ -273,12 +295,20 @@ private:
 
         const jive::Interpreter interpreter;
 
-        auto basicView = interpreter.interpret(juce::ValueTree{ "Component" });
+        auto basicView = interpreter.interpret(juce::ValueTree{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         expect(dynamic_cast<jive::GuiItem*>(basicView.get()));
 
         auto flexView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", juce::VariantConverter<jive::Display>::toVar(jive::Display::flex) },
             },
             {
@@ -293,6 +323,8 @@ private:
         auto gridView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "grid" },
             },
             {
@@ -305,6 +337,8 @@ private:
         auto blockView = interpreter.interpret(juce::ValueTree{
             "Component",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "display", "block" },
             },
             {
@@ -343,8 +377,8 @@ private:
                 },
             },
         });
-
-        expectNotEquals(view->getChild(1).getViewport().getPosition(), juce::Point<int>{});
+        expectNotEquals(view->getChild(1).getComponent()->getPosition(),
+                        juce::Point<int>{});
     }
 
     void testWindowContent()
@@ -383,11 +417,23 @@ private:
         };
 
         jive::Interpreter interpreter;
-        auto item = interpreter.interpret(juce::ValueTree{ "Button" });
+        auto item = interpreter.interpret(juce::ValueTree{
+            "Button",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         expect(dynamic_cast<MyDecorator*>(item.get()) == nullptr);
 
         interpreter.addDecorator<MyDecorator>("Button");
-        item = interpreter.interpret(juce::ValueTree{ "Button" });
+        item = interpreter.interpret(juce::ValueTree{
+            "Button",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         auto* decorator = dynamic_cast<jive::GuiItemDecorator*>(item.get());
         expect(decorator->toType<MyDecorator>() != nullptr);
 
@@ -396,7 +442,13 @@ private:
             using jive::GuiItemDecorator::GuiItemDecorator;
         };
         interpreter.addDecorator<MyOtherDecorator>("Button");
-        item = interpreter.interpret(juce::ValueTree{ "Button" });
+        item = interpreter.interpret(juce::ValueTree{
+            "Button",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         decorator = dynamic_cast<jive::GuiItemDecorator*>(item.get());
         expect(decorator->toType<MyDecorator>() != nullptr);
         expect(decorator->toType<MyOtherDecorator>() != nullptr);

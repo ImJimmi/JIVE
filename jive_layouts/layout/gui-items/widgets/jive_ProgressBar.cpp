@@ -6,7 +6,9 @@ namespace jive
     //==================================================================================================================
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ tree, "value" }
+        , value{ state, "value" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
         value.onValueChange = [this]() {
             getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
@@ -14,17 +16,28 @@ namespace jive
         getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
 
         getProgressBar().setPercentageDisplay(false);
+
+        if (width.isAuto())
+            width = "135";
+        if (height.isAuto())
+            height = "20";
+    }
+
+    //==================================================================================================================
+    bool ProgressBar::isContainer() const
+    {
+        return false;
     }
 
     //==================================================================================================================
     NormalisedProgressBar& ProgressBar::getProgressBar()
     {
-        return *dynamic_cast<NormalisedProgressBar*>(&getComponent());
+        return *dynamic_cast<NormalisedProgressBar*>(component.get());
     }
 
     const NormalisedProgressBar& ProgressBar::getProgressBar() const
     {
-        return *dynamic_cast<const NormalisedProgressBar*>(&getComponent());
+        return *dynamic_cast<const NormalisedProgressBar*>(component.get());
     }
 } // namespace jive
 
@@ -41,6 +54,7 @@ public:
     void runTest() final
     {
         testValue();
+        testDefaultSize();
     }
 
 private:
@@ -56,7 +70,13 @@ private:
         beginTest("value");
 
         {
-            juce::ValueTree tree{ "ProgressBar" };
+            juce::ValueTree tree{
+                "ProgressBar",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
             auto item = createProgressBar(tree);
             expectEquals(item->getProgressBar().getValue(), 0.0);
 
@@ -73,12 +93,36 @@ private:
             juce::ValueTree tree{
                 "ProgressBar",
                 {
+                    { "width", 222 },
+                    { "height", 333 },
                     { "value", 0.463 },
                 },
             };
             auto item = createProgressBar(tree);
             expectEquals(item->getProgressBar().getValue(), 0.463);
         }
+    }
+
+    void testDefaultSize()
+    {
+        beginTest("default size");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 999 },
+                { "height", 999 },
+            },
+            {
+                juce::ValueTree{ "ProgressBar" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& progressBar = dynamic_cast<jive::ProgressBar&>(parent->getChild(0));
+        expect(!progressBar.isContainer());
+        expectEquals(progressBar.boxModel.getWidth(), 135.0f);
+        expectEquals(progressBar.boxModel.getHeight(), 20.0f);
     }
 };
 

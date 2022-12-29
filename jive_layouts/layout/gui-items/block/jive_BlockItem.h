@@ -11,19 +11,20 @@ namespace jive
         explicit BlockItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updatePosition() override;
+        juce::Rectangle<int> calculateBounds() const;
 
     private:
         //==============================================================================================================
         int calculateX() const;
         int calculateY() const;
-        juce::Point<int> calculatePosition() const;
 
         //==============================================================================================================
-        TypedValue<Width> x;
-        TypedValue<Height> y;
-        TypedValue<Width> centreX;
-        TypedValue<Height> centreY;
+        Length x;
+        Length y;
+        Length centreX;
+        Length centreY;
+        Length width;
+        Length height;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BlockItem)

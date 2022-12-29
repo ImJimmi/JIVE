@@ -23,15 +23,13 @@ namespace jive
     protected:
         //==============================================================================================================
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
-        void componentParentHierarchyChanged(juce::Component& componentWhoseParentHierarchyChanged) override;
 
     private:
         //==============================================================================================================
-        juce::TextLayout buildTextLayout() const;
+        juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
 
         void updateFont();
         void updateTextComponent();
-        void updateExplicitSize();
 
         //==============================================================================================================
         TypedValue<juce::String> text;
@@ -45,8 +43,8 @@ namespace jive
         TypedValue<juce::Justification> justification;
         TypedValue<juce::AttributedString::WordWrap> wordWrap;
         TypedValue<juce::AttributedString::ReadingDirection> direction;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
+        TypedValue<float> idealWidth;
+        TypedValue<float> idealHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)

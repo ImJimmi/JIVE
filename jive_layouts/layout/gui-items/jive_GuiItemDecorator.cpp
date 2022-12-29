@@ -13,31 +13,9 @@ namespace jive
     }
 
     //==================================================================================================================
-    void GuiItemDecorator::updateLayout()
-    {
-        item->updateLayout();
-    }
-
-    void GuiItemDecorator::updateSize()
-    {
-        item->updateSize();
-    }
-
-    void GuiItemDecorator::updatePosition()
-    {
-        item->updatePosition();
-    }
-
-    void GuiItemDecorator::informContentChanged()
-    {
-        getTopLevelDecorator().contentChanged();
-    }
-
-    //==================================================================================================================
     void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
     {
         item->addChild(std::move(child));
-        updateLayout();
     }
 
     int GuiItemDecorator::getNumChildren() const
@@ -48,6 +26,44 @@ namespace jive
     GuiItem& GuiItemDecorator::getChild(int index) const
     {
         return item->getChild(index);
+    }
+
+    const GuiItem* GuiItemDecorator::getParent() const
+    {
+        return const_cast<GuiItemDecorator*>(this)->getParent();
+    }
+
+    GuiItem* GuiItemDecorator::getParent()
+    {
+        if (auto* parentItem = item->getParent())
+        {
+            if (auto* decoratedParent = dynamic_cast<GuiItemDecorator*>(parentItem))
+                return &decoratedParent->getTopLevelDecorator();
+        }
+
+        return item->getParent();
+    }
+
+    GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
+    }
+
+    const GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator() const
+    {
+        if (owner != nullptr)
+            return owner->getTopLevelDecorator();
+
+        return *this;
+    }
+
+    //==================================================================================================================
+    void GuiItemDecorator::layOutChildren()
+    {
+        item->layOutChildren();
     }
 
     //==================================================================================================================
@@ -69,22 +85,5 @@ namespace jive
     const GuiItem::Iterator GuiItemDecorator::end() const
     {
         return std::end(*item);
-    }
-
-    //==================================================================================================================
-    GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator()
-    {
-        if (owner != nullptr)
-            return owner->getTopLevelDecorator();
-
-        return *this;
-    }
-
-    const GuiItemDecorator& GuiItemDecorator::getTopLevelDecorator() const
-    {
-        if (owner != nullptr)
-            return owner->getTopLevelDecorator();
-
-        return *this;
     }
 } // namespace jive

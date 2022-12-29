@@ -16,7 +16,7 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , border{ tree, "border-width" }
+        , border{ state, "border-width" }
     {
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));
@@ -33,7 +33,7 @@ namespace jive
     //==================================================================================================================
     juce::Label& Label::getLabel()
     {
-        auto* label = dynamic_cast<juce::Label*>(&getComponent());
+        auto* label = dynamic_cast<juce::Label*>(component.get());
         jassert(label != nullptr);
 
         return *label;
@@ -41,22 +41,10 @@ namespace jive
 
     const juce::Label& Label::getLabel() const
     {
-        const auto* label = dynamic_cast<const juce::Label*>(&getComponent());
+        const auto* label = dynamic_cast<const juce::Label*>(component.get());
         jassert(label != nullptr);
 
         return *label;
-    }
-
-    //==================================================================================================================
-    void Label::contentChanged()
-    {
-        GuiItemDecorator::contentChanged();
-
-        if (auto* text = findFirstTextContent(*this))
-        {
-            getLabel().setText(text->getTextComponent().getText(),
-                               juce::sendNotification);
-        }
     }
 } // namespace jive
 
@@ -74,7 +62,6 @@ public:
     {
         testGuiItem();
         testBorder();
-        testContentChanged();
     }
 
 private:
@@ -89,7 +76,13 @@ private:
     {
         beginTest("gui-item");
 
-        auto item = createLabel(juce::ValueTree{ "Label" });
+        auto item = createLabel(juce::ValueTree{
+            "Label",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        });
         expect(!item->isContainer());
     }
 
@@ -97,7 +90,13 @@ private:
     {
         beginTest("border");
 
-        juce::ValueTree tree{ "Label" };
+        juce::ValueTree tree{
+            "Label",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+        };
         auto label = createLabel(tree);
 
         expect(label->getLabel().getBorderSize().getTop() == 0);
@@ -111,29 +110,6 @@ private:
         expect(label->getLabel().getBorderSize().getRight() == 10);
         expect(label->getLabel().getBorderSize().getBottom() == 20);
         expect(label->getLabel().getBorderSize().getLeft() == 40);
-    }
-
-    void testContentChanged()
-    {
-        beginTest("content-changed");
-
-        juce::ValueTree tree{
-            "Label",
-            {},
-            {
-                juce::ValueTree{
-                    "Text",
-                    {
-                        { "text", "Some text..." },
-                    },
-                },
-            },
-        };
-        auto item = createLabel(tree);
-        expectEquals<juce::String>(item->getLabel().getText(), "Some text...");
-
-        tree.getChild(0).setProperty("text", "Some different text!", nullptr);
-        expectEquals<juce::String>(item->getLabel().getText(), "Some different text!");
     }
 };
 

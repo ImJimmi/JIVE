@@ -8,3 +8,7 @@
 #include "values/variant-converters/jive_FlexVariantConverters.cpp"
 #include "values/variant-converters/jive_GridVariantConverters.cpp"
 #include "values/variant-converters/jive_MiscVariantConverters.cpp"
+
+#include "geometry/jive_Length.cpp"
+
+#include "geometry/jive_BoxModel.cpp"

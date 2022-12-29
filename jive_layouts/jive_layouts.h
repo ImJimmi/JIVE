@@ -26,14 +26,14 @@ namespace jive
 #include "utilities/jive_ComponentFactory.h"
 #include "utilities/jive_Display.h"
 #include "utilities/jive_Drawable.h"
-#include "utilities/jive_Length.h"
+#include "utilities/jive_LayoutStrategy.h"
 #include "utilities/jive_Orientation.h"
 #include "utilities/jive_Overflow.h"
 
-#include "layout/jive_BoxModel.h"
-
 #include "layout/gui-items/jive_GuiItem.h"
 #include "layout/gui-items/jive_GuiItemDecorator.h"
+
+#include "layout/gui-items/jive_ContainerItem.h"
 
 #include "layout/gui-items/block/jive_BlockContainer.h"
 #include "layout/gui-items/block/jive_BlockItem.h"

@@ -4,28 +4,26 @@
 namespace jive
 {
     //==================================================================================================================
-    class GridContainer : public GuiItemDecorator
+    class GridContainer : public ContainerItem
     {
     public:
         //==============================================================================================================
         explicit GridContainer(std::unique_ptr<GuiItem> itemToDecorate);
 
         //==============================================================================================================
-        void updateLayout() override;
-
-        //==============================================================================================================
-        void addChild(std::unique_ptr<GuiItem> child) override;
+        void layOutChildren() override;
 
         //==============================================================================================================
         operator juce::Grid();
 
+    protected:
+        //==============================================================================================================
+        juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
+
     private:
         //==============================================================================================================
-        juce::Grid getGrid();
-        juce::Grid getGridWithDummyItems() const;
-
-        float calculateMinimumContentWidth() const;
-        float calculateMinimumContentHeight() const;
+        juce::Grid buildGrid();
+        juce::Grid buildGridWithDummyItems() const;
 
         //==============================================================================================================
         TypedValue<juce::Grid::JustifyItems> justifyItems;

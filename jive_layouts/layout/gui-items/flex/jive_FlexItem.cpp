@@ -6,31 +6,32 @@ namespace jive
     //==================================================================================================================
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexItemOrder{ tree, "order" }
-        , flexItemGrow{ tree, "flex-grow" }
-        , flexItemShrink{ tree, "flex-shrink", 1 }
-        , flexItemBasis{ tree, "flex-basis" }
-        , flexItemAlignSelf{ tree, "align-self", juce::FlexItem::AlignSelf::autoAlign }
+        , flexItemOrder{ state, "order" }
+        , flexItemGrow{ state, "flex-grow" }
+        , flexItemShrink{ state, "flex-shrink", 1 }
+        , flexItemBasis{ state, "flex-basis" }
+        , flexItemAlignSelf{ state, "align-self", juce::FlexItem::AlignSelf::autoAlign }
+        , width{ state, "width", "auto" }
+        , height{ state, "height", "auto" }
+        , minWidth{ state, "min-width" }
+        , minHeight{ state, "min-height" }
+        , idealWidth{ state, "ideal-width" }
+        , idealHeight{ state, "ideal-height" }
     {
-        flexItemOrder.onValueChange = [this]() {
-            updateParentLayout();
+        jassert(getParent() != nullptr);
+
+        const auto updateParentLayout = [this]() {
+            getParent()->layOutChildren();
         };
-        flexItemGrow.onValueChange = [this]() {
-            updateParentLayout();
-        };
-        flexItemShrink.onValueChange = [this]() {
-            updateParentLayout();
-        };
-        flexItemBasis.onValueChange = [this]() {
-            updateParentLayout();
-        };
-        flexItemAlignSelf.onValueChange = [this]() {
-            updateParentLayout();
-        };
+        flexItemOrder.onValueChange = updateParentLayout;
+        flexItemGrow.onValueChange = updateParentLayout;
+        flexItemShrink.onValueChange = updateParentLayout;
+        flexItemBasis.onValueChange = updateParentLayout;
+        flexItemAlignSelf.onValueChange = updateParentLayout;
     }
 
     //==================================================================================================================
-    juce::FlexItem::Margin boxModelToFlexMargin(const juce::BorderSize<float>& border)
+    juce::FlexItem::Margin transform(const juce::BorderSize<float>& border)
     {
         return juce::FlexItem::Margin{
             border.getTop(),
@@ -40,32 +41,131 @@ namespace jive
         };
     }
 
-    FlexItem::operator juce::FlexItem()
+    juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
+                                            LayoutStrategy strategy) const
     {
-        juce::FlexItem flexItem{ getViewport() };
+        juce::FlexItem flexItem;
 
-        if (!hasAutoWidth())
-            flexItem.width = getTopLevelDecorator().getBoxModel().getBorderBounds().getWidth();
-        if (!hasAutoHeight())
-            flexItem.height = getTopLevelDecorator().getBoxModel().getBorderBounds().getHeight();
+        if (strategy == LayoutStrategy::real)
+            flexItem.associatedComponent = component.get();
+
+        const auto minBounds = boxModel.getMinimumBounds();
+        flexItem.minWidth = minBounds.getWidth();
+        flexItem.minHeight = minBounds.getHeight();
+
+        if (!width.isAuto())
+        {
+            flexItem.width = width.toPixels(parentContentBounds);
+        }
+        else
+        {
+            if (idealWidth.exists())
+            {
+                if (idealWidth.get() < parentContentBounds.getWidth() || strategy == LayoutStrategy::dummy)
+                    flexItem.minWidth = juce::jmax(flexItem.minWidth, idealWidth.get());
+                else
+                    flexItem.width = parentContentBounds.getWidth();
+            }
+        }
+
+        if (!height.isAuto())
+        {
+            flexItem.height = height.toPixels(parentContentBounds);
+        }
+        else
+        {
+            if (idealHeight.exists())
+            {
+                auto property = state["ideal-height"];
+                auto calculateHeight = property.getNativeFunction();
+
+                if (calculateHeight != nullptr)
+                {
+                    juce::var args[] = {
+                        strategy == LayoutStrategy::dummy
+                            ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
+                            : flexItem.width,
+                    };
+                    flexItem.minHeight = juce::jmax(flexItem.minHeight,
+                                                    static_cast<float>(calculateHeight({ property, args, 1 })));
+                }
+                else
+                {
+                    flexItem.minHeight = juce::jmax(flexItem.minHeight,
+                                                    static_cast<float>(property));
+                }
+            }
+        }
+
+        // if (state.getParent()["flex-direction"].toString() == "column")
+        // {
+        //     if (width.isAuto() && idealWidth.getOr(-1.f) > parentBounds.getWidth())
+        //         flexItem.width = parentBounds.getWidth();
+        //     else if (width.isAuto() && idealWidth.exists())
+        //         flexItem.minWidth = juce::jmax(flexItem.minWidth, idealWidth.get());
+        //     else if (!width.isAuto())
+        //         flexItem.width = width.toPixels(parentBounds);
+
+        //     if (height.isAuto() && idealHeight.exists())
+        //     {
+        //         auto property = state["ideal-height"];
+        //         auto calculateHeight = property.getNativeFunction();
+
+        //         if (calculateHeight != nullptr)
+        //         {
+        //             juce::var args[] = { flexItem.width >= 0 ? flexItem.width : flexItem.minWidth };
+        //             flexItem.height = static_cast<float>(calculateHeight({ property, args, 1 }));
+        //         }
+        //         else
+        //         {
+        //             flexItem.height = juce::jmin(parentBounds.getHeight(), static_cast<float>(property));
+        //         }
+        //     }
+        //     else if (!height.isAuto())
+        //     {
+        //         flexItem.height = height.toPixels(parentBounds);
+        //     }
+        // }
+        // else
+        // {
+        //     if (width.isAuto() && idealWidth.exists())
+        //         flexItem.width = juce::jmin(parentBounds.getWidth(), idealWidth.get());
+        //     else if (!width.isAuto())
+        //         flexItem.width = width.toPixels(parentBounds);
+
+        //     if (height.isAuto() && idealHeight.getOr(-1.f) > parentBounds.getHeight())
+        //         flexItem.height = parentBounds.getHeight();
+        //     else if (height.isAuto() && idealHeight.exists())
+        //     {
+        //         auto property = state["ideal-height"];
+        //         auto calculateHeight = property.getNativeFunction();
+
+        //         if (calculateHeight != nullptr)
+        //         {
+        //             juce::var args[] = { flexItem.width >= 0 ? flexItem.width : flexItem.minWidth };
+        //             flexItem.minHeight = static_cast<float>(calculateHeight({ property, args, 1 }));
+        //         }
+        //         else
+        //         {
+        //             flexItem.minHeight = juce::jmax(flexItem.minHeight, static_cast<float>(property));
+        //         }
+        //     }
+        //     else if (!height.isAuto())
+        //     {
+        //         flexItem.height = height.toPixels(parentBounds);
+        //     }
+        // }
 
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
         flexItem.flexShrink = flexItemShrink;
         flexItem.flexBasis = flexItemBasis;
-        flexItem.alignSelf = flexItemAlignSelf;
-        flexItem.margin = boxModelToFlexMargin(getBoxModel().getMargin());
+        flexItem.margin = transform(boxModel.getMargin());
+
+        if (strategy == LayoutStrategy::real)
+            flexItem.alignSelf = flexItemAlignSelf;
 
         return flexItem;
-    }
-
-    //==================================================================================================================
-    void FlexItem::updateParentLayout()
-    {
-        if (auto* container = dynamic_cast<FlexContainer*>(getParent()))
-            container->updateLayout();
-        else if (getParent() != nullptr)
-            jassertfalse;
     }
 } // namespace jive
 
@@ -89,40 +189,59 @@ public:
         testAlignSelf();
         testSize();
         testMargin();
-        testDecoratedItems();
     }
 
 private:
-    std::unique_ptr<jive::FlexItem> createFlexItem(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-
-        return std::make_unique<jive::FlexItem>(interpreter.interpret(tree));
-    }
-
     void testComponent()
     {
         beginTest("component");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
-
-        expect(flexItem.associatedComponent == &item->getViewport());
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        const auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                                  .toType<jive::FlexItem>()
+                                  ->toJuceFlexItem({}, jive::LayoutStrategy::real);
+        expect(flexItem.associatedComponent == item.getComponent().get());
     }
 
     void testOrder()
     {
         beginTest("order");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.order == 0);
 
-        tree.setProperty("order", 10, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("order", 10, nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.order == 10);
     }
@@ -131,14 +250,29 @@ private:
     {
         beginTest("flex-grow");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexGrow == 0.f);
 
-        tree.setProperty("flex-grow", 5.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-grow", 5.f, nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexGrow == 5.f);
     }
@@ -147,14 +281,29 @@ private:
     {
         beginTest("flex-shrink");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexShrink == 1.f);
 
-        tree.setProperty("flex-shrink", 3.4f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-shrink", 3.4f, nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexShrink == 3.4f);
     }
@@ -163,14 +312,29 @@ private:
     {
         beginTest("flex-basis");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexBasis == 0.f);
 
-        tree.setProperty("flex-basis", 4.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("flex-basis", 4.f, nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.flexBasis == 4.f);
     }
@@ -179,14 +343,29 @@ private:
     {
         beginTest("align-self");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign);
 
-        tree.setProperty("align-self", "centre", nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("align-self", "centre", nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::center);
     }
@@ -195,20 +374,30 @@ private:
     {
         beginTest("size");
 
-        juce::ValueTree tree{
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
             "Component",
-            { { "width", 100 },
-              { "height", 200 } }
+            {
+                { "width", 100 },
+                { "height", 200 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
         };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
+        expectEquals(flexItem.width, juce::FlexItem{}.width);
+        expectEquals(flexItem.height, juce::FlexItem{}.height);
 
-        expect(flexItem.width == 100.f);
-        expect(flexItem.height == 200.f);
-
-        tree.setProperty("width", 50.f, nullptr);
-        tree.setProperty("height", 175.f, nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("width", 50.f, nullptr);
+        state.getChild(0).setProperty("height", 175.f, nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.width == 50.f);
         expect(flexItem.height == 175.f);
@@ -218,53 +407,37 @@ private:
     {
         beginTest("margin");
 
-        juce::ValueTree tree{ "Component" };
-        auto item = createFlexItem(tree);
-        auto flexItem = static_cast<juce::FlexItem>(*item);
+        jive::Interpreter interpreter;
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 200 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        };
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                            .toType<jive::FlexItem>()
+                            ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.margin.top == 0.f);
         expect(flexItem.margin.right == 0.f);
         expect(flexItem.margin.bottom == 0.f);
         expect(flexItem.margin.left == 0.f);
 
-        tree.setProperty("margin", "1 2 3 4", nullptr);
-        flexItem = static_cast<juce::FlexItem>(*item);
+        state.getChild(0).setProperty("margin", "1 2 3 4", nullptr);
+        flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
+                       .toType<jive::FlexItem>()
+                       ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
         expect(flexItem.margin.top == 1.f);
         expect(flexItem.margin.right == 2.f);
         expect(flexItem.margin.bottom == 3.f);
         expect(flexItem.margin.left == 4.f);
-    }
-
-    void testDecoratedItems()
-    {
-        beginTest("decorated-items");
-
-        struct StubItem : public jive::GuiItemDecorator
-        {
-            explicit StubItem(std::unique_ptr<jive::GuiItem> itemToDecorate)
-                : jive::GuiItemDecorator{ std::move(itemToDecorate) }
-            {
-                getBoxModel().setWidth(123.45f);
-                getBoxModel().setHeight(678.9f);
-            }
-        };
-
-        auto item = std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                    juce::ValueTree{
-                                                        "Component",
-                                                        {
-                                                            { "width", 100.0f },
-                                                            { "height", 87.0f },
-                                                        },
-                                                    });
-        item = std::make_unique<jive::FlexItem>(std::move(item));
-        item = std::make_unique<StubItem>(std::move(item));
-
-        const auto flexItem = static_cast<juce::FlexItem>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                                               .toType<jive::FlexItem>());
-        expectEquals(flexItem.width, 123.45f);
-        expectEquals(flexItem.height, 678.9f);
     }
 };
 

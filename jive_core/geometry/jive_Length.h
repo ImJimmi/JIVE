@@ -4,26 +4,28 @@
 namespace jive
 {
     //==================================================================================================================
-    class ProgressBar : public GuiItemDecorator
+    class Length : public TypedValue<juce::String>
     {
     public:
         //==============================================================================================================
-        explicit ProgressBar(std::unique_ptr<GuiItem> itemToDecorate);
-
-        //==================================================================================================================
-        bool isContainer() const override;
+        using TypedValue<juce::String>::TypedValue;
 
         //==============================================================================================================
-        NormalisedProgressBar& getProgressBar();
-        const NormalisedProgressBar& getProgressBar() const;
+        float toPixels(const juce::Rectangle<float>& parentBounds) const;
+
+        //==============================================================================================================
+        bool isAuto() const;
+        bool isPixels() const;
+        bool isPercent() const;
+
+        //==============================================================================================================
+        using TypedValue<juce::String>::operator=;
+
+        //==============================================================================================================
+        static const float pixelValueWhenAuto;
 
     private:
         //==============================================================================================================
-        TypedValue<double> value;
-        Length width;
-        Length height;
-
-        //==============================================================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressBar)
+        double getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const;
     };
 } // namespace jive

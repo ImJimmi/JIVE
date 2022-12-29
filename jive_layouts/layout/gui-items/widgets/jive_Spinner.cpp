@@ -5,8 +5,8 @@ namespace jive
 {
     //==================================================================================================================
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 50.0f, 20.0f }
-        , draggable{ tree, "draggable" }
+        : Slider{ std::move(itemToDecorate), 70.0f, 20.0f }
+        , draggable{ state, "draggable" }
     {
         draggable.onValueChange = [this]() {
             getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
@@ -54,6 +54,8 @@ private:
         juce::ValueTree tree{
             "Spinner",
             {
+                { "width", 222 },
+                { "height", 333 },
                 { "orientation", "horizontal" },
             },
         };
@@ -68,16 +70,27 @@ private:
     {
         beginTest("auto size");
 
-        juce::ValueTree tree{ "Spinner" };
-        auto item = createSpinner(tree);
-        expectEquals(item->getBoxModel().getWidth(), 50.0f);
-        expectEquals(item->getBoxModel().getHeight(), 20.0f);
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Spinner" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& item = parent->getChild(0);
+        expectEquals(item.boxModel.getWidth(), 70.0f);
+        expectEquals(item.boxModel.getHeight(), 20.0f);
 
-        tree.setProperty("width", 38.0f, nullptr);
-        expectEquals(item->getBoxModel().getWidth(), 38.0f);
+        parentState.getChild(0).setProperty("width", 38.0f, nullptr);
+        expectEquals(item.boxModel.getWidth(), 38.0f);
 
-        tree.setProperty("height", 73.0f, nullptr);
-        expectEquals(item->getBoxModel().getHeight(), 73.0f);
+        parentState.getChild(0).setProperty("height", 73.0f, nullptr);
+        expectEquals(item.boxModel.getHeight(), 73.0f);
     }
 };
 

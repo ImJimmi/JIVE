@@ -12,6 +12,7 @@ namespace jive
     //==================================================================================================================
     void TextComponent::paint(juce::Graphics& g)
     {
+        attributedString.setColour(juce::Colours::white);
         attributedString.draw(g, getLocalBounds().toFloat());
     }
 

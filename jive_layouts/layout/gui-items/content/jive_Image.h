@@ -18,30 +18,31 @@ namespace jive
 
     protected:
         //==============================================================================================================
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
+        void componentMovedOrResized(juce::Component&, bool, bool) override;
+        void boxModelChanged(BoxModel& boxModelThatChanged) override;
 
     private:
         //==============================================================================================================
         float calculateAspectRatio(const juce::ImageComponent& image) const;
-        float calculateAutoWidth(const juce::ImageComponent& image) const;
-        float calculateAutoWidth(const juce::Drawable& drawable) const;
-        float calculateAutoWidth() const;
-        float calculateAutoHeight(const juce::ImageComponent& image) const;
-        float calculateAutoHeight(const juce::Drawable& drawable) const;
-        float calculateAutoHeight() const;
+        float calculateRequiredWidth(const juce::ImageComponent& image) const;
+        float calculateRequiredWidth(const juce::Drawable& drawable) const;
+        float calculateRequiredWidth() const;
+        float calculateRequiredHeight(const juce::ImageComponent& image) const;
+        float calculateRequiredHeight(const juce::Drawable& drawable) const;
+        float calculateRequiredHeight() const;
+
         std::unique_ptr<juce::ImageComponent> createImageComponent(const juce::Image& image) const;
         std::unique_ptr<juce::Drawable> createSVG(const juce::String& svgString) const;
         std::unique_ptr<juce::Component> createChildComponent() const;
         void setChildComponent(std::unique_ptr<juce::Component> newComponent);
 
         //==============================================================================================================
-        void updateExplicitSize();
-
-        //==============================================================================================================
         TypedValue<Drawable> source;
         TypedValue<juce::RectanglePlacement> placement;
-        TypedValue<float> explicitWidth;
-        TypedValue<float> explicitHeight;
+        Length width;
+        Length height;
+        Length idealWidth;
+        Length idealHeight;
 
         std::unique_ptr<juce::Component> childComponent;
 

@@ -60,9 +60,6 @@ namespace jive
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
         void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int index) override;
 
-        //==============================================================================================================
-        void contentChanged() override;
-
     private:
         //==============================================================================================================
         void comboBoxChanged(juce::ComboBox* box) final;
@@ -71,6 +68,8 @@ namespace jive
         TypedValue<bool> editable;
         TypedValue<juce::String> tooltip;
         TypedValue<int> selected;
+        Length width;
+        Length height;
 
         juce::OwnedArray<Option> options;
         juce::OwnedArray<Header> headers;

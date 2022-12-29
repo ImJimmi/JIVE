@@ -15,6 +15,9 @@ namespace juce
 
     FlexBox::AlignContent VariantConverter<FlexBox::AlignContent>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexBox{}.alignContent;
+
         jassert(options.contains(v));
         return static_cast<FlexBox::AlignContent>(options.indexOf(v));
     }
@@ -37,6 +40,9 @@ namespace juce
 
     FlexBox::AlignItems VariantConverter<FlexBox::AlignItems>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexBox{}.alignItems;
+
         jassert(options.contains(v));
         return static_cast<FlexBox::AlignItems>(options.indexOf(v));
     }
@@ -59,6 +65,9 @@ namespace juce
 
     FlexBox::Direction VariantConverter<FlexBox::Direction>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexBox{}.flexDirection;
+
         jassert(options.contains(v));
         return static_cast<FlexBox::Direction>(options.indexOf(v));
     }
@@ -82,6 +91,9 @@ namespace juce
 
     FlexBox::JustifyContent VariantConverter<FlexBox::JustifyContent>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexBox{}.justifyContent;
+
         jassert(options.contains(v));
         return static_cast<FlexBox::JustifyContent>(options.indexOf(v));
     }
@@ -103,6 +115,9 @@ namespace juce
 
     FlexBox::Wrap VariantConverter<FlexBox::Wrap>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexBox{}.flexWrap;
+
         jassert(options.contains(v));
         return static_cast<FlexBox::Wrap>(options.indexOf(v));
     }
@@ -126,6 +141,9 @@ namespace juce
 
     FlexItem::AlignSelf VariantConverter<FlexItem::AlignSelf>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return FlexItem{}.alignSelf;
+
         jassert(options.contains(v));
         return static_cast<FlexItem::AlignSelf>(options.indexOf(v));
     }

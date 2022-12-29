@@ -4,19 +4,44 @@
 namespace jive
 {
     //==================================================================================================================
-    template <typename ValueType>
-    class TypedValue : private juce::Value::Listener
+    enum class HereditaryValueBehaviour
+    {
+        inheritFromParent,
+        inheritFromAncestors,
+        doNotInherit,
+    };
+
+    //==================================================================================================================
+    template <typename ValueType,
+              HereditaryValueBehaviour hereditaryBehavior = HereditaryValueBehaviour::doNotInherit>
+    class TypedValue : protected juce::ValueTree::Listener
     {
     public:
-        using VariantConverter = juce::VariantConverter<ValueType>;
+        //==============================================================================================================
+        using Converter = juce::VariantConverter<ValueType>;
 
+        //==============================================================================================================
         TypedValue(juce::ValueTree sourceTree,
                    const juce::Identifier& propertyID)
             : id{ propertyID }
             , tree{ sourceTree }
-            , value{ tree.getPropertyAsValue(id, nullptr, true) }
         {
-            value.addListener(this);
+            switch (hereditaryBehavior)
+            {
+            case HereditaryValueBehaviour::inheritFromParent:
+                treeToListenTo = tree.getParent();
+                break;
+            case HereditaryValueBehaviour::inheritFromAncestors:
+                treeToListenTo = tree.getRoot();
+                break;
+            case HereditaryValueBehaviour::doNotInherit:
+                treeToListenTo = tree;
+            }
+
+            if (!treeToListenTo.isValid())
+                treeToListenTo = tree;
+
+            treeToListenTo.addListener(this);
         }
 
         TypedValue(juce::ValueTree sourceTree,
@@ -25,12 +50,35 @@ namespace jive
             : TypedValue{ sourceTree, propertyID }
         {
             if (!exists())
-                value = VariantConverter::toVar(initialValue);
+                *this = initialValue;
         }
 
-        ValueType get() const
+        //==============================================================================================================
+        virtual ValueType get() const
         {
-            return VariantConverter::fromVar(value);
+            if (exists())
+                return Converter::fromVar(tree[id]);
+
+            switch (hereditaryBehavior)
+            {
+            case HereditaryValueBehaviour::inheritFromParent:
+                return Converter::fromVar(tree.getParent()[id]);
+            case HereditaryValueBehaviour::inheritFromAncestors:
+                return Converter::fromVar(findPropertyInLatestAncestor());
+            case HereditaryValueBehaviour::doNotInherit:
+                return Converter::fromVar(tree[id]);
+            }
+
+            jassertfalse;
+            return Converter::fromVar(juce::var{});
+        }
+
+        ValueType getOr(const ValueType& valueIfNotExists) const
+        {
+            if (!exists())
+                return valueIfNotExists;
+
+            return get();
         }
 
         void clear()
@@ -43,6 +91,7 @@ namespace jive
             return tree.hasProperty(id);
         }
 
+        //==============================================================================================================
         operator ValueType() const
         {
             return get();
@@ -50,23 +99,62 @@ namespace jive
 
         TypedValue<ValueType>& operator=(const ValueType& newValue)
         {
-            value = juce::VariantConverter<ValueType>::toVar(newValue);
+            tree.setProperty(id, Converter::toVar(newValue), nullptr);
             return *this;
         }
 
+        //==============================================================================================================
         const juce::Identifier id;
         std::function<void(void)> onValueChange = nullptr;
 
-    private:
-        void valueChanged(juce::Value& valueThatChanged) override
+    protected:
+        //==============================================================================================================
+        void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
+                                      const juce::Identifier& property) override
         {
-            jassertquiet(valueThatChanged.refersToSameSourceAs(value));
+            if (property != id)
+                return;
+            if (!treeWhosePropertyChanged.hasProperty(property))
+                return;
+            if (!respondToPropertyChanges(treeWhosePropertyChanged))
+                return;
 
-            if (onValueChange != nullptr && exists())
+            if (onValueChange != nullptr)
+            {
                 onValueChange();
+            }
         }
 
+        bool respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
+        {
+            if (treeWhosePropertyChanged == tree)
+                return true;
+
+            switch (hereditaryBehavior)
+            {
+            case HereditaryValueBehaviour::inheritFromParent:
+                return treeWhosePropertyChanged == tree.getParent();
+            case HereditaryValueBehaviour::inheritFromAncestors:
+                return tree.isAChildOf(treeWhosePropertyChanged);
+            case HereditaryValueBehaviour::doNotInherit:
+                return treeWhosePropertyChanged == tree;
+            }
+
+            return false;
+        }
+
+        juce::var findPropertyInLatestAncestor() const
+        {
+            auto treeToSearch = tree.getParent();
+
+            while (!treeToSearch.hasProperty(id))
+                treeToSearch = treeToSearch.getParent();
+
+            return treeToSearch[id];
+        }
+
+        //==============================================================================================================
+        juce::ValueTree treeToListenTo;
         juce::ValueTree tree;
-        juce::Value value;
     };
 } // namespace jive
