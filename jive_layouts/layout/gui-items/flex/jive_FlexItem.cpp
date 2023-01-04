@@ -53,108 +53,92 @@ namespace jive
         flexItem.minWidth = minBounds.getWidth();
         flexItem.minHeight = minBounds.getHeight();
 
-        if (!width.isAuto())
+        if (state.getParent().getProperty("flex-direction").toString().contains("column"))
         {
-            flexItem.width = width.toPixels(parentContentBounds);
+            if (!width.isAuto())
+            {
+                flexItem.width = width.toPixels(parentContentBounds);
+            }
+            else
+            {
+                if (idealWidth.exists())
+                {
+                    if (idealWidth.get() < parentContentBounds.getWidth() || strategy == LayoutStrategy::dummy)
+                        flexItem.minWidth = juce::jmax(flexItem.minWidth, idealWidth.get());
+                    else
+                        flexItem.width = parentContentBounds.getWidth();
+                }
+            }
+
+            if (!height.isAuto())
+            {
+                flexItem.height = height.toPixels(parentContentBounds);
+            }
+            else
+            {
+                if (idealHeight.exists())
+                {
+                    auto property = state["ideal-height"];
+                    auto calculateHeight = property.getNativeFunction();
+
+                    if (calculateHeight != nullptr)
+                    {
+                        juce::var args[] = {
+                            strategy == LayoutStrategy::dummy
+                                ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
+                                : flexItem.width,
+                        };
+                        flexItem.minHeight = juce::jmax(flexItem.minHeight,
+                                                        static_cast<float>(calculateHeight({ property, args, 1 })));
+                    }
+                    else
+                    {
+                        flexItem.minHeight = juce::jmax(flexItem.minHeight,
+                                                        static_cast<float>(property));
+                    }
+                }
+            }
         }
         else
         {
-            if (idealWidth.exists())
+            if (!width.isAuto())
+                flexItem.width = width.toPixels(parentContentBounds);
+            else if (idealWidth.exists())
+                flexItem.width = idealWidth.get();
+
+            if (!height.isAuto())
             {
-                if (idealWidth.get() < parentContentBounds.getWidth() || strategy == LayoutStrategy::dummy)
-                    flexItem.minWidth = juce::jmax(flexItem.minWidth, idealWidth.get());
-                else
-                    flexItem.width = parentContentBounds.getWidth();
+                flexItem.height = height.toPixels(parentContentBounds);
+            }
+            else
+            {
+                if (idealHeight.exists())
+                {
+                    auto property = state["ideal-height"];
+                    auto calculateHeight = property.getNativeFunction();
+
+                    if (calculateHeight != nullptr)
+                    {
+                        juce::var args[] = {
+                            strategy == LayoutStrategy::dummy
+                                ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
+                                : flexItem.width,
+                        };
+                        const auto idealHeightAbsolute = static_cast<float>(calculateHeight({ property, args, 1 }));
+
+                        if (idealHeightAbsolute < parentContentBounds.getHeight() || strategy == LayoutStrategy::dummy)
+                            flexItem.minHeight = juce::jmax(flexItem.minHeight, idealHeightAbsolute);
+                        else
+                            flexItem.height = parentContentBounds.getHeight();
+                    }
+                    else
+                    {
+                        flexItem.minHeight = juce::jmax(flexItem.minHeight,
+                                                        static_cast<float>(property));
+                    }
+                }
             }
         }
-
-        if (!height.isAuto())
-        {
-            flexItem.height = height.toPixels(parentContentBounds);
-        }
-        else
-        {
-            if (idealHeight.exists())
-            {
-                auto property = state["ideal-height"];
-                auto calculateHeight = property.getNativeFunction();
-
-                if (calculateHeight != nullptr)
-                {
-                    juce::var args[] = {
-                        strategy == LayoutStrategy::dummy
-                            ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
-                            : flexItem.width,
-                    };
-                    flexItem.minHeight = juce::jmax(flexItem.minHeight,
-                                                    static_cast<float>(calculateHeight({ property, args, 1 })));
-                }
-                else
-                {
-                    flexItem.minHeight = juce::jmax(flexItem.minHeight,
-                                                    static_cast<float>(property));
-                }
-            }
-        }
-
-        // if (state.getParent()["flex-direction"].toString() == "column")
-        // {
-        //     if (width.isAuto() && idealWidth.getOr(-1.f) > parentBounds.getWidth())
-        //         flexItem.width = parentBounds.getWidth();
-        //     else if (width.isAuto() && idealWidth.exists())
-        //         flexItem.minWidth = juce::jmax(flexItem.minWidth, idealWidth.get());
-        //     else if (!width.isAuto())
-        //         flexItem.width = width.toPixels(parentBounds);
-
-        //     if (height.isAuto() && idealHeight.exists())
-        //     {
-        //         auto property = state["ideal-height"];
-        //         auto calculateHeight = property.getNativeFunction();
-
-        //         if (calculateHeight != nullptr)
-        //         {
-        //             juce::var args[] = { flexItem.width >= 0 ? flexItem.width : flexItem.minWidth };
-        //             flexItem.height = static_cast<float>(calculateHeight({ property, args, 1 }));
-        //         }
-        //         else
-        //         {
-        //             flexItem.height = juce::jmin(parentBounds.getHeight(), static_cast<float>(property));
-        //         }
-        //     }
-        //     else if (!height.isAuto())
-        //     {
-        //         flexItem.height = height.toPixels(parentBounds);
-        //     }
-        // }
-        // else
-        // {
-        //     if (width.isAuto() && idealWidth.exists())
-        //         flexItem.width = juce::jmin(parentBounds.getWidth(), idealWidth.get());
-        //     else if (!width.isAuto())
-        //         flexItem.width = width.toPixels(parentBounds);
-
-        //     if (height.isAuto() && idealHeight.getOr(-1.f) > parentBounds.getHeight())
-        //         flexItem.height = parentBounds.getHeight();
-        //     else if (height.isAuto() && idealHeight.exists())
-        //     {
-        //         auto property = state["ideal-height"];
-        //         auto calculateHeight = property.getNativeFunction();
-
-        //         if (calculateHeight != nullptr)
-        //         {
-        //             juce::var args[] = { flexItem.width >= 0 ? flexItem.width : flexItem.minWidth };
-        //             flexItem.minHeight = static_cast<float>(calculateHeight({ property, args, 1 }));
-        //         }
-        //         else
-        //         {
-        //             flexItem.minHeight = juce::jmax(flexItem.minHeight, static_cast<float>(property));
-        //         }
-        //     }
-        //     else if (!height.isAuto())
-        //     {
-        //         flexItem.height = height.toPixels(parentBounds);
-        //     }
-        // }
 
         flexItem.order = flexItemOrder;
         flexItem.flexGrow = flexItemGrow;
