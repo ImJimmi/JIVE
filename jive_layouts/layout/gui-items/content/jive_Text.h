@@ -32,19 +32,19 @@ namespace jive
         void updateTextComponent();
 
         //==============================================================================================================
-        TypedValue<juce::String> text;
-        TypedValue<juce::String> typefaceName;
-        TypedValue<juce::String> fontWeight;
-        TypedValue<float> fontHeight;
-        TypedValue<juce::String> fontStyle;
-        TypedValue<float> kerning;
-        TypedValue<float> horizontalScale;
-        TypedValue<float> lineSpacing;
-        TypedValue<juce::Justification> justification;
-        TypedValue<juce::AttributedString::WordWrap> wordWrap;
-        TypedValue<juce::AttributedString::ReadingDirection> direction;
-        TypedValue<float> idealWidth;
-        TypedValue<float> idealHeight;
+        Property<juce::String> text;
+        Property<juce::String> typefaceName;
+        Property<juce::String> fontWeight;
+        Property<float> fontHeight;
+        Property<juce::String> fontStyle;
+        Property<float> kerning;
+        Property<float> horizontalScale;
+        Property<float> lineSpacing;
+        Property<juce::Justification> justification;
+        Property<juce::AttributedString::WordWrap> wordWrap;
+        Property<juce::AttributedString::ReadingDirection> direction;
+        Property<float> idealWidth;
+        Property<float> idealHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)

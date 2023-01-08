@@ -14,15 +14,15 @@ namespace jive
     //==================================================================================================================
     template <typename ValueType,
               HereditaryValueBehaviour hereditaryBehavior = HereditaryValueBehaviour::doNotInherit>
-    class TypedValue : protected juce::ValueTree::Listener
+    class Property : protected juce::ValueTree::Listener
     {
     public:
         //==============================================================================================================
         using Converter = juce::VariantConverter<ValueType>;
 
         //==============================================================================================================
-        TypedValue(juce::ValueTree sourceTree,
-                   const juce::Identifier& propertyID)
+        Property(juce::ValueTree sourceTree,
+                 const juce::Identifier& propertyID)
             : id{ propertyID }
             , tree{ sourceTree }
         {
@@ -44,10 +44,10 @@ namespace jive
             treeToListenTo.addListener(this);
         }
 
-        TypedValue(juce::ValueTree sourceTree,
-                   const juce::Identifier& propertyID,
-                   const ValueType& initialValue)
-            : TypedValue{ sourceTree, propertyID }
+        Property(juce::ValueTree sourceTree,
+                 const juce::Identifier& propertyID,
+                 const ValueType& initialValue)
+            : Property{ sourceTree, propertyID }
         {
             if (!exists())
                 *this = initialValue;
@@ -81,6 +81,16 @@ namespace jive
             return get();
         }
 
+        void set(const ValueType& newValue)
+        {
+            tree.setProperty(id, Converter::toVar(newValue), nullptr);
+        }
+
+        void setAuto()
+        {
+            tree.setProperty(id, "auto", nullptr);
+        }
+
         void clear()
         {
             tree.removeProperty(id, nullptr);
@@ -91,15 +101,28 @@ namespace jive
             return tree.hasProperty(id);
         }
 
+        bool isAuto() const
+        {
+            return (!exists()) || tree[id].toString().trim().equalsIgnoreCase("auto");
+        }
+
+        juce::String toString() const
+        {
+            if (!exists())
+                return "";
+
+            return tree[id].toString();
+        }
+
         //==============================================================================================================
         operator ValueType() const
         {
             return get();
         }
 
-        TypedValue<ValueType>& operator=(const ValueType& newValue)
+        Property<ValueType>& operator=(const ValueType& newValue)
         {
-            tree.setProperty(id, Converter::toVar(newValue), nullptr);
+            set(newValue);
             return *this;
         }
 

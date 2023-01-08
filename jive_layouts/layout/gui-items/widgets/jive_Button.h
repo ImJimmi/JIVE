@@ -29,17 +29,17 @@ namespace jive
         void updateTriggerEvent();
 
         //==============================================================================================================
-        TypedValue<bool> toggleable;
-        TypedValue<bool> toggled;
-        TypedValue<bool> toggleOnClick;
-        TypedValue<int> radioGroup;
-        TypedValue<TriggerEvent> triggerEvent;
-        TypedValue<juce::String> tooltip;
-        TypedValue<juce::FlexBox::Direction> flexDirection;
-        TypedValue<juce::FlexBox::JustifyContent> justifyContent;
-        TypedValue<juce::BorderSize<float>> padding;
-        TypedValue<float> minWidth;
-        TypedValue<float> minHeight;
+        Property<bool> toggleable;
+        Property<bool> toggled;
+        Property<bool> toggleOnClick;
+        Property<int> radioGroup;
+        Property<TriggerEvent> triggerEvent;
+        Property<juce::String> tooltip;
+        Property<juce::FlexBox::Direction> flexDirection;
+        Property<juce::FlexBox::JustifyContent> justifyContent;
+        Property<juce::BorderSize<float>> padding;
+        Property<float> minWidth;
+        Property<float> minHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)

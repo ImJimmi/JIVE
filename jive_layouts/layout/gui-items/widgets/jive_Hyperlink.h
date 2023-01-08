@@ -19,7 +19,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<juce::URL> url;
-        TypedValue<juce::String> fontStyle;
+        Property<juce::URL> url;
+        Property<juce::String> fontStyle;
     };
 } // namespace jive

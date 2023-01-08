@@ -86,27 +86,27 @@ namespace jive
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
-        TypedValue<juce::String> name;
-        TypedValue<juce::String> title;
-        TypedValue<juce::Identifier> id;
-        TypedValue<juce::String> description;
-        TypedValue<juce::String> tooltip;
-        TypedValue<bool> enabled;
-        TypedValue<bool> visible;
-        TypedValue<bool> alwaysOnTop;
-        TypedValue<bool> bufferedToImage;
-        TypedValue<bool> opaque;
-        TypedValue<bool> focusable;
-        TypedValue<bool> clickingGrabsFocus;
-        TypedValue<bool> focusOutline;
-        TypedValue<int> focusOrder;
-        TypedValue<float> opacity;
-        TypedValue<juce::MouseCursor::StandardCursorType> cursor;
-        TypedValue<Display> display;
+        Property<juce::String> name;
+        Property<juce::String> title;
+        Property<juce::Identifier> id;
+        Property<juce::String> description;
+        Property<juce::String> tooltip;
+        Property<bool> enabled;
+        Property<bool> visible;
+        Property<bool> alwaysOnTop;
+        Property<bool> bufferedToImage;
+        Property<bool> opaque;
+        Property<bool> focusable;
+        Property<bool> clickingGrabsFocus;
+        Property<bool> focusOutline;
+        Property<int> focusOrder;
+        Property<float> opacity;
+        Property<juce::MouseCursor::StandardCursorType> cursor;
+        Property<Display> display;
         Length width;
         Length height;
-        TypedValue<float> componentWidth;
-        TypedValue<float> componentHeight;
+        Property<float> componentWidth;
+        Property<float> componentHeight;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)

@@ -37,20 +37,20 @@ namespace jive
         void updateRange();
 
         //==============================================================================================================
-        TypedValue<juce::String> value;
-        TypedValue<juce::String> min;
-        TypedValue<juce::String> max;
-        TypedValue<juce::String> mid;
-        TypedValue<juce::String> interval;
-        TypedValue<Orientation> orientation;
+        Property<juce::String> value;
+        Property<juce::String> min;
+        Property<juce::String> max;
+        Property<juce::String> mid;
+        Property<juce::String> interval;
+        Property<Orientation> orientation;
         Length width;
         Length height;
-        TypedValue<double> sensitivity;
-        TypedValue<bool> isInVelocityMode;
-        TypedValue<double> velocitySensitivity;
-        TypedValue<int> velocityThreshold;
-        TypedValue<double> velocityOffset;
-        TypedValue<bool> snapToMouse;
+        Property<double> sensitivity;
+        Property<bool> isInVelocityMode;
+        Property<double> velocitySensitivity;
+        Property<int> velocityThreshold;
+        Property<double> velocityOffset;
+        Property<bool> snapToMouse;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Slider)

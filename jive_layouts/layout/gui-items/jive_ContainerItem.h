@@ -25,7 +25,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<float> idealWidth;
-        TypedValue<float> idealHeight;
+        Property<float> idealWidth;
+        Property<float> idealHeight;
     };
 } // namespace jive

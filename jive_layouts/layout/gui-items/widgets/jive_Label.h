@@ -19,7 +19,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<juce::BorderSize<float>> border;
+        Property<juce::BorderSize<float>> border;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Label)

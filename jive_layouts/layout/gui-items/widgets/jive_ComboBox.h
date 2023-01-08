@@ -22,9 +22,9 @@ namespace jive
             juce::ComboBox& comboBox;
             const int index;
             const int id;
-            TypedValue<juce::String> text;
-            TypedValue<bool> enabled;
-            TypedValue<bool> selected;
+            Property<juce::String> text;
+            Property<bool> enabled;
+            Property<bool> selected;
             bool wasSelected{ false };
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Option)
@@ -37,7 +37,7 @@ namespace jive
 
         private:
             ComboBox& comboBox;
-            TypedValue<juce::String> text;
+            Property<juce::String> text;
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Header)
         };
@@ -65,9 +65,9 @@ namespace jive
         void comboBoxChanged(juce::ComboBox* box) final;
 
         //==============================================================================================================
-        TypedValue<bool> editable;
-        TypedValue<juce::String> tooltip;
-        TypedValue<int> selected;
+        Property<bool> editable;
+        Property<juce::String> tooltip;
+        Property<int> selected;
         Length width;
         Length height;
 

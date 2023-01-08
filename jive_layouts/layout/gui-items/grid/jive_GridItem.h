@@ -15,14 +15,14 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<int> order;
-        TypedValue<juce::GridItem::JustifySelf> justifySelf;
-        TypedValue<juce::GridItem::AlignSelf> alignSelf;
-        TypedValue<juce::GridItem::StartAndEndProperty> column;
-        TypedValue<juce::GridItem::StartAndEndProperty> row;
-        TypedValue<juce::String> area;
-        TypedValue<float> maxWidth;
-        TypedValue<float> maxHeight;
+        Property<int> order;
+        Property<juce::GridItem::JustifySelf> justifySelf;
+        Property<juce::GridItem::AlignSelf> alignSelf;
+        Property<juce::GridItem::StartAndEndProperty> column;
+        Property<juce::GridItem::StartAndEndProperty> row;
+        Property<juce::String> area;
+        Property<float> maxWidth;
+        Property<float> maxHeight;
         Length width;
         Length height;
         Length minWidth;

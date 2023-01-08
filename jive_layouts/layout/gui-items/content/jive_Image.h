@@ -38,10 +38,10 @@ namespace jive
         void setChildComponent(std::unique_ptr<juce::Component> newComponent);
 
         //==============================================================================================================
-        TypedValue<Drawable> source;
         std::unique_ptr<juce::Component> childComponent;
 
-        TypedValue<juce::RectanglePlacement> placement;
+        Property<Drawable> source;
+        Property<juce::RectanglePlacement> placement;
         Length width;
         Length height;
         Length idealWidth;

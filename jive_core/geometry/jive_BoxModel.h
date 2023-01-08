@@ -54,14 +54,14 @@ namespace jive
         Length minHeight;
         Length autoMinWidth;
         Length autoMinHeight;
-        TypedValue<float> idealWidth;
-        TypedValue<float> idealHeight;
-        TypedValue<float> componentWidth;
-        TypedValue<float> componentHeight;
-        TypedValue<juce::BorderSize<float>> padding;
-        TypedValue<juce::BorderSize<float>> border;
-        TypedValue<juce::BorderSize<float>> margin;
-        TypedValue<bool> isValid;
+        Property<float> idealWidth;
+        Property<float> idealHeight;
+        Property<float> componentWidth;
+        Property<float> componentHeight;
+        Property<juce::BorderSize<float>> padding;
+        Property<juce::BorderSize<float>> border;
+        Property<juce::BorderSize<float>> margin;
+        Property<bool> isValid;
 
         std::unique_ptr<BoxModel> parentBoxModel;
         juce::ListenerList<Listener> listeners;
