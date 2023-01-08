@@ -42,7 +42,7 @@ namespace jive
         TypedValue<juce::String> max;
         TypedValue<juce::String> mid;
         TypedValue<juce::String> interval;
-        TypedValue<AutoValue<Orientation>> orientation;
+        TypedValue<Orientation> orientation;
         Length width;
         Length height;
         TypedValue<double> sensitivity;

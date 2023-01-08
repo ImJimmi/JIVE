@@ -18,7 +18,6 @@ END_JUCE_MODULE_DECLARATION */
 //======================================================================================================================
 #include "logging/jive_StringStreams.h"
 
-#include "values/jive_AutoValue.h"
 #include "values/jive_TypedValue.h"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.h"
 #include "values/variant-converters/jive_FlexVariantConverters.h"

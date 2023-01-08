@@ -113,7 +113,7 @@ namespace jive
     {
         Orientation ori;
 
-        if (orientation.get().isAuto())
+        if (orientation.isAuto())
         {
             if (boxModel.getWidth() < boxModel.getHeight())
                 ori = Orientation::vertical;
@@ -122,7 +122,7 @@ namespace jive
         }
         else
         {
-            ori = orientation.get().getWithDefault();
+            ori = orientation.getOr(Orientation::horizontal);
         }
 
         getSlider().setSliderStyle(getStyleForOrientation(ori));
