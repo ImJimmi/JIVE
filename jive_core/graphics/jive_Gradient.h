@@ -11,6 +11,9 @@ namespace jive
         {
             double proportion;
             juce::Colour colour;
+
+            bool operator==(const ColourStop& other) const;
+            bool operator!=(const ColourStop& other) const;
         };
 
         enum class Variant
@@ -21,6 +24,10 @@ namespace jive
 
         //==============================================================================================================
         juce::ColourGradient toJuceGradient(const juce::Rectangle<float>& bounds) const;
+
+        //==============================================================================================================
+        bool operator==(const Gradient& other) const;
+        bool operator!=(const Gradient& other) const;
 
         //==============================================================================================================
         juce::Array<ColourStop> stops;

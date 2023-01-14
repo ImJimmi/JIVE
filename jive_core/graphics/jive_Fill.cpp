@@ -19,7 +19,8 @@ namespace jive
     {
     }
 
-    juce::Optional<juce::Colour> Fill::getColour() const
+    //==================================================================================================================
+    std::optional<juce::Colour> Fill::getColour() const
     {
         return colour;
     }
@@ -30,7 +31,7 @@ namespace jive
         gradient.reset();
     }
 
-    juce::Optional<Gradient> Fill::getGradient() const
+    std::optional<Gradient> Fill::getGradient() const
     {
         return gradient;
     }
@@ -39,6 +40,18 @@ namespace jive
     {
         gradient = newGradient;
         colour.reset();
+    }
+
+    //==================================================================================================================
+    bool Fill::operator==(const Fill& other) const
+    {
+        return colour == other.colour
+            && gradient == other.gradient;
+    }
+
+    bool Fill::operator!=(const Fill& other) const
+    {
+        return !(*this == other);
     }
 } // namespace jive
 
@@ -59,10 +72,10 @@ namespace juce
 
     var VariantConverter<jive::Fill>::toVar(const jive::Fill& fill)
     {
-        if (fill.getColour().hasValue())
+        if (fill.getColour().has_value())
             return VariantConverter<Colour>::toVar(*fill.getColour());
 
-        if (fill.getGradient().hasValue())
+        if (fill.getGradient().has_value())
             return VariantConverter<jive::Gradient>::toVar(*fill.getGradient());
 
         jassertfalse;

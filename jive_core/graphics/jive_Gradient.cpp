@@ -4,6 +4,18 @@
 namespace jive
 {
     //==================================================================================================================
+    bool Gradient::ColourStop::operator==(const ColourStop& other) const
+    {
+        return proportion == other.proportion
+            && colour == other.colour;
+    }
+
+    bool Gradient::ColourStop::operator!=(const ColourStop& other) const
+    {
+        return !(*this == other);
+    }
+
+    //==================================================================================================================
     juce::ColourGradient Gradient::toJuceGradient(const juce::Rectangle<float>& bounds) const
     {
         juce::ColourGradient gradient;
@@ -39,6 +51,20 @@ namespace jive
         }
 
         return gradient;
+    }
+
+    //==================================================================================================================
+    bool Gradient::operator==(const Gradient& other) const
+    {
+        return stops == other.stops
+            && variant == other.variant
+            && orientation == other.orientation
+            && startEndPoints == other.startEndPoints;
+    }
+
+    bool Gradient::operator!=(const Gradient& other) const
+    {
+        return !(*this == other);
     }
 } // namespace jive
 

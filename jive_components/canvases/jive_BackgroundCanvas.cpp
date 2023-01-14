@@ -6,9 +6,9 @@ namespace jive
     //==================================================================================================================
     void BackgroundCanvas::paint(juce::Graphics& g)
     {
-        if (fill.getGradient().hasValue())
+        if (fill.getGradient().has_value())
             g.setGradientFill(fill.getGradient()->toJuceGradient(getLocalBounds().toFloat()));
-        else if (fill.getColour().hasValue())
+        else if (fill.getColour().has_value())
             g.setColour(*fill.getColour());
         else
             g.setColour(juce::Colour{});
@@ -24,7 +24,9 @@ namespace jive
 
     void BackgroundCanvas::setFill(const Fill& newFill)
     {
+        if (newFill != fill)
+            repaint();
+
         fill = newFill;
-        repaint();
     }
 } // namespace jive
