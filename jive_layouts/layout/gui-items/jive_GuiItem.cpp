@@ -9,6 +9,9 @@ namespace jive
         , boxModel{ stateSource }
         , component{ comp }
         , parent{ parentItem }
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+        , styleSheet{ *component, state }
+#endif
         , name{ stateSource, "name" }
         , title{ stateSource, "title" }
         , id{ stateSource, "id" }

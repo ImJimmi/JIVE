@@ -186,7 +186,14 @@ namespace jive
         expandAlias(tree);
 
         if (auto component = createComponent(tree))
-            return std::make_unique<GuiItem>(std::move(component), tree, parent);
+        {
+            return std::make_unique<GuiItem>(std::move(component),
+                                             tree,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                                             new StyleSheet{ *component, tree },
+#endif
+                                             parent);
+        }
 
         return nullptr;
     }

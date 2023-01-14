@@ -86,6 +86,10 @@ namespace jive
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+        StyleSheet styleSheet;
+#endif
+
         Property<juce::String> name;
         Property<juce::String> title;
         Property<juce::Identifier> id;
