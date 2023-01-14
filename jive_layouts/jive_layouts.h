@@ -6,7 +6,7 @@
     version:            0.1.0
     name:               JIVE Layouts
     license:            MIT
-    minimumCppStandard: 14
+    minimumCppStandard: 17
     dependencies:       jive_components jive_core
 END_JUCE_MODULE_DECLARATION */
 
