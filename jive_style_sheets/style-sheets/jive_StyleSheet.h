@@ -4,37 +4,44 @@
 namespace jive
 {
     //==================================================================================================================
-    class StyleSheet : private juce::ComponentListener
+    class StyleSheet
+        : private juce::ComponentListener
+        , private juce::MouseListener
+        , private juce::ValueTree::Listener
     {
     public:
         //==============================================================================================================
-        StyleSheet(std::shared_ptr<juce::Component> component, juce::ValueTree state);
+        StyleSheet(juce::Component& component, juce::ValueTree state);
         ~StyleSheet();
 
-    private:
         //==============================================================================================================
-        struct Style
-        {
-            Fill background;
-        };
+        Fill getBackground() const;
 
+    private:
         //==============================================================================================================
         void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                      bool wasMoved,
                                      bool wasResized) final;
+        void mouseEnter(const juce::MouseEvent&) final;
+        void mouseExit(const juce::MouseEvent&) final;
+        void mouseDown(const juce::MouseEvent&) final;
+        void mouseUp(const juce::MouseEvent&) final;
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
 
         //==============================================================================================================
-        juce::FillType getBackgroundFill() const;
-        Style collateStyle() const;
-        void setStyle(Style style);
+        juce::var findStyleProperty(const juce::Identifier& propertyName) const;
 
         //==============================================================================================================
-        std::shared_ptr<juce::Component> component;
+        void applyStylesToCanvas();
+
+        //==============================================================================================================
+        juce::Component::SafePointer<juce::Component> component;
         juce::ValueTree state;
+        juce::ValueTree stateRoot;
 
-        BackgroundCanvas background;
+        BackgroundCanvas backgroundCanvas;
 
-        Property<juce::var, HereditaryValueBehaviour::inheritFromAncestors> style;
+        Property<Object::ReferenceCountedPointer> style;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(StyleSheet)

@@ -4,26 +4,35 @@
 namespace jive
 {
     //==================================================================================================================
-    StyleSheet::StyleSheet(std::shared_ptr<juce::Component> sourceComponent,
+    StyleSheet::StyleSheet(juce::Component& sourceComponent,
                            juce::ValueTree sourceState)
-        : component{ sourceComponent }
+        : component{ &sourceComponent }
         , state{ sourceState }
+        , stateRoot{ state.getRoot() }
         , style{ state, "style" }
     {
-        style.onValueChange = [this]() {
-            setStyle(collateStyle());
-        };
-        setStyle(collateStyle());
+        jassert(component != nullptr);
 
-        component->addAndMakeVisible(background, 0);
-        background.setBounds(sourceComponent->getLocalBounds());
+        applyStylesToCanvas();
+
+        component->addAndMakeVisible(backgroundCanvas, 0);
+        backgroundCanvas.setBounds(component->getLocalBounds());
 
         component->addComponentListener(this);
+        component->addMouseListener(this, true);
+        stateRoot.addListener(this);
     }
 
     StyleSheet::~StyleSheet()
     {
-        component->removeComponentListener(this);
+        if (component != nullptr)
+            component->removeComponentListener(this);
+    }
+
+    //==================================================================================================================
+    Fill StyleSheet::getBackground() const
+    {
+        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
     }
 
     //==================================================================================================================
@@ -31,75 +40,110 @@ namespace jive
                                              bool /*wasMoved*/,
                                              bool /*wasResized*/)
     {
-        jassertquiet(&componentThatWasMovedOrResized == component.get());
-        background.setBounds(component->getLocalBounds());
+        jassertquiet(&componentThatWasMovedOrResized == component);
+        backgroundCanvas.setBounds(component->getLocalBounds());
+    }
+
+    void StyleSheet::mouseEnter(const juce::MouseEvent&)
+    {
+        applyStylesToCanvas();
+    }
+
+    void StyleSheet::mouseExit(const juce::MouseEvent&)
+    {
+        applyStylesToCanvas();
+    }
+
+    void StyleSheet::mouseDown(const juce::MouseEvent&)
+    {
+        applyStylesToCanvas();
+    }
+
+    void StyleSheet::mouseUp(const juce::MouseEvent&)
+    {
+        applyStylesToCanvas();
+    }
+
+    void StyleSheet::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
+    {
+        if (id == juce::Identifier{ "style" })
+            applyStylesToCanvas();
     }
 
     //==================================================================================================================
-    juce::FillType getBackgroundFill(juce::var style,
-                                     juce::ValueTree state)
+    juce::StringArray findApplicableSelectorsInOrderOfSpecificity(const juce::Component& component)
     {
-        using Converter = juce::VariantConverter<juce::Colour>;
+        juce::StringArray selectors;
 
-        if (style.hasProperty("background"))
-            return Converter::fromVar(style["background"]);
+        if (!component.isEnabled())
+            selectors.add("disabled");
 
-        if (style.hasProperty(state.getType()))
-            return getBackgroundFill(style[state.getType()], state);
+        if (component.hasKeyboardFocus(false))
+            selectors.add("focus");
 
-        return juce::Colour{};
+        if (component.isMouseButtonDown(true))
+            selectors.add("active");
+
+        if (component.isMouseOverOrDragging(true))
+            selectors.add("hover");
+
+        return selectors;
     }
 
-    juce::FillType StyleSheet::getBackgroundFill() const
+    juce::var findStyleProperty(const Object& object,
+                                const juce::Identifier& componentType,
+                                const juce::Identifier& propertyName,
+                                const juce::Component& component)
     {
-        return ::jive::getBackgroundFill(style.get(), state);
-    }
+        auto selectors = juce::StringArray{ componentType.toString() };
+        selectors.addArray(findApplicableSelectorsInOrderOfSpecificity(component));
 
-    juce::var findPropertyOfStyleSheet(juce::var style,
-                                       const juce::Identifier& property,
-                                       const juce::Identifier& type)
-    {
-        if (style.hasProperty(property))
-            return style[property];
-
-        if (style.hasProperty(type))
-            return findPropertyOfStyleSheet(style[type], property, type);
-
-        return {};
-    }
-
-    juce::var findPropertyOfStyleSheet(juce::ValueTree state,
-                                       const juce::Identifier& property)
-    {
-        if (state.hasProperty("style"))
+        for (const auto& selector : selectors)
         {
-            const auto style = state["style"];
-            const auto value = findPropertyOfStyleSheet(style, property, state.getType());
-
-            if (value != juce::var{})
-                return value;
+            if (object.hasProperty(selector))
+            {
+                const auto& nested = dynamic_cast<Object&>(*object.getProperty(selector).getDynamicObject());
+                return findStyleProperty(nested, componentType, propertyName, component);
+            }
         }
 
-        const auto parent = state.getParent();
+        return object.getProperty(propertyName);
+    }
 
-        if (parent.isValid())
-            return findPropertyOfStyleSheet(parent, property);
+    juce::var findStyleProperty(const juce::ValueTree& state,
+                                const juce::Identifier& componentType,
+                                const juce::Identifier& propertyName,
+                                const juce::Component& component)
+    {
+        jassert(state.isValid());
+
+        if (auto object = Property<Object::ReferenceCountedPointer>{ state, "style" }.get())
+        {
+            if (auto value = findStyleProperty(*object, componentType, propertyName, component);
+                !value.isUndefined())
+            {
+                return value;
+            }
+        }
+
+        if (auto parent = state.getParent();
+            parent.isValid())
+        {
+            return findStyleProperty(parent, componentType, propertyName, component);
+        }
 
         return {};
     }
 
-    StyleSheet::Style StyleSheet::collateStyle() const
+    juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
     {
-        Style collatedStyle;
-
-        collatedStyle.background = juce::VariantConverter<Fill>::fromVar(findPropertyOfStyleSheet(state, "background"));
-
-        return collatedStyle;
+        return ::jive::findStyleProperty(state, state.getType(), propertyName, *component);
     }
 
-    void StyleSheet::setStyle(Style collatedStyle)
+    //==================================================================================================================
+    void StyleSheet::applyStylesToCanvas()
     {
-        background.setFill(collatedStyle.background);
+        backgroundCanvas.setFill(getBackground());
     }
 } // namespace jive
 
@@ -148,81 +192,81 @@ private:
     {
         beginTest("background colour");
 
-        auto component = std::make_shared<juce::Component>();
+        juce::Component component;
         juce::ValueTree state{ "Component" };
         jive::StyleSheet styleSheet{ component, state };
-        expectEquals(component->getNumChildComponents(), 1);
-        expect(jive::find<jive::BackgroundCanvas>(*component) != nullptr);
+        expectEquals(component.getNumChildComponents(), 1);
+        expect(jive::find<jive::BackgroundCanvas>(component) != nullptr);
 
-        component->setBounds(0, 0, 10, 10);
+        component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                               },
-                          )"),
+                          )",
                           nullptr);
-        auto snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0x00000000 }));
 
-        component->setBounds(0, 0, 10, 10);
+        component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": "0xFF00FF00",
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF00FF00 }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": "#BADD06",
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFFBADD06 }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": 'rgb(201, 76, 76)',
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFFC94C4C }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": 'rgba(201, 76, 76, 1.0)',
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFFC94C4C }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": 'hsl(89, 43%, 51%)',
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF84B84C }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": 'hsla(89, 43%, 51%, 1.0)',
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF84B84C }));
     }
 
@@ -230,12 +274,12 @@ private:
     {
         beginTest("linear background gradient");
 
-        auto component = std::make_shared<juce::Component>();
+        juce::Component component;
         juce::ValueTree state{ "Component" };
         jive::StyleSheet styleSheet{ component, state };
-        component->setBounds(0, 0, 10, 10);
+        component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": {
                                       "gradient": "linear",
@@ -245,16 +289,16 @@ private:
                                       }
                                   },
                               },
-                          )"),
+                          )",
                           nullptr);
-        auto snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expectEquals(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 });
         expectEquals(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF161616 });
         expectEquals(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF949494 });
         expectEquals(snapshot.getPixelAt(9, 9), juce::Colour{ 0xFF949494 });
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "background": {
                                       "gradient": "linear",
@@ -265,9 +309,9 @@ private:
                                       }
                                   },
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         juce::PNGImageFormat format;
         auto stream = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("snapshot.png").createOutputStream();
         format.writeImageToStream(snapshot, *stream);
@@ -281,33 +325,33 @@ private:
     {
         beginTest("type styling");
 
-        auto component = std::make_shared<juce::Component>();
+        juce::Component component;
         juce::ValueTree state{ "CustomType" };
         jive::StyleSheet styleSheet{ component, state };
 
-        component->setBounds(0, 0, 10, 10);
+        component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "MyWidget": {
                                       "background": "#7F7F7F",
                                   }
                               },
-                          )"),
+                          )",
                           nullptr);
-        auto snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0x00000000 }));
 
         state.setProperty("style",
-                          juce::JSON::parse(R"(
+                          R"(
                               {
                                   "CustomType": {
                                       "background": "#7F7F7F",
                                   }
                               },
-                          )"),
+                          )",
                           nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF7F7F7F }));
     }
 
@@ -318,7 +362,7 @@ private:
         juce::ValueTree state{
             "Root",
             {
-                { "style", juce::JSON::parse(R"({ "background": "#111111" })") },
+                { "style", R"({ "background": "#111111" })" },
             },
             {
                 juce::ValueTree{
@@ -331,23 +375,23 @@ private:
             },
         };
 
-        auto component = std::make_shared<juce::Component>();
-        component->setBounds(0, 0, 10, 10);
+        juce::Component component;
+        component.setBounds(0, 0, 10, 10);
 
         jive::StyleSheet styleSheet{ component, state.getChild(0).getChild(0) };
-        auto snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF111111 }));
 
-        state.getChild(0).setProperty("style", juce::JSON::parse(R"({ "background": "#222222" })"), nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        state.getChild(0).setProperty("style", R"({ "background": "#222222" })", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF222222 }));
 
-        state.setProperty("style", juce::JSON::parse(R"({ "background": "#333333" })"), nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        state.setProperty("style", R"({ "background": "#333333" })", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF222222 }));
 
-        state.getChild(0).getChild(0).setProperty("style", juce::JSON::parse(R"({ "background": "#444444" })"), nullptr);
-        snapshot = component->createComponentSnapshot(component->getLocalBounds());
+        state.getChild(0).getChild(0).setProperty("style", R"({ "background": "#444444" })", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF444444 }));
     }
 };
