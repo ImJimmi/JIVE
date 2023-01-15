@@ -17,7 +17,8 @@ namespace jive
 
         //==============================================================================================================
         Fill getBackground() const;
-        Fill getBorder() const;
+        Fill getBorderFill() const;
+        BorderRadii<float> getBorderRadii() const;
 
     private:
         //==============================================================================================================

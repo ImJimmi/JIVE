@@ -52,9 +52,14 @@ namespace jive
         return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
     }
 
-    Fill StyleSheet::getBorder() const
+    Fill StyleSheet::getBorderFill() const
     {
         return juce::VariantConverter<Fill>::fromVar(findStyleProperty("border"));
+    }
+
+    BorderRadii<float> StyleSheet::getBorderRadii() const
+    {
+        return juce::VariantConverter<BorderRadii<float>>::fromVar(findStyleProperty("border-radius"));
     }
 
     //==================================================================================================================
@@ -104,7 +109,9 @@ namespace jive
         if (name == juce::Identifier{ "background" })
             backgroundCanvas.setFill(getBackground());
         else if (name == juce::Identifier{ "border" })
-            backgroundCanvas.setBorder(getBorder(), borderWidth.get());
+            backgroundCanvas.setBorderFill(getBorderFill());
+        else if (name == juce::Identifier{ "border-radius" })
+            backgroundCanvas.setBorderRadii(getBorderRadii());
     }
 
     //==================================================================================================================
@@ -140,7 +147,9 @@ namespace jive
             if (object.hasProperty(selector))
             {
                 const auto& nested = dynamic_cast<Object&>(*object.getProperty(selector).getDynamicObject());
-                return findStyleProperty(nested, componentType, propertyName, component);
+
+                if (nested.hasProperty(propertyName))
+                    return findStyleProperty(nested, componentType, propertyName, component);
             }
         }
 
@@ -181,7 +190,9 @@ namespace jive
     void StyleSheet::applyStylesToCanvas()
     {
         backgroundCanvas.setFill(getBackground());
-        backgroundCanvas.setBorder(getBorder(), borderWidth.get());
+        backgroundCanvas.setBorderFill(getBorderFill());
+        backgroundCanvas.setBorderWidth(borderWidth.get());
+        backgroundCanvas.setBorderRadii(getBorderRadii());
     }
 } // namespace jive
 
