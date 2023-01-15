@@ -17,6 +17,7 @@ namespace jive
 
         //==============================================================================================================
         Fill getBackground() const;
+        Fill getBorder() const;
 
     private:
         //==============================================================================================================
@@ -44,6 +45,7 @@ namespace jive
         BackgroundCanvas backgroundCanvas;
 
         Property<Object::ReferenceCountedPointer> style;
+        Property<float> borderWidth;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(StyleSheet)

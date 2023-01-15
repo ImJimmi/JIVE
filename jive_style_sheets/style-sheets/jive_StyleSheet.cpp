@@ -10,6 +10,7 @@ namespace jive
         , state{ sourceState }
         , stateRoot{ state.getRoot() }
         , style{ state, "style" }
+        , borderWidth{ state, "border-width" }
     {
         jassert(component != nullptr);
 
@@ -49,6 +50,11 @@ namespace jive
     Fill StyleSheet::getBackground() const
     {
         return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
+    }
+
+    Fill StyleSheet::getBorder() const
+    {
+        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("border"));
     }
 
     //==================================================================================================================
@@ -97,6 +103,8 @@ namespace jive
 
         if (name == juce::Identifier{ "background" })
             backgroundCanvas.setFill(getBackground());
+        else if (name == juce::Identifier{ "border" })
+            backgroundCanvas.setBorder(getBorder(), borderWidth.get());
     }
 
     //==================================================================================================================
@@ -173,6 +181,7 @@ namespace jive
     void StyleSheet::applyStylesToCanvas()
     {
         backgroundCanvas.setFill(getBackground());
+        backgroundCanvas.setBorder(getBorder(), borderWidth.get());
     }
 } // namespace jive
 

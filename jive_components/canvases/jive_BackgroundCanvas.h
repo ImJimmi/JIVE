@@ -17,9 +17,15 @@ namespace jive
         Fill getFill() const;
         void setFill(const Fill& newFill);
 
+        Fill getBorderFill() const;
+        float getBorderWidth() const;
+        void setBorder(const Fill& newFill, float newWidth);
+
     private:
         //==============================================================================================================
-        Fill fill{ juce::Colours::transparentBlack };
+        Fill background{ juce::Colours::transparentBlack };
+        Fill borderFill{ juce::Colours::transparentBlack };
+        float borderWidth{ 0.0f };
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BackgroundCanvas)
