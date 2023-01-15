@@ -21,12 +21,28 @@ namespace jive
         component->addComponentListener(this);
         component->addMouseListener(this, true);
         stateRoot.addListener(this);
+
+        borderWidth.onValueChange = [this]() {
+            backgroundCanvas.setBorderWidth(borderWidth.get());
+        };
+
+        if (auto object = style.get();
+            object != nullptr)
+        {
+            object->addListener(*this);
+        }
     }
 
     StyleSheet::~StyleSheet()
     {
         if (component != nullptr)
             component->removeComponentListener(this);
+
+        if (auto object = style.get();
+            object != nullptr)
+        {
+            object->removeListener(*this);
+        }
     }
 
     //==================================================================================================================
@@ -67,7 +83,20 @@ namespace jive
     void StyleSheet::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
     {
         if (id == juce::Identifier{ "style" })
+        {
+            if (style.exists())
+                style.get()->addListener(*this);
+
             applyStylesToCanvas();
+        }
+    }
+
+    void StyleSheet::propertyChanged(Object& object, const juce::Identifier& name)
+    {
+        jassert(&object == style.get().get());
+
+        if (name == juce::Identifier{ "background" })
+            backgroundCanvas.setFill(getBackground());
     }
 
     //==================================================================================================================

@@ -8,6 +8,7 @@ namespace jive
         : private juce::ComponentListener
         , private juce::MouseListener
         , private juce::ValueTree::Listener
+        , private Object::Listener
     {
     public:
         //==============================================================================================================
@@ -27,6 +28,7 @@ namespace jive
         void mouseDown(const juce::MouseEvent&) final;
         void mouseUp(const juce::MouseEvent&) final;
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
+        void propertyChanged(Object& object, const juce::Identifier& name) final;
 
         //==============================================================================================================
         juce::var findStyleProperty(const juce::Identifier& propertyName) const;
