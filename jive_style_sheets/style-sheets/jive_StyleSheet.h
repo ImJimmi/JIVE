@@ -17,6 +17,7 @@ namespace jive
 
         //==============================================================================================================
         Fill getBackground() const;
+        Fill getForeground() const;
         Fill getBorderFill() const;
         BorderRadii<float> getBorderRadii() const;
 
@@ -34,9 +35,10 @@ namespace jive
 
         //==============================================================================================================
         juce::var findStyleProperty(const juce::Identifier& propertyName) const;
+        juce::var findHierarchicalStyleProperty(const juce::Identifier& propertyName) const;
 
         //==============================================================================================================
-        void applyStylesToCanvas();
+        void applyStyles();
 
         //==============================================================================================================
         juce::Component::SafePointer<juce::Component> component;

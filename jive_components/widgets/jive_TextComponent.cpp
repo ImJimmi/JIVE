@@ -12,8 +12,9 @@ namespace jive
     //==================================================================================================================
     void TextComponent::paint(juce::Graphics& g)
     {
-        attributedString.setColour(juce::Colours::white);
-        attributedString.draw(g, getLocalBounds().toFloat());
+        auto as = attributedString;
+        as.setColour(textColour);
+        as.draw(g, getLocalBounds().toFloat());
     }
 
     //==================================================================================================================
@@ -56,6 +57,20 @@ namespace jive
     {
         attributedString.setLineSpacing(spacing);
         repaint();
+    }
+
+    void TextComponent::setTextFill(const Fill& newFill)
+    {
+        // JUCE currently only supports colours with AttributedString, which is
+        // being used to render the text in the paint() method.
+        jassert(newFill.getColour().has_value());
+
+        const auto newColour = newFill.getColour().value_or(juce::Colours::black);
+
+        if (newColour != textColour)
+            repaint();
+
+        textColour = newColour;
     }
 
     void TextComponent::clearAttributes()

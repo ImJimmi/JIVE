@@ -36,6 +36,10 @@ namespace jive
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
+        juce::Array<juce::Identifier> typesWithoutStyleSheets{
+            "Text",
+            "Image",
+        };
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(Interpreter)

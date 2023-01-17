@@ -25,6 +25,7 @@ namespace jive
         void setWordWrap(juce::AttributedString::WordWrap wrap);
         void setDirection(juce::AttributedString::ReadingDirection direction);
         void setLineSpacing(float spacing);
+        void setTextFill(const Fill& newFill);
 
         void clearAttributes();
         void append(const juce::AttributedString& attributedStringToAppend);
@@ -37,6 +38,7 @@ namespace jive
 
         //==============================================================================================================
         juce::AttributedString attributedString;
+        juce::Colour textColour{ juce::Colours::black };
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TextComponent)

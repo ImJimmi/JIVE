@@ -149,9 +149,15 @@ namespace jive
 
         for (auto childState : state)
         {
-            Text childItem{ std::make_unique<GuiItem>(std::make_unique<TextComponent>(),
-                                                      childState,
-                                                      this) };
+            Text childItem
+            {
+                std::make_unique<GuiItem>(std::make_unique<TextComponent>(),
+                                          childState,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                                          nullptr,
+#endif
+                                          this)
+            };
             getTextComponent().append(childItem.getTextComponent().getAttributedString());
         }
 

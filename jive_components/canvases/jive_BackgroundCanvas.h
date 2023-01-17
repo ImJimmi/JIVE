@@ -12,6 +12,8 @@ namespace jive
 
         //==============================================================================================================
         void paint(juce::Graphics& g) final;
+        void resized() final;
+        bool hitTest(int x, int y) final;
 
         //==============================================================================================================
         Fill getFill() const;
@@ -26,10 +28,15 @@ namespace jive
 
     private:
         //==============================================================================================================
+        void updateShape();
+
+        //==============================================================================================================
         Fill background{ juce::Colours::transparentBlack };
         Fill borderFill{ juce::Colours::transparentBlack };
         float borderWidth{ 0.0f };
         BorderRadii<float> borderRadii;
+
+        juce::Path shape;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BackgroundCanvas)

@@ -31,7 +31,13 @@ namespace jive
         };
 
         //==============================================================================================================
-        GuiItem(std::unique_ptr<juce::Component> component, juce::ValueTree stateSource, GuiItem* parent = nullptr);
+        GuiItem(std::unique_ptr<juce::Component> component,
+                juce::ValueTree stateSource,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                std::unique_ptr<StyleSheet> styleSheet,
+#endif
+                GuiItem* parent = nullptr);
+
         GuiItem(const GuiItem& other);
         ~GuiItem();
 
@@ -81,13 +87,18 @@ namespace jive
         friend class GuiItemDecorator;
 
         //==============================================================================================================
-        GuiItem(std::shared_ptr<juce::Component> component, GuiItem* parent, juce::ValueTree stateSource);
+        GuiItem(std::shared_ptr<juce::Component> component,
+                GuiItem* parent,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                std::unique_ptr<StyleSheet> sheet,
+#endif
+                juce::ValueTree stateSource);
 
         //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        StyleSheet styleSheet;
+        const std::unique_ptr<StyleSheet> styleSheet;
 #endif
 
         Property<juce::String> name;

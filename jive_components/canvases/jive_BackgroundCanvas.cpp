@@ -4,6 +4,91 @@
 namespace jive
 {
     //==================================================================================================================
+    void apply(const Fill& fill, juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        if (fill.getGradient().has_value())
+            g.setGradientFill(fill.getGradient()->toJuceGradient(bounds));
+        else if (fill.getColour().has_value())
+            g.setColour(*fill.getColour());
+        else
+            g.setColour(juce::Colour{});
+    }
+
+    void BackgroundCanvas::paint(juce::Graphics& g)
+    {
+        g.reduceClipRegion(shape);
+
+        const auto bounds = getLocalBounds().toFloat();
+        apply(background, g, bounds);
+        g.fillAll();
+
+        apply(borderFill, g, bounds);
+        g.strokePath(shape, juce::PathStrokeType{ borderWidth * 2.0f });
+    }
+
+    void BackgroundCanvas::resized()
+    {
+        updateShape();
+    }
+
+    bool BackgroundCanvas::hitTest(int x, int y)
+    {
+        return shape.contains(static_cast<float>(x), static_cast<float>(y));
+    }
+
+    //==================================================================================================================
+    Fill BackgroundCanvas::getFill() const
+    {
+        return background;
+    }
+
+    void BackgroundCanvas::setFill(const Fill& newFill)
+    {
+        if (newFill != background)
+            repaint();
+
+        background = newFill;
+    }
+
+    Fill BackgroundCanvas::getBorderFill() const
+    {
+        return borderFill;
+    }
+
+    void BackgroundCanvas::setBorderFill(const Fill& newFill)
+    {
+        if (newFill != borderFill)
+            repaint();
+
+        borderFill = newFill;
+    }
+
+    float BackgroundCanvas::getBorderWidth() const
+    {
+        return borderWidth;
+    }
+
+    void BackgroundCanvas::setBorderWidth(float newWidth)
+    {
+        if (newWidth != borderWidth)
+            updateShape();
+
+        borderWidth = newWidth;
+    }
+
+    BorderRadii<float> BackgroundCanvas::getBorderRadii() const
+    {
+        return borderRadii;
+    }
+
+    void BackgroundCanvas::setBorderRadii(BorderRadii<float> newRadii)
+    {
+        if (newRadii != borderRadii)
+            updateShape();
+
+        borderRadii = newRadii;
+    }
+
     struct CubicBezier
     {
         juce::Point<float> start{ 0.0f, 0.0f };
@@ -49,99 +134,23 @@ namespace jive
         };
     }
 
-    juce::Path getShape(const BackgroundCanvas& background)
+    void BackgroundCanvas::updateShape()
     {
-        juce::Path path;
+        shape.clear();
 
-        for (const auto& corner : getCorners(background.getBorderRadii(),
-                                             background.getLocalBounds().toFloat()))
+        for (const auto& corner : getCorners(getBorderRadii(),
+                                             getLocalBounds().toFloat()))
         {
-            if (path.isEmpty())
-                path.startNewSubPath(corner.start);
+            if (shape.isEmpty())
+                shape.startNewSubPath(corner.start);
             else
-                path.lineTo(corner.start);
+                shape.lineTo(corner.start);
 
-            path.cubicTo(corner.control1, corner.control2, corner.end);
+            shape.cubicTo(corner.control1, corner.control2, corner.end);
         }
 
-        path.closeSubPath();
+        shape.closeSubPath();
 
-        return path;
-    }
-
-    void apply(const Fill& fill, juce::Graphics& g, juce::Rectangle<float> bounds)
-    {
-        if (fill.getGradient().has_value())
-            g.setGradientFill(fill.getGradient()->toJuceGradient(bounds));
-        else if (fill.getColour().has_value())
-            g.setColour(*fill.getColour());
-        else
-            g.setColour(juce::Colour{});
-    }
-
-    void BackgroundCanvas::paint(juce::Graphics& g)
-    {
-        const auto shape = getShape(*this);
-        g.reduceClipRegion(shape);
-
-        const auto bounds = getLocalBounds().toFloat();
-        apply(background, g, bounds);
-        g.fillAll();
-
-        apply(borderFill, g, bounds);
-        g.strokePath(shape, juce::PathStrokeType{ borderWidth * 2.0f });
-    }
-
-    //==================================================================================================================
-    Fill BackgroundCanvas::getFill() const
-    {
-        return background;
-    }
-
-    void BackgroundCanvas::setFill(const Fill& newFill)
-    {
-        if (newFill != background)
-            repaint();
-
-        background = newFill;
-    }
-
-    Fill BackgroundCanvas::getBorderFill() const
-    {
-        return borderFill;
-    }
-
-    void BackgroundCanvas::setBorderFill(const Fill& newFill)
-    {
-        if (newFill != borderFill)
-            repaint();
-
-        borderFill = newFill;
-    }
-
-    float BackgroundCanvas::getBorderWidth() const
-    {
-        return borderWidth;
-    }
-
-    void BackgroundCanvas::setBorderWidth(float newWidth)
-    {
-        if (newWidth != borderWidth)
-            repaint();
-
-        borderWidth = newWidth;
-    }
-
-    BorderRadii<float> BackgroundCanvas::getBorderRadii() const
-    {
-        return borderRadii;
-    }
-
-    void BackgroundCanvas::setBorderRadii(BorderRadii<float> newRadii)
-    {
-        if (newRadii != borderRadii)
-            repaint();
-
-        borderRadii = newRadii;
+        repaint();
     }
 } // namespace jive

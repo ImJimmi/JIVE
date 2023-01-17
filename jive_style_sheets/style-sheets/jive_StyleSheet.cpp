@@ -14,7 +14,7 @@ namespace jive
     {
         jassert(component != nullptr);
 
-        applyStylesToCanvas();
+        applyStyles();
 
         component->addAndMakeVisible(backgroundCanvas, 0);
         backgroundCanvas.setBounds(component->getLocalBounds());
@@ -37,7 +37,10 @@ namespace jive
     StyleSheet::~StyleSheet()
     {
         if (component != nullptr)
+        {
             component->removeComponentListener(this);
+            component->removeMouseListener(this);
+        }
 
         if (auto object = style.get();
             object != nullptr)
@@ -50,6 +53,11 @@ namespace jive
     Fill StyleSheet::getBackground() const
     {
         return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
+    }
+
+    Fill StyleSheet::getForeground() const
+    {
+        return juce::VariantConverter<Fill>::fromVar(findHierarchicalStyleProperty("foreground"));
     }
 
     Fill StyleSheet::getBorderFill() const
@@ -73,22 +81,22 @@ namespace jive
 
     void StyleSheet::mouseEnter(const juce::MouseEvent&)
     {
-        applyStylesToCanvas();
+        applyStyles();
     }
 
     void StyleSheet::mouseExit(const juce::MouseEvent&)
     {
-        applyStylesToCanvas();
+        applyStyles();
     }
 
     void StyleSheet::mouseDown(const juce::MouseEvent&)
     {
-        applyStylesToCanvas();
+        applyStyles();
     }
 
     void StyleSheet::mouseUp(const juce::MouseEvent&)
     {
-        applyStylesToCanvas();
+        applyStyles();
     }
 
     void StyleSheet::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
@@ -98,24 +106,19 @@ namespace jive
             if (style.exists())
                 style.get()->addListener(*this);
 
-            applyStylesToCanvas();
+            applyStyles();
         }
     }
 
-    void StyleSheet::propertyChanged(Object& object, const juce::Identifier& name)
+    void StyleSheet::propertyChanged(Object& object, const juce::Identifier&)
     {
         jassert(&object == style.get().get());
-
-        if (name == juce::Identifier{ "background" })
-            backgroundCanvas.setFill(getBackground());
-        else if (name == juce::Identifier{ "border" })
-            backgroundCanvas.setBorderFill(getBorderFill());
-        else if (name == juce::Identifier{ "border-radius" })
-            backgroundCanvas.setBorderRadii(getBorderRadii());
+        applyStyles();
     }
 
     //==================================================================================================================
-    juce::StringArray findApplicableSelectorsInOrderOfSpecificity(const juce::Component& component)
+    juce::StringArray findApplicableSelectorsInOrderOfSpecificity(const juce::Component& component,
+                                                                  const BackgroundCanvas& canvas)
     {
         juce::StringArray selectors;
 
@@ -125,11 +128,15 @@ namespace jive
         if (component.hasKeyboardFocus(false))
             selectors.add("focus");
 
-        if (component.isMouseButtonDown(true))
-            selectors.add("active");
+        if (const auto mousePosition = component.getMouseXYRelative();
+            const_cast<BackgroundCanvas&>(canvas).hitTest(mousePosition.x, mousePosition.y))
+        {
+            if (component.isMouseButtonDown(true))
+                selectors.add("active");
 
-        if (component.isMouseOverOrDragging(true))
-            selectors.add("hover");
+            if (component.isMouseOverOrDragging(true))
+                selectors.add("hover");
+        }
 
         return selectors;
     }
@@ -137,10 +144,12 @@ namespace jive
     juce::var findStyleProperty(const Object& object,
                                 const juce::Identifier& componentType,
                                 const juce::Identifier& propertyName,
-                                const juce::Component& component)
+                                const juce::Component& component,
+                                const BackgroundCanvas& canvas)
     {
         auto selectors = juce::StringArray{ componentType.toString() };
-        selectors.addArray(findApplicableSelectorsInOrderOfSpecificity(component));
+        selectors.addArray(findApplicableSelectorsInOrderOfSpecificity(component,
+                                                                       canvas));
 
         for (const auto& selector : selectors)
         {
@@ -149,7 +158,13 @@ namespace jive
                 const auto& nested = dynamic_cast<Object&>(*object.getProperty(selector).getDynamicObject());
 
                 if (nested.hasProperty(propertyName))
-                    return findStyleProperty(nested, componentType, propertyName, component);
+                {
+                    return findStyleProperty(nested,
+                                             componentType,
+                                             propertyName,
+                                             component,
+                                             canvas);
+                }
             }
         }
 
@@ -159,23 +174,53 @@ namespace jive
     juce::var findStyleProperty(const juce::ValueTree& state,
                                 const juce::Identifier& componentType,
                                 const juce::Identifier& propertyName,
-                                const juce::Component& component)
+                                const juce::Component& component,
+                                const BackgroundCanvas& canvas)
     {
         jassert(state.isValid());
 
         if (auto object = Property<Object::ReferenceCountedPointer>{ state, "style" }.get())
         {
-            if (auto value = findStyleProperty(*object, componentType, propertyName, component);
+            if (auto value = findStyleProperty(*object,
+                                               componentType,
+                                               propertyName,
+                                               component,
+                                               canvas);
                 !value.isUndefined())
             {
                 return value;
             }
         }
 
+        return {};
+    }
+
+    juce::var findHierarchicalStyleProperty(const juce::ValueTree& state,
+                                            const juce::Identifier& componentType,
+                                            const juce::Identifier& propertyName,
+                                            const juce::Component& component,
+                                            const BackgroundCanvas& canvas)
+    {
+        jassert(state.isValid());
+
+        if (auto property = findStyleProperty(state,
+                                              componentType,
+                                              propertyName,
+                                              component,
+                                              canvas);
+            property != juce::var{})
+        {
+            return property;
+        }
+
         if (auto parent = state.getParent();
             parent.isValid())
         {
-            return findStyleProperty(parent, componentType, propertyName, component);
+            return findHierarchicalStyleProperty(parent,
+                                                 componentType,
+                                                 propertyName,
+                                                 component,
+                                                 canvas);
         }
 
         return {};
@@ -183,16 +228,33 @@ namespace jive
 
     juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
     {
-        return ::jive::findStyleProperty(state, state.getType(), propertyName, *component);
+        return ::jive::findStyleProperty(state,
+                                         state.getType(),
+                                         propertyName,
+                                         *component,
+                                         backgroundCanvas);
+    }
+
+    juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
+    {
+        return ::jive::findHierarchicalStyleProperty(state,
+                                                     state.getType(),
+                                                     propertyName,
+                                                     *component,
+                                                     backgroundCanvas);
     }
 
     //==================================================================================================================
-    void StyleSheet::applyStylesToCanvas()
+    void StyleSheet::applyStyles()
     {
         backgroundCanvas.setFill(getBackground());
         backgroundCanvas.setBorderFill(getBorderFill());
         backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
+        backgroundCanvas.repaint();
+
+        if (auto* text = dynamic_cast<TextComponent*>(component.getComponent()))
+            text->setTextFill(getForeground());
     }
 } // namespace jive
 
