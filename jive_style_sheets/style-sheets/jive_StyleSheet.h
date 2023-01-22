@@ -34,6 +34,7 @@ namespace jive
         void propertyChanged(Object& object, const juce::Identifier& name) final;
 
         //==============================================================================================================
+        juce::StringArray findApplicableSelectorsInOrderOfSpecificity() const;
         juce::var findStyleProperty(const juce::Identifier& propertyName) const;
         juce::var findHierarchicalStyleProperty(const juce::Identifier& propertyName) const;
 

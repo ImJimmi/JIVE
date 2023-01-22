@@ -117,76 +117,101 @@ namespace jive
     }
 
     //==================================================================================================================
-    juce::StringArray findApplicableSelectorsInOrderOfSpecificity(const juce::Component& component,
-                                                                  const BackgroundCanvas& canvas)
+    juce::StringArray StyleSheet::findApplicableSelectorsInOrderOfSpecificity() const
     {
         juce::StringArray selectors;
 
-        if (!component.isEnabled())
+        if (!component->isEnabled())
             selectors.add("disabled");
 
-        if (component.hasKeyboardFocus(false))
+        if (component->hasKeyboardFocus(false))
             selectors.add("focus");
 
-        if (const auto mousePosition = component.getMouseXYRelative();
-            const_cast<BackgroundCanvas&>(canvas).hitTest(mousePosition.x, mousePosition.y))
+        if (const auto mousePosition = component->getMouseXYRelative();
+            const_cast<BackgroundCanvas&>(backgroundCanvas).hitTest(mousePosition.x, mousePosition.y))
         {
-            if (component.isMouseButtonDown(true))
+            if (component->isMouseButtonDown(true))
                 selectors.add("active");
 
-            if (component.isMouseOverOrDragging(true))
+            if (component->isMouseOverOrDragging(true))
                 selectors.add("hover");
         }
 
         return selectors;
     }
 
-    juce::var findStyleProperty(const Object& object,
-                                const juce::Identifier& componentType,
-                                const juce::Identifier& propertyName,
-                                const juce::Component& component,
-                                const BackgroundCanvas& canvas)
+    enum class StyleSearchStrategy
     {
-        auto selectors = juce::StringArray{ componentType.toString() };
-        selectors.addArray(findApplicableSelectorsInOrderOfSpecificity(component,
-                                                                       canvas));
+        objectAndChildren,
+        childrenOnly,
+    };
 
-        for (const auto& selector : selectors)
+    template <StyleSearchStrategy strategy>
+    juce::var findStyleProperty(const Object& object,
+                                const juce::StringArray& selectorsInOrderOfSpecificity,
+                                const juce::Identifier& propertyName)
+    {
+        for (const auto& selector : selectorsInOrderOfSpecificity)
         {
             if (object.hasProperty(selector))
             {
-                const auto& nested = dynamic_cast<Object&>(*object.getProperty(selector).getDynamicObject());
+                const auto& nested = dynamic_cast<Object&>(*object
+                                                                .getProperty(selector)
+                                                                .getDynamicObject());
+                const auto value = findStyleProperty<StyleSearchStrategy::objectAndChildren>(nested,
+                                                                                             selectorsInOrderOfSpecificity,
+                                                                                             propertyName);
 
-                if (nested.hasProperty(propertyName))
-                {
-                    return findStyleProperty(nested,
-                                             componentType,
-                                             propertyName,
-                                             component,
-                                             canvas);
-                }
+                if (value != juce::var{})
+                    return value;
             }
         }
 
-        return object.getProperty(propertyName);
+        if constexpr (strategy == StyleSearchStrategy::objectAndChildren)
+            return object.getProperty(propertyName);
+        else
+            return juce::var{};
     }
 
+    template <StyleSearchStrategy strategy>
     juce::var findStyleProperty(const juce::ValueTree& state,
-                                const juce::Identifier& componentType,
-                                const juce::Identifier& propertyName,
-                                const juce::Component& component,
-                                const BackgroundCanvas& canvas)
+                                const juce::StringArray& selectorsInOrderOfSpecificity,
+                                const juce::Identifier& propertyName)
     {
         jassert(state.isValid());
 
         if (auto object = Property<Object::ReferenceCountedPointer>{ state, "style" }.get())
         {
-            if (auto value = findStyleProperty(*object,
-                                               componentType,
-                                               propertyName,
-                                               component,
-                                               canvas);
-                !value.isUndefined())
+            return findStyleProperty<strategy>(*object.get(),
+                                               selectorsInOrderOfSpecificity,
+                                               propertyName);
+        }
+
+        return juce::var{};
+    }
+
+    juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
+    {
+        juce::StringArray applicableSelectors;
+        applicableSelectors.add(state.getType().toString());
+        applicableSelectors.addArray(findApplicableSelectorsInOrderOfSpecificity());
+
+        if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(state,
+                                                                                           applicableSelectors,
+                                                                                           propertyName);
+            value != juce::var{})
+        {
+            return value;
+        }
+
+        for (auto stateToSearch = state.getParent();
+             stateToSearch.isValid();
+             stateToSearch = stateToSearch.getParent())
+        {
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::childrenOnly>(stateToSearch,
+                                                                                          applicableSelectors,
+                                                                                          propertyName);
+                value != juce::var{})
             {
                 return value;
             }
@@ -195,53 +220,33 @@ namespace jive
         return {};
     }
 
-    juce::var findHierarchicalStyleProperty(const juce::ValueTree& state,
-                                            const juce::Identifier& componentType,
-                                            const juce::Identifier& propertyName,
-                                            const juce::Component& component,
-                                            const BackgroundCanvas& canvas)
+    juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
     {
-        jassert(state.isValid());
+        juce::StringArray applicableSelectors;
 
-        if (auto property = findStyleProperty(state,
-                                              componentType,
-                                              propertyName,
-                                              component,
-                                              canvas);
-            property != juce::var{})
+        for (auto currentState = state;
+             currentState.isValid();
+             currentState = currentState.getParent())
         {
-            return property;
+            applicableSelectors.add(currentState.getType().toString());
         }
 
-        if (auto parent = state.getParent();
-            parent.isValid())
+        applicableSelectors.addArray(findApplicableSelectorsInOrderOfSpecificity());
+
+        for (auto stateToSearch = state;
+             stateToSearch.isValid();
+             stateToSearch = stateToSearch.getParent())
         {
-            return findHierarchicalStyleProperty(parent,
-                                                 componentType,
-                                                 propertyName,
-                                                 component,
-                                                 canvas);
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::childrenOnly>(stateToSearch,
+                                                                                          applicableSelectors,
+                                                                                          propertyName);
+                value != juce::var{})
+            {
+                return value;
+            }
         }
 
         return {};
-    }
-
-    juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
-    {
-        return ::jive::findStyleProperty(state,
-                                         state.getType(),
-                                         propertyName,
-                                         *component,
-                                         backgroundCanvas);
-    }
-
-    juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
-    {
-        return ::jive::findHierarchicalStyleProperty(state,
-                                                     state.getType(),
-                                                     propertyName,
-                                                     *component,
-                                                     backgroundCanvas);
     }
 
     //==================================================================================================================
