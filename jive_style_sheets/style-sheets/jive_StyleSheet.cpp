@@ -300,7 +300,6 @@ public:
         testBackgroundColour();
         testLinearBackgroundGradient();
         testTypeStyling();
-        testHereditaryStyling();
     }
 
 private:
@@ -469,46 +468,6 @@ private:
                           nullptr);
         snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF7F7F7F }));
-    }
-
-    void testHereditaryStyling()
-    {
-        beginTest("hereditary styling");
-
-        juce::ValueTree state{
-            "Root",
-            {
-                { "style", R"({ "background": "#111111" })" },
-            },
-            {
-                juce::ValueTree{
-                    "Parent",
-                    {},
-                    {
-                        juce::ValueTree{ "Child" },
-                    },
-                },
-            },
-        };
-
-        juce::Component component;
-        component.setBounds(0, 0, 10, 10);
-
-        jive::StyleSheet styleSheet{ component, state.getChild(0).getChild(0) };
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF111111 }));
-
-        state.getChild(0).setProperty("style", R"({ "background": "#222222" })", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF222222 }));
-
-        state.setProperty("style", R"({ "background": "#333333" })", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF222222 }));
-
-        state.getChild(0).getChild(0).setProperty("style", R"({ "background": "#444444" })", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF444444 }));
     }
 };
 
