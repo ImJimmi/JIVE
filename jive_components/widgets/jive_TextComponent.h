@@ -39,6 +39,7 @@ namespace jive
         //==============================================================================================================
         juce::AttributedString attributedString;
         juce::Colour textColour{ juce::Colours::black };
+        juce::Font font;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TextComponent)

@@ -33,13 +33,13 @@ namespace jive
 
         //==============================================================================================================
         Property<juce::String> text;
-        Property<juce::String> typefaceName;
-        Property<juce::String> fontWeight;
-        Property<float> fontHeight;
-        Property<juce::String> fontStyle;
-        Property<float> kerning;
-        Property<float> horizontalScale;
-        Property<float> lineSpacing;
+        Property<juce::String, HereditaryValueBehaviour::inheritFromAncestors> typefaceName;
+        Property<juce::String, HereditaryValueBehaviour::inheritFromAncestors> fontWeight;
+        Property<float, HereditaryValueBehaviour::inheritFromAncestors> fontHeight;
+        Property<juce::String, HereditaryValueBehaviour::inheritFromAncestors> fontStyle;
+        Property<float, HereditaryValueBehaviour::inheritFromAncestors> kerning;
+        Property<float, HereditaryValueBehaviour::inheritFromAncestors> horizontalScale;
+        Property<float, HereditaryValueBehaviour::inheritFromAncestors> lineSpacing;
         Property<juce::Justification> justification;
         Property<juce::AttributedString::WordWrap> wordWrap;
         Property<juce::AttributedString::ReadingDirection> direction;

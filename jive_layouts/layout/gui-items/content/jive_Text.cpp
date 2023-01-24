@@ -8,11 +8,11 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , text{ state, "text" }
         , typefaceName{ state, "typeface-name" }
-        , fontWeight{ state, "font-weight", "Regular" }
-        , fontHeight{ state, "font-height", 12.f }
+        , fontWeight{ state, "font-weight" }
+        , fontHeight{ state, "font-height" }
         , fontStyle{ state, "font-style" }
         , kerning{ state, "kerning" }
-        , horizontalScale{ state, "horizontal-scale", 1.0f }
+        , horizontalScale{ state, "horizontal-scale" }
         , lineSpacing{ state, "line-spacing" }
         , justification{ state, "justification", juce::Justification::centredLeft }
         , wordWrap{ state, "word-wrap", juce::AttributedString::WordWrap::byWord }
@@ -107,21 +107,6 @@ namespace jive
         return layout;
     }
 
-    int getFontStyleFlags(const juce::String& styleString)
-    {
-        int flags = juce::Font::plain;
-        const auto tokens = juce::StringArray::fromTokens(styleString, false);
-
-        if (tokens.contains("bold"))
-            flags += juce::Font::bold;
-        if (tokens.contains("italic"))
-            flags += juce::Font::italic;
-        if (tokens.contains("underlined"))
-            flags += juce::Font::underlined;
-
-        return flags;
-    }
-
     void Text::updateFont()
     {
         juce::Font font;
@@ -129,11 +114,11 @@ namespace jive
         if (typefaceName.get().isNotEmpty())
             font.setTypefaceName(typefaceName);
 
-        font.setTypefaceStyle(fontWeight);
-        font.setStyleFlags(getFontStyleFlags(fontStyle));
+        font.setTypefaceStyle(fontWeight.getOr("Regular"));
+        font.setStyleFlags(parseFontStyleFlags(fontStyle));
         font.setExtraKerningFactor(kerning);
-        font.setHorizontalScale(horizontalScale);
-        font = font.withPointHeight(fontHeight);
+        font.setHorizontalScale(horizontalScale.getOr(1.0f));
+        font = font.withPointHeight(fontHeight.getOr(12.0f));
 
         getTextComponent().setFont(font);
     }

@@ -13,7 +13,10 @@ namespace jive
     void TextComponent::paint(juce::Graphics& g)
     {
         auto as = attributedString;
+
         as.setColour(textColour);
+        as.setFont(font);
+
         as.draw(g, getLocalBounds().toFloat());
     }
 
@@ -29,10 +32,12 @@ namespace jive
         return attributedString.getText();
     }
 
-    void TextComponent::setFont(const juce::Font& font)
+    void TextComponent::setFont(const juce::Font& newFont)
     {
-        attributedString.setFont(font);
-        repaint();
+        if (newFont != font)
+            repaint();
+
+        font = newFont;
     }
 
     void TextComponent::setJustification(juce::Justification justification)

@@ -15,5 +15,6 @@
 #include "geometry/jive_Orientation.cpp"
 
 #include "graphics/jive_Fill.cpp"
+#include "graphics/jive_FontUtilities.cpp"
 #include "graphics/jive_Gradient.cpp"
 #include "graphics/jive_LookAndFeel.cpp"

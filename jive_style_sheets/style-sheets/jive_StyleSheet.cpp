@@ -237,9 +237,9 @@ namespace jive
              stateToSearch.isValid();
              stateToSearch = stateToSearch.getParent())
         {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::childrenOnly>(stateToSearch,
-                                                                                          applicableSelectors,
-                                                                                          propertyName);
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(stateToSearch,
+                                                                                               applicableSelectors,
+                                                                                               propertyName);
                 value != juce::var{})
             {
                 return value;
