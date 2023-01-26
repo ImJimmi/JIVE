@@ -12,3 +12,5 @@
 #include "geometry/jive_Length.cpp"
 
 #include "geometry/jive_BoxModel.cpp"
+
+#include "graphics/jive_LookAndFeel.cpp"

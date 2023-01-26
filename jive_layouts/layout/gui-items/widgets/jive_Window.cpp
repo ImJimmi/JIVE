@@ -117,6 +117,12 @@ namespace jive
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
         getWindow().setContentNonOwned(component.get(), resizeWindowWhenComponentSizeChanges);
         getWindow().centreWithSize(windowWidth, windowHeight);
+        getWindow().setLookAndFeel(&lookAndFeel);
+    }
+
+    Window::~Window()
+    {
+        getWindow().setLookAndFeel(nullptr);
     }
 
     //==================================================================================================================
@@ -173,7 +179,10 @@ private:
     {
         jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Window>(interpreter.interpret(tree));
+        return std::unique_ptr<jive::Window>{
+            dynamic_cast<jive::GuiItemDecorator*>(interpreter.interpret(tree).release())
+                ->toType<jive::Window>(),
+        };
     }
 
     void testShadow()

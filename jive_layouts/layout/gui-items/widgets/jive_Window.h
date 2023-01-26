@@ -9,6 +9,7 @@ namespace jive
     public:
         //==============================================================================================================
         explicit Window(std::unique_ptr<GuiItem> itemToDecorate);
+        ~Window();
 
         //==============================================================================================================
         juce::DocumentWindow& getWindow();
@@ -24,6 +25,7 @@ namespace jive
 
         //==============================================================================================================
         DocumentWindow window;
+        LookAndFeel lookAndFeel;
 
         TypedValue<bool> hasShadow;
         TypedValue<bool> isNative;
