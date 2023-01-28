@@ -73,6 +73,9 @@ namespace jive
     void BoxModel::setWidth(float newWidth)
     {
         componentWidth = newWidth;
+
+        if (!state.getParent().isValid())
+            width = juce::String{ juce::roundToInt(newWidth) };
     }
 
     float BoxModel::getHeight() const
@@ -88,6 +91,9 @@ namespace jive
     void BoxModel::setHeight(float newHeight)
     {
         componentHeight = newHeight;
+
+        if (!state.getParent().isValid())
+            height = juce::String{ juce::roundToInt(newHeight) };
     }
 
     juce::BorderSize<float> BoxModel::getPadding() const
