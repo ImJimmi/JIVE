@@ -31,6 +31,12 @@ namespace jive
             return nullptr;
         }
 
+        template <typename ItemType>
+        const ItemType* toType() const
+        {
+            return const_cast<GuiItemDecorator*>(this)->toType<ItemType>();
+        }
+
         //==============================================================================================================
         void layOutChildren() override;
 

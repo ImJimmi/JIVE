@@ -3,6 +3,7 @@
 namespace juce
 {
     String& operator<<(String& str, const Colour& colour);
+    String& operator<<(String& str, const juce::Font& font);
     String& operator<<(String& str, const Image& image);
     String& operator<<(String& str, const var& value);
 

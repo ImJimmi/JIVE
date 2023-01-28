@@ -70,6 +70,56 @@ namespace jive
         return juce::VariantConverter<BorderRadii<float>>::fromVar(findStyleProperty("border-radius"));
     }
 
+    juce::Font StyleSheet::getFont() const
+    {
+        juce::Font font;
+
+        if (const auto fontFamily = findHierarchicalStyleProperty(fontProperties::fontFamily).toString();
+            fontFamily.isNotEmpty())
+        {
+            font.setTypefaceName(fontFamily);
+        }
+
+        if (const auto fontStyle = findHierarchicalStyleProperty(fontProperties::fontStyle).toString();
+            fontStyle.isNotEmpty())
+        {
+            font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
+        }
+
+        if (const auto weight = findHierarchicalStyleProperty(fontProperties::fontWeight).toString();
+            weight.isNotEmpty())
+        {
+            font.setBold(weight.compareIgnoreCase("bold") == 0);
+        }
+
+        if (const auto size = findHierarchicalStyleProperty(fontProperties::fontSize);
+            size != juce::var{})
+        {
+            font = font.withPointHeight(static_cast<float>(size));
+        }
+
+        if (const auto spacing = findHierarchicalStyleProperty(fontProperties::letterSpacing);
+            spacing != juce::var{})
+        {
+            const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
+            font.setExtraKerningFactor(extraKerning);
+        }
+
+        if (const auto decoration = findHierarchicalStyleProperty(fontProperties::textDecoration).toString();
+            decoration.isNotEmpty())
+        {
+            font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
+        }
+
+        if (const auto stretch = findHierarchicalStyleProperty(fontProperties::fontStretch);
+            stretch != juce::var{})
+        {
+            font.setHorizontalScale(static_cast<float>(stretch));
+        }
+
+        return font;
+    }
+
     //==================================================================================================================
     void StyleSheet::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                              bool /*wasMoved*/,
@@ -259,12 +309,17 @@ namespace jive
         backgroundCanvas.repaint();
 
         if (auto* text = dynamic_cast<TextComponent*>(component.getComponent()))
-            text->setTextFill(getForeground());
+        {
+            text->setTextColour(*getForeground().getColour());
+            text->setFont(getFont());
+        }
     }
 } // namespace jive
 
 //======================================================================================================================
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/jive_layouts.h>
+
 bool compare(const juce::Image& image, juce::Colour colour)
 {
     for (auto y = 0; y < image.getHeight(); y++)
@@ -300,6 +355,7 @@ public:
         testBackgroundColour();
         testLinearBackgroundGradient();
         testTypeStyling();
+        testFont();
     }
 
 private:
@@ -468,6 +524,67 @@ private:
                           nullptr);
         snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF7F7F7F }));
+    }
+
+    void testFont()
+    {
+        beginTest("font");
+
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        {
+                            "style",
+                            R"({})",
+                        },
+                    },
+                },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(state);
+        auto& text = dynamic_cast<jive::TextComponent&>(*item->getChild(0).getComponent());
+        expectEquals(text.getFont(), juce::Font{});
+
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ text, state.getChild(0) };
+        jive::Property<jive::Object::ReferenceCountedPointer> style{ state.getChild(0), "style" };
+        juce::Font expected;
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("font-family", "Helvetica");
+        expected.setTypefaceName("Helvetica");
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("font-style", "italic");
+        expected.setItalic(true);
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("font-weight", "bold");
+        expected.setBold(true);
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("font-size", 123.45f);
+        expected = expected.withPointHeight(123.45f);
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("letter-spacing", 5.3f);
+        expected.setExtraKerningFactor(5.3f / expected.getHeight());
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("text-decoration", "underlined");
+        expected.setUnderline(true);
+        expectEquals(text.getFont(), expected);
+
+        style.get()->setProperty("font-stretch", 0.381f);
+        expected.setHorizontalScale(0.381f);
+        expectEquals(text.getFont(), expected);
     }
 };
 

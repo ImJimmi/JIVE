@@ -42,6 +42,12 @@ namespace jive
                 treeToListenTo = tree;
 
             treeToListenTo.addListener(this);
+
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (tree[id].isString())
+                    tree.setProperty(id, parseJSON(tree[id].toString()), nullptr);
+            }
         }
 
         Property(juce::ValueTree sourceTree,

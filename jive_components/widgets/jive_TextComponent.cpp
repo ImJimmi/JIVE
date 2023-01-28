@@ -6,91 +6,140 @@ namespace jive
     //==================================================================================================================
     TextComponent::TextComponent()
     {
+        canvas.onPaint = [this](juce::Graphics& g) {
+            if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
+                return;
+
+            getAttributedString()
+                .draw(g, getLocalBounds().toFloat());
+        };
+        canvas.setAlwaysOnTop(true);
+        canvas.setBufferedToImage(true);
+        addAndMakeVisible(canvas);
+
         setInterceptsMouseClicks(false, false);
     }
 
     //==================================================================================================================
-    void TextComponent::paint(juce::Graphics& g)
+    void TextComponent::resized()
     {
-        auto as = attributedString;
-
-        as.setColour(textColour);
-        as.setFont(font);
-
-        as.draw(g, getLocalBounds().toFloat());
+        canvas.setBounds(getLocalBounds());
     }
 
     //==================================================================================================================
-    void TextComponent::setText(const juce::String& text)
-    {
-        attributedString.setText(text);
-        repaint();
-    }
-
     const juce::String& TextComponent::getText() const
     {
-        return attributedString.getText();
+        return text;
+    }
+
+    void TextComponent::setText(const juce::String& newText)
+    {
+        if (newText != text)
+        {
+            text = newText;
+            canvas.repaint();
+        }
+    }
+
+    juce::Font TextComponent::getFont() const
+    {
+        return font;
     }
 
     void TextComponent::setFont(const juce::Font& newFont)
     {
         if (newFont != font)
-            repaint();
-
-        font = newFont;
+        {
+            font = newFont;
+            listeners.call(&Listener::textFontChanged, *this);
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setJustification(juce::Justification justification)
+    void TextComponent::setJustification(juce::Justification newJustification)
     {
-        attributedString.setJustification(justification);
-        repaint();
+        if (newJustification != justification)
+        {
+            justification = newJustification;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setWordWrap(juce::AttributedString::WordWrap wrap)
+    void TextComponent::setWordWrap(juce::AttributedString::WordWrap newWordWrap)
     {
-        attributedString.setWordWrap(wrap);
-        repaint();
+        if (newWordWrap != wordWrap)
+        {
+            wordWrap = newWordWrap;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setDirection(juce::AttributedString::ReadingDirection direction)
+    void TextComponent::setDirection(juce::AttributedString::ReadingDirection newDirection)
     {
-        attributedString.setReadingDirection(direction);
-        repaint();
+        if (newDirection != direction)
+        {
+            direction = newDirection;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setLineSpacing(float spacing)
+    void TextComponent::setLineSpacing(float newLineSpacing)
     {
-        attributedString.setLineSpacing(spacing);
-        repaint();
+        if (newLineSpacing != lineSpacing)
+        {
+            lineSpacing = newLineSpacing;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setTextFill(const Fill& newFill)
+    void TextComponent::setTextColour(juce::Colour newColour)
     {
-        // JUCE currently only supports colours with AttributedString, which is
-        // being used to render the text in the paint() method.
-        jassert(newFill.getColour().has_value());
-
-        const auto newColour = newFill.getColour().value_or(juce::Colours::black);
-
         if (newColour != textColour)
-            repaint();
-
-        textColour = newColour;
+        {
+            textColour = newColour;
+            canvas.repaint();
+        }
     }
 
     void TextComponent::clearAttributes()
     {
-        attributedString.clear();
+        appendices.clear();
+        canvas.repaint();
     }
 
     void TextComponent::append(const juce::AttributedString& attributedStringToAppend)
     {
-        attributedString.append(attributedStringToAppend);
+        appendices.add(attributedStringToAppend);
+        canvas.repaint();
     }
 
-    const juce::AttributedString& TextComponent::getAttributedString() const
+    juce::AttributedString TextComponent::getAttributedString() const
     {
+        juce::AttributedString attributedString;
+
+        attributedString.setText(text);
+
+        attributedString.setColour(textColour);
+        attributedString.setFont(font);
+        attributedString.setJustification(justification);
+        attributedString.setLineSpacing(lineSpacing);
+        attributedString.setReadingDirection(direction);
+        attributedString.setWordWrap(wordWrap);
+
+        for (const auto& appendix : appendices)
+            attributedString.append(appendix);
+
         return attributedString;
+    }
+
+    void TextComponent::addListener(Listener& listener) const
+    {
+        listeners.add(&listener);
+    }
+
+    void TextComponent::removeListener(Listener& listener) const
+    {
+        listeners.remove(&listener);
     }
 
     //==================================================================================================================

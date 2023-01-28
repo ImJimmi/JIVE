@@ -19,6 +19,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "accessibility/jive_IgnoredComponent.h"
 
 #include "canvases/jive_BackgroundCanvas.h"
+#include "canvases/jive_Canvas.h"
 
 #include "containers/jive_DocumentWindow.h"
 

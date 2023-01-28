@@ -7,6 +7,11 @@ namespace juce
         return str << "juce::Colour { 0x" << colour.toDisplayString(true) << " }";
     }
 
+    String& operator<<(String& str, const juce::Font& font)
+    {
+        return str << "juce::Font { \"" << font.toString() << "\" }";
+    }
+
     String& operator<<(String& str, const Image& image)
     {
         return str << "juce::Image { "

@@ -20,6 +20,7 @@ namespace jive
         Fill getForeground() const;
         Fill getBorderFill() const;
         BorderRadii<float> getBorderRadii() const;
+        juce::Font getFont() const;
 
     private:
         //==============================================================================================================
