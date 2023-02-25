@@ -71,6 +71,12 @@ namespace jive
             },
         });
         creators.insert({
+            "svg",
+            []() {
+                return std::make_unique<IgnoredComponent>();
+            },
+        });
+        creators.insert({
             "Text",
             []() {
                 return std::make_unique<TextComponent>();
