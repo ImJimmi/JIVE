@@ -4,23 +4,111 @@
 namespace jive
 {
     //==================================================================================================================
+    namespace fontProperties
+    {
+        static const juce::Identifier fontFamily{ "font-family" };
+        static const juce::Identifier fontStyle{ "font-style" };
+        static const juce::Identifier fontWeight{ "font-weight" };
+        static const juce::Identifier fontSize{ "font-size" };
+        static const juce::Identifier letterSpacing{ "letter-spacing" };
+        static const juce::Identifier textDecoration{ "text-decoration" };
+        static const juce::Identifier fontStretch{ "font-stretch" };
+
+        static const juce::Array all{
+            fontFamily,
+            fontStyle,
+            fontWeight,
+            fontSize,
+            letterSpacing,
+            textDecoration,
+            fontStretch,
+        };
+    } // namespace fontProperties
+
+    //==================================================================================================================
+    juce::StringArray getAncestorTypes(const juce::ValueTree& child)
+    {
+        juce::StringArray types;
+
+        for (auto parent = child.getParent();
+             parent.isValid();
+             parent = parent.getParent())
+        {
+            types.add(parent.getType().toString());
+        }
+
+        return types;
+    }
+
+    struct StyleSheet::Selectors
+    {
+    public:
+        explicit Selectors(const juce::ValueTree& sourceState)
+            : state{ sourceState }
+            , enabled{ state, enabledID }
+            , mouse{ state, mouseID }
+            , keyboard{ state, keyboardID }
+        {
+            const auto informListeners = [this]() {
+                if (onChange != nullptr)
+                    onChange();
+            };
+            enabled.onValueChange = informListeners;
+            mouse.onValueChange = informListeners;
+            keyboard.onValueChange = informListeners;
+        }
+
+        juce::StringArray getSelectorsInOrderOfSpecificity() const
+        {
+            juce::StringArray result{ state.getType() };
+            result.addArray(getAncestorTypes(state));
+
+            if (!enabled.get())
+                result.add("disabled");
+            if (keyboard == ComponentInteractionState::Keyboard::focus)
+                result.add("focus");
+            if (mouse == ComponentInteractionState::Mouse::active)
+                result.add("active");
+            if (mouse != ComponentInteractionState::Mouse::dissociate)
+                result.add("hover");
+
+            return result;
+        }
+
+        std::function<void()> onChange = nullptr;
+
+    private:
+        static const inline juce::Identifier enabledID{ "enabled" };
+        static const inline juce::Identifier mouseID{ "mouse" };
+        static const inline juce::Identifier keyboardID{ "keyboard" };
+
+        juce::ValueTree state;
+        Property<bool> enabled;
+        Property<ComponentInteractionState::Mouse> mouse;
+        Property<ComponentInteractionState::Keyboard> keyboard;
+    };
+
+    //==================================================================================================================
     StyleSheet::StyleSheet(juce::Component& sourceComponent,
                            juce::ValueTree sourceState)
         : component{ &sourceComponent }
         , state{ sourceState }
         , stateRoot{ state.getRoot() }
+        , interactionState{ sourceComponent, state }
         , style{ state, "style" }
         , borderWidth{ state, "border-width" }
+        , selectors{ std::make_unique<Selectors>(state) }
     {
         jassert(component != nullptr);
+        jassert(!component->getProperties().contains("style-sheet"));
 
-        applyStyles();
-
+        component->getProperties().set("style-sheet", juce::var{ this });
         component->addAndMakeVisible(backgroundCanvas, 0);
         backgroundCanvas.setBounds(component->getLocalBounds());
 
+        applyStyles();
+
         component->addComponentListener(this);
-        component->addMouseListener(this, true);
         stateRoot.addListener(this);
 
         borderWidth.onValueChange = [this]() {
@@ -32,6 +120,10 @@ namespace jive
         {
             object->addListener(*this);
         }
+
+        selectors->onChange = [this]() {
+            applyStyles();
+        };
     }
 
     StyleSheet::~StyleSheet()
@@ -39,7 +131,7 @@ namespace jive
         if (component != nullptr)
         {
             component->removeComponentListener(this);
-            component->removeMouseListener(this);
+            component->getProperties().remove("style-sheet");
         }
 
         if (auto object = style.get();
@@ -72,52 +164,54 @@ namespace jive
 
     juce::Font StyleSheet::getFont() const
     {
-        juce::Font font;
+        if (!fontInvalidated)
+            return cachedFont;
 
         if (const auto fontFamily = findHierarchicalStyleProperty(fontProperties::fontFamily).toString();
             fontFamily.isNotEmpty())
         {
-            font.setTypefaceName(fontFamily);
+            cachedFont.setTypefaceName(fontFamily);
         }
 
         if (const auto fontStyle = findHierarchicalStyleProperty(fontProperties::fontStyle).toString();
             fontStyle.isNotEmpty())
         {
-            font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
+            cachedFont.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
         }
 
         if (const auto weight = findHierarchicalStyleProperty(fontProperties::fontWeight).toString();
             weight.isNotEmpty())
         {
-            font.setBold(weight.compareIgnoreCase("bold") == 0);
+            cachedFont.setBold(weight.compareIgnoreCase("bold") == 0);
         }
 
         if (const auto size = findHierarchicalStyleProperty(fontProperties::fontSize);
             size != juce::var{})
         {
-            font = font.withPointHeight(static_cast<float>(size));
+            cachedFont = cachedFont.withPointHeight(static_cast<float>(size));
         }
 
         if (const auto spacing = findHierarchicalStyleProperty(fontProperties::letterSpacing);
             spacing != juce::var{})
         {
-            const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
-            font.setExtraKerningFactor(extraKerning);
+            const auto extraKerning = static_cast<float>(spacing) / cachedFont.getHeight();
+            cachedFont.setExtraKerningFactor(extraKerning);
         }
 
         if (const auto decoration = findHierarchicalStyleProperty(fontProperties::textDecoration).toString();
             decoration.isNotEmpty())
         {
-            font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
+            cachedFont.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
         }
 
         if (const auto stretch = findHierarchicalStyleProperty(fontProperties::fontStretch);
             stretch != juce::var{})
         {
-            font.setHorizontalScale(static_cast<float>(stretch));
+            cachedFont.setHorizontalScale(static_cast<float>(stretch));
         }
 
-        return font;
+        fontInvalidated = false;
+        return cachedFont;
     }
 
     //==================================================================================================================
@@ -129,23 +223,9 @@ namespace jive
         backgroundCanvas.setBounds(component->getLocalBounds());
     }
 
-    void StyleSheet::mouseEnter(const juce::MouseEvent&)
+    void StyleSheet::componentParentHierarchyChanged(juce::Component& childComponent)
     {
-        applyStyles();
-    }
-
-    void StyleSheet::mouseExit(const juce::MouseEvent&)
-    {
-        applyStyles();
-    }
-
-    void StyleSheet::mouseDown(const juce::MouseEvent&)
-    {
-        applyStyles();
-    }
-
-    void StyleSheet::mouseUp(const juce::MouseEvent&)
-    {
+        jassertquiet(&childComponent == component);
         applyStyles();
     }
 
@@ -153,43 +233,28 @@ namespace jive
     {
         if (id == juce::Identifier{ "style" })
         {
-            if (style.exists())
-                style.get()->addListener(*this);
+            if (auto object = style.get();
+                object != nullptr)
+            {
+                object->addListener(*this);
+            }
 
+            fontInvalidated = true;
             applyStyles();
         }
     }
 
-    void StyleSheet::propertyChanged(Object& object, const juce::Identifier&)
+    void StyleSheet::propertyChanged(Object& object, const juce::Identifier& id)
     {
-        jassert(&object == style.get().get());
+        jassertquiet(&object == style.get().get());
+
+        if (fontProperties::all.contains(id))
+            fontInvalidated = true;
+
         applyStyles();
     }
 
     //==================================================================================================================
-    juce::StringArray StyleSheet::findApplicableSelectorsInOrderOfSpecificity() const
-    {
-        juce::StringArray selectors;
-
-        if (!component->isEnabled())
-            selectors.add("disabled");
-
-        if (component->hasKeyboardFocus(false))
-            selectors.add("focus");
-
-        if (const auto mousePosition = component->getMouseXYRelative();
-            const_cast<BackgroundCanvas&>(backgroundCanvas).hitTest(mousePosition.x, mousePosition.y))
-        {
-            if (component->isMouseButtonDown(true))
-                selectors.add("active");
-
-            if (component->isMouseOverOrDragging(true))
-                selectors.add("hover");
-        }
-
-        return selectors;
-    }
-
     enum class StyleSearchStrategy
     {
         objectAndChildren,
@@ -198,10 +263,10 @@ namespace jive
 
     template <StyleSearchStrategy strategy>
     juce::var findStyleProperty(const Object& object,
-                                const juce::StringArray& selectorsInOrderOfSpecificity,
+                                const StyleSheet::Selectors& selectors,
                                 const juce::Identifier& propertyName)
     {
-        for (const auto& selector : selectorsInOrderOfSpecificity)
+        for (const auto& selector : selectors.getSelectorsInOrderOfSpecificity())
         {
             if (object.hasProperty(selector))
             {
@@ -209,7 +274,7 @@ namespace jive
                                                                 .getProperty(selector)
                                                                 .getDynamicObject());
                 const auto value = findStyleProperty<StyleSearchStrategy::objectAndChildren>(nested,
-                                                                                             selectorsInOrderOfSpecificity,
+                                                                                             selectors,
                                                                                              propertyName);
 
                 if (value != juce::var{})
@@ -225,7 +290,7 @@ namespace jive
 
     template <StyleSearchStrategy strategy>
     juce::var findStyleProperty(const juce::ValueTree& state,
-                                const juce::StringArray& selectorsInOrderOfSpecificity,
+                                const StyleSheet::Selectors& selectors,
                                 const juce::Identifier& propertyName)
     {
         jassert(state.isValid());
@@ -233,7 +298,7 @@ namespace jive
         if (auto object = Property<Object::ReferenceCountedPointer>{ state, "style" }.get())
         {
             return findStyleProperty<strategy>(*object.get(),
-                                               selectorsInOrderOfSpecificity,
+                                               selectors,
                                                propertyName);
         }
 
@@ -242,12 +307,8 @@ namespace jive
 
     juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
     {
-        juce::StringArray applicableSelectors;
-        applicableSelectors.add(state.getType().toString());
-        applicableSelectors.addArray(findApplicableSelectorsInOrderOfSpecificity());
-
         if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(state,
-                                                                                           applicableSelectors,
+                                                                                           *selectors,
                                                                                            propertyName);
             value != juce::var{})
         {
@@ -259,7 +320,7 @@ namespace jive
              stateToSearch = stateToSearch.getParent())
         {
             if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::childrenOnly>(stateToSearch,
-                                                                                          applicableSelectors,
+                                                                                          *selectors,
                                                                                           propertyName);
                 value != juce::var{})
             {
@@ -272,23 +333,12 @@ namespace jive
 
     juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
     {
-        juce::StringArray applicableSelectors;
-
-        for (auto currentState = state;
-             currentState.isValid();
-             currentState = currentState.getParent())
+        for (juce::ReferenceCountedObjectPtr<StyleSheet> styleSheetToSearch{ const_cast<StyleSheet*>(this) };
+             styleSheetToSearch != nullptr;
+             styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
         {
-            applicableSelectors.add(currentState.getType().toString());
-        }
-
-        applicableSelectors.addArray(findApplicableSelectorsInOrderOfSpecificity());
-
-        for (auto stateToSearch = state;
-             stateToSearch.isValid();
-             stateToSearch = stateToSearch.getParent())
-        {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(stateToSearch,
-                                                                                               applicableSelectors,
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(styleSheetToSearch->state,
+                                                                                               *styleSheetToSearch->selectors,
                                                                                                propertyName);
                 value != juce::var{})
             {
@@ -299,6 +349,37 @@ namespace jive
         return {};
     }
 
+    juce::ReferenceCountedObjectPtr<StyleSheet> StyleSheet::findClosestAncestorStyleSheet()
+    {
+        for (auto* parent = component->getParentComponent();
+             parent != nullptr;
+             parent = parent->getParentComponent())
+        {
+            if (auto& properties = parent->getProperties();
+                properties.contains("style-sheet"))
+            {
+                return dynamic_cast<StyleSheet*>(properties["style-sheet"].getObject());
+            }
+        }
+
+        return nullptr;
+    }
+
+    juce::Array<StyleSheet::ReferenceCountedPointer> StyleSheet::collectChildSheets()
+    {
+        juce::Array<ReferenceCountedPointer> result;
+
+        for (auto* const child : component->getChildren())
+        {
+            auto& properties = child->getProperties();
+
+            if (properties.contains("style-sheet"))
+                result.add(dynamic_cast<StyleSheet*>(properties["style-sheet"].getObject()));
+        }
+
+        return result;
+    }
+
     //==================================================================================================================
     void StyleSheet::applyStyles()
     {
@@ -306,13 +387,24 @@ namespace jive
         backgroundCanvas.setBorderFill(getBorderFill());
         backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
-        backgroundCanvas.repaint();
+
+        const auto foregroundColour = *getForeground().getColour();
+        const auto font = getFont();
 
         if (auto* text = dynamic_cast<TextComponent*>(component.getComponent()))
         {
-            text->setTextColour(*getForeground().getColour());
-            text->setFont(getFont());
+            text->setTextColour(foregroundColour);
+            text->setFont(font);
         }
+        if (state.getType().toString().compareIgnoreCase("svg") == 0)
+        {
+            state.setProperty("fill",
+                              "#" + foregroundColour.toDisplayString(false),
+                              nullptr);
+        }
+
+        for (auto child : collectChildSheets())
+            child->applyStyles();
     }
 } // namespace jive
 

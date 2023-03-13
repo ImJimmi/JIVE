@@ -89,7 +89,17 @@ namespace jive
         if (state.getType().toString().compareIgnoreCase("svg") == 0)
         {
             if (childComponent != nullptr)
+            {
                 setChildComponent(createChildComponent());
+
+                childComponent->setBounds(component->getLocalBounds());
+
+                if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+                {
+                    drawable->setTransformToFit(component->getLocalBounds().toFloat(),
+                                                placement.get());
+                }
+            }
         }
     }
 

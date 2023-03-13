@@ -34,7 +34,7 @@ namespace jive
         GuiItem(std::unique_ptr<juce::Component> component,
                 juce::ValueTree stateSource,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                std::unique_ptr<StyleSheet> styleSheet,
+                StyleSheet::ReferenceCountedPointer styleSheet,
 #endif
                 GuiItem* parent = nullptr);
 
@@ -90,7 +90,7 @@ namespace jive
         GuiItem(std::shared_ptr<juce::Component> component,
                 GuiItem* parent,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                std::unique_ptr<StyleSheet> sheet,
+                StyleSheet::ReferenceCountedPointer sheet,
 #endif
                 juce::ValueTree stateSource);
 
@@ -98,7 +98,7 @@ namespace jive
         juce::OwnedArray<GuiItem> children;
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        const std::unique_ptr<StyleSheet> styleSheet;
+        const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
 
         Property<juce::String> name;

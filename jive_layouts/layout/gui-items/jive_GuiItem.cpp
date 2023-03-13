@@ -7,7 +7,7 @@ namespace jive
     GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
                      GuiItem* parentItem,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                     std::unique_ptr<StyleSheet> sheet,
+                     StyleSheet::ReferenceCountedPointer sheet,
 #endif
                      juce::ValueTree stateSource)
         : state{ stateSource }
@@ -15,7 +15,7 @@ namespace jive
         , component{ comp }
         , parent{ parentItem }
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        , styleSheet{ std::move(sheet) }
+        , styleSheet{ sheet }
 #endif
         , name{ stateSource, "name" }
         , title{ stateSource, "title" }
@@ -150,7 +150,7 @@ namespace jive
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
                      juce::ValueTree sourceState,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                     std::unique_ptr<StyleSheet> sheet,
+                     StyleSheet::ReferenceCountedPointer sheet,
 #endif
                      GuiItem* parentItem)
         : GuiItem

@@ -18,3 +18,5 @@
 #include "graphics/jive_FontUtilities.cpp"
 #include "graphics/jive_Gradient.cpp"
 #include "graphics/jive_LookAndFeel.cpp"
+
+#include "interface/jive_ComponentInteractionState.cpp"

@@ -36,3 +36,5 @@ END_JUCE_MODULE_DECLARATION */
 #include "graphics/jive_LookAndFeel.h"
 
 #include "graphics/jive_Fill.h"
+
+#include "interface/jive_ComponentInteractionState.h"
