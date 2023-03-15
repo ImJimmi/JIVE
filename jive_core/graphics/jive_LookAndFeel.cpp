@@ -184,14 +184,6 @@ namespace jive
     {
     }
 
-    void LookAndFeel::fillResizableWindowBackground(juce::Graphics&,
-                                                    int /* w */,
-                                                    int /* h */,
-                                                    const juce::BorderSize<int>&,
-                                                    juce::ResizableWindow&)
-    {
-    }
-
     void LookAndFeel::drawResizableWindowBorder(juce::Graphics&,
                                                 int /* w */,
                                                 int /* h */,
