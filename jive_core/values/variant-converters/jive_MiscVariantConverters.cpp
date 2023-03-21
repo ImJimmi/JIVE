@@ -306,4 +306,25 @@ namespace juce
     {
         return point.toString();
     }
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    Rectangle<Arithmetic> VariantConverter<Rectangle<Arithmetic>>::fromVar(const var& value)
+    {
+        const auto tokens = StringArray::fromTokens(value.toString(), " ", "");
+        jassert(tokens.size() == 4);
+
+        return Rectangle{
+            static_cast<Arithmetic>(tokens[0].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[1].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[2].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[3].getDoubleValue()),
+        };
+    }
+
+    template <typename Arithmetic>
+    var VariantConverter<Rectangle<Arithmetic>>::toVar(const Rectangle<Arithmetic>& rectangle)
+    {
+        return rectangle.toString();
+    }
 } // namespace juce

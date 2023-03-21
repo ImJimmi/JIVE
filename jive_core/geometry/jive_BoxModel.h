@@ -22,10 +22,9 @@ namespace jive
         //==============================================================================================================
         float getWidth() const;
         bool hasAutoWidth() const;
-        void setWidth(float newWidth);
         float getHeight() const;
         bool hasAutoHeight() const;
-        void setHeight(float newHeight);
+        void setSize(float newWidth, float newHeight);
 
         juce::BorderSize<float> getPadding() const;
         juce::BorderSize<float> getBorder() const;
@@ -56,8 +55,7 @@ namespace jive
         Length autoMinHeight;
         Property<float> idealWidth;
         Property<float> idealHeight;
-        Property<float> componentWidth;
-        Property<float> componentHeight;
+        Property<juce::Rectangle<float>> componentSize;
         Property<juce::BorderSize<float>> padding;
         Property<juce::BorderSize<float>> border;
         Property<juce::BorderSize<float>> margin;

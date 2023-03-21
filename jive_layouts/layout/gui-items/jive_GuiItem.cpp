@@ -302,8 +302,8 @@ namespace jive
             return;
 
         const auto componentBounds = component->getBounds().toFloat();
-        boxModel.setWidth(componentBounds.getWidth());
-        boxModel.setHeight(componentBounds.getHeight());
+        boxModel.setSize(componentBounds.getWidth(),
+                         componentBounds.getHeight());
         layOutChildren();
     }
 
