@@ -15,7 +15,7 @@ namespace jive
         juce::Slider::SliderStyle getStyleForOrientation(Orientation orientation) final;
 
         //==============================================================================================================
-        TypedValue<bool> draggable;
+        Property<bool> draggable;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Spinner)

@@ -4,22 +4,21 @@
 namespace jive
 {
     //==================================================================================================================
-    class Length : public TypedValue<juce::String>
+    class Length : public Property<juce::String>
     {
     public:
         //==============================================================================================================
-        using TypedValue<juce::String>::TypedValue;
+        using Property<juce::String>::Property;
 
         //==============================================================================================================
         float toPixels(const juce::Rectangle<float>& parentBounds) const;
 
         //==============================================================================================================
-        bool isAuto() const;
         bool isPixels() const;
         bool isPercent() const;
 
         //==============================================================================================================
-        using TypedValue<juce::String>::operator=;
+        using Property<juce::String>::operator=;
 
         //==============================================================================================================
         static const float pixelValueWhenAuto;

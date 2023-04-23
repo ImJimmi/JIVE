@@ -6,7 +6,7 @@
     version:            0.1.0
     name:               JIVE Core
     license:            MIT
-    minimumCppStandard: 14
+    minimumCppStandard: 17
     dependencies:       juce_gui_basics
 END_JUCE_MODULE_DECLARATION */
 
@@ -18,14 +18,14 @@ END_JUCE_MODULE_DECLARATION */
 //======================================================================================================================
 #include "logging/jive_StringStreams.h"
 
-#include "values/jive_AutoValue.h"
-#include "values/jive_TypedValue.h"
+#include "values/jive_Property.h"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.h"
 #include "values/variant-converters/jive_FlexVariantConverters.h"
 #include "values/variant-converters/jive_GridVariantConverters.h"
 #include "values/variant-converters/jive_MiscVariantConverters.h"
 
 #include "geometry/jive_Length.h"
+#include "geometry/jive_Orientation.h"
 
 #include "geometry/jive_BoxModel.h"
 

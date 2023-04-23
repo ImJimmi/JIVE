@@ -27,20 +27,20 @@ namespace jive
         DocumentWindow window;
         LookAndFeel lookAndFeel;
 
-        TypedValue<bool> hasShadow;
-        TypedValue<bool> isNative;
-        TypedValue<bool> isResizable;
-        TypedValue<bool> useCornerResizer;
-        TypedValue<float> minWidth;
-        TypedValue<float> minHeight;
-        TypedValue<float> maxWidth;
-        TypedValue<float> maxHeight;
-        TypedValue<bool> isDraggable;
-        TypedValue<bool> isFullScreen;
-        TypedValue<bool> isMinimised;
-        TypedValue<juce::String> name;
-        TypedValue<float> titleBarHeight;
-        TypedValue<juce::DocumentWindow::TitleBarButtons> titleBarButtons;
+        Property<bool> hasShadow;
+        Property<bool> isNative;
+        Property<bool> isResizable;
+        Property<bool> useCornerResizer;
+        Property<float> minWidth;
+        Property<float> minHeight;
+        Property<float> maxWidth;
+        Property<float> maxHeight;
+        Property<bool> isDraggable;
+        Property<bool> isFullScreen;
+        Property<bool> isMinimised;
+        Property<juce::String> name;
+        Property<float> titleBarHeight;
+        Property<juce::DocumentWindow::TitleBarButtons> titleBarButtons;
         Length width;
         Length height;
 

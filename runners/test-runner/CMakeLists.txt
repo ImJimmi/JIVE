@@ -25,7 +25,7 @@ PRIVATE
 
 target_compile_features(jive-test-runner
 PRIVATE
-    cxx_std_14
+    cxx_std_17
 )
 
 if (APPLE)

@@ -20,11 +20,6 @@ namespace jive
     }
 
     //==================================================================================================================
-    bool Length::isAuto() const
-    {
-        return (!exists()) || get() == "auto";
-    }
-
     bool Length::isPixels() const
     {
         return !isAuto() && !isPercent();
@@ -32,7 +27,7 @@ namespace jive
 
     bool Length::isPercent() const
     {
-        return !isAuto() && get().endsWith("%");
+        return !isAuto() && toString().endsWith("%");
     }
 
     //==================================================================================================================
@@ -40,7 +35,7 @@ namespace jive
     {
         jassert(tree.getParent().isValid());
 
-        if (id.toString().contains("width") || id.toString().contains("x"))
+        if (id.toString().containsIgnoreCase("width") || id.toString().containsIgnoreCase("x"))
             return parentBounds.getWidth();
 
         return parentBounds.getHeight();

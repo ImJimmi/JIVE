@@ -4,7 +4,6 @@
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"
 #include "utilities/jive_Drawable.cpp"
-#include "utilities/jive_Orientation.cpp"
 #include "utilities/jive_Overflow.cpp"
 
 #include "layout/gui-items/jive_GuiItem.cpp"

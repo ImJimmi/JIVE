@@ -16,17 +16,17 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<int> flexItemOrder;
-        TypedValue<float> flexItemGrow;
-        TypedValue<float> flexItemShrink;
-        TypedValue<float> flexItemBasis;
-        TypedValue<juce::FlexItem::AlignSelf> flexItemAlignSelf;
+        Property<int> flexItemOrder;
+        Property<float> flexItemGrow;
+        Property<float> flexItemShrink;
+        Property<float> flexItemBasis;
+        Property<juce::FlexItem::AlignSelf> flexItemAlignSelf;
         const Length width;
         const Length height;
         const Length minWidth;
         const Length minHeight;
-        const TypedValue<float> idealWidth;
-        const TypedValue<float> idealHeight;
+        const Property<float> idealWidth;
+        const Property<float> idealHeight;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)

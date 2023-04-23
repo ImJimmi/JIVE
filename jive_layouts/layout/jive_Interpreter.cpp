@@ -41,7 +41,7 @@ namespace jive
     //==================================================================================================================
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
-        TypedValue<Display> display{ item->state, "display" };
+        Property<Display> display{ item->state, "display" };
 
         switch (display.get())
         {
@@ -63,7 +63,7 @@ namespace jive
         if (item->getParent() == nullptr)
             return item;
 
-        TypedValue<Display> display{ item->state.getParent(), "display" };
+        Property<Display> display{ item->state.getParent(), "display" };
 
         switch (display.get())
         {

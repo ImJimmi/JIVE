@@ -19,7 +19,7 @@ namespace jive
 
     private:
         //==============================================================================================================
-        TypedValue<double> value;
+        Property<double> value;
         Length width;
         Length height;
 

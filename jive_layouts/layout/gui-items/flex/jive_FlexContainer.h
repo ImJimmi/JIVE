@@ -25,11 +25,11 @@ namespace jive
         juce::FlexBox buildFlexBox(juce::Rectangle<float> bounds, LayoutStrategy strategy);
 
         //==============================================================================================================
-        TypedValue<juce::FlexBox::Direction> flexDirection;
-        TypedValue<juce::FlexBox::Wrap> flexWrap;
-        TypedValue<juce::FlexBox::JustifyContent> flexJustifyContent;
-        TypedValue<juce::FlexBox::AlignItems> flexAlignItems;
-        TypedValue<juce::FlexBox::AlignContent> flexAlignContent;
+        Property<juce::FlexBox::Direction> flexDirection;
+        Property<juce::FlexBox::Wrap> flexWrap;
+        Property<juce::FlexBox::JustifyContent> flexJustifyContent;
+        Property<juce::FlexBox::AlignItems> flexAlignItems;
+        Property<juce::FlexBox::AlignContent> flexAlignContent;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)
