@@ -26,6 +26,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "values/variant-converters/jive_MiscVariantConverters.h"
 
 #include "geometry/jive_Length.h"
+#include "geometry/jive_Orientation.h"
 
 #include "geometry/jive_BoxModel.h"
 

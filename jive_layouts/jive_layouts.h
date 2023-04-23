@@ -27,7 +27,6 @@ namespace jive
 #include "utilities/jive_Display.h"
 #include "utilities/jive_Drawable.h"
 #include "utilities/jive_LayoutStrategy.h"
-#include "utilities/jive_Orientation.h"
 #include "utilities/jive_Overflow.h"
 
 #include "layout/gui-items/jive_GuiItem.h"
