@@ -90,7 +90,7 @@ namespace jive
             return std::make_unique<ComboBox>(std::move(item));
         if (name == "Hyperlink")
             return std::make_unique<Hyperlink>(std::move(item));
-        if (name == "Image")
+        if (name == "Image" || name.compareIgnoreCase("svg") == 0)
             return std::make_unique<Image>(std::move(item));
         if (name == "Knob")
             return std::make_unique<Knob>(std::move(item));
@@ -163,6 +163,13 @@ namespace jive
             {
                 auto propertyName = tree.getPropertyName(i);
                 replacement.setProperty(propertyName, tree[propertyName], nullptr);
+            }
+
+            for (auto child : tree)
+            {
+                replacement.addChild(child.createCopy(),
+                                     tree.indexOf(child),
+                                     nullptr);
             }
 
             auto parent = tree.getParent();

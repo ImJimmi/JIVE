@@ -40,6 +40,11 @@ namespace jive
 
     Drawable Image::getDrawable() const
     {
+        const auto isInlineSVG = state.getType().toString().compareIgnoreCase("svg") == 0;
+
+        if (isInlineSVG)
+            return Drawable{ state.toXmlString() };
+
         return source.get();
     }
 
@@ -52,7 +57,15 @@ namespace jive
             return;
 
         if (childComponent != nullptr)
+        {
             childComponent->setBounds(component->getLocalBounds());
+
+            if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
+            {
+                drawable->setTransformToFit(component->getLocalBounds().toFloat(),
+                                            placement.get());
+            }
+        }
     }
 
     void Image::boxModelChanged(BoxModel& boxModelThatChanged)
@@ -64,6 +77,20 @@ namespace jive
 
         if (childComponent != nullptr)
             childComponent->setBounds(component->getLocalBounds());
+
+        idealWidth = juce::String{ calculateRequiredWidth() };
+        idealHeight = juce::String{ calculateRequiredHeight() };
+    }
+
+    void Image::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        GuiItemDecorator::valueTreePropertyChanged(tree, property);
+
+        if (state.getType().toString().compareIgnoreCase("svg") == 0)
+        {
+            if (childComponent != nullptr)
+                setChildComponent(createChildComponent());
+        }
     }
 
     //==================================================================================================================
@@ -82,7 +109,13 @@ namespace jive
 
     float Image::calculateRequiredWidth(const juce::Drawable& drawable) const
     {
-        return drawable.getDrawableBounds().getWidth();
+        const auto drawableBounds = drawable.getDrawableBounds();
+
+        if (boxModel.hasAutoHeight())
+            return drawableBounds.getWidth();
+
+        const auto scale = boxModel.getHeight() / drawableBounds.getHeight();
+        return drawableBounds.getWidth() * scale;
     }
 
     float Image::calculateRequiredWidth() const
@@ -106,7 +139,13 @@ namespace jive
 
     float Image::calculateRequiredHeight(const juce::Drawable& drawable) const
     {
-        return drawable.getDrawableBounds().getHeight();
+        const auto drawableBounds = drawable.getDrawableBounds();
+
+        if (boxModel.hasAutoWidth())
+            return drawableBounds.getHeight();
+
+        const auto scale = boxModel.getWidth() / drawableBounds.getWidth();
+        return drawableBounds.getHeight() * scale;
     }
 
     float Image::calculateRequiredHeight() const
@@ -151,10 +190,14 @@ namespace jive
 
     void Image::setChildComponent(std::unique_ptr<juce::Component> newComponent)
     {
-        childComponent = std::move(newComponent);
-
-        if (childComponent == nullptr)
+        if (newComponent == nullptr)
+        {
+            childComponent = nullptr;
             return;
+        }
+
+        childComponent.reset();
+        childComponent = std::move(newComponent);
 
         component->addAndMakeVisible(*childComponent);
         childComponent->setBounds(component->getLocalBounds());
@@ -181,6 +224,7 @@ public:
         testAutoSize();
         testChildComponent();
         testSVG();
+        testInlineSVG();
     }
 
 private:
@@ -445,6 +489,29 @@ private:
             expectEquals(item.boxModel.getWidth(), 155.0f);
             expectEquals(item.boxModel.getHeight(), 155.0f);
         }
+    }
+
+    void testInlineSVG()
+    {
+        beginTest("inline SVG");
+
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 300 },
+                { "height", 200 },
+            },
+            {
+                juce::ValueTree::fromXml(R"(
+                    <svg></svg>
+                )"),
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(state);
+        auto& image = *dynamic_cast<jive::GuiItemDecorator*>(&parent->getChild(0))
+                           ->toType<jive::Image>();
+        expect(image.getDrawable().isSVG());
     }
 };
 

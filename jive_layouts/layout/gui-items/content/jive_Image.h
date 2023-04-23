@@ -20,6 +20,7 @@ namespace jive
         //==============================================================================================================
         void componentMovedOrResized(juce::Component&, bool, bool) override;
         void boxModelChanged(BoxModel& boxModelThatChanged) override;
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id) override;
 
     private:
         //==============================================================================================================
@@ -38,13 +39,13 @@ namespace jive
 
         //==============================================================================================================
         TypedValue<Drawable> source;
+        std::unique_ptr<juce::Component> childComponent;
+
         TypedValue<juce::RectanglePlacement> placement;
         Length width;
         Length height;
         Length idealWidth;
         Length idealHeight;
-
-        std::unique_ptr<juce::Component> childComponent;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Image)
