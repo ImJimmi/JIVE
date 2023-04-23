@@ -9,8 +9,8 @@ public:
     //==================================================================================================================
     TestRunner()
     {
-        // setPassesAreLogged(false);
-        // setAssertOnFailure(false);
+        setPassesAreLogged(false);
+        setAssertOnFailure(false);
     }
 
     //==================================================================================================================
@@ -43,29 +43,29 @@ public:
 
 protected:
     //==================================================================================================================
-    // void logMessage(const juce::String& message) final
-    // {
-    //     if (message.contains("Starting test"))
-    //     {
-    //         static constexpr auto includeSubstring = false;
-    //         static constexpr auto ignoreCase = true;
-    //         latestTestName = message.fromFirstOccurrenceOf(": ", includeSubstring, ignoreCase);
-    //         latestTestName = latestTestName.upToLastOccurrenceOf("...", includeSubstring, ignoreCase);
+    void logMessage(const juce::String& message) final
+    {
+        if (message.contains("Starting test"))
+        {
+            static constexpr auto includeSubstring = false;
+            static constexpr auto ignoreCase = true;
+            latestTestName = message.fromFirstOccurrenceOf(": ", includeSubstring, ignoreCase);
+            latestTestName = latestTestName.upToLastOccurrenceOf("...", includeSubstring, ignoreCase);
 
-    //         return;
-    //     }
+            return;
+        }
 
-    //     if (message.contains("-----------------------------------------------------------------")
-    //         || message.contains("All tests completed successfully")
-    //         || message.contains("FAILED!!")
-    //         || message.trim().isEmpty()
-    //         || message.contains("Completed test"))
-    //     {
-    //         return;
-    //     }
+        if (message.contains("-----------------------------------------------------------------")
+            || message.contains("All tests completed successfully")
+            || message.contains("FAILED!!")
+            || message.trim().isEmpty()
+            || message.contains("Completed test"))
+        {
+            return;
+        }
 
-    //     DBG("[" << latestTestName << "] " << message.fromLastOccurrenceOf("!!! ", false, true));
-    // }
+        DBG("[" << latestTestName << "] " << message.fromLastOccurrenceOf("!!! ", false, true));
+    }
 
 private:
     //==================================================================================================================
