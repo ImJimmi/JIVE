@@ -19,6 +19,11 @@ namespace jive
         componentFactory = newFactory;
     }
 
+    void Interpreter::setAlias(juce::Identifier aliasType, juce::ValueTree treeToReplaceWith)
+    {
+        aliases.emplace(aliasType, treeToReplaceWith.createCopy());
+    }
+
     template <typename Decorator>
     void Interpreter::addDecorator(const juce::Identifier& itemType)
     {
@@ -147,8 +152,32 @@ namespace jive
         return item;
     }
 
+    void Interpreter::expandAlias(juce::ValueTree& tree) const
+    {
+        if (const auto alias = aliases.find(tree.getType());
+            alias != std::end(aliases))
+        {
+            auto replacement = alias->second.createCopy();
+
+            for (auto i = 0; i < tree.getNumProperties(); i++)
+            {
+                auto propertyName = tree.getPropertyName(i);
+                replacement.setProperty(propertyName, tree[propertyName], nullptr);
+            }
+
+            auto parent = tree.getParent();
+            const auto indexInParent = parent.indexOf(tree);
+
+            parent.removeChild(tree, nullptr);
+            parent.addChild(replacement, indexInParent, nullptr);
+            tree = replacement;
+        }
+    }
+
     std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const
     {
+        expandAlias(tree);
+
         if (auto component = createComponent(tree))
             return std::make_unique<GuiItem>(std::move(component), tree, parent);
 
@@ -168,8 +197,8 @@ namespace jive
 
     void Interpreter::appendChildItems(GuiItem& item) const
     {
-        for (auto childTree : item.state)
-            appendChild(item, childTree);
+        for (auto i = 0; i < item.state.getNumChildren(); i++)
+            appendChild(item, item.state.getChild(i));
     }
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(juce::ValueTree tree) const
@@ -196,6 +225,7 @@ public:
         testInitialLayout();
         testWindowContent();
         testCustomDecorators();
+        testAliases();
     }
 
 private:
@@ -452,6 +482,46 @@ private:
         decorator = dynamic_cast<jive::GuiItemDecorator*>(item.get());
         expect(decorator->toType<MyDecorator>() != nullptr);
         expect(decorator->toType<MyOtherDecorator>() != nullptr);
+    }
+
+    void testAliases()
+    {
+        beginTest("aliases");
+
+        const juce::ValueTree state{
+            "Window",
+            {
+                { "width", 123 },
+                { "height", 456 },
+            },
+            {
+                juce::ValueTree{
+                    "SomeAlias",
+                    {
+                        { "padding", 10 },
+                        { "margin", "1 2 3 4" },
+                    },
+                },
+            },
+        };
+
+        jive::Interpreter interpreter;
+        auto window = interpreter.interpret(state);
+        expect(window->getNumChildren() == 0);
+
+        interpreter.setAlias("SomeAlias",
+                             juce::ValueTree{
+                                 "Button",
+                                 {
+                                     { "margin", 33 },
+                                     { "enabled", false },
+                                 },
+                             });
+        window = interpreter.interpret(state);
+        expectEquals(window->getNumChildren(), 1);
+        expectEquals(window->getChild(0).state["padding"].toString(), juce::String{ "10" });
+        expectEquals(window->getChild(0).state["margin"].toString(), juce::String{ "1 2 3 4" });
+        expect(!static_cast<bool>(window->getChild(0).state["enabled"]));
     }
 };
 

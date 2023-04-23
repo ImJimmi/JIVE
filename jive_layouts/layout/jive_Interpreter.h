@@ -12,6 +12,8 @@ namespace jive
         ComponentFactory& getComponentFactory();
         void setComponentFactory(const ComponentFactory& newFactory);
 
+        void setAlias(juce::Identifier aliasType, juce::ValueTree treeToReplaceWith);
+
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType);
 
@@ -22,6 +24,8 @@ namespace jive
         //==============================================================================================================
         std::unique_ptr<GuiItem> interpret(juce::ValueTree tree, GuiItem* const parent) const;
 
+        void expandAlias(juce::ValueTree& tree) const;
+
         std::unique_ptr<GuiItem> createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const;
         void appendChild(GuiItem& item, juce::ValueTree childState) const;
         void appendChildItems(GuiItem& item) const;
@@ -31,6 +35,7 @@ namespace jive
         //==============================================================================================================
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
+        std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
 
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(Interpreter)
