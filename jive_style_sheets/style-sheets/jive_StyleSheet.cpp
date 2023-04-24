@@ -457,7 +457,7 @@ private:
 
         juce::Component component;
         juce::ValueTree state{ "Component" };
-        jive::StyleSheet styleSheet{ component, state };
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
         expectEquals(component.getNumChildComponents(), 1);
         expect(jive::find<jive::BackgroundCanvas>(component) != nullptr);
 
@@ -539,7 +539,7 @@ private:
 
         juce::Component component;
         juce::ValueTree state{ "Component" };
-        jive::StyleSheet styleSheet{ component, state };
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
         component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
                           R"(
@@ -590,7 +590,7 @@ private:
 
         juce::Component component;
         juce::ValueTree state{ "CustomType" };
-        jive::StyleSheet styleSheet{ component, state };
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
 
         component.setBounds(0, 0, 10, 10);
         state.setProperty("style",
