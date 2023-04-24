@@ -223,4 +223,108 @@ namespace juce
 
         return stringFlagPair->first;
     }
+
+    //==================================================================================================================
+    StringArray getTokensBetweenParentheses(const String& text)
+    {
+        static constexpr auto includeSubString = false;
+        static constexpr auto ignoreCase = true;
+        const auto values = text.fromLastOccurrenceOf("(", includeSubString, ignoreCase)
+                                .upToFirstOccurrenceOf(")", includeSubString, ignoreCase);
+        return StringArray::fromTokens(values, ",", "");
+    }
+
+    Colour parseRgbColourString(const String& text)
+    {
+        const auto tokens = getTokensBetweenParentheses(text);
+        jassert(tokens.size() >= 3);
+
+        const auto red = static_cast<uint8>(tokens[0].getIntValue());
+        const auto green = static_cast<uint8>(tokens[1].getIntValue());
+        const auto blue = static_cast<uint8>(tokens[2].getIntValue());
+        const auto alpha = static_cast<uint8>(roundToInt(255.0f * (tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f)));
+
+        return Colour::fromRGBA(red, green, blue, alpha);
+    }
+
+    Colour parseHslColourString(const String& text)
+    {
+        const auto tokens = getTokensBetweenParentheses(text);
+        jassert(tokens.size() >= 3);
+
+        const auto hue = tokens[0].getFloatValue() / 360.0f;
+        const auto saturation = tokens[1].getFloatValue() / 100.0f;
+        const auto lightness = tokens[2].getFloatValue() / 100.0f;
+        const auto alpha = tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f;
+
+        return Colour::fromHSL(hue, saturation, lightness, alpha);
+    }
+
+    Colour VariantConverter<Colour>::fromVar(const var& v)
+    {
+        if (v.isString())
+        {
+            auto text = v.toString();
+
+            if (text.startsWith("rgb"))
+                return parseRgbColourString(text);
+            if (text.startsWith("hsl"))
+                return parseHslColourString(text);
+
+            if (text.startsWith("#"))
+                text = text.replace("#", "0xFF");
+
+            return Colour::fromString(text);
+        }
+
+        if (v.isInt() || v.isInt64())
+            return Colour{ static_cast<uint32>(static_cast<int64>(v)) };
+
+        return Colour{};
+    }
+
+    var VariantConverter<Colour>::toVar(const Colour& colour)
+    {
+        return colour.toString();
+    }
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    Point<Arithmetic> VariantConverter<Point<Arithmetic>>::fromVar(const var& value)
+    {
+        const auto tokens = StringArray::fromTokens(value.toString(), ",", "");
+        jassert(tokens.size() == 2);
+
+        return Point<Arithmetic>{
+            static_cast<Arithmetic>(tokens[0].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[1].getDoubleValue()),
+        };
+    }
+
+    template <typename Arithmetic>
+    var VariantConverter<Point<Arithmetic>>::toVar(const Point<Arithmetic>& point)
+    {
+        return point.toString();
+    }
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    Rectangle<Arithmetic> VariantConverter<Rectangle<Arithmetic>>::fromVar(const var& value)
+    {
+        const auto tokens = StringArray::fromTokens(value.toString(), " ", "");
+        jassert(tokens.size() == 4);
+
+        return Rectangle{
+            static_cast<Arithmetic>(tokens[0].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[1].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[2].getDoubleValue()),
+            static_cast<Arithmetic>(tokens[3].getDoubleValue()),
+        };
+    }
+
+    template <typename Arithmetic>
+    var VariantConverter<Rectangle<Arithmetic>>::toVar(const Rectangle<Arithmetic>& rectangle)
+    {
+        return rectangle.toString();
+    }
 } // namespace juce

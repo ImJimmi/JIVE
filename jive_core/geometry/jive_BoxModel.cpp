@@ -14,8 +14,7 @@ namespace jive
         , autoMinHeight{ state, "auto-min-height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
-        , componentWidth{ state, "component-width" }
-        , componentHeight{ state, "component-height" }
+        , componentSize{ state, "component-size" }
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
@@ -25,8 +24,10 @@ namespace jive
             parentBoxModel = std::make_unique<BoxModel>(state.getParent());
 
         const auto recalculateSize = [this]() {
-            componentWidth = calculateComponentWidth();
-            componentHeight = calculateComponentHeight();
+            componentSize = juce::Rectangle{
+                calculateComponentWidth(),
+                calculateComponentHeight(),
+            };
         };
 
         width.onValueChange = recalculateSize;
@@ -50,8 +51,7 @@ namespace jive
         autoMinHeight.onValueChange = onBoxModelChanged;
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
-        componentWidth.onValueChange = onBoxModelChanged;
-        componentHeight.onValueChange = onBoxModelChanged;
+        componentSize.onValueChange = onBoxModelChanged;
 
         isValid.onValueChange = [this]() {
             if (!isValid.get())
@@ -62,7 +62,7 @@ namespace jive
     //==================================================================================================================
     float BoxModel::getWidth() const
     {
-        return componentWidth.get();
+        return componentSize.get().getWidth();
     }
 
     bool BoxModel::hasAutoWidth() const
@@ -70,14 +70,9 @@ namespace jive
         return width.isAuto();
     }
 
-    void BoxModel::setWidth(float newWidth)
-    {
-        componentWidth = newWidth;
-    }
-
     float BoxModel::getHeight() const
     {
-        return componentHeight.get();
+        return componentSize.get().getHeight();
     }
 
     bool BoxModel::hasAutoHeight() const
@@ -85,9 +80,15 @@ namespace jive
         return height.isAuto();
     }
 
-    void BoxModel::setHeight(float newHeight)
+    void BoxModel::setSize(float newWidth, float newHeight)
     {
-        componentHeight = newHeight;
+        componentSize = juce::Rectangle{ newWidth, newHeight };
+
+        if (!state.getParent().isValid())
+        {
+            width = juce::String{ juce::roundToInt(newWidth) };
+            height = juce::String{ juce::roundToInt(newHeight) };
+        }
     }
 
     juce::BorderSize<float> BoxModel::getPadding() const
@@ -107,10 +108,7 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getBounds() const
     {
-        return juce::Rectangle<float>{
-            componentWidth.get(),
-            componentHeight.get(),
-        };
+        return componentSize.get();
     }
 
     juce::Rectangle<float> BoxModel::getParentBounds() const

@@ -4,11 +4,19 @@
 namespace jive
 {
     //==================================================================================================================
-    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp, GuiItem* parentItem, juce::ValueTree stateSource)
+    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
+                     GuiItem* parentItem,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                     StyleSheet::ReferenceCountedPointer sheet,
+#endif
+                     juce::ValueTree stateSource)
         : state{ stateSource }
         , boxModel{ stateSource }
         , component{ comp }
         , parent{ parentItem }
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+        , styleSheet{ sheet }
+#endif
         , name{ stateSource, "name" }
         , title{ stateSource, "title" }
         , id{ stateSource, "id" }
@@ -139,13 +147,34 @@ namespace jive
         boxModel.addListener(*this);
     }
 
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp, juce::ValueTree sourceState, GuiItem* parentItem)
-        : GuiItem{ std::shared_ptr<juce::Component>{ std::move(comp) }, parentItem, sourceState }
+    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
+                     juce::ValueTree sourceState,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                     StyleSheet::ReferenceCountedPointer sheet,
+#endif
+                     GuiItem* parentItem)
+        : GuiItem
+    {
+        std::shared_ptr<juce::Component>{ std::move(comp) },
+            parentItem,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+            std::move(sheet),
+#endif
+            sourceState,
+    }
     {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
-        : GuiItem{ other.component, other.parent, other.state }
+        : GuiItem
+    {
+        other.component,
+            other.parent,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+            nullptr,
+#endif
+            other.state,
+    }
     {
     }
 
@@ -273,8 +302,8 @@ namespace jive
             return;
 
         const auto componentBounds = component->getBounds().toFloat();
-        boxModel.setWidth(componentBounds.getWidth());
-        boxModel.setHeight(componentBounds.getHeight());
+        boxModel.setSize(componentBounds.getWidth(),
+                         componentBounds.getHeight());
         layOutChildren();
     }
 

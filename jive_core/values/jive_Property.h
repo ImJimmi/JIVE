@@ -42,6 +42,12 @@ namespace jive
                 treeToListenTo = tree;
 
             treeToListenTo.addListener(this);
+
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (tree[id].isString())
+                    tree.setProperty(id, parseJSON(tree[id].toString()), nullptr);
+            }
         }
 
         Property(juce::ValueTree sourceTree,
@@ -75,10 +81,28 @@ namespace jive
 
         ValueType getOr(const ValueType& valueIfNotExists) const
         {
-            if (!exists())
-                return valueIfNotExists;
+            if (exists())
+                return get();
 
-            return get();
+            switch (hereditaryBehavior)
+            {
+            case HereditaryValueBehaviour::inheritFromParent:
+            {
+                if (auto value = tree.getParent()[id];
+                    value != juce::var{})
+                    return Converter::fromVar(value);
+            }
+            case HereditaryValueBehaviour::inheritFromAncestors:
+            {
+                if (auto value = findPropertyInLatestAncestor();
+                    value != juce::var{})
+                    return Converter::fromVar(value);
+            }
+            case HereditaryValueBehaviour::doNotInherit:
+                return valueIfNotExists;
+            }
+
+            return valueIfNotExists;
         }
 
         void set(const ValueType& newValue)
@@ -120,7 +144,7 @@ namespace jive
             return get();
         }
 
-        Property<ValueType>& operator=(const ValueType& newValue)
+        Property<ValueType, hereditaryBehavior>& operator=(const ValueType& newValue)
         {
             set(newValue);
             return *this;
@@ -170,10 +194,13 @@ namespace jive
         {
             auto treeToSearch = tree.getParent();
 
-            while (!treeToSearch.hasProperty(id))
+            while (treeToSearch.isValid() && !treeToSearch.hasProperty(id))
                 treeToSearch = treeToSearch.getParent();
 
-            return treeToSearch[id];
+            if (treeToSearch.isValid())
+                return treeToSearch[id];
+
+            return {};
         }
 
         //==============================================================================================================

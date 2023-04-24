@@ -2,11 +2,6 @@ juce_add_console_app(jive-test-runner
     VERSION 0.1.0
 )
 
-add_test(
-    NAME jive-tests
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/jive-test-runner_artefacts/jive-test-runner
-)
-
 target_sources(jive-test-runner
 PRIVATE
     source/main.cpp
@@ -15,7 +10,7 @@ PRIVATE
 target_link_libraries(jive-test-runner
 PRIVATE
     jive::jive_layouts
-    juce::juce_gui_basics
+    jive::jive_style_sheets
 )
 
 target_include_directories(jive-test-runner
@@ -54,9 +49,10 @@ endif()
 
 target_compile_definitions(jive-test-runner
 PRIVATE
-    JUCE_DISABLE_JUCE_VERSION_PRINTING=1
+    JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=0
     JIVE_UNIT_TESTS=1
     JUCE_APPLICATION_NAME="JIVE Test Runner"
+    JUCE_DISABLE_JUCE_VERSION_PRINTING=1
 )
 
 if (APPLE)

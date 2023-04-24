@@ -57,7 +57,7 @@ namespace jive
         {
             if (!width.isAuto())
             {
-                flexItem.width = width.toPixels(parentContentBounds);
+                flexItem.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
             }
             else
             {
@@ -72,7 +72,7 @@ namespace jive
 
             if (!height.isAuto())
             {
-                flexItem.height = height.toPixels(parentContentBounds);
+                flexItem.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
             }
             else
             {
@@ -102,13 +102,13 @@ namespace jive
         else
         {
             if (!width.isAuto())
-                flexItem.width = width.toPixels(parentContentBounds);
+                flexItem.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
             else if (idealWidth.exists())
                 flexItem.width = idealWidth.get();
 
             if (!height.isAuto())
             {
-                flexItem.height = height.toPixels(parentContentBounds);
+                flexItem.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
             }
             else
             {
@@ -173,6 +173,7 @@ public:
         testAlignSelf();
         testSize();
         testMargin();
+        testRelativeSizes();
     }
 
 private:
@@ -422,6 +423,35 @@ private:
         expect(flexItem.margin.right == 2.f);
         expect(flexItem.margin.bottom == 3.f);
         expect(flexItem.margin.left == 4.f);
+    }
+
+    void testRelativeSizes()
+    {
+        beginTest("relative sizes");
+
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 300 },
+                { "height", 200 },
+                { "display", "flex" },
+                { "align-items", "flex-start" },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "width", "50%" },
+                        { "height", "10%" },
+                    },
+                },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(state);
+        auto& item = parent->getChild(0);
+        expectEquals(item.boxModel.getWidth(), 150.0f);
+        expectEquals(item.boxModel.getHeight(), 20.0f);
     }
 };
 

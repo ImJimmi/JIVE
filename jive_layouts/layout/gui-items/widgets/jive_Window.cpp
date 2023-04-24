@@ -146,8 +146,8 @@ namespace jive
         if (!wasResized)
             return;
 
-        boxModel.setWidth(static_cast<float>(component->getWidth()));
-        boxModel.setHeight(static_cast<float>(component->getHeight()));
+        boxModel.setSize(static_cast<float>(component->getWidth()),
+                         static_cast<float>(component->getHeight()));
     }
 } // namespace jive
 

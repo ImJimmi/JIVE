@@ -6,71 +6,140 @@ namespace jive
     //==================================================================================================================
     TextComponent::TextComponent()
     {
+        canvas.onPaint = [this](juce::Graphics& g) {
+            if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
+                return;
+
+            getAttributedString()
+                .draw(g, getLocalBounds().toFloat());
+        };
+        canvas.setAlwaysOnTop(true);
+        canvas.setBufferedToImage(true);
+        addAndMakeVisible(canvas);
+
         setInterceptsMouseClicks(false, false);
     }
 
     //==================================================================================================================
-    void TextComponent::paint(juce::Graphics& g)
+    void TextComponent::resized()
     {
-        attributedString.setColour(juce::Colours::white);
-        attributedString.draw(g, getLocalBounds().toFloat());
+        canvas.setBounds(getLocalBounds());
     }
 
     //==================================================================================================================
-    void TextComponent::setText(const juce::String& text)
-    {
-        attributedString.setText(text);
-        repaint();
-    }
-
     const juce::String& TextComponent::getText() const
     {
-        return attributedString.getText();
+        return text;
     }
 
-    void TextComponent::setFont(const juce::Font& font)
+    void TextComponent::setText(const juce::String& newText)
     {
-        attributedString.setFont(font);
-        repaint();
+        if (newText != text)
+        {
+            text = newText;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setJustification(juce::Justification justification)
+    juce::Font TextComponent::getFont() const
     {
-        attributedString.setJustification(justification);
-        repaint();
+        return font;
     }
 
-    void TextComponent::setWordWrap(juce::AttributedString::WordWrap wrap)
+    void TextComponent::setFont(const juce::Font& newFont)
     {
-        attributedString.setWordWrap(wrap);
-        repaint();
+        if (newFont != font)
+        {
+            font = newFont;
+            listeners.call(&Listener::textFontChanged, *this);
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setDirection(juce::AttributedString::ReadingDirection direction)
+    void TextComponent::setJustification(juce::Justification newJustification)
     {
-        attributedString.setReadingDirection(direction);
-        repaint();
+        if (newJustification != justification)
+        {
+            justification = newJustification;
+            canvas.repaint();
+        }
     }
 
-    void TextComponent::setLineSpacing(float spacing)
+    void TextComponent::setWordWrap(juce::AttributedString::WordWrap newWordWrap)
     {
-        attributedString.setLineSpacing(spacing);
-        repaint();
+        if (newWordWrap != wordWrap)
+        {
+            wordWrap = newWordWrap;
+            canvas.repaint();
+        }
+    }
+
+    void TextComponent::setDirection(juce::AttributedString::ReadingDirection newDirection)
+    {
+        if (newDirection != direction)
+        {
+            direction = newDirection;
+            canvas.repaint();
+        }
+    }
+
+    void TextComponent::setLineSpacing(float newLineSpacing)
+    {
+        if (newLineSpacing != lineSpacing)
+        {
+            lineSpacing = newLineSpacing;
+            canvas.repaint();
+        }
+    }
+
+    void TextComponent::setTextColour(juce::Colour newColour)
+    {
+        if (newColour != textColour)
+        {
+            textColour = newColour;
+            canvas.repaint();
+        }
     }
 
     void TextComponent::clearAttributes()
     {
-        attributedString.clear();
+        appendices.clear();
+        canvas.repaint();
     }
 
     void TextComponent::append(const juce::AttributedString& attributedStringToAppend)
     {
-        attributedString.append(attributedStringToAppend);
+        appendices.add(attributedStringToAppend);
+        canvas.repaint();
     }
 
-    const juce::AttributedString& TextComponent::getAttributedString() const
+    juce::AttributedString TextComponent::getAttributedString() const
     {
+        juce::AttributedString attributedString;
+
+        attributedString.setText(text);
+
+        attributedString.setColour(textColour);
+        attributedString.setFont(font);
+        attributedString.setJustification(justification);
+        attributedString.setLineSpacing(lineSpacing);
+        attributedString.setReadingDirection(direction);
+        attributedString.setWordWrap(wordWrap);
+
+        for (const auto& appendix : appendices)
+            attributedString.append(appendix);
+
         return attributedString;
+    }
+
+    void TextComponent::addListener(Listener& listener) const
+    {
+        listeners.add(&listener);
+    }
+
+    void TextComponent::removeListener(Listener& listener) const
+    {
+        listeners.remove(&listener);
     }
 
     //==================================================================================================================

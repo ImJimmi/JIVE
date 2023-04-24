@@ -7,14 +7,21 @@
     name:               JIVE Layouts
     license:            MIT
     minimumCppStandard: 17
-    dependencies:       jive_components jive_core
+    dependencies:       jive_components
 END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_LAYOUTS_H_INCLUDED
 
 //======================================================================================================================
 #include <jive_components/jive_components.h>
-#include <jive_core/jive_core.h>
+
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+    #ifdef __has_include
+        #if __has_include(<jive_style_sheets/jive_style_sheets.h>)
+            #include <jive_style_sheets/jive_style_sheets.h>
+        #endif
+    #endif
+#endif
 
 //======================================================================================================================
 namespace jive

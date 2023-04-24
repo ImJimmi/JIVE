@@ -191,4 +191,34 @@ namespace juce
         //==============================================================================================================
         static const std::unordered_map<String, RectanglePlacement::Flags> map;
     };
+
+    //==================================================================================================================
+    template <>
+    class VariantConverter<Colour>
+    {
+    public:
+        //==============================================================================================================
+        static Colour fromVar(const var& v);
+        static var toVar(const Colour& colour);
+    };
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    class VariantConverter<Point<Arithmetic>>
+    {
+    public:
+        //==============================================================================================================
+        static Point<Arithmetic> fromVar(const var& v);
+        static var toVar(const Point<Arithmetic>& point);
+    };
+
+    //==================================================================================================================
+    template <typename Arithmetic>
+    class VariantConverter<Rectangle<Arithmetic>>
+    {
+    public:
+        //==============================================================================================================
+        static Rectangle<Arithmetic> fromVar(const var& v);
+        static var toVar(const Rectangle<Arithmetic>& rectangle);
+    };
 } // namespace juce

@@ -107,12 +107,6 @@ namespace jive
                                 int w,
                                 int h,
                                 const juce::BorderSize<int>&) override;
-
-        void fillResizableWindowBackground(juce::Graphics&,
-                                           int w,
-                                           int h,
-                                           const juce::BorderSize<int>&,
-                                           juce::ResizableWindow&) override;
         void drawResizableWindowBorder(juce::Graphics&,
                                        int w,
                                        int h,

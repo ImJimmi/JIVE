@@ -4,11 +4,14 @@
 namespace jive
 {
     //==================================================================================================================
-    class Text : public GuiItemDecorator
+    class Text
+        : public GuiItemDecorator
+        , private TextComponent::Listener
     {
     public:
         //==============================================================================================================
         explicit Text(std::unique_ptr<GuiItem> itemToDecorate);
+        ~Text();
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
@@ -20,26 +23,18 @@ namespace jive
         TextComponent& getTextComponent();
         const TextComponent& getTextComponent() const;
 
-    protected:
-        //==============================================================================================================
-        void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
-
     private:
+        //==============================================================================================================
+        void textFontChanged(TextComponent& text) final;
+
         //==============================================================================================================
         juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
 
-        void updateFont();
         void updateTextComponent();
 
         //==============================================================================================================
         Property<juce::String> text;
-        Property<juce::String> typefaceName;
-        Property<juce::String> fontWeight;
-        Property<float> fontHeight;
-        Property<juce::String> fontStyle;
-        Property<float> kerning;
-        Property<float> horizontalScale;
-        Property<float> lineSpacing;
+        Property<float, HereditaryValueBehaviour::inheritFromAncestors> lineSpacing;
         Property<juce::Justification> justification;
         Property<juce::AttributedString::WordWrap> wordWrap;
         Property<juce::AttributedString::ReadingDirection> direction;
