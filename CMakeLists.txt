@@ -13,8 +13,6 @@ if (JIVE_BUILD_TEST_RUNNER)
     add_subdirectory(runners/libraries)
 
     set(CMAKE_XCODE_GENERATE_SCHEME ${DEFAULT_XCODE_GENERATE_SCHEME})
-
-    enable_testing()
 endif()
 
 juce_add_module(jive_components ALIAS_NAMESPACE jive)

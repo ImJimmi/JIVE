@@ -64,7 +64,7 @@ protected:
             return;
         }
 
-        DBG("[" << latestTestName << "] " << message.fromLastOccurrenceOf("!!! ", false, true));
+        std::cout << "[" << latestTestName << "] " << message.fromLastOccurrenceOf("!!! ", false, true) << "\n";
     }
 
 private:
@@ -84,14 +84,14 @@ private:
 
     void logSuccessOrFailure()
     {
-        DBG("\n================================");
+        std::cout << "\n================================\n";
 
         if (getNumFailures() == 0)
-            DBG("ALL TESTS PASSED!");
+            std::cout << "ALL TESTS PASSED!\n";
         else
-            DBG(juce::String{ getNumFailures() } << " tests failed!");
+            std::cout << juce::String{ getNumFailures() } << " tests failed!\n";
 
-        DBG("================================\n");
+        std::cout << "================================\n\n";
     }
 
     //==================================================================================================================
