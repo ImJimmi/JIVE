@@ -3,6 +3,7 @@
 //======================================================================================================================
 #include "logging/jive_StringStreams.cpp"
 
+#include "values/jive_Event.cpp"
 #include "values/jive_Object.cpp"
 #include "values/jive_Property.cpp"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.cpp"

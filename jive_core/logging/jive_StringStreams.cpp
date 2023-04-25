@@ -7,7 +7,7 @@ namespace juce
         return str << "juce::Colour { 0x" << colour.toDisplayString(true) << " }";
     }
 
-    String& operator<<(String& str, const juce::Font& font)
+    String& operator<<(String& str, const Font& font)
     {
         return str << "juce::Font { \"" << font.toString() << "\" }";
     }
@@ -27,5 +27,13 @@ namespace juce
             return str << "juce::var{ \"" << value.toString() << "\" }";
 
         return str << "juce::var{ " << value.toString() << " }";
+    }
+
+    String& operator<<(String& str, const Time& time)
+    {
+        static constexpr auto includeDividers = true;
+        return str << "juce::Time{ "
+                   << time.toISO8601(includeDividers)
+                   << " }";
     }
 } // namespace juce
