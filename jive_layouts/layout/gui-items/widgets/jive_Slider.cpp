@@ -25,6 +25,7 @@ namespace jive
         , velocityThreshold{ state, "velocity-threshold", 1 }
         , velocityOffset{ state, "velocity-offset" }
         , snapToMouse{ state, "snap-to-mouse", true }
+        , onChange{ state, "on-change" }
     {
         min.onValueChange = [this]() {
             updateRange();
@@ -135,6 +136,7 @@ namespace jive
             return;
 
         value = getSlider().getTextFromValue(getSlider().getValue());
+        onChange.triggerWithoutSelfCallback();
     }
 
     //==================================================================================================================
@@ -188,6 +190,7 @@ public:
         testVelocityMode();
         testTextBox();
         testAutoSize();
+        testEvents();
     }
 
 private:
@@ -512,6 +515,31 @@ private:
 
         parentState.getChild(0).setProperty("height", 311.f, nullptr);
         expectEquals(item.boxModel.getHeight(), 311.f);
+    }
+
+    void testEvents()
+    {
+        beginTest("events");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Slider" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& slider = *dynamic_cast<jive::GuiItemDecorator&>(parent->getChild(0))
+                            .toType<jive::Slider>();
+        jive::Event onChange{ parentState.getChild(0), "on-change" };
+        expectEquals(onChange.getAssumedTriggerCount(), 0);
+
+        slider.getSlider().setValue(0.123, juce::sendNotificationSync);
+        expectEquals(onChange.getAssumedTriggerCount(), 1);
     }
 };
 

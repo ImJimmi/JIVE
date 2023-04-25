@@ -52,6 +52,8 @@ namespace jive
         Property<double> velocityOffset;
         Property<bool> snapToMouse;
 
+        Event onChange;
+
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Slider)
     };
