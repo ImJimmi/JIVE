@@ -71,10 +71,10 @@ namespace jive
         Length width;
         Length height;
 
+        Event onChange;
+
         juce::OwnedArray<Option> options;
         juce::OwnedArray<Header> headers;
-
-        std::function<void()> onComboBoxChanged = nullptr;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ComboBox)

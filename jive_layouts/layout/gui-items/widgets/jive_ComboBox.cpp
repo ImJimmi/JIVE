@@ -68,6 +68,7 @@ namespace jive
         , selected{ state, "selected" }
         , width{ state, "width" }
         , height{ state, "height" }
+        , onChange{ state, "on-change" }
     {
         editable.onValueChange = [this]() {
             getComboBox().setEditableText(editable);
@@ -92,10 +93,6 @@ namespace jive
                 if (auto* selectedOption = options[selected])
                     selectedOption->setSelected(true);
             }
-        };
-
-        onComboBoxChanged = [this]() {
-            selected = getComboBox().getSelectedItemIndex();
         };
 
         updateItems();
@@ -164,8 +161,8 @@ namespace jive
     {
         jassertquiet(box == &getComboBox());
 
-        if (onComboBoxChanged != nullptr)
-            onComboBoxChanged();
+        selected = getComboBox().getSelectedItemIndex();
+        onChange.triggerWithoutSelfCallback();
     }
 } // namespace jive
 
@@ -186,6 +183,7 @@ public:
         testTooltip();
         testOptions();
         testSelected();
+        testEvents();
     }
 
 private:
@@ -426,6 +424,41 @@ private:
             auto item = createComboBox(tree);
             expectEquals(item->getComboBox().getSelectedItemIndex(), 1);
         }
+    }
+
+    void testEvents()
+    {
+        beginTest("events");
+
+        juce::ValueTree tree{
+            "ComboBox",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{
+                    "Option",
+                    {
+                        { "text", "One" },
+                        { "selected", true },
+                    },
+                },
+                juce::ValueTree{
+                    "Option",
+                    {
+                        { "text", "Two" },
+                        { "enabled", false },
+                    },
+                },
+            },
+        };
+        auto item = createComboBox(tree);
+        jive::Event onChange{ tree, "on-change" };
+        expectEquals(onChange.getAssumedTriggerCount(), 0);
+
+        item->getComboBox().setSelectedId(2, juce::sendNotificationSync);
+        expectEquals(onChange.getAssumedTriggerCount(), 1);
     }
 };
 
