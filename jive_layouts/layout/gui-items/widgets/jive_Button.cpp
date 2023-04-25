@@ -4,6 +4,19 @@
 namespace jive
 {
     //==================================================================================================================
+    void triggerClick(juce::Button& button)
+    {
+#if JIVE_UNIT_TESTS
+        // Pretty horrible hack to have the triggerClick command message
+        // handled synchronously for the sake of testing.
+        dynamic_cast<juce::Component&>(button)
+            .handleCommandMessage(0x2f3f4f99);
+#else
+        button.triggerClick();
+#endif
+    }
+
+    //==================================================================================================================
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , toggleable{ state, "toggleable" }
@@ -17,6 +30,7 @@ namespace jive
         , padding{ state, "padding", juce::BorderSize<float>{ 0.0f, 5.0f, 0.0f, 5.0f } }
         , minWidth{ state, "min-width", 50.0f }
         , minHeight{ state, "min-height", 20.0f }
+        , onClick{ state, "on-click" }
     {
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -47,6 +61,16 @@ namespace jive
             getButton().setTooltip(tooltip);
         };
         getButton().setTooltip(tooltip);
+
+        onClick.onTrigger = [this]() {
+            triggerClick(getButton());
+        };
+        getButton().addListener(this);
+    }
+
+    Button::~Button()
+    {
+        getButton().removeListener(this);
     }
 
     //==================================================================================================================
@@ -64,6 +88,15 @@ namespace jive
     const juce::Button& Button::getButton() const
     {
         return *dynamic_cast<const juce::Button*>(component.get());
+    }
+
+    //==================================================================================================================
+    void Button::buttonClicked(juce::Button* button)
+    {
+        jassertquiet(button == &getButton());
+
+        toggled = getButton().getToggleState();
+        onClick.triggerWithoutSelfCallback();
     }
 } // namespace jive
 
@@ -109,6 +142,7 @@ public:
         testRadioGroup();
         testTooltip();
         testDefaultSize();
+        testEvents();
     }
 
 private:
@@ -352,9 +386,43 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& button = dynamic_cast<jive::Button&>(parent->getChild(0));
+        auto& button = *dynamic_cast<jive::GuiItemDecorator&>(parent->getChild(0))
+                            .toType<jive::Button>();
         expectEquals(button.boxModel.getWidth(), 50.0f);
         expectEquals(button.boxModel.getHeight(), 20.0f);
+    }
+
+    void testEvents()
+    {
+        beginTest("events");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{ "Button" },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(parentState);
+        auto& button = *dynamic_cast<jive::GuiItemDecorator&>(parent->getChild(0))
+                            .toType<jive::Button>();
+
+        jive::Event clickEvent{ parentState.getChild(0), "on-click" };
+        expectEquals(clickEvent.getAssumedTriggerCount(), 0);
+
+        jive::triggerClick(button.getButton());
+        expectEquals(clickEvent.getAssumedTriggerCount(), 1);
+
+        bool wasTriggered = false;
+        button.getButton().onClick = [&wasTriggered]() {
+            wasTriggered = true;
+        };
+        clickEvent.trigger();
+        expect(wasTriggered);
     }
 };
 

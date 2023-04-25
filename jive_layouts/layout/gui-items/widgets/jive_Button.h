@@ -4,7 +4,9 @@
 namespace jive
 {
     //==================================================================================================================
-    class Button : public GuiItemDecorator
+    class Button
+        : public GuiItemDecorator
+        , private juce::Button::Listener
     {
     public:
         //==============================================================================================================
@@ -16,6 +18,7 @@ namespace jive
 
         //==============================================================================================================
         explicit Button(std::unique_ptr<GuiItem> itemToDecorate);
+        ~Button() override;
 
         //==============================================================================================================
         bool isContainer() const override;
@@ -25,6 +28,9 @@ namespace jive
         const juce::Button& getButton() const;
 
     private:
+        //==============================================================================================================
+        void buttonClicked(juce::Button* button) final;
+
         //==============================================================================================================
         void updateTriggerEvent();
 
@@ -40,6 +46,8 @@ namespace jive
         Property<juce::BorderSize<float>> padding;
         Property<float> minWidth;
         Property<float> minHeight;
+
+        Event onClick;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Button)

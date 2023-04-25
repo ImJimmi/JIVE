@@ -70,6 +70,14 @@ namespace jive
             }
         }
 
+        void triggerWithoutSelfCallback()
+        {
+            const auto callback = onTrigger;
+            onTrigger = nullptr;
+            trigger();
+            onTrigger = callback;
+        }
+
         //==============================================================================================================
         const juce::Identifier id;
 

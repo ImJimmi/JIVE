@@ -61,6 +61,10 @@ private:
             event1.trigger();
             expect(wasTriggered);
 
+            wasTriggered = false;
+            event1.triggerWithoutSelfCallback();
+            expect(!wasTriggered);
+
             event1.onTrigger = nullptr;
         }
 
