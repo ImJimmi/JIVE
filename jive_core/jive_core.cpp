@@ -3,6 +3,8 @@
 //======================================================================================================================
 #include "logging/jive_StringStreams.cpp"
 
+#include "algorithms/jive_Find.cpp"
+
 #include "values/jive_Event.cpp"
 #include "values/jive_Object.cpp"
 #include "values/jive_Property.cpp"
