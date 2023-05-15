@@ -3,9 +3,10 @@
 namespace juce
 {
     String& operator<<(String& str, const Colour& colour);
-    String& operator<<(String& str, const juce::Font& font);
+    String& operator<<(String& str, const Font& font);
     String& operator<<(String& str, const Image& image);
     String& operator<<(String& str, const var& value);
+    String& operator<<(String& str, const Time& time);
 
     template <typename T>
     String& operator<<(String& str, const Point<T>& point)
