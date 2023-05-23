@@ -12,25 +12,27 @@ namespace jive
         , centreY{ state, "centre-y" }
         , width{ state, "width" }
         , height{ state, "height" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(getParent() != nullptr);
 
         x.onValueChange = [this]() {
             centreX.clear();
-            getParent()->layOutChildren();
+            getComponent()->setBounds(calculateBounds());
         };
         y.onValueChange = [this]() {
             centreY.clear();
-            getParent()->layOutChildren();
+            getComponent()->setBounds(calculateBounds());
         };
         centreX.onValueChange = [this]() {
             x.clear();
-            getParent()->layOutChildren();
+            getComponent()->setBounds(calculateBounds());
         };
         centreY.onValueChange = [this]() {
             y.clear();
-            getParent()->layOutChildren();
+            getComponent()->setBounds(calculateBounds());
         };
+        getComponent()->setBounds(calculateBounds());
     }
 
     //==================================================================================================================
@@ -57,15 +59,22 @@ namespace jive
     juce::Rectangle<int> BlockItem::calculateBounds() const
     {
         juce::Rectangle<int> bounds;
-        const auto parentBounds = BoxModel{ state.getParent() }.getContentBounds();
+        const auto& parentBoxModel = dynamic_cast<const GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel;
+        const auto parentBounds = parentBoxModel.getContentBounds();
 
         if (!width.isAuto())
             bounds.setWidth(juce::roundToInt(width.toPixels(parentBounds)));
         if (!height.isAuto())
             bounds.setHeight(juce::roundToInt(height.toPixels(parentBounds)));
 
-        return bounds.withPosition(getParent()->boxModel.getContentBounds().getPosition().roundToInt()
-                                   + juce::Point<int>{ calculateX(), calculateY() });
+        return bounds.withPosition(parentBoxModel
+                                       .getContentBounds()
+                                       .getPosition()
+                                       .roundToInt()
+                                   + juce::Point{
+                                       calculateX(),
+                                       calculateY(),
+                                   });
     }
 } // namespace jive
 
@@ -107,7 +116,7 @@ private:
             };
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getX(), 25);
             expectEquals(item.getComponent()->getY(), 25);
 
@@ -138,7 +147,7 @@ private:
             };
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getX(), 40);
             expectEquals(item.getComponent()->getY(), 50);
         }
@@ -162,7 +171,7 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
-            auto child = parent->getChild(0);
+            auto& child = *parent->getChildren()[0];
 
             expectEquals(child.getComponent()->getX(), 10);
             expectEquals(child.getComponent()->getY(), 30);
@@ -198,7 +207,7 @@ private:
             };
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getBounds().getCentreX(), 25);
             expectEquals(item.getComponent()->getBounds().getCentreY(), 25);
 
@@ -229,7 +238,7 @@ private:
             };
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expect(item.getComponent()->getBounds().getCentreX() == 85);
             expect(item.getComponent()->getBounds().getCentreY() == 43);
 
@@ -259,7 +268,7 @@ private:
             };
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getX(), 1);
             expectEquals(item.getComponent()->getY(), 93);
 
@@ -289,7 +298,7 @@ private:
         };
         jive::Interpreter interpreter;
         const auto parent = interpreter.interpret(parentState);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         expectEquals(item.getComponent()->getWidth(), 0);
         expectEquals(item.getComponent()->getHeight(), 0);
 

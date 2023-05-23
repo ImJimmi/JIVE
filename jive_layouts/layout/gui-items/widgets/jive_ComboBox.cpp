@@ -99,6 +99,8 @@ namespace jive
         getComboBox().setSelectedItemIndex(selected);
         getComboBox().addListener(this);
 
+        state.addListener(this);
+
         if (width.isAuto())
             width = "50";
         if (height.isAuto())

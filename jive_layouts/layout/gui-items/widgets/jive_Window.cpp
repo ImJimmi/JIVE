@@ -111,6 +111,7 @@ namespace jive
         };
         getWindow().setTitleBarButtonsRequired(titleBarButtons, leftAlignButtons);
 
+        const auto& boxModel = toType<CommonGuiItem>()->boxModel;
         const auto windowWidth = juce::roundToInt(boxModel.getWidth());
         const auto windowHeight = juce::roundToInt(boxModel.getHeight());
 
@@ -134,20 +135,6 @@ namespace jive
     const juce::DocumentWindow& Window::getWindow() const
     {
         return window;
-    }
-
-    //==================================================================================================================
-    void Window::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                         bool wasMoved,
-                                         bool wasResized)
-    {
-        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
-
-        if (!wasResized)
-            return;
-
-        boxModel.setSize(static_cast<float>(component->getWidth()),
-                         static_cast<float>(component->getHeight()));
     }
 } // namespace jive
 

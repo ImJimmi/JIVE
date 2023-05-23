@@ -19,7 +19,7 @@ namespace jive
         componentFactory = newFactory;
     }
 
-    void Interpreter::setAlias(juce::Identifier aliasType, juce::ValueTree treeToReplaceWith)
+    void Interpreter::setAlias(juce::Identifier aliasType, const juce::ValueTree& treeToReplaceWith)
     {
         aliases.emplace(aliasType, treeToReplaceWith.createCopy());
     }
@@ -33,7 +33,7 @@ namespace jive
     }
 
     //==================================================================================================================
-    std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree) const
     {
         return interpret(tree, nullptr);
     }
@@ -129,6 +129,7 @@ namespace jive
     std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
                                       const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
     {
+        item = std::make_unique<CommonGuiItem>(std::move(item));
         item = decorateWithDisplayBehaviour(std::move(item));
         item = decorateWithHereditaryBehaviour(std::move(item));
         item = decorateWithWidgetBehaviour(std::move(item));
@@ -139,7 +140,7 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(juce::ValueTree tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, GuiItem* const parent) const
     {
         auto item = createUndecoratedItem(tree, parent);
 
@@ -181,16 +182,17 @@ namespace jive
         }
     }
 
-    std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const
     {
-        expandAlias(tree);
+        auto expandedTree = tree;
+        expandAlias(expandedTree);
 
-        if (auto component = createComponent(tree))
+        if (auto component = createComponent(expandedTree))
         {
             return std::make_unique<GuiItem>(std::move(component),
-                                             tree,
+                                             expandedTree,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                                             new StyleSheet{ *component, tree },
+                                             new StyleSheet{ *component, expandedTree },
 #endif
                                              parent);
         }
@@ -198,7 +200,7 @@ namespace jive
         return nullptr;
     }
 
-    void Interpreter::appendChild(GuiItem& item, juce::ValueTree childState) const
+    void Interpreter::appendChild(GuiItem& item, const juce::ValueTree& childState) const
     {
         auto childItem = interpret(childState, &item);
 
@@ -215,7 +217,7 @@ namespace jive
             appendChild(item, item.state.getChild(i));
     }
 
-    std::unique_ptr<juce::Component> Interpreter::createComponent(juce::ValueTree tree) const
+    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const
     {
         const auto name = tree.getType();
         return componentFactory.create(name);
@@ -284,7 +286,7 @@ private:
                 },
             });
 
-            expectEquals(view->getNumChildren(), 0);
+            expectEquals(view->getChildren().size(), 0);
             expectEquals(view->getComponent()->getNumChildComponents(), 0);
         }
         {
@@ -301,7 +303,7 @@ private:
             };
             auto view = interpreter.interpret(tree);
 
-            expect(view->getNumChildren() == tree.getNumChildren());
+            expect(view->getChildren().size() == tree.getNumChildren());
             expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
         }
         {
@@ -325,11 +327,11 @@ private:
             };
             auto view = interpreter.interpret(tree);
 
-            expect(view->getNumChildren() == tree.getNumChildren());
+            expect(view->getChildren().size() == tree.getNumChildren());
             expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
 
-            expect(view->getChild(0).getNumChildren() == tree.getChild(0).getNumChildren());
-            expect(view->getChild(0).getComponent()->getNumChildComponents() == tree.getChild(0).getNumChildren());
+            expect(view->getChildren()[0]->getChildren().size() == tree.getChild(0).getNumChildren());
+            expect(view->getChildren()[0]->getComponent()->getNumChildComponents() == tree.getChild(0).getNumChildren());
         }
     }
 
@@ -360,7 +362,7 @@ private:
             },
         });
         expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
-        expect(dynamic_cast<jive::GuiItemDecorator*>(&flexView->getChild(0))
+        expect(dynamic_cast<jive::GuiItemDecorator*>(flexView->getChildren()[0])
                    ->toType<jive::FlexItem>()
                != nullptr);
 
@@ -376,7 +378,7 @@ private:
             },
         });
         expect(dynamic_cast<jive::GridContainer*>(gridView.get()));
-        expect(dynamic_cast<jive::GridItem*>(&gridView->getChild(0)));
+        expect(dynamic_cast<jive::GridItem*>(gridView->getChildren()[0]));
 
         auto blockView = interpreter.interpret(juce::ValueTree{
             "Component",
@@ -390,7 +392,7 @@ private:
             },
         });
         expect(dynamic_cast<jive::GuiItem*>(blockView.get()));
-        expect(dynamic_cast<jive::BlockItem*>(&blockView->getChild(0)));
+        expect(dynamic_cast<jive::BlockItem*>(blockView->getChildren()[0]));
     }
 
     void testInitialLayout()
@@ -421,7 +423,7 @@ private:
                 },
             },
         });
-        expectNotEquals(view->getChild(1).getComponent()->getPosition(),
+        expectNotEquals(view->getChildren()[1]->getComponent()->getPosition(),
                         juce::Point<int>{});
     }
 
@@ -521,7 +523,7 @@ private:
 
         jive::Interpreter interpreter;
         auto window = interpreter.interpret(state);
-        expect(window->getNumChildren() == 0);
+        expect(window->getChildren().size() == 0);
 
         interpreter.setAlias("SomeAlias",
                              juce::ValueTree{
@@ -532,10 +534,10 @@ private:
                                  },
                              });
         window = interpreter.interpret(state);
-        expectEquals(window->getNumChildren(), 1);
-        expectEquals(window->getChild(0).state["padding"].toString(), juce::String{ "10" });
-        expectEquals(window->getChild(0).state["margin"].toString(), juce::String{ "1 2 3 4" });
-        expect(!static_cast<bool>(window->getChild(0).state["enabled"]));
+        expectEquals(window->getChildren().size(), 1);
+        expectEquals(window->getChildren()[0]->state["padding"].toString(), juce::String{ "10" });
+        expectEquals(window->getChildren()[0]->state["margin"].toString(), juce::String{ "1 2 3 4" });
+        expect(!static_cast<bool>(window->getChildren()[0]->state["enabled"]));
     }
 };
 

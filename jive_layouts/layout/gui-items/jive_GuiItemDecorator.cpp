@@ -18,14 +18,14 @@ namespace jive
         item->addChild(std::move(child));
     }
 
-    int GuiItemDecorator::getNumChildren() const
+    juce::Array<GuiItem*> GuiItemDecorator::getChildren()
     {
-        return item->getNumChildren();
+        return item->getChildren();
     }
 
-    GuiItem& GuiItemDecorator::getChild(int index) const
+    juce::Array<const GuiItem*> GuiItemDecorator::getChildren() const
     {
-        return item->getChild(index);
+        return juce::Array<const GuiItem*>{ item->getChildren().getRawDataPointer(), item->getChildren().size() };
     }
 
     const GuiItem* GuiItemDecorator::getParent() const
@@ -64,26 +64,5 @@ namespace jive
     void GuiItemDecorator::layOutChildren()
     {
         item->layOutChildren();
-    }
-
-    //==================================================================================================================
-    GuiItem::Iterator GuiItemDecorator::begin()
-    {
-        return std::begin(*item);
-    }
-
-    const GuiItem::Iterator GuiItemDecorator::begin() const
-    {
-        return std::begin(*item);
-    }
-
-    GuiItem::Iterator GuiItemDecorator::end()
-    {
-        return std::end(*item);
-    }
-
-    const GuiItem::Iterator GuiItemDecorator::end() const
-    {
-        return std::end(*item);
     }
 } // namespace jive

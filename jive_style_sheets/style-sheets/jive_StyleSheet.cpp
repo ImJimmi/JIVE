@@ -646,7 +646,7 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(state);
-        auto& text = dynamic_cast<jive::TextComponent&>(*item->getChild(0).getComponent());
+        auto& text = dynamic_cast<jive::TextComponent&>(*item->getChildren()[0]->getComponent());
         expectEquals(text.getFont(), juce::Font{});
 
         jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ text, state.getChild(0) };

@@ -82,15 +82,15 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 70.0f);
-        expectEquals(item.boxModel.getHeight(), 20.0f);
+        auto& item = *parent->getChildren()[0];
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 70.0f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 20.0f);
 
         parentState.getChild(0).setProperty("width", 38.0f, nullptr);
-        expectEquals(item.boxModel.getWidth(), 38.0f);
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 38.0f);
 
         parentState.getChild(0).setProperty("height", 73.0f, nullptr);
-        expectEquals(item.boxModel.getHeight(), 73.0f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 73.0f);
     }
 };
 

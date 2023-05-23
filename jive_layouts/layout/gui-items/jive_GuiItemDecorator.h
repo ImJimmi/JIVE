@@ -12,8 +12,8 @@ namespace jive
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
-        int getNumChildren() const override;
-        GuiItem& getChild(int index) const override;
+        juce::Array<GuiItem*> getChildren() override;
+        juce::Array<const GuiItem*> getChildren() const override;
         const GuiItem* getParent() const override;
         GuiItem* getParent() override;
 
@@ -39,12 +39,6 @@ namespace jive
 
         //==============================================================================================================
         void layOutChildren() override;
-
-        //==============================================================================================================
-        Iterator begin() override;
-        const Iterator begin() const override;
-        Iterator end() override;
-        const Iterator end() const override;
 
         //==============================================================================================================
         const std::unique_ptr<GuiItem> item;

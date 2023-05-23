@@ -7,6 +7,7 @@ namespace jive
     class ComboBox
         : public GuiItemDecorator
         , private juce::ComboBox::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         //==============================================================================================================

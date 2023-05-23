@@ -10,8 +10,6 @@ namespace jive
         , height{ state, "height", "auto" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
         , componentSize{ state, "component-size" }
@@ -20,14 +18,25 @@ namespace jive
         , margin{ state, "margin" }
         , isValid{ state, "is-valid", true }
     {
-        if (state.getParent().isValid())
-            parentBoxModel = std::make_unique<BoxModel>(state.getParent());
+        componentSize = juce::Rectangle{
+            calculateComponentWidth(),
+            calculateComponentHeight(),
+        };
 
-        const auto recalculateSize = [this]() {
+        const auto onBoxModelChanged = [this]() {
+            isValid = true;
+            listeners.call(&Listener::boxModelChanged, *this);
+            invalidateParent();
+        };
+        const auto recalculateSize = [this, onBoxModelChanged]() {
+            const auto sizeBefore = componentSize.get();
             componentSize = juce::Rectangle{
                 calculateComponentWidth(),
                 calculateComponentHeight(),
             };
+
+            if (componentSize.get() == sizeBefore)
+                onBoxModelChanged();
         };
 
         width.onValueChange = recalculateSize;
@@ -35,20 +44,7 @@ namespace jive
         padding.onValueChange = recalculateSize;
         border.onValueChange = recalculateSize;
         margin.onValueChange = recalculateSize;
-        recalculateSize();
 
-        const auto onBoxModelChanged = [this]() {
-            isValid = true;
-            listeners.call(&Listener::boxModelChanged, *this);
-
-            if (parentBoxModel != nullptr)
-            {
-                parentBoxModel->isValid = true;
-                parentBoxModel->isValid = false;
-            }
-        };
-        autoMinWidth.onValueChange = onBoxModelChanged;
-        autoMinHeight.onValueChange = onBoxModelChanged;
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
         componentSize.onValueChange = onBoxModelChanged;
@@ -113,20 +109,20 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getParentBounds() const
     {
-        if (parentBoxModel != nullptr)
-            return parentBoxModel->getBounds();
+        if (state.getParent().isValid())
+        {
+            const Property<juce::Rectangle<float>> parentSize{ state.getParent(), componentSize.id };
+            return parentSize.get();
+        }
 
         return juce::Rectangle<float>{};
     }
 
     juce::Rectangle<float> BoxModel::getMinimumBounds() const
     {
-        auto& minWidthProperty = minWidth.isAuto() ? autoMinWidth : minWidth;
-        auto& minHeightProperty = minHeight.isAuto() ? autoMinHeight : minHeight;
-
         return juce::Rectangle<float>{
-            minWidthProperty.toPixels(getParentBounds()),
-            minHeightProperty.toPixels(getParentBounds()),
+            minWidth.toPixels(getParentBounds()),
+            minHeight.toPixels(getParentBounds()),
         };
     }
 
@@ -164,6 +160,17 @@ namespace jive
             return padding.get().getTopAndBottom() + border.get().getTopAndBottom();
 
         return height.toPixels(getParentBounds());
+    }
+
+    void BoxModel::invalidateParent()
+    {
+        if (!state.getParent().isValid())
+            return;
+
+        BoxModel parent{ state.getParent() };
+
+        parent.isValid = true;
+        parent.isValid = false;
     }
 } // namespace jive
 

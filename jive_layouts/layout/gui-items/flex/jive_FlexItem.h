@@ -28,6 +28,8 @@ namespace jive
         const Property<float> idealWidth;
         const Property<float> idealHeight;
 
+        const BoxModel& boxModel;
+
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)
     };

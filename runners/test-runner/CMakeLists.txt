@@ -71,8 +71,3 @@ if (APPLE)
 endif()
 
 get_target_property(JIVE_TEST_RUNNER_SOURCES jive-test-runner SOURCES)
-
-source_group(
-    TREE ${CMAKE_CURRENT_SOURCE_DIR}
-    FILES ${JIVE_TEST_RUNNER_SOURCES}
-)

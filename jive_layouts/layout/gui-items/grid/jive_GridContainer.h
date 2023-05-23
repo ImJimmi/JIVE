@@ -38,6 +38,8 @@ namespace jive
         Property<juce::Grid::TrackInfo> autoColumns;
         Property<juce::Array<juce::Grid::Px>> gap;
 
+        const BoxModel& boxModel;
+
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)
     };

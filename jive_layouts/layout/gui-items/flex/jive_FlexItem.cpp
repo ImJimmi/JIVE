@@ -17,6 +17,7 @@ namespace jive
         , minHeight{ state, "min-height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(getParent() != nullptr);
 
@@ -86,7 +87,7 @@ namespace jive
                         juce::var args[] = {
                             strategy == LayoutStrategy::dummy
                                 ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
-                                : flexItem.width,
+                                : juce::jmax(flexItem.width, flexItem.minWidth),
                         };
                         flexItem.minHeight = juce::jmax(flexItem.minHeight,
                                                         static_cast<float>(calculateHeight({ property, args, 1 })));
@@ -122,7 +123,7 @@ namespace jive
                         juce::var args[] = {
                             strategy == LayoutStrategy::dummy
                                 ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
-                                : flexItem.width,
+                                : juce::jmax(flexItem.width, flexItem.minWidth),
                         };
                         const auto idealHeightAbsolute = static_cast<float>(calculateHeight({ property, args, 1 }));
 
@@ -193,7 +194,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         const auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                   .toType<jive::FlexItem>()
                                   ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -216,7 +217,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -247,7 +248,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -278,7 +279,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -309,7 +310,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -340,7 +341,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -371,7 +372,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -404,7 +405,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
@@ -449,9 +450,9 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 150.0f);
-        expectEquals(item.boxModel.getHeight(), 20.0f);
+        auto& item = *parent->getChildren()[0];
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 150.0f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 20.0f);
     }
 };
 

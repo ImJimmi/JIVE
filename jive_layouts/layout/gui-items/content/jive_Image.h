@@ -4,11 +4,16 @@
 namespace jive
 {
     //==================================================================================================================
-    class Image : public GuiItemDecorator
+    class Image
+        : public GuiItemDecorator
+        , private juce::ComponentListener
+        , private BoxModel::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         //==============================================================================================================
         explicit Image(std::unique_ptr<GuiItem> itemToDecorate);
+        ~Image() override;
 
         //==============================================================================================================
         bool isContainer() const override;
@@ -39,6 +44,7 @@ namespace jive
 
         //==============================================================================================================
         std::unique_ptr<juce::Component> childComponent;
+        bool changingChild = false;
 
         Property<Drawable> source;
         Property<juce::RectanglePlacement> placement;
@@ -46,6 +52,8 @@ namespace jive
         Length height;
         Length idealWidth;
         Length idealHeight;
+
+        const BoxModel& boxModel;
 
         //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Image)

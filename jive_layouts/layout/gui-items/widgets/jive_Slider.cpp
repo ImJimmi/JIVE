@@ -116,6 +116,8 @@ namespace jive
 
         if (orientation.isAuto())
         {
+            const BoxModel boxModel{ state };
+
             if (boxModel.getWidth() < boxModel.getHeight())
                 ori = Orientation::vertical;
             else
@@ -506,15 +508,15 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 135.0f);
-        expectEquals(item.boxModel.getHeight(), 20.0f);
+        auto& item = *parent->getChildren()[0];
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 135.0f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 20.0f);
 
         parentState.getChild(0).setProperty("width", 123.f, nullptr);
-        expectEquals(item.boxModel.getWidth(), 123.f);
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 123.f);
 
         parentState.getChild(0).setProperty("height", 311.f, nullptr);
-        expectEquals(item.boxModel.getHeight(), 311.f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 311.f);
     }
 
     void testEvents()
@@ -533,7 +535,7 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& slider = *dynamic_cast<jive::GuiItemDecorator&>(parent->getChild(0))
+        auto& slider = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                             .toType<jive::Slider>();
         jive::Event onChange{ parentState.getChild(0), "on-change" };
         expectEquals(onChange.getAssumedTriggerCount(), 0);
