@@ -2,10 +2,8 @@
 
 #include "jive_Object.h"
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     enum class HereditaryValueBehaviour
     {
         inheritFromParent,
@@ -13,16 +11,13 @@ namespace jive
         doNotInherit,
     };
 
-    //==================================================================================================================
     template <typename ValueType,
               HereditaryValueBehaviour hereditaryBehavior = HereditaryValueBehaviour::doNotInherit>
     class Property : protected juce::ValueTree::Listener
     {
     public:
-        //==============================================================================================================
         using Converter = juce::VariantConverter<ValueType>;
 
-        //==============================================================================================================
         Property(juce::ValueTree sourceTree,
                  const juce::Identifier& propertyID)
             : id{ propertyID }
@@ -61,7 +56,6 @@ namespace jive
                 *this = initialValue;
         }
 
-        //==============================================================================================================
         virtual ValueType get() const
         {
             if (exists())
@@ -140,7 +134,6 @@ namespace jive
             return tree[id].toString();
         }
 
-        //==============================================================================================================
         operator ValueType() const
         {
             return get();
@@ -152,12 +145,10 @@ namespace jive
             return *this;
         }
 
-        //==============================================================================================================
         const juce::Identifier id;
         std::function<void(void)> onValueChange = nullptr;
 
     protected:
-        //==============================================================================================================
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                       const juce::Identifier& property) override
         {
@@ -205,7 +196,6 @@ namespace jive
             return {};
         }
 
-        //==============================================================================================================
         juce::ValueTree treeToListenTo;
         juce::ValueTree tree;
     };

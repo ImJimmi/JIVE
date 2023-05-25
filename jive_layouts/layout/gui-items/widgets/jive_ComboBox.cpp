@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     ComboBox::Option::Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box)
         : tree{ sourceTree }
         , comboBox{ box }
@@ -60,7 +58,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator(std::move(itemToDecorate))
         , editable{ state, "editable" }
@@ -107,13 +104,11 @@ namespace jive
             height = "20";
     }
 
-    //==================================================================================================================
     bool ComboBox::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     juce::ComboBox& ComboBox::getComboBox()
     {
         return *dynamic_cast<juce::ComboBox*>(component.get());
@@ -124,7 +119,6 @@ namespace jive
         return *dynamic_cast<const juce::ComboBox*>(component.get());
     }
 
-    //==================================================================================================================
     void ComboBox::updateItems()
     {
         options.clear();
@@ -141,7 +135,6 @@ namespace jive
         }
     }
 
-    //==================================================================================================================
     void ComboBox::valueTreeChildAdded(juce::ValueTree& parentState, juce::ValueTree& /* child */)
     {
         if (parentState != state)
@@ -158,7 +151,6 @@ namespace jive
         updateItems();
     }
 
-    //==================================================================================================================
     void ComboBox::comboBoxChanged(juce::ComboBox* box)
     {
         jassertquiet(box == &getComboBox());
@@ -168,7 +160,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ComboBoxTest : public juce::UnitTest
 {

@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , flexItemOrder{ state, "order" }
@@ -31,7 +29,6 @@ namespace jive
         flexItemAlignSelf.onValueChange = updateParentLayout;
     }
 
-    //==================================================================================================================
     juce::FlexItem::Margin transform(const juce::BorderSize<float>& border)
     {
         return juce::FlexItem::Margin{
@@ -154,7 +151,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class FlexItemUnitTest : public juce::UnitTest
 {

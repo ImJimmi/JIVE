@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , order{ state, "order", juce::GridItem{}.order }
@@ -39,7 +37,6 @@ namespace jive
         height.onValueChange = invalidateParentBoxModel;
     }
 
-    //==================================================================================================================
     juce::GridItem::Margin boxModelToGridItemMargin(const BoxModel& boxModel)
     {
         const auto margin = boxModel.getMargin();
@@ -84,7 +81,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
 {

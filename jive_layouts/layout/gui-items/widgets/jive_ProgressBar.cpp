@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , value{ state, "value" }
@@ -23,13 +21,11 @@ namespace jive
             height = "20";
     }
 
-    //==================================================================================================================
     bool ProgressBar::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     NormalisedProgressBar& ProgressBar::getProgressBar()
     {
         return *dynamic_cast<NormalisedProgressBar*>(component.get());
@@ -41,7 +37,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ProgressBarTest : public juce::UnitTest
 {

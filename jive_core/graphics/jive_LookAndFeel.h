@@ -1,13 +1,10 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class LookAndFeel : public juce::LookAndFeel_V4
     {
     public:
-        //==============================================================================================================
         bool areScrollbarButtonsVisible() override;
         void drawScrollbarButton(juce::Graphics& g,
                                  juce::ScrollBar& scrollbar,
@@ -33,7 +30,6 @@ namespace jive
         int getDefaultScrollbarWidth() override;
         int getScrollbarButtonSize(juce::ScrollBar&) override;
 
-        //==============================================================================================================
         void drawButtonBackground(juce::Graphics&,
                                   juce::Button&,
                                   const juce::Colour& backgroundColour,
@@ -67,7 +63,6 @@ namespace jive
                                 bool shouldDrawButtonAsHighlighted,
                                 bool shouldDrawButtonAsDown) override;
 
-        //==============================================================================================================
         void fillTextEditorBackground(juce::Graphics&,
                                       int width,
                                       int height,
@@ -78,7 +73,6 @@ namespace jive
                                    juce::TextEditor&) override;
         juce::CaretComponent* createCaretComponent(juce::Component* keyFocusOwner) override;
 
-        //==============================================================================================================
         void drawComboBox(juce::Graphics&,
                           int width,
                           int height,
@@ -97,7 +91,6 @@ namespace jive
                                                  juce::ComboBox&,
                                                  juce::Label&) override;
 
-        //==============================================================================================================
         void drawCornerResizer(juce::Graphics&,
                                int w,
                                int h,
@@ -114,6 +107,5 @@ namespace jive
                                        juce::ResizableWindow&) override;
 
     private:
-        //==============================================================================================================
     };
 } // namespace jive

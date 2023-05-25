@@ -1,21 +1,16 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class FlexItem : public GuiItemDecorator
     {
     public:
-        //==============================================================================================================
         explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
-        //==============================================================================================================
         juce::FlexItem toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                       LayoutStrategy strategy) const;
 
     private:
-        //==============================================================================================================
         Property<int> flexItemOrder;
         Property<float> flexItemGrow;
         Property<float> flexItemShrink;
@@ -30,7 +25,6 @@ namespace jive
 
         const BoxModel& boxModel;
 
-        //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FlexItem)
     };
 } // namespace jive

@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
     {
@@ -11,7 +9,6 @@ namespace jive
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
-    //==================================================================================================================
     void BlockContainer::layOutChildren()
     {
         for (auto child : getChildren())
@@ -21,7 +18,6 @@ namespace jive
         }
     }
 
-    //==================================================================================================================
     juce::Rectangle<float> BlockContainer::calculateIdealSize(juce::Rectangle<float>) const
     {
         return { 0.0f, 0.0f };

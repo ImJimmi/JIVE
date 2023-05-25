@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexBox::AlignContent>::options = {
         "stretch",
         "flex-start",
@@ -30,7 +28,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexBox::AlignItems>::options = {
         "stretch",
         "flex-start",
@@ -55,7 +52,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexBox::Direction>::options = {
         "row",
         "row-reverse",
@@ -80,7 +76,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexBox::JustifyContent>::options = {
         "flex-start",
         "flex-end",
@@ -106,7 +101,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexBox::Wrap>::options = {
         "nowrap",
         "wrap",
@@ -130,7 +124,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<FlexItem::AlignSelf>::options = {
         "auto",
         "flex-start",

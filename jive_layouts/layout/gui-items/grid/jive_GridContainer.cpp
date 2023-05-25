@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     GridContainer::GridContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem(std::move(itemToDecorate))
         , justifyItems{ state, "justify-items", juce::Grid{}.justifyItems }
@@ -57,7 +55,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     void GridContainer::layOutChildren()
     {
         const auto bounds = boxModel.getContentBounds().toNearestInt();
@@ -68,13 +65,11 @@ namespace jive
         buildGrid().performLayout(bounds);
     }
 
-    //==================================================================================================================
     GridContainer::operator juce::Grid()
     {
         return buildGrid();
     }
 
-    //==================================================================================================================
     juce::Rectangle<float> GridContainer::calculateIdealSize(juce::Rectangle<float>) const
     {
         const auto grid = buildGridWithDummyItems();
@@ -109,7 +104,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     void appendChildren(GuiItem& container, juce::Grid& grid)
     {
         for (auto* child : container.getChildren())
@@ -163,7 +157,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {

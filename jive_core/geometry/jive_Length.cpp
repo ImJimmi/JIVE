@@ -1,12 +1,9 @@
 #include "jive_Length.h"
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     const float Length::pixelValueWhenAuto = 0.0f;
 
-    //==================================================================================================================
     float Length::toPixels(const juce::Rectangle<float>& parentBounds) const
     {
         if (isAuto())
@@ -19,7 +16,6 @@ namespace jive
         return static_cast<float>(scale * getRelativeParentLength(parentBounds.toDouble()));
     }
 
-    //==================================================================================================================
     bool Length::isPixels() const
     {
         return !isAuto() && !isPercent();
@@ -30,7 +26,6 @@ namespace jive
         return !isAuto() && toString().endsWith("%");
     }
 
-    //==================================================================================================================
     double Length::getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const
     {
         jassert(tree.getParent().isValid());
@@ -42,7 +37,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class LengthUnitTest : public juce::UnitTest
 {

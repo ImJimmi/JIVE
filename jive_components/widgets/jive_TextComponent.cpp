@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     TextComponent::TextComponent()
     {
         canvas.onPaint = [this](juce::Graphics& g) {
@@ -20,13 +18,11 @@ namespace jive
         setInterceptsMouseClicks(false, false);
     }
 
-    //==================================================================================================================
     void TextComponent::resized()
     {
         canvas.setBounds(getLocalBounds());
     }
 
-    //==================================================================================================================
     const juce::String& TextComponent::getText() const
     {
         return text;
@@ -142,7 +138,6 @@ namespace jive
         listeners.remove(&listener);
     }
 
-    //==================================================================================================================
     class TextComponent::AccessibilityInterface : public juce::AccessibilityTextValueInterface
     {
     public:

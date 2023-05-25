@@ -1,13 +1,10 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class GuiItem
     {
     public:
-        //==============================================================================================================
         GuiItem(std::unique_ptr<juce::Component> component,
                 const juce::ValueTree& stateSource,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
@@ -18,7 +15,6 @@ namespace jive
         GuiItem(const GuiItem& other);
         virtual ~GuiItem() = default;
 
-        //==============================================================================================================
         const std::shared_ptr<const juce::Component> getComponent() const;
         const std::shared_ptr<juce::Component> getComponent();
 
@@ -32,22 +28,17 @@ namespace jive
         virtual bool isContainer() const;
         virtual bool isContent() const;
 
-        //==============================================================================================================
         virtual void layOutChildren() {}
 
-        //==============================================================================================================
         juce::ValueTree state;
 
     protected:
-        //==============================================================================================================
         const std::shared_ptr<juce::Component> component;
         GuiItem* const parent;
 
     private:
-        //==============================================================================================================
         friend class GuiItemDecorator;
 
-        //==============================================================================================================
         GuiItem(std::shared_ptr<juce::Component> component,
                 GuiItem* parent,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
@@ -55,14 +46,12 @@ namespace jive
 #endif
                 const juce::ValueTree& stateSource);
 
-        //==============================================================================================================
         juce::OwnedArray<GuiItem> children;
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
         const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
 
-        //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItem)
     };
 } // namespace jive

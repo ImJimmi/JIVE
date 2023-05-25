@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     const Array<var> VariantConverter<GridItem::JustifySelf>::options = {
         "start",
         "end",
@@ -26,7 +24,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<GridItem::AlignSelf>::options = {
         "start",
         "end",
@@ -49,7 +46,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     GridItem::Span VariantConverter<GridItem::Span>::fromVar(const var& v)
     {
         const auto tokens = StringArray::fromTokens(v.toString(), false);
@@ -64,7 +60,6 @@ namespace juce
         return "span " + String{ span.number };
     }
 
-    //==================================================================================================================
     GridItem::Property VariantConverter<GridItem::Property>::fromVar(const var& v)
     {
         if (v.isInt())
@@ -97,7 +92,6 @@ namespace juce
         return "auto";
     }
 
-    //==================================================================================================================
     GridItem::StartAndEndProperty VariantConverter<GridItem::StartAndEndProperty>::fromVar(const var& v)
     {
         auto tokens = StringArray::fromTokens(v.toString(), "/", "");
@@ -131,7 +125,6 @@ namespace juce
         return tokens.joinIntoString(" / ");
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<Grid::JustifyItems>::options = {
         "start",
         "end",
@@ -153,7 +146,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<Grid::AlignItems>::options = {
         "start",
         "end",
@@ -175,7 +167,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<Grid::JustifyContent>::options = {
         "start",
         "end",
@@ -200,7 +191,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<Grid::AlignContent>::options = {
         "start",
         "end",
@@ -225,7 +215,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<Grid::AutoFlow>::options = {
         "row",
         "column",
@@ -247,7 +236,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     Grid::TrackInfo VariantConverter<Grid::TrackInfo>::fromVar(const var& v)
     {
         if (v.isString())
@@ -282,7 +270,6 @@ namespace juce
         return info.getSize();
     }
 
-    //==================================================================================================================
     Grid::Px VariantConverter<Grid::Px>::fromVar(const var& v)
     {
         if (v.isString())

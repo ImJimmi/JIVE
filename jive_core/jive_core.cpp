@@ -1,6 +1,5 @@
 #include "jive_core.h"
 
-//======================================================================================================================
 #include "logging/jive_StringStreams.cpp"
 
 #include "algorithms/jive_Find.cpp"

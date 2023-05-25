@@ -1,6 +1,5 @@
 #include "jive_layouts.h"
 
-//======================================================================================================================
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"
 #include "utilities/jive_Drawable.cpp"

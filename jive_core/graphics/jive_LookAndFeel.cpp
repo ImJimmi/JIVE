@@ -1,9 +1,7 @@
 #include <jive_core/jive_core.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     bool LookAndFeel::areScrollbarButtonsVisible()
     {
         return false;
@@ -54,7 +52,6 @@ namespace jive
         return 0;
     }
 
-    //==================================================================================================================
     void LookAndFeel::drawButtonBackground(juce::Graphics&,
                                            juce::Button&,
                                            const juce::Colour& /* backgroundColour */,
@@ -113,7 +110,6 @@ namespace jive
     {
     }
 
-    //==================================================================================================================
     void LookAndFeel::fillTextEditorBackground(juce::Graphics&,
                                                int /* width */,
                                                int /* height */,
@@ -133,7 +129,6 @@ namespace jive
         return nullptr;
     }
 
-    //==================================================================================================================
     void LookAndFeel::drawComboBox(juce::Graphics&,
                                    int /* width */,
                                    int /* height */,
@@ -168,7 +163,6 @@ namespace jive
     {
     }
 
-    //==================================================================================================================
     void LookAndFeel::drawCornerResizer(juce::Graphics&,
                                         int /* w */,
                                         int /* h */,

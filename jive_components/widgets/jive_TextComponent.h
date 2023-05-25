@@ -1,13 +1,10 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class TextComponent : public juce::Component
     {
     public:
-        //==============================================================================================================
         class AccessibilityHandler;
         class AccessibilityInterface;
 
@@ -18,13 +15,10 @@ namespace jive
             virtual void textFontChanged(TextComponent& text) = 0;
         };
 
-        //==============================================================================================================
         TextComponent();
 
-        //==============================================================================================================
         void resized() override;
 
-        //==============================================================================================================
         void setDirection(juce::AttributedString::ReadingDirection direction);
         juce::Font getFont() const;
         void setFont(const juce::Font& font);
@@ -44,10 +38,8 @@ namespace jive
         void removeListener(Listener&) const;
 
     private:
-        //==============================================================================================================
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
-        //==============================================================================================================
         juce::AttributedString::ReadingDirection direction{ juce::AttributedString::ReadingDirection::natural };
         juce::Font font;
         juce::Justification justification{ juce::Justification::topLeft };
@@ -61,7 +53,6 @@ namespace jive
 
         mutable juce::ListenerList<Listener> listeners;
 
-        //==============================================================================================================
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TextComponent)
     };
 } // namespace jive

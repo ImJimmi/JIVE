@@ -1,13 +1,10 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class BoxModel
     {
     public:
-        //==============================================================================================================
         struct Listener
         {
             virtual ~Listener() = default;
@@ -16,10 +13,8 @@ namespace jive
             virtual void boxModelInvalidated(BoxModel&) {}
         };
 
-        //==============================================================================================================
         explicit BoxModel(juce::ValueTree sourceState);
 
-        //==============================================================================================================
         float getWidth() const;
         bool hasAutoWidth() const;
         float getHeight() const;
@@ -37,17 +32,14 @@ namespace jive
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
-        //==============================================================================================================
         juce::ValueTree state;
 
     private:
-        //==============================================================================================================
         juce::Rectangle<float> getParentBounds() const;
         float calculateComponentWidth() const;
         float calculateComponentHeight() const;
         void invalidateParent();
 
-        //==============================================================================================================
         Length width;
         Length height;
         Length minWidth;
@@ -62,7 +54,6 @@ namespace jive
 
         juce::ListenerList<Listener> listeners;
 
-        //==============================================================================================================
         JUCE_LEAK_DETECTOR(BoxModel)
     };
 } // namespace jive

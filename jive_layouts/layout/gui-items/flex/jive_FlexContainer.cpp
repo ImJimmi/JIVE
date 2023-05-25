@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
         , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::column }
@@ -33,7 +31,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     void FlexContainer::layOutChildren()
     {
         const auto bounds = boxModel.getContentBounds();
@@ -44,13 +41,11 @@ namespace jive
         buildFlexBox(bounds, LayoutStrategy::real).performLayout(bounds);
     }
 
-    //==================================================================================================================
     FlexContainer::operator juce::FlexBox()
     {
         return buildFlexBox(boxModel.getContentBounds(), LayoutStrategy::real);
     }
 
-    //==================================================================================================================
     juce::Rectangle<float> FlexContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
     {
         switch (flexDirection.getOr(juce::FlexBox{}.flexDirection))
@@ -100,7 +95,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     void appendChildren(GuiItem& container,
                         juce::FlexBox& flex,
                         juce::Rectangle<float> bounds,

@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     DocumentWindow::DocumentWindow()
         : juce::DocumentWindow{ "",
                                 juce::LookAndFeel::getDefaultLookAndFeel()
@@ -16,7 +14,6 @@ namespace jive
         setVisible(true);
     }
 
-    //==================================================================================================================
     void DocumentWindow::closeButtonPressed()
     {
         if (onCloseButtonPressed != nullptr)

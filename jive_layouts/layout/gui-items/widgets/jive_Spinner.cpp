@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
         : Slider{ std::move(itemToDecorate), 70.0f, 20.0f }
         , draggable{ state, "draggable" }
@@ -16,14 +14,12 @@ namespace jive
         updateStyle();
     }
 
-    //==================================================================================================================
     juce::Slider::SliderStyle Spinner::getStyleForOrientation(Orientation /* orientation */)
     {
         return juce::Slider::IncDecButtons;
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class SpinnerTest : public juce::UnitTest
 {

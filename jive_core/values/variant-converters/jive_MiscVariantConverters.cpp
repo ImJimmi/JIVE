@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     Justification VariantConverter<Justification>::fromVar(const var& v)
     {
         if (v == "centred-left")
@@ -52,7 +50,6 @@ namespace juce
         return {};
     }
 
-    //==================================================================================================================
     Identifier VariantConverter<Identifier>::fromVar(const var& v)
     {
         if (v.toString().isEmpty())
@@ -66,7 +63,6 @@ namespace juce
         return { id.toString() };
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<MouseCursor::StandardCursorType>::options = {
         "inherit",
         "none",
@@ -104,7 +100,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     StringArray VariantConverter<StringArray>::fromVar(const var& v)
     {
         if (v.isArray())
@@ -129,7 +124,6 @@ namespace juce
         return array.joinIntoString(" ");
     }
 
-    //==================================================================================================================
     Font VariantConverter<Font>::fromVar(const var& v)
     {
         return Font::fromString(v.toString());
@@ -140,7 +134,6 @@ namespace juce
         return font.toString();
     }
 
-    //==================================================================================================================
     DocumentWindow::TitleBarButtons VariantConverter<DocumentWindow::TitleBarButtons>::fromVar(const var& v)
     {
         auto result = 0;
@@ -171,7 +164,6 @@ namespace juce
         return tokens.joinIntoString(" ");
     }
 
-    //==================================================================================================================
     Image VariantConverter<Image>::fromVar(const var& v)
     {
         return Image{
@@ -184,7 +176,6 @@ namespace juce
         return var{ image.getPixelData() };
     }
 
-    //==================================================================================================================
     const std::unordered_map<String, RectanglePlacement::Flags> VariantConverter<RectanglePlacement>::map = {
         { "left", RectanglePlacement::xLeft },
         { "right", RectanglePlacement::xRight },
@@ -224,7 +215,6 @@ namespace juce
         return stringFlagPair->first;
     }
 
-    //==================================================================================================================
     StringArray getTokensBetweenParentheses(const String& text)
     {
         static constexpr auto includeSubString = false;
@@ -288,7 +278,6 @@ namespace juce
         return colour.toString();
     }
 
-    //==================================================================================================================
     template <typename Arithmetic>
     Point<Arithmetic> VariantConverter<Point<Arithmetic>>::fromVar(const var& value)
     {
@@ -307,7 +296,6 @@ namespace juce
         return point.toString();
     }
 
-    //==================================================================================================================
     template <typename Arithmetic>
     Rectangle<Arithmetic> VariantConverter<Rectangle<Arithmetic>>::fromVar(const var& value)
     {

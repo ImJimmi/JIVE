@@ -1,23 +1,19 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Knob::Knob(std::unique_ptr<GuiItem> itemToDecorate)
         : Slider{ std::move(itemToDecorate), 55.0f, 55.0f }
     {
         updateStyle();
     }
 
-    //==============================================================================================================
     juce::Slider::SliderStyle Knob::getStyleForOrientation(Orientation /* orientation */)
     {
         return juce::Slider::RotaryVerticalDrag;
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class KnobTest : public juce::UnitTest
 {

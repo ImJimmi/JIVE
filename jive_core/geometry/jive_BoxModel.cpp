@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     BoxModel::BoxModel(juce::ValueTree stateSource)
         : state{ stateSource }
         , width{ state, "width", "auto" }
@@ -55,7 +53,6 @@ namespace jive
         };
     }
 
-    //==================================================================================================================
     float BoxModel::getWidth() const
     {
         return componentSize.get().getWidth();
@@ -145,7 +142,6 @@ namespace jive
         const_cast<juce::ListenerList<Listener>*>(&listeners)->remove(&listener);
     }
 
-    //==================================================================================================================
     float BoxModel::calculateComponentWidth() const
     {
         if (width.isAuto())
@@ -174,7 +170,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class BoxModelUnitTest : public juce::UnitTest
 {
