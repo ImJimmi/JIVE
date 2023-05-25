@@ -17,6 +17,7 @@ namespace jive
         , autoRows{ state, "auto-rows", juce::Grid{}.autoRows }
         , autoColumns{ state, "auto-columns", juce::Grid{}.autoColumns }
         , gap{ state, "gap" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
@@ -91,17 +92,29 @@ namespace jive
         }
 
         return {
-            extremities.x + boxModel.getPadding().getLeftAndRight() + boxModel.getBorder().getLeftAndRight(),
-            extremities.y + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom(),
+            extremities.x
+                + boxModel
+                      .getPadding()
+                      .getLeftAndRight()
+                + boxModel
+                      .getBorder()
+                      .getLeftAndRight(),
+            extremities.y
+                + boxModel
+                      .getPadding()
+                      .getTopAndBottom()
+                + boxModel
+                      .getBorder()
+                      .getTopAndBottom(),
         };
     }
 
     //==================================================================================================================
     void appendChildren(GuiItem& container, juce::Grid& grid)
     {
-        for (auto& child : container)
+        for (auto* child : container.getChildren())
         {
-            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
+            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(child))
             {
                 if (auto* const gridItem = decoratedItem->toType<GridItem>())
                     grid.items.add(*gridItem);
@@ -144,7 +157,7 @@ namespace jive
         for (auto& gridItem : grid.items)
             gridItem.associatedComponent = nullptr;
 
-        grid.performLayout(juce::Rectangle<int>{ 0, 0 });
+        grid.performLayout(juce::Rectangle{ 1, 1 });
 
         return grid;
     }
@@ -740,8 +753,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(state);
-        expectGreaterThan(item->getChild(0).getComponent()->getWidth(), 0);
-        expectGreaterThan(item->getChild(1).getComponent()->getWidth(), 0);
+        expectGreaterThan(item->getChildren()[0]->getComponent()->getWidth(), 0);
+        expectGreaterThan(item->getChildren()[1]->getComponent()->getWidth(), 0);
     }
 
     void testAutoSize()
@@ -775,9 +788,9 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& item = parent->getChild(0);
-        expectEquals(item.boxModel.getWidth(), 25.f);
-        expectEquals(item.boxModel.getHeight(), 15.f);
+        auto& item = *parent->getChildren()[0];
+        expectEquals(jive::BoxModel{ item.state }.getWidth(), 25.f);
+        expectEquals(jive::BoxModel{ item.state }.getHeight(), 15.f);
     }
 };
 

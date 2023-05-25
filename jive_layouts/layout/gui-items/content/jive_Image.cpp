@@ -12,6 +12,7 @@ namespace jive
         , height{ state, "height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         source.onValueChange = [this]() {
             setChildComponent(createChildComponent());
@@ -22,9 +23,17 @@ namespace jive
         };
 
         setChildComponent(createChildComponent());
-        component->setInterceptsMouseClicks(false, false);
-
         boxModel.addListener(*this);
+        state.addListener(this);
+    }
+
+    Image::~Image()
+    {
+        state.removeListener(this);
+        boxModel.removeListener(*this);
+
+        if (component != nullptr)
+            component->removeComponentListener(this);
     }
 
     //==================================================================================================================
@@ -49,10 +58,8 @@ namespace jive
     }
 
     //==================================================================================================================
-    void Image::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool wasMoved, bool wasResized)
+    void Image::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool, bool)
     {
-        GuiItemDecorator::componentMovedOrResized(componentThatWasMovedOrResized, wasMoved, wasResized);
-
         if (&componentThatWasMovedOrResized != component.get())
             return;
 
@@ -70,8 +77,6 @@ namespace jive
 
     void Image::boxModelChanged(BoxModel& boxModelThatChanged)
     {
-        GuiItemDecorator::boxModelChanged(boxModelThatChanged);
-
         if (boxModelThatChanged.state != state)
             return;
 
@@ -82,13 +87,11 @@ namespace jive
         idealHeight = juce::String{ calculateRequiredHeight() };
     }
 
-    void Image::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    void Image::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
     {
-        GuiItemDecorator::valueTreePropertyChanged(tree, property);
-
         if (state.getType().toString().compareIgnoreCase("svg") == 0)
         {
-            if (childComponent != nullptr)
+            if (!changingChild && childComponent != nullptr)
             {
                 setChildComponent(createChildComponent());
 
@@ -200,6 +203,8 @@ namespace jive
 
     void Image::setChildComponent(std::unique_ptr<juce::Component> newComponent)
     {
+        const juce::ScopedValueSetter svs{ changingChild, true };
+
         if (newComponent == nullptr)
         {
             childComponent = nullptr;
@@ -214,6 +219,9 @@ namespace jive
 
         idealWidth = juce::String{ calculateRequiredWidth() };
         idealHeight = juce::String{ calculateRequiredHeight() };
+
+        component->addComponentListener(this);
+        component->setInterceptsMouseClicks(false, false);
     }
 } // namespace jive
 
@@ -259,7 +267,7 @@ private:
                 }
             };
             auto item = createImage(tree);
-            expectEquals(item->getDrawable(), jive::Drawable{});
+            expect(item->getDrawable().isEmpty());
 
             const juce::Image image{ juce::Image::ARGB, 120, 40, true };
             tree.setProperty("source", juce::VariantConverter<juce::Image>::toVar(image), nullptr);
@@ -354,7 +362,7 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getNumChildComponents(), 1);
             expectEquals(item.getComponent()->getLocalBounds(), image.getBounds());
 
@@ -386,7 +394,7 @@ private:
                 }
             };
             auto item = createImage(tree);
-            expectEquals(item->getDrawable(), jive::Drawable{});
+            expect(item->getDrawable().isEmpty());
 
             tree.setProperty("source", svg, nullptr);
             expect(item->getDrawable().isSVG());
@@ -459,9 +467,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
-            auto& item = parent->getChild(0);
-            expectEquals(item.boxModel.getWidth(), 80.0f);
-            expectEquals(item.boxModel.getHeight(), 40.0f);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(jive::BoxModel{ item.state }.getWidth(), 80.0f);
+            expectEquals(jive::BoxModel{ item.state }.getHeight(), 40.0f);
         }
         {
             juce::ValueTree tree{
@@ -495,9 +503,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
-            auto& item = parent->getChild(0);
-            expectEquals(item.boxModel.getWidth(), 155.0f);
-            expectEquals(item.boxModel.getHeight(), 155.0f);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(jive::BoxModel{ item.state }.getWidth(), 155.0f);
+            expectEquals(jive::BoxModel{ item.state }.getHeight(), 155.0f);
         }
     }
 
@@ -519,7 +527,7 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(state);
-        auto& image = *dynamic_cast<jive::GuiItemDecorator*>(&parent->getChild(0))
+        auto& image = *dynamic_cast<jive::GuiItemDecorator*>(parent->getChildren()[0])
                            ->toType<jive::Image>();
         expect(image.getDrawable().isSVG());
     }

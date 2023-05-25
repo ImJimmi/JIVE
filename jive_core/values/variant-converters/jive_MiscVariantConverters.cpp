@@ -312,7 +312,6 @@ namespace juce
     Rectangle<Arithmetic> VariantConverter<Rectangle<Arithmetic>>::fromVar(const var& value)
     {
         const auto tokens = StringArray::fromTokens(value.toString(), " ", "");
-        jassert(tokens.size() == 4);
 
         return Rectangle{
             static_cast<Arithmetic>(tokens[0].getDoubleValue()),

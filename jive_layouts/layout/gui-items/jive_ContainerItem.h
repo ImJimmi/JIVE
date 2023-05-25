@@ -4,11 +4,14 @@
 namespace jive
 {
     //==================================================================================================================
-    class ContainerItem : public GuiItemDecorator
+    class ContainerItem
+        : public GuiItemDecorator
+        , private BoxModel::Listener
     {
     public:
         //==============================================================================================================
         explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
+        ~ContainerItem() override;
 
         //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
@@ -27,5 +30,7 @@ namespace jive
         //==============================================================================================================
         Property<float> idealWidth;
         Property<float> idealHeight;
+
+        BoxModel& boxModel;
     };
 } // namespace jive

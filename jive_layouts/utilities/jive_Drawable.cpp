@@ -87,6 +87,11 @@ namespace jive
     {
         return svgSource.isNotEmpty();
     }
+
+    bool Drawable::isEmpty() const
+    {
+        return drawable == nullptr;
+    }
 } // namespace jive
 
 //======================================================================================================================

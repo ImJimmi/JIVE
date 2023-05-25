@@ -18,26 +18,25 @@ namespace jive
         , height{ state, "height", "auto" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
-        , autoMinWidth{ state, "auto-min-width" }
-        , autoMinHeight{ state, "auto-min-height" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(getParent() != nullptr);
 
-        const auto updateParentLayout = [this]() {
-            getParent()->layOutChildren();
+        const auto invalidateParentBoxModel = [this]() {
+            getParent()->state.setProperty("is-valid", false, nullptr);
         };
-        order.onValueChange = updateParentLayout;
-        justifySelf.onValueChange = updateParentLayout;
-        alignSelf.onValueChange = updateParentLayout;
-        column.onValueChange = updateParentLayout;
-        row.onValueChange = updateParentLayout;
-        area.onValueChange = updateParentLayout;
-        minWidth.onValueChange = updateParentLayout;
-        maxWidth.onValueChange = updateParentLayout;
-        minHeight.onValueChange = updateParentLayout;
-        maxHeight.onValueChange = updateParentLayout;
-        width.onValueChange = updateParentLayout;
-        height.onValueChange = updateParentLayout;
+        order.onValueChange = invalidateParentBoxModel;
+        justifySelf.onValueChange = invalidateParentBoxModel;
+        alignSelf.onValueChange = invalidateParentBoxModel;
+        column.onValueChange = invalidateParentBoxModel;
+        row.onValueChange = invalidateParentBoxModel;
+        area.onValueChange = invalidateParentBoxModel;
+        minWidth.onValueChange = invalidateParentBoxModel;
+        maxWidth.onValueChange = invalidateParentBoxModel;
+        minHeight.onValueChange = invalidateParentBoxModel;
+        maxHeight.onValueChange = invalidateParentBoxModel;
+        width.onValueChange = invalidateParentBoxModel;
+        height.onValueChange = invalidateParentBoxModel;
     }
 
     //==================================================================================================================
@@ -56,7 +55,7 @@ namespace jive
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ *component };
-        const auto parentBounds = getParent()->boxModel.getBounds();
+        const auto parentBounds = dynamic_cast<GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel.getBounds();
 
         if (!width.isAuto())
             gridItem.width = width.toPixels(parentBounds);
@@ -147,7 +146,7 @@ private:
             },
         };
         auto parent = interpreter.interpret(state);
-        auto& item = parent->getChild(0);
+        auto& item = *parent->getChildren()[0];
         const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                .toType<jive::GridItem>());
         expect(gridItem.associatedComponent == item.getComponent().get());
@@ -171,7 +170,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expectEquals(gridItem.order, 0);
@@ -200,7 +199,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expectEquals(gridItem.order, 456);
@@ -225,7 +224,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.justifySelf == juce::GridItem::JustifySelf::autoValue);
@@ -274,7 +273,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.justifySelf == juce::GridItem::JustifySelf::end);
@@ -299,7 +298,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.alignSelf == juce::GridItem::AlignSelf::autoValue);
@@ -348,7 +347,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.alignSelf == juce::GridItem::AlignSelf::end);
@@ -373,7 +372,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{}));
@@ -403,7 +402,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{ 1, juce::GridItem::Span{ 3 } }));
@@ -428,7 +427,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{}));
@@ -457,7 +456,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{ 14, juce::GridItem::Span{ 7 } }));
@@ -483,7 +482,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.area.isEmpty());
@@ -513,7 +512,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.area == "abc");
@@ -538,7 +537,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expectEquals<float>(gridItem.width, juce::GridItem::notAssigned);
@@ -567,7 +566,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expectEquals(gridItem.width, 374.6f);
@@ -592,7 +591,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.minWidth == 0.f);
@@ -622,7 +621,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.minWidth == 12.6f);
@@ -647,7 +646,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.maxWidth == juce::GridItem::notAssigned);
@@ -677,7 +676,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.maxWidth == 986.f);
@@ -702,7 +701,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.height == juce::GridItem::notAssigned);
@@ -731,7 +730,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expectEquals(gridItem.height, 374.6f);
@@ -756,7 +755,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.minHeight == 0.f);
@@ -785,7 +784,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.minHeight == 12.6f);
@@ -810,7 +809,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(gridItem.maxHeight == juce::GridItem::notAssigned);
@@ -839,7 +838,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(gridItem.maxHeight == 986.f);
@@ -864,7 +863,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
             expect(compare(gridItem.margin, juce::GridItem::Margin{}));
@@ -893,7 +892,7 @@ private:
                 },
             };
             auto parent = interpreter.interpret(state);
-            auto& item = parent->getChild(0);
+            auto& item = *parent->getChildren()[0];
             const auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                                    .toType<jive::GridItem>());
             expect(compare(gridItem.margin, juce::GridItem::Margin{ 45.f }));

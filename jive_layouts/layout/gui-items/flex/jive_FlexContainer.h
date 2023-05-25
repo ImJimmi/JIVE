@@ -31,6 +31,8 @@ namespace jive
         Property<juce::FlexBox::AlignItems> flexAlignItems;
         Property<juce::FlexBox::AlignContent> flexAlignContent;
 
+        const BoxModel& boxModel;
+
         //==============================================================================================================
         JUCE_LEAK_DETECTOR(FlexContainer)
     };

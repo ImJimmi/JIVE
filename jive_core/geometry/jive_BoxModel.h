@@ -17,7 +17,7 @@ namespace jive
         };
 
         //==============================================================================================================
-        explicit BoxModel(juce::ValueTree stateSource);
+        explicit BoxModel(juce::ValueTree sourceState);
 
         //==============================================================================================================
         float getWidth() const;
@@ -45,14 +45,13 @@ namespace jive
         juce::Rectangle<float> getParentBounds() const;
         float calculateComponentWidth() const;
         float calculateComponentHeight() const;
+        void invalidateParent();
 
         //==============================================================================================================
         Length width;
         Length height;
         Length minWidth;
         Length minHeight;
-        Length autoMinWidth;
-        Length autoMinHeight;
         Property<float> idealWidth;
         Property<float> idealHeight;
         Property<juce::Rectangle<float>> componentSize;
@@ -61,7 +60,6 @@ namespace jive
         Property<juce::BorderSize<float>> margin;
         Property<bool> isValid;
 
-        std::unique_ptr<BoxModel> parentBoxModel;
         juce::ListenerList<Listener> listeners;
 
         //==============================================================================================================

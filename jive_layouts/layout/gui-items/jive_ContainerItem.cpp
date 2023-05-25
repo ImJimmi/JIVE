@@ -8,7 +8,14 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
+        boxModel.addListener(*this);
+    }
+
+    ContainerItem::~ContainerItem()
+    {
+        boxModel.removeListener(*this);
     }
 
     //==================================================================================================================
@@ -21,8 +28,6 @@ namespace jive
     //==================================================================================================================
     void ContainerItem::boxModelInvalidated(BoxModel& box)
     {
-        GuiItemDecorator::boxModelInvalidated(box);
-
         const auto newIdealSize = calculateIdealSize(box.getBounds());
         const auto idealWidthChanged = newIdealSize.getWidth() != idealWidth.get();
         const auto idealHeightChanged = newIdealSize.getHeight() != idealHeight.get();

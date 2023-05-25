@@ -11,6 +11,7 @@ namespace jive
         , flexJustifyContent{ state, "justify-content" }
         , flexAlignItems{ state, "align-items" }
         , flexAlignContent{ state, "align-content" }
+        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
@@ -82,8 +83,20 @@ namespace jive
         }
 
         return {
-            extremities.x + boxModel.getPadding().getLeftAndRight() + boxModel.getBorder().getLeftAndRight(),
-            extremities.y + boxModel.getPadding().getTopAndBottom() + boxModel.getBorder().getTopAndBottom(),
+            extremities.x
+                + boxModel
+                      .getPadding()
+                      .getLeftAndRight()
+                + boxModel
+                      .getBorder()
+                      .getLeftAndRight(),
+            extremities.y
+                + boxModel
+                      .getPadding()
+                      .getTopAndBottom()
+                + boxModel
+                      .getBorder()
+                      .getTopAndBottom(),
         };
     }
 
@@ -93,9 +106,9 @@ namespace jive
                         juce::Rectangle<float> bounds,
                         LayoutStrategy strategy)
     {
-        for (auto& child : container)
+        for (auto* child : container.getChildren())
         {
-            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(&child))
+            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(child))
             {
                 if (auto* const flexItem = decoratedItem->toType<FlexItem>())
                     flex.items.add(flexItem->toJuceFlexItem(bounds, strategy));
@@ -298,7 +311,7 @@ private:
 
         flexBox = static_cast<juce::FlexBox>(*item);
 
-        expect(flexBox.items.size() == item->getNumChildren());
+        expect(flexBox.items.size() == item->getChildren().size());
     }
 
     void testPadding()
@@ -322,10 +335,12 @@ private:
             },
         };
         auto item = createFlexContainer(tree);
-        expectEquals(item->getChild(0).getComponent()->getPosition(), juce::Point<int>{ 0, 0 });
+        expectEquals(item->getChildren()[0]->getComponent()->getPosition(),
+                     juce::Point<int>{ 0, 0 });
 
         tree.setProperty("padding", "10 20 30 40", nullptr);
-        expectEquals(item->getChild(0).getComponent()->getPosition(), juce::Point<int>{ 40, 10 });
+        expectEquals(item->getChildren()[0]->getComponent()->getPosition(),
+                     juce::Point<int>{ 40, 10 });
     }
 
     void testAutoSize()
@@ -352,9 +367,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
-            expectEquals(item.boxModel.getWidth(), 0.0f);
-            expectEquals(item.boxModel.getHeight(), 0.0f);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(jive::BoxModel{ item.state }.getWidth(), 0.0f);
+            expectEquals(jive::BoxModel{ item.state }.getHeight(), 0.0f);
         }
         {
             juce::ValueTree parentState{
@@ -386,11 +401,11 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
-            expectEquals(item.boxModel.getWidth(), 222.0f);
-            expectEquals(item.boxModel.getHeight(), 84.0f);
-            expectEquals(item.getChild(0).boxModel.getWidth(), 43.0f);
-            expectEquals(item.getChild(0).boxModel.getHeight(), 84.0f);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(jive::BoxModel{ item.state }.getWidth(), 222.0f);
+            expectEquals(jive::BoxModel{ item.state }.getHeight(), 84.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
         }
         {
             juce::ValueTree parentState{
@@ -426,21 +441,21 @@ private:
             };
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
-            auto& item = parent->getChild(0);
-            expectEquals(item.boxModel.getWidth(), 222.0f);
-            expectEquals(item.boxModel.getHeight(), 193.0f);
-            expectEquals(item.getChild(0).boxModel.getWidth(), 43.0f);
-            expectEquals(item.getChild(0).boxModel.getHeight(), 84.0f);
-            expectEquals(item.getChild(1).boxModel.getWidth(), 37.0f);
-            expectEquals(item.getChild(1).boxModel.getHeight(), 99.0f);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(jive::BoxModel{ item.state }.getWidth(), 222.0f);
+            expectEquals(jive::BoxModel{ item.state }.getHeight(), 193.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getWidth(), 37.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getHeight(), 99.0f);
 
             item.state.setProperty("flex-direction", "row", nullptr);
-            expectGreaterOrEqual(item.boxModel.getWidth(), 90.0f);
-            expectGreaterOrEqual(item.boxModel.getHeight(), 109.0f);
-            expectEquals(item.getChild(0).boxModel.getWidth(), 43.0f);
-            expectEquals(item.getChild(0).boxModel.getHeight(), 84.0f);
-            expectEquals(item.getChild(1).boxModel.getWidth(), 37.0f);
-            expectEquals(item.getChild(1).boxModel.getHeight(), 99.0f);
+            expectGreaterOrEqual(jive::BoxModel{ item.state }.getWidth(), 90.0f);
+            expectGreaterOrEqual(jive::BoxModel{ item.state }.getHeight(), 109.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getWidth(), 37.0f);
+            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getHeight(), 99.0f);
         }
     }
 
@@ -471,9 +486,9 @@ private:
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
-            const auto& container = window->getChild(0);
-            expectEquals(container.boxModel.getWidth(), 0.0f);
-            expectEquals(container.boxModel.getHeight(), 0.0f);
+            const auto& container = *window->getChildren()[0];
+            expectEquals(jive::BoxModel{ container.state }.getWidth(), 0.0f);
+            expectEquals(jive::BoxModel{ container.state }.getHeight(), 0.0f);
         }
 
         juce::ValueTree buttonState{
@@ -492,9 +507,9 @@ private:
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
-            const auto& container = window->getChild(0);
-            expectEquals(container.boxModel.getWidth(), 50.0f);
-            expectEquals(container.boxModel.getHeight(), 20.0f);
+            const auto& container = *window->getChildren()[0];
+            expectEquals(jive::BoxModel{ container.state }.getWidth(), 50.0f);
+            expectEquals(jive::BoxModel{ container.state }.getHeight(), 20.0f);
         }
 
         buttonState.removeProperty("width", nullptr);
@@ -516,9 +531,11 @@ private:
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
-            const auto& container = window->getChild(0);
-            expectEquals(container.boxModel.getWidth(), std::ceil(font.getStringWidthFloat(textState["text"])));
-            expectEquals(container.boxModel.getHeight(), font.getHeight());
+            const auto& container = *window->getChildren()[0];
+            expectEquals(jive::BoxModel{ container.state }.getWidth(),
+                         std::ceil(font.getStringWidthFloat(textState["text"])));
+            expectEquals(jive::BoxModel{ container.state }.getHeight(),
+                         font.getHeight());
         }
 
         const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
@@ -532,9 +549,9 @@ private:
             juce::TextLayout layout;
             layout.createLayout(attributedString, 150.0f);
 
-            const auto& container = window->getChild(0);
-            expectEquals(container.boxModel.getWidth(), 150.0f);
-            expectEquals(container.boxModel.getHeight(), std::ceil(layout.getHeight()));
+            const auto& container = *window->getChildren()[0];
+            expectEquals(jive::BoxModel{ container.state }.getWidth(), 150.0f);
+            expectEquals(jive::BoxModel{ container.state }.getHeight(), std::ceil(layout.getHeight()));
         }
     }
 };

@@ -26,6 +26,8 @@ namespace jive
         operator juce::String() const;
         bool isSVG() const;
 
+        bool isEmpty() const;
+
     private:
         //==============================================================================================================
         std::unique_ptr<juce::Drawable> drawable;

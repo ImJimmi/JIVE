@@ -14,10 +14,10 @@ namespace jive
     //==================================================================================================================
     void BlockContainer::layOutChildren()
     {
-        for (auto& child : *this)
+        for (auto child : getChildren())
         {
-            auto& blockItem = *dynamic_cast<GuiItemDecorator&>(child).toType<BlockItem>();
-            child.getComponent()->setBounds(blockItem.calculateBounds());
+            auto& blockItem = *dynamic_cast<GuiItemDecorator&>(*child).toType<BlockItem>();
+            child->getComponent()->setBounds(blockItem.calculateBounds());
         }
     }
 
@@ -66,14 +66,14 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(state);
-        expectEquals(item->getChild(0).getComponent()->getX(), 111);
-        expectEquals(item->getChild(0).getComponent()->getHeight(), 33);
+        expectEquals(item->getChildren()[0]->getComponent()->getX(), 111);
+        expectEquals(item->getChildren()[0]->getComponent()->getHeight(), 33);
 
         state.setProperty("width", 300, nullptr);
-        expectEquals(item->getChild(0).getComponent()->getX(), 150);
+        expectEquals(item->getChildren()[0]->getComponent()->getX(), 150);
 
         state.setProperty("height", 100, nullptr);
-        expectEquals(item->getChild(0).getComponent()->getHeight(), 10);
+        expectEquals(item->getChildren()[0]->getComponent()->getHeight(), 10);
     }
 };
 

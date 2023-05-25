@@ -12,25 +12,25 @@ namespace jive
         ComponentFactory& getComponentFactory();
         void setComponentFactory(const ComponentFactory& newFactory);
 
-        void setAlias(juce::Identifier aliasType, juce::ValueTree treeToReplaceWith);
+        void setAlias(juce::Identifier aliasType, const juce::ValueTree& treeToReplaceWith);
 
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType);
 
         //==============================================================================================================
-        std::unique_ptr<GuiItem> interpret(juce::ValueTree tree) const;
+        std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree) const;
 
     private:
         //==============================================================================================================
-        std::unique_ptr<GuiItem> interpret(juce::ValueTree tree, GuiItem* const parent) const;
+        std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree, GuiItem* const parent) const;
 
         void expandAlias(juce::ValueTree& tree) const;
 
-        std::unique_ptr<GuiItem> createUndecoratedItem(juce::ValueTree tree, GuiItem* const parent) const;
-        void appendChild(GuiItem& item, juce::ValueTree childState) const;
+        std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const;
+        void appendChild(GuiItem& item, const juce::ValueTree& childState) const;
         void appendChildItems(GuiItem& item) const;
 
-        std::unique_ptr<juce::Component> createComponent(juce::ValueTree tree) const;
+        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) const;
 
         //==============================================================================================================
         ComponentFactory componentFactory;

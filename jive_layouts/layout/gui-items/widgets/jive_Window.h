@@ -15,10 +15,6 @@ namespace jive
         juce::DocumentWindow& getWindow();
         const juce::DocumentWindow& getWindow() const;
 
-    protected:
-        //==============================================================================================================
-        void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
-
     private:
         //==============================================================================================================
         int getStyleFlags() const;
