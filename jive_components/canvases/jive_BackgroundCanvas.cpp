@@ -4,6 +4,11 @@
 namespace jive
 {
     //==================================================================================================================
+    BackgroundCanvas::BackgroundCanvas()
+    {
+        setInterceptsMouseClicks(false, false);
+    }
+
     void apply(const Fill& fill, juce::Graphics& g, juce::Rectangle<float> bounds)
     {
         if (fill.getGradient().has_value())
@@ -29,11 +34,6 @@ namespace jive
     void BackgroundCanvas::resized()
     {
         updateShape();
-    }
-
-    bool BackgroundCanvas::hitTest(int x, int y)
-    {
-        return shape.contains(static_cast<float>(x), static_cast<float>(y));
     }
 
     //==================================================================================================================
