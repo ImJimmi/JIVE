@@ -9,6 +9,7 @@ env:
 
 jobs:
   test-windows:
+    name: Test Windows
     runs-on: windows-latest
 
     steps:
@@ -27,6 +28,7 @@ jobs:
       run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
 
   test-macos:
+    name: Test macOS
     runs-on: macos-latest
 
     steps:
@@ -58,3 +60,16 @@ jobs:
         curl -Os https://uploader.codecov.io/latest/macos/codecov
         chmod +x codecov
         ./codecov -t ${{ secrets.CODECOV_TOKEN }}
+
+  verify-formatting:
+    name: Verify Formatting
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install clang-format
+      run: brew install clang-format
+
+    - name: Verify formatting
+      run: python3 ${{github.workspace}}/.github/verify_formatting.py 
