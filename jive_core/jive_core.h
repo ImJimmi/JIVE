@@ -18,6 +18,8 @@ END_JUCE_MODULE_DECLARATION */
 //======================================================================================================================
 #include "logging/jive_StringStreams.h"
 
+#include "algorithms/jive_Find.h"
+
 #include "values/jive_Event.h"
 #include "values/jive_Object.h"
 #include "values/jive_Property.h"
