@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Hyperlink::Hyperlink(std::unique_ptr<GuiItem> itemToDecorate)
         : Button(std::move(itemToDecorate))
         , url{ state, "url" }
@@ -15,13 +13,11 @@ namespace jive
         getHyperlink().setURL(url);
     }
 
-    //==================================================================================================================
     bool Hyperlink::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     juce::HyperlinkButton& Hyperlink::getHyperlink()
     {
         return *dynamic_cast<juce::HyperlinkButton*>(&getButton());
@@ -33,7 +29,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class HyperlinkTest : public juce::UnitTest
 {

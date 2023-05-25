@@ -1,14 +1,11 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 #ifndef JUCE_APPLICATION_NAME
     #define JUCE_APPLICATION_NAME ""
 #endif
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Window::Window(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , hasShadow{ state, "shadow", true }
@@ -126,7 +123,6 @@ namespace jive
         getWindow().setLookAndFeel(nullptr);
     }
 
-    //==================================================================================================================
     juce::DocumentWindow& Window::getWindow()
     {
         return window;
@@ -138,7 +134,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class WindowTest : public juce::UnitTest
 {

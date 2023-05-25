@@ -1,9 +1,7 @@
 #include <jive_core/jive_core.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     ComponentInteractionState::ComponentInteractionState(const juce::Component& comp, juce::ValueTree tree)
         : component{ comp }
         , mouse{ tree, "mouse" }
@@ -22,7 +20,6 @@ namespace jive
         const_cast<juce::Component&>(component).removeMouseListener(this);
     }
 
-    //==================================================================================================================
     void ComponentInteractionState::mouseEnter(const juce::MouseEvent&)
     {
         mouse = getCurrentMouseState();
@@ -48,7 +45,6 @@ namespace jive
         keyboard = getCurrentKeyboardState();
     }
 
-    //==================================================================================================================
     ComponentInteractionState::Mouse ComponentInteractionState::getCurrentMouseState() const
     {
         if (component.isMouseOverOrDragging(true))
@@ -71,10 +67,8 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     const std::unordered_map<jive::ComponentInteractionState::Mouse, juce::String> VariantConverter<jive::ComponentInteractionState::Mouse>::map{
         { jive::ComponentInteractionState::Mouse::dissociate, "dissociate" },
         { jive::ComponentInteractionState::Mouse::hover, "hover" },
@@ -96,7 +90,6 @@ namespace juce
             ->first;
     }
 
-    //==================================================================================================================
     var VariantConverter<jive::ComponentInteractionState::Keyboard>::toVar(const jive::ComponentInteractionState::Keyboard& mouse)
     {
         return map.find(mouse)->second;

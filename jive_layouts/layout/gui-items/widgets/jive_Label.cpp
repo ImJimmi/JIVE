@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     juce::BorderSize<int> toNearestInt(juce::BorderSize<float> border)
     {
         return juce::BorderSize<int>{
@@ -24,13 +22,11 @@ namespace jive
         getLabel().setBorderSize(toNearestInt(border));
     }
 
-    //==================================================================================================================
     bool Label::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     juce::Label& Label::getLabel()
     {
         auto* label = dynamic_cast<juce::Label*>(component.get());
@@ -48,7 +44,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class LabelUnitTest : public juce::UnitTest
 {

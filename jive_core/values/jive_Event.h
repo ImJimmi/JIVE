@@ -2,14 +2,11 @@
 
 #include "jive_Property.h"
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class Event : protected juce::ValueTree::Listener
     {
     public:
-        //==============================================================================================================
         Event(juce::ValueTree sourceState, const juce::Identifier& eventID)
             : id{ eventID }
             , event{ sourceState, eventID }
@@ -31,7 +28,6 @@ namespace jive
             event.get()->setProperty("callbacks", callbacks);
         }
 
-        //==============================================================================================================
         int getAssumedTriggerCount() const
         {
             if (!event.get()->hasProperty("count"))
@@ -50,7 +46,6 @@ namespace jive
             };
         }
 
-        //==============================================================================================================
         void trigger()
         {
             event
@@ -78,16 +73,13 @@ namespace jive
             onTrigger = callback;
         }
 
-        //==============================================================================================================
         const juce::Identifier id;
 
         std::function<void()> onTrigger = nullptr;
 
     private:
-        //==============================================================================================================
         Property<Object::ReferenceCountedPointer> event;
 
-        //==============================================================================================================
         JUCE_DECLARE_WEAK_REFERENCEABLE(Event)
     };
 } // namespace jive

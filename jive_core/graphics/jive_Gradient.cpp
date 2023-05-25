@@ -1,9 +1,7 @@
 #include "jive_Gradient.h"
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     bool Gradient::ColourStop::operator==(const ColourStop& other) const
     {
         return proportion == other.proportion
@@ -15,7 +13,6 @@ namespace jive
         return !(*this == other);
     }
 
-    //==================================================================================================================
     juce::ColourGradient Gradient::toJuceGradient(const juce::Rectangle<float>& bounds) const
     {
         juce::ColourGradient gradient;
@@ -53,7 +50,6 @@ namespace jive
         return gradient;
     }
 
-    //==================================================================================================================
     bool Gradient::operator==(const Gradient& other) const
     {
         return stops == other.stops
@@ -68,10 +64,8 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     var VariantConverter<Array<jive::Gradient::ColourStop>>::toVar(const Array<jive::Gradient::ColourStop>& stops)
     {
         auto object = std::make_unique<DynamicObject>();
@@ -103,7 +97,6 @@ namespace juce
         return stops;
     }
 
-    //==================================================================================================================
     var VariantConverter<jive::Gradient::Variant>::toVar(const jive::Gradient::Variant& variant)
     {
         switch (variant)
@@ -131,7 +124,6 @@ namespace juce
         return {};
     }
 
-    //==================================================================================================================
     var VariantConverter<jive::Gradient>::toVar(const jive::Gradient& gradient)
     {
         auto object = std::make_unique<DynamicObject>();

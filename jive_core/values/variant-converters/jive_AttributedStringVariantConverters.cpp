@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     const Array<var> VariantConverter<AttributedString::ReadingDirection>::options = {
         "natural",
         "left-to-right",
@@ -24,7 +22,6 @@ namespace juce
         return options[index];
     }
 
-    //==================================================================================================================
     const Array<var> VariantConverter<AttributedString::WordWrap>::options = {
         "none",
         "by-word",

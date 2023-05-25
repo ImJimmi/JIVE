@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate)
         : Slider{ std::move(itemToDecorate), 135.0f, 20.0f }
     {
@@ -92,13 +90,11 @@ namespace jive
             height = juce::String{ defaultHeight };
     }
 
-    //==================================================================================================================
     bool Slider::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     juce::Slider& Slider::getSlider()
     {
         return *dynamic_cast<juce::Slider*>(component.get());
@@ -109,7 +105,6 @@ namespace jive
         return *dynamic_cast<const juce::Slider*>(component.get());
     }
 
-    //==================================================================================================================
     void Slider::updateStyle()
     {
         Orientation ori;
@@ -131,7 +126,6 @@ namespace jive
         getSlider().setSliderStyle(getStyleForOrientation(ori));
     }
 
-    //==================================================================================================================
     void Slider::sliderValueChanged(juce::Slider* slider)
     {
         if (slider != &getSlider())
@@ -141,7 +135,6 @@ namespace jive
         onChange.triggerWithoutSelfCallback();
     }
 
-    //==================================================================================================================
     juce::Slider::SliderStyle Slider::getStyleForOrientation(Orientation ori)
     {
         switch (ori)
@@ -156,7 +149,6 @@ namespace jive
         return {};
     }
 
-    //==================================================================================================================
     void Slider::updateRange()
     {
         auto& slider = getSlider();
@@ -172,7 +164,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class SliderTest : public juce::UnitTest
 {

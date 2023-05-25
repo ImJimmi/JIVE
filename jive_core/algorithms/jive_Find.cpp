@@ -1,9 +1,7 @@
 #include <jive_core/jive_core.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     juce::ValueTree find(juce::ValueTree& root,
                          std::function<bool(const juce::ValueTree&)> predicate)
     {
@@ -29,7 +27,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 struct FindUnitTest : public juce::UnitTest
 {

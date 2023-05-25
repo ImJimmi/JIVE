@@ -1,9 +1,7 @@
 #include <jive_core/jive_core.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class Object::InternalListener : public Object::Listener
     {
     public:
@@ -52,7 +50,6 @@ namespace jive
         Object& object;
     };
 
-    //==================================================================================================================
     Object::Object()
         : internalListener{ std::make_unique<InternalListener>(*this) }
     {
@@ -75,7 +72,6 @@ namespace jive
     {
     }
 
-    //==================================================================================================================
     void Object::setProperty(const juce::Identifier& propertyName,
                              const juce::var& newValue)
     {
@@ -91,7 +87,6 @@ namespace jive
         return dynamic_cast<juce::DynamicObject*>(const_cast<Object*>(this))->getProperties();
     }
 
-    //==================================================================================================================
     void Object::addListener(Listener& listener) const
     {
         listeners.add(&listener);
@@ -102,7 +97,6 @@ namespace jive
         listeners.remove(&listener);
     }
 
-    //==================================================================================================================
     void replaceDynamicObjectsWithJiveObjects(juce::var& value)
     {
         if (auto* dynamicObject = value.getDynamicObject())
@@ -130,7 +124,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 namespace juce
 {
     jive::Object::ReferenceCountedPointer VariantConverter<jive::Object::ReferenceCountedPointer>::fromVar(const var& value)
@@ -155,7 +148,6 @@ namespace juce
     }
 } // namespace juce
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ObjectTest : public juce::UnitTest
 {

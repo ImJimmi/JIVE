@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     const ComponentFactory& Interpreter::getComponentFactory() const
     {
         return componentFactory;
@@ -32,13 +30,11 @@ namespace jive
         });
     }
 
-    //==================================================================================================================
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree) const
     {
         return interpret(tree, nullptr);
     }
 
-    //==================================================================================================================
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         Property<Display> display{ item->state, "display" };

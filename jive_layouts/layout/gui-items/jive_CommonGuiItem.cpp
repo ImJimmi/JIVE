@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     CommonGuiItem::CommonGuiItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , boxModel{ state }
@@ -126,7 +124,6 @@ namespace jive
         component->removeComponentListener(this);
     }
 
-    //==================================================================================================================
     void CommonGuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                                 bool /*wasMoved*/,
                                                 bool wasResized)
@@ -184,7 +181,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class CommonGuiItemUnitTest : public juce::UnitTest
 {

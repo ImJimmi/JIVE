@@ -1,12 +1,9 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     struct Gradient
     {
-        //==============================================================================================================
         struct ColourStop
         {
             double proportion;
@@ -22,14 +19,11 @@ namespace jive
             radial,
         };
 
-        //==============================================================================================================
         juce::ColourGradient toJuceGradient(const juce::Rectangle<float>& bounds) const;
 
-        //==============================================================================================================
         bool operator==(const Gradient& other) const;
         bool operator!=(const Gradient& other) const;
 
-        //==============================================================================================================
         juce::Array<ColourStop> stops;
         Variant variant{ Variant::linear };
         juce::Optional<Orientation> orientation;
@@ -37,10 +31,8 @@ namespace jive
     };
 } // namespace jive
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     template <>
     struct VariantConverter<Array<jive::Gradient::ColourStop>>
     {
@@ -48,7 +40,6 @@ namespace juce
         static Array<jive::Gradient::ColourStop> fromVar(const var& object);
     };
 
-    //==================================================================================================================
     template <>
     struct VariantConverter<jive::Gradient::Variant>
     {
@@ -56,7 +47,6 @@ namespace juce
         static jive::Gradient::Variant fromVar(const var& value);
     };
 
-    //==================================================================================================================
     template <>
     struct VariantConverter<jive::Gradient>
     {

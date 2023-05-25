@@ -12,7 +12,6 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_LAYOUTS_H_INCLUDED
 
-//======================================================================================================================
 #include <jive_components/jive_components.h>
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
@@ -23,13 +22,11 @@ END_JUCE_MODULE_DECLARATION */
     #endif
 #endif
 
-//======================================================================================================================
 namespace jive
 {
     class GuiItem;
 } // namespace jive
 
-//======================================================================================================================
 #include "utilities/jive_ComponentFactory.h"
 #include "utilities/jive_Display.h"
 #include "utilities/jive_Drawable.h"

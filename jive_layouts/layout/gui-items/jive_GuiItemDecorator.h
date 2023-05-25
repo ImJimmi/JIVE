@@ -1,16 +1,12 @@
 #pragma once
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     class GuiItemDecorator : public GuiItem
     {
     public:
-        //==============================================================================================================
         explicit GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate);
 
-        //==============================================================================================================
         void addChild(std::unique_ptr<GuiItem> child) override;
         juce::Array<GuiItem*> getChildren() override;
         juce::Array<const GuiItem*> getChildren() const override;
@@ -37,17 +33,13 @@ namespace jive
             return const_cast<GuiItemDecorator*>(this)->toType<ItemType>();
         }
 
-        //==============================================================================================================
         void layOutChildren() override;
 
-        //==============================================================================================================
         const std::unique_ptr<GuiItem> item;
 
     private:
-        //==============================================================================================================
         GuiItemDecorator* owner = nullptr;
 
-        //==============================================================================================================
         JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
 } // namespace jive

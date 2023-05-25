@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     GuiItemDecorator::GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItem{ *itemToDecorate }
         , item{ std::move(itemToDecorate) }
@@ -12,7 +10,6 @@ namespace jive
             decorator->owner = this;
     }
 
-    //==================================================================================================================
     void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
     {
         item->addChild(std::move(child));
@@ -60,7 +57,6 @@ namespace jive
         return *this;
     }
 
-    //==================================================================================================================
     void GuiItemDecorator::layOutChildren()
     {
         item->layOutChildren();

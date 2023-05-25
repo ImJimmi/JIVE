@@ -12,10 +12,8 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_COMPONENTS_H_INCLUDED
 
-//======================================================================================================================
 #include <jive_core/jive_core.h>
 
-//======================================================================================================================
 #include "accessibility/jive_IgnoredComponent.h"
 
 #include "canvases/jive_BackgroundCanvas.h"

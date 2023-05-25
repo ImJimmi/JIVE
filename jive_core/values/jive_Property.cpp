@@ -1,6 +1,5 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class PropertyUnitTest : public juce::UnitTest
 {

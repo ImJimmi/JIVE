@@ -1,9 +1,7 @@
 #include <jive_style_sheets/jive_style_sheets.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     namespace fontProperties
     {
         static const juce::Identifier fontFamily{ "font-family" };
@@ -25,7 +23,6 @@ namespace jive
         };
     } // namespace fontProperties
 
-    //==================================================================================================================
     juce::StringArray getAncestorTypes(const juce::ValueTree& child)
     {
         juce::StringArray types;
@@ -88,7 +85,6 @@ namespace jive
         Property<ComponentInteractionState::Keyboard> keyboard;
     };
 
-    //==================================================================================================================
     StyleSheet::StyleSheet(juce::Component& sourceComponent,
                            juce::ValueTree sourceState)
         : component{ &sourceComponent }
@@ -141,7 +137,6 @@ namespace jive
         }
     }
 
-    //==================================================================================================================
     Fill StyleSheet::getBackground() const
     {
         return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
@@ -214,7 +209,6 @@ namespace jive
         return cachedFont;
     }
 
-    //==================================================================================================================
     void StyleSheet::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                              bool /*wasMoved*/,
                                              bool /*wasResized*/)
@@ -254,7 +248,6 @@ namespace jive
         applyStyles();
     }
 
-    //==================================================================================================================
     enum class StyleSearchStrategy
     {
         objectAndChildren,
@@ -380,7 +373,6 @@ namespace jive
         return result;
     }
 
-    //==================================================================================================================
     void StyleSheet::applyStyles()
     {
         backgroundCanvas.setFill(getBackground());
@@ -408,7 +400,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/jive_layouts.h>
 

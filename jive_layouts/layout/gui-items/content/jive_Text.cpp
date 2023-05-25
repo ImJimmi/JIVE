@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Text::Text(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , text{ state, "text" }
@@ -46,7 +44,6 @@ namespace jive
         getTextComponent().removeListener(*this);
     }
 
-    //==================================================================================================================
     void Text::addChild(std::unique_ptr<GuiItem> child)
     {
         GuiItemDecorator::addChild(std::move(child));
@@ -63,7 +60,6 @@ namespace jive
         return true;
     }
 
-    //==================================================================================================================
     TextComponent& Text::getTextComponent()
     {
         return dynamic_cast<TextComponent&>(*component);
@@ -74,13 +70,11 @@ namespace jive
         return dynamic_cast<const TextComponent&>(*component);
     }
 
-    //==================================================================================================================
     void Text::textFontChanged(TextComponent&)
     {
         updateTextComponent();
     }
 
-    //==================================================================================================================
     juce::TextLayout Text::buildTextLayout(float maxWidth) const
     {
         for (auto* parentItem = getParent();
@@ -135,7 +129,6 @@ namespace jive
         }
     }
 
-    //==================================================================================================================
     const Text* findFirstTextContent(const GuiItem& item)
     {
         if (auto* text = dynamic_cast<const Text*>(&item))
@@ -153,7 +146,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class TextTest : public juce::UnitTest
 {

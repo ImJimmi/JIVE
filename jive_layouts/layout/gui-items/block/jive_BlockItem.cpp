@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     BlockItem::BlockItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , x{ state, "x" }
@@ -35,7 +33,6 @@ namespace jive
         getComponent()->setBounds(calculateBounds());
     }
 
-    //==================================================================================================================
     int BlockItem::calculateX() const
     {
         const auto parentContentBounds = BoxModel{ state.getParent() }.getContentBounds();
@@ -78,7 +75,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class BlockItemTest : public juce::UnitTest
 {

@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
                      GuiItem* parentItem,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
@@ -51,7 +49,6 @@ namespace jive
     {
     }
 
-    //==================================================================================================================
     const std::shared_ptr<const juce::Component> GuiItem::getComponent() const
     {
         return component;
@@ -104,7 +101,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class GuiItemUnitTest : public juce::UnitTest
 {

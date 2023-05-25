@@ -1,6 +1,5 @@
 #include "jive_components.h"
 
-//======================================================================================================================
 #include "accessibility/jive_IgnoredComponent.cpp"
 
 #include "canvases/jive_BackgroundCanvas.cpp"

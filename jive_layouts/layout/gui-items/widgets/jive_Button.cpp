@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     void triggerClick(juce::Button& button)
     {
 #if JIVE_UNIT_TESTS
@@ -16,7 +14,6 @@ namespace jive
 #endif
     }
 
-    //==================================================================================================================
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , toggleable{ state, "toggleable" }
@@ -73,13 +70,11 @@ namespace jive
         getButton().removeListener(this);
     }
 
-    //==================================================================================================================
     bool Button::isContainer() const
     {
         return false;
     }
 
-    //==================================================================================================================
     juce::Button& Button::getButton()
     {
         return *dynamic_cast<juce::Button*>(component.get());
@@ -90,7 +85,6 @@ namespace jive
         return *dynamic_cast<const juce::Button*>(component.get());
     }
 
-    //==================================================================================================================
     void Button::buttonClicked(juce::Button* button)
     {
         jassertquiet(button == &getButton());
@@ -100,10 +94,8 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 namespace juce
 {
-    //==================================================================================================================
     const Array<var> VariantConverter<jive::Button::TriggerEvent>::options = {
         "mouse-up",
         "mouse-down",
@@ -124,7 +116,6 @@ namespace juce
     }
 } // namespace juce
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ButtonTest : public juce::UnitTest
 {

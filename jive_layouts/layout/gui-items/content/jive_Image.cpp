@@ -1,9 +1,7 @@
 #include <jive_layouts/jive_layouts.h>
 
-//======================================================================================================================
 namespace jive
 {
-    //==================================================================================================================
     Image::Image(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , source{ state, "source" }
@@ -36,7 +34,6 @@ namespace jive
             component->removeComponentListener(this);
     }
 
-    //==================================================================================================================
     bool Image::isContainer() const
     {
         return false;
@@ -57,7 +54,6 @@ namespace jive
         return source.get();
     }
 
-    //==================================================================================================================
     void Image::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool, bool)
     {
         if (&componentThatWasMovedOrResized != component.get())
@@ -106,7 +102,6 @@ namespace jive
         }
     }
 
-    //==================================================================================================================
     float Image::calculateAspectRatio(const juce::ImageComponent& image) const
     {
         return image.getImage().getBounds().toFloat().getAspectRatio();
@@ -225,7 +220,6 @@ namespace jive
     }
 } // namespace jive
 
-//======================================================================================================================
 #if JIVE_UNIT_TESTS
 class ImageTest : public juce::UnitTest
 {

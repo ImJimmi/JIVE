@@ -12,10 +12,8 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_CORE_H_INCLUDED
 
-//======================================================================================================================
 #include <juce_gui_basics/juce_gui_basics.h>
 
-//======================================================================================================================
 #include "logging/jive_StringStreams.h"
 
 #include "algorithms/jive_Find.h"
