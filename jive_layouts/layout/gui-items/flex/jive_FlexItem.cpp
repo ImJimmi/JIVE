@@ -4,11 +4,11 @@ namespace jive
 {
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , flexItemOrder{ state, "order" }
-        , flexItemGrow{ state, "flex-grow" }
-        , flexItemShrink{ state, "flex-shrink", 1 }
-        , flexItemBasis{ state, "flex-basis" }
-        , flexItemAlignSelf{ state, "align-self", juce::FlexItem::AlignSelf::autoAlign }
+        , order{ state, "order" }
+        , flexGrow{ state, "flex-grow" }
+        , flexShrink{ state, "flex-shrink", 1 }
+        , flexBasis{ state, "flex-basis" }
+        , alignSelf{ state, "align-self" }
         , width{ state, "width", "auto" }
         , height{ state, "height", "auto" }
         , minWidth{ state, "min-width" }
@@ -22,11 +22,11 @@ namespace jive
         const auto updateParentLayout = [this]() {
             getParent()->layOutChildren();
         };
-        flexItemOrder.onValueChange = updateParentLayout;
-        flexItemGrow.onValueChange = updateParentLayout;
-        flexItemShrink.onValueChange = updateParentLayout;
-        flexItemBasis.onValueChange = updateParentLayout;
-        flexItemAlignSelf.onValueChange = updateParentLayout;
+        order.onValueChange = updateParentLayout;
+        flexGrow.onValueChange = updateParentLayout;
+        flexShrink.onValueChange = updateParentLayout;
+        flexBasis.onValueChange = updateParentLayout;
+        alignSelf.onValueChange = updateParentLayout;
     }
 
     juce::FlexItem::Margin transform(const juce::BorderSize<float>& border)
@@ -138,14 +138,14 @@ namespace jive
             }
         }
 
-        flexItem.order = flexItemOrder;
-        flexItem.flexGrow = flexItemGrow;
-        flexItem.flexShrink = flexItemShrink;
-        flexItem.flexBasis = flexItemBasis;
+        flexItem.order = order;
+        flexItem.flexGrow = flexGrow;
+        flexItem.flexShrink = flexShrink;
+        flexItem.flexBasis = flexBasis;
         flexItem.margin = transform(boxModel.getMargin());
 
         if (strategy == LayoutStrategy::real)
-            flexItem.alignSelf = flexItemAlignSelf;
+            flexItem.alignSelf = alignSelf;
 
         return flexItem;
     }
@@ -342,7 +342,7 @@ private:
                             .toType<jive::FlexItem>()
                             ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
-        expect(flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign);
+        expect(flexItem.alignSelf == juce::FlexItem{}.alignSelf);
 
         state.getChild(0).setProperty("align-self", "centre", nullptr);
         flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)

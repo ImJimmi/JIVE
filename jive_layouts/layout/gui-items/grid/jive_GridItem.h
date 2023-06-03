@@ -13,9 +13,9 @@ namespace jive
         Property<int> order;
         Property<juce::GridItem::JustifySelf> justifySelf;
         Property<juce::GridItem::AlignSelf> alignSelf;
-        Property<juce::GridItem::StartAndEndProperty> column;
-        Property<juce::GridItem::StartAndEndProperty> row;
-        Property<juce::String> area;
+        Property<juce::GridItem::StartAndEndProperty> gridColumn;
+        Property<juce::GridItem::StartAndEndProperty> gridRow;
+        Property<juce::String> gridArea;
         Property<float> maxWidth;
         Property<float> maxHeight;
         Length width;

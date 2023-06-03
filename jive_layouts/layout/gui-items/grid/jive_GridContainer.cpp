@@ -8,12 +8,12 @@ namespace jive
         , alignItems{ state, "align-items", juce::Grid{}.alignItems }
         , justifyContent{ state, "justify-content", juce::Grid{}.justifyContent }
         , alignContent{ state, "align-content", juce::Grid{}.alignContent }
-        , autoFlow{ state, "auto-flow", juce::Grid{}.autoFlow }
-        , templateColumns{ state, "template-columns", juce::Grid{}.templateColumns }
-        , templateRows{ state, "template-rows", juce::Grid{}.templateRows }
-        , templateAreas{ state, "template-areas", juce::Grid{}.templateAreas }
-        , autoRows{ state, "auto-rows", juce::Grid{}.autoRows }
-        , autoColumns{ state, "auto-columns", juce::Grid{}.autoColumns }
+        , gridAutoFlow{ state, "grid-auto-flow", juce::Grid{}.autoFlow }
+        , gridTemplateColumns{ state, "grid-template-columns" }
+        , gridTemplateRows{ state, "grid-template-rows" }
+        , gridTemplateAreas{ state, "grid-template-areas" }
+        , gridAutoRows{ state, "grid-auto-rows", juce::Grid{}.autoRows }
+        , gridAutoColumns{ state, "grid-auto-columns", juce::Grid{}.autoColumns }
         , gap{ state, "gap" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
@@ -32,22 +32,22 @@ namespace jive
         alignContent.onValueChange = [this]() {
             layoutChanged();
         };
-        autoFlow.onValueChange = [this]() {
+        gridAutoFlow.onValueChange = [this]() {
             layoutChanged();
         };
-        templateColumns.onValueChange = [this]() {
+        gridTemplateColumns.onValueChange = [this]() {
             layoutChanged();
         };
-        templateRows.onValueChange = [this]() {
+        gridTemplateRows.onValueChange = [this]() {
             layoutChanged();
         };
-        templateAreas.onValueChange = [this]() {
+        gridTemplateAreas.onValueChange = [this]() {
             layoutChanged();
         };
-        autoRows.onValueChange = [this]() {
+        gridAutoRows.onValueChange = [this]() {
             layoutChanged();
         };
-        autoColumns.onValueChange = [this]() {
+        gridAutoColumns.onValueChange = [this]() {
             layoutChanged();
         };
         gap.onValueChange = [this]() {
@@ -124,13 +124,13 @@ namespace jive
         grid.alignItems = alignItems;
         grid.justifyContent = justifyContent;
         grid.alignContent = alignContent;
-        grid.autoFlow = autoFlow;
+        grid.autoFlow = gridAutoFlow;
 
-        grid.templateColumns = templateColumns;
-        grid.templateRows = templateRows;
-        grid.templateAreas = templateAreas;
-        grid.autoRows = autoRows;
-        grid.autoColumns = autoColumns;
+        grid.templateColumns = gridTemplateColumns;
+        grid.templateRows = gridTemplateRows;
+        grid.templateAreas = gridTemplateAreas;
+        grid.autoRows = gridAutoRows;
+        grid.autoColumns = gridAutoColumns;
 
         const auto gaps = gap.get();
         grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
@@ -398,7 +398,7 @@ private:
 
     void testAutoFlow()
     {
-        beginTest("auto-flow");
+        beginTest("grid-auto-flow");
 
         juce::ValueTree state{
             "Component",
@@ -414,22 +414,22 @@ private:
                                                  .toType<jive::GridContainer>());
         expect(grid.autoFlow == juce::Grid::AutoFlow::row);
 
-        state.setProperty("auto-flow", "column", nullptr);
+        state.setProperty("grid-auto-flow", "column", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(grid.autoFlow == juce::Grid::AutoFlow::column);
 
-        state.setProperty("auto-flow", "row", nullptr);
+        state.setProperty("grid-auto-flow", "row", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(grid.autoFlow == juce::Grid::AutoFlow::row);
 
-        state.setProperty("auto-flow", "row dense", nullptr);
+        state.setProperty("grid-auto-flow", "row dense", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(grid.autoFlow == juce::Grid::AutoFlow::rowDense);
 
-        state.setProperty("auto-flow", "column dense", nullptr);
+        state.setProperty("grid-auto-flow", "column dense", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(grid.autoFlow == juce::Grid::AutoFlow::columnDense);
@@ -437,7 +437,7 @@ private:
 
     void testTemplateColumns()
     {
-        beginTest("template-columns");
+        beginTest("grid-template-columns");
 
         juce::ValueTree state{
             "Component",
@@ -451,29 +451,29 @@ private:
         auto item = interpreter.interpret(state);
         auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                  .toType<jive::GridContainer>());
-        expect(grid.templateColumns.isEmpty());
+        expect(compare(grid.templateColumns, juce::Grid{}.templateColumns));
 
-        state.setProperty("template-columns", "1fr", nullptr);
+        state.setProperty("grid-template-columns", "1fr", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Fr{ 1 } }));
 
-        state.setProperty("template-columns", "4px", nullptr);
+        state.setProperty("grid-template-columns", "4px", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 4 } }));
 
-        state.setProperty("template-columns", "24", nullptr);
+        state.setProperty("grid-template-columns", "24", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 24 } }));
 
-        state.setProperty("template-columns", "auto", nullptr);
+        state.setProperty("grid-template-columns", "auto", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
 
-        state.setProperty("template-columns", "10 30 40", nullptr);
+        state.setProperty("grid-template-columns", "10 30 40", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns,
@@ -483,7 +483,7 @@ private:
                            juce::Grid::Px{ 40 },
                        }));
 
-        state.setProperty("template-columns", "auto 2fr 99px", nullptr);
+        state.setProperty("grid-template-columns", "auto 2fr 99px", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateColumns,
@@ -496,7 +496,7 @@ private:
 
     void testTemplateRows()
     {
-        beginTest("template-rows");
+        beginTest("grid-template-rows");
 
         juce::ValueTree state{
             "Component",
@@ -510,29 +510,29 @@ private:
         auto item = interpreter.interpret(state);
         auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                  .toType<jive::GridContainer>());
-        expect(grid.templateRows.isEmpty());
+        expect(compare(grid.templateRows, juce::Grid{}.templateRows));
 
-        state.setProperty("template-rows", "5fr", nullptr);
+        state.setProperty("grid-template-rows", "5fr", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Fr{ 5 } }));
 
-        state.setProperty("template-rows", "8px", nullptr);
+        state.setProperty("grid-template-rows", "8px", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 8 } }));
 
-        state.setProperty("template-rows", "17", nullptr);
+        state.setProperty("grid-template-rows", "17", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::Px{ 17 } }));
 
-        state.setProperty("template-rows", "auto", nullptr);
+        state.setProperty("grid-template-rows", "auto", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
 
-        state.setProperty("template-rows", "1 313 67", nullptr);
+        state.setProperty("grid-template-rows", "1 313 67", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows,
@@ -542,7 +542,7 @@ private:
                            juce::Grid::Px{ 67 },
                        }));
 
-        state.setProperty("template-rows", "78px 3fr auto", nullptr);
+        state.setProperty("grid-template-rows", "78px 3fr auto", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows,
@@ -555,7 +555,7 @@ private:
 
     void testTemplateAreas()
     {
-        beginTest("template-areas");
+        beginTest("grid-template-areas");
 
         juce::ValueTree state{
             "Component",
@@ -569,9 +569,9 @@ private:
         auto item = interpreter.interpret(state);
         auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                  .toType<jive::GridContainer>());
-        expect(grid.templateAreas.isEmpty());
+        expect(grid.templateAreas == juce::Grid{}.templateAreas);
 
-        state.setProperty("template-areas", "a b c-d e.f", nullptr);
+        state.setProperty("grid-template-areas", "a b c-d e.f", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(grid.templateAreas == juce::StringArray{ "a", "b", "c-d", "e.f" });
@@ -579,7 +579,7 @@ private:
 
     void testAutoRows()
     {
-        beginTest("auto-rows");
+        beginTest("grid-auto-rows");
 
         juce::ValueTree state{
             "Component",
@@ -595,12 +595,12 @@ private:
                                                  .toType<jive::GridContainer>());
         expect(compare(grid.autoRows, juce::Grid::TrackInfo{}));
 
-        state.setProperty("auto-rows", "100px", nullptr);
+        state.setProperty("grid-auto-rows", "100px", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.autoRows, juce::Grid::Px{ 100 }));
 
-        state.setProperty("auto-rows", "13fr", nullptr);
+        state.setProperty("grid-auto-rows", "13fr", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.autoRows, juce::Grid::Fr{ 13 }));
@@ -608,7 +608,7 @@ private:
 
     void testAutoColumns()
     {
-        beginTest("auto-columns");
+        beginTest("grid-auto-columns");
 
         juce::ValueTree state{
             "Component",
@@ -624,12 +624,12 @@ private:
                                                  .toType<jive::GridContainer>());
         expect(compare(grid.autoColumns, juce::Grid::TrackInfo{}));
 
-        state.setProperty("auto-columns", "1.23px", nullptr);
+        state.setProperty("grid-auto-columns", "1.23px", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.autoColumns, juce::Grid::Px{ 1.23L }));
 
-        state.setProperty("auto-columns", "15fr", nullptr);
+        state.setProperty("grid-auto-columns", "15fr", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
         expect(compare(grid.autoColumns, juce::Grid::Fr{ 15 }));
@@ -736,8 +736,8 @@ private:
                 { "display", "grid" },
                 { "width", 200 },
                 { "height", 200 },
-                { "template-columns", "1fr 1fr" },
-                { "template-rows", "1fr" },
+                { "grid-template-columns", "1fr 1fr" },
+                { "grid-template-rows", "1fr" },
             },
             {
                 juce::ValueTree{ "Component" },
@@ -766,8 +766,8 @@ private:
                     "Component",
                     {
                         { "display", "grid" },
-                        { "template-columns", "10px 10px" },
-                        { "template-rows", "10px 1fr" },
+                        { "grid-template-columns", "10px 10px" },
+                        { "grid-template-rows", "10px 1fr" },
                         { "gap", "5" },
                     },
                     {

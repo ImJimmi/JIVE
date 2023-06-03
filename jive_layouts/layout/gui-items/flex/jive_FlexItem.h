@@ -11,11 +11,11 @@ namespace jive
                                       LayoutStrategy strategy) const;
 
     private:
-        Property<int> flexItemOrder;
-        Property<float> flexItemGrow;
-        Property<float> flexItemShrink;
-        Property<float> flexItemBasis;
-        Property<juce::FlexItem::AlignSelf> flexItemAlignSelf;
+        Property<int> order;
+        Property<float> flexGrow;
+        Property<float> flexShrink;
+        Property<float> flexBasis;
+        Property<juce::FlexItem::AlignSelf> alignSelf;
         const Length width;
         const Length height;
         const Length minWidth;
