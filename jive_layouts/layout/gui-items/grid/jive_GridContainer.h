@@ -22,12 +22,12 @@ namespace jive
         Property<juce::Grid::AlignItems> alignItems;
         Property<juce::Grid::JustifyContent> justifyContent;
         Property<juce::Grid::AlignContent> alignContent;
-        Property<juce::Grid::AutoFlow> autoFlow;
-        Property<juce::Array<juce::Grid::TrackInfo>> templateColumns;
-        Property<juce::Array<juce::Grid::TrackInfo>> templateRows;
-        Property<juce::StringArray> templateAreas;
-        Property<juce::Grid::TrackInfo> autoRows;
-        Property<juce::Grid::TrackInfo> autoColumns;
+        Property<juce::Grid::AutoFlow> gridAutoFlow;
+        Property<juce::Array<juce::Grid::TrackInfo>> gridTemplateColumns;
+        Property<juce::Array<juce::Grid::TrackInfo>> gridTemplateRows;
+        Property<juce::StringArray> gridTemplateAreas;
+        Property<juce::Grid::TrackInfo> gridAutoRows;
+        Property<juce::Grid::TrackInfo> gridAutoColumns;
         Property<juce::Array<juce::Grid::Px>> gap;
 
         const BoxModel& boxModel;

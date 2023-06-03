@@ -4,12 +4,12 @@ namespace jive
 {
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , order{ state, "order", juce::GridItem{}.order }
+        , order{ state, "order" }
         , justifySelf{ state, "justify-self", juce::GridItem{}.justifySelf }
         , alignSelf{ state, "align-self", juce::GridItem{}.alignSelf }
-        , column{ state, "column", juce::GridItem{}.column }
-        , row{ state, "row", juce::GridItem{}.row }
-        , area{ state, "area", juce::GridItem{}.area }
+        , gridColumn{ state, "grid-column", juce::GridItem{}.column }
+        , gridRow{ state, "grid-row", juce::GridItem{}.row }
+        , gridArea{ state, "grid-area", juce::GridItem{}.area }
         , maxWidth{ state, "max-width", juce::GridItem{}.maxWidth }
         , maxHeight{ state, "max-height", juce::GridItem{}.maxHeight }
         , width{ state, "width", "auto" }
@@ -26,9 +26,9 @@ namespace jive
         order.onValueChange = invalidateParentBoxModel;
         justifySelf.onValueChange = invalidateParentBoxModel;
         alignSelf.onValueChange = invalidateParentBoxModel;
-        column.onValueChange = invalidateParentBoxModel;
-        row.onValueChange = invalidateParentBoxModel;
-        area.onValueChange = invalidateParentBoxModel;
+        gridColumn.onValueChange = invalidateParentBoxModel;
+        gridRow.onValueChange = invalidateParentBoxModel;
+        gridArea.onValueChange = invalidateParentBoxModel;
         minWidth.onValueChange = invalidateParentBoxModel;
         maxWidth.onValueChange = invalidateParentBoxModel;
         minHeight.onValueChange = invalidateParentBoxModel;
@@ -71,9 +71,9 @@ namespace jive
         gridItem.justifySelf = justifySelf;
         gridItem.alignSelf = alignSelf;
 
-        gridItem.column = column;
-        gridItem.row = row;
-        gridItem.area = area;
+        gridItem.column = gridColumn;
+        gridItem.row = gridRow;
+        gridItem.area = gridArea;
 
         gridItem.margin = boxModelToGridItemMargin(boxModel);
 
@@ -352,7 +352,7 @@ private:
 
     void testColumn()
     {
-        beginTest("column");
+        beginTest("grid-column");
 
         {
             jive::Interpreter interpreter;
@@ -371,9 +371,9 @@ private:
             auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
-            expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{}));
+            expect(compare(gridItem.column, juce::GridItem{}.column));
 
-            state.getChild(0).setProperty("column", "3 / span 4", nullptr);
+            state.getChild(0).setProperty("grid-column", "3 / span 4", nullptr);
             gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                         .toType<jive::GridItem>());
             expect(compare(gridItem.column, juce::GridItem::StartAndEndProperty{ 3, juce::GridItem::Span{ 4 } }));
@@ -386,13 +386,13 @@ private:
                     { "width", 222 },
                     { "height", 333 },
                     { "display", "grid" },
-                    { "template-columns", "auto auto auto auto" },
+                    { "grid-template-columns", "auto auto auto auto" },
                 },
                 {
                     juce::ValueTree{
                         "Component",
                         {
-                            { "column", "1 / span 3" },
+                            { "grid-column", "1 / span 3" },
                         },
                     },
                 },
@@ -407,7 +407,7 @@ private:
 
     void testRow()
     {
-        beginTest("row");
+        beginTest("grid-row");
 
         {
             jive::Interpreter interpreter;
@@ -426,9 +426,9 @@ private:
             auto& item = *parent->getChildren()[0];
             auto gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                              .toType<jive::GridItem>());
-            expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{}));
+            expect(compare(gridItem.row, juce::GridItem{}.row));
 
-            state.getChild(0).setProperty("row", "2 / 3", nullptr);
+            state.getChild(0).setProperty("grid-row", "2 / 3", nullptr);
             gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                         .toType<jive::GridItem>());
             expect(compare(gridItem.row, juce::GridItem::StartAndEndProperty{ 2, 3 }));
@@ -446,7 +446,7 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
-                            { "row", "14 / span 7" },
+                            { "grid-row", "14 / span 7" },
                         },
                     },
                 },
@@ -461,7 +461,7 @@ private:
 
     void testArea()
     {
-        beginTest("area");
+        beginTest("grid-area");
 
         {
             jive::Interpreter interpreter;
@@ -471,7 +471,7 @@ private:
                     { "width", 222 },
                     { "height", 333 },
                     { "display", "grid" },
-                    { "template-areas", "just-here" },
+                    { "grid-template-areas", "just-here" },
                 },
                 {
                     juce::ValueTree{ "Component" },
@@ -483,7 +483,7 @@ private:
                                                              .toType<jive::GridItem>());
             expect(gridItem.area.isEmpty());
 
-            state.getChild(0).setProperty("area", "just-here", nullptr);
+            state.getChild(0).setProperty("grid-area", "just-here", nullptr);
             gridItem = static_cast<juce::GridItem>(*dynamic_cast<jive::GuiItemDecorator&>(item)
                                                         .toType<jive::GridItem>());
             expect(gridItem.area == "just-here");
@@ -496,13 +496,13 @@ private:
                     { "width", 222 },
                     { "height", 333 },
                     { "display", "grid" },
-                    { "template-areas", "xyz abc" },
+                    { "grid-template-areas", "xyz abc" },
                 },
                 {
                     juce::ValueTree{
                         "Component",
                         {
-                            { "area", "abc" },
+                            { "grid-area", "abc" },
                         },
                     },
                 },
