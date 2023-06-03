@@ -28,7 +28,7 @@ namespace jive
         Property<juce::String> description;
         Property<juce::String> tooltip;
         Property<bool> enabled;
-        Property<bool> visible;
+        Property<bool> visibility;
         Property<bool> alwaysOnTop;
         Property<bool> bufferedToImage;
         Property<bool> opaque;

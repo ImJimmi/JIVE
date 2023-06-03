@@ -11,7 +11,7 @@ namespace jive
         , description{ state, "description" }
         , tooltip{ state, "tooltip" }
         , enabled{ state, "enabled", true }
-        , visible{ state, "visible", true }
+        , visibility{ state, "visibility", true }
         , alwaysOnTop{ state, "always-on-top" }
         , bufferedToImage{ state, "buffered-to-image" }
         , opaque{ state, "opaque" }
@@ -55,10 +55,10 @@ namespace jive
         };
         component->setEnabled(enabled);
 
-        visible.onValueChange = [this]() {
-            component->setVisible(visible);
+        visibility.onValueChange = [this]() {
+            component->setVisible(visibility);
         };
-        component->setVisible(visible);
+        component->setVisible(visibility);
 
         alwaysOnTop.onValueChange = [this]() {
             component->setAlwaysOnTop(alwaysOnTop);
@@ -144,7 +144,7 @@ namespace jive
         if (&componentThatChangedVisiblity != component.get())
             return;
 
-        visible = component->isVisible();
+        visibility = component->isVisible();
     }
 
     void CommonGuiItem::componentNameChanged(juce::Component& componentThatChangedName)
@@ -457,7 +457,7 @@ private:
             auto item = interpreter.interpret(state);
             expect(item->getComponent()->isVisible());
 
-            state.setProperty("visible", false, nullptr);
+            state.setProperty("visibility", false, nullptr);
             expect(!item->getComponent()->isVisible());
 
             ;
@@ -466,7 +466,7 @@ private:
                                   {
                                       { "width", 222 },
                                       { "height", 333 },
-                                      { "visible", true },
+                                      { "visibility", true },
                                   },
                               },
                               nullptr);
@@ -478,7 +478,7 @@ private:
                 {
                     { "width", 222 },
                     { "height", 333 },
-                    { "visible", false },
+                    { "visibility", false },
                 },
             };
             item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
@@ -492,7 +492,7 @@ private:
                 {
                     { "width", 222 },
                     { "height", 333 },
-                    { "visible", false },
+                    { "visibility", false },
                 },
             };
             jive::Interpreter interpreter;
