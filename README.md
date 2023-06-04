@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/workflow/status/ImJimmi/JIVE/test-runner?label=Tests&logo=github&style=for-the-badge"/>
+  <img src="https://img.shields.io/github/actions/workflow/status/ImJimmi/JIVE/test-runner.yml?label=TESTS&logo=github&style=for-the-badge"/>
   <img src="https://img.shields.io/codecov/c/gh/ImJimmi/JIVE?label=Test%20Coverage&logo=codecov&logoColor=white&style=for-the-badge&token=827SYOR678"/>
 </p>
 
