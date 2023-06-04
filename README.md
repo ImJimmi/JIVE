@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/ImJimmi/JIVE?logo=github&style=for-the-badge"/>
+  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/ImJimmi/JIVE?logo=github&style=for-the-badge">
   <img src="https://img.shields.io/github/contributors/ImJimmi/JIVE?logo=github&style=for-the-badge"/>
   <img src="https://img.shields.io/github/last-commit/ImJimmi/JIVE?logo=git&logoColor=white&style=for-the-badge"/>
 </p>
