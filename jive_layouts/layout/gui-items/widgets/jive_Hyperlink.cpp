@@ -5,7 +5,6 @@ namespace jive
     Hyperlink::Hyperlink(std::unique_ptr<GuiItem> itemToDecorate)
         : Button(std::move(itemToDecorate))
         , url{ state, "url" }
-        , fontStyle{ state, "font-style", "underlined" }
     {
         url.onValueChange = [this]() {
             getHyperlink().setURL(url);

@@ -1,338 +1,188 @@
-![JIVE Banner](assets/banner.svg)
+![JIVE](.github/assets/banner.svg)
 
-[![codecov](https://img.shields.io/codecov/c/gh/ImJimmi/JIVE?label=CodeCov&logo=codecov&style=for-the-badge&token=827SYOR678)](https://codecov.io/gh/ImJimmi/JIVE)
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/github/license/ImJimmi/JIVE?style=for-the-badge"/>
+</p>
 
-[![codecov](https://codecov.io/gh/ImJimmi/JIVE/branch/main/graphs/sunburst.svg?token=827SYOR678)](https://codecov.io/gh/ImJimmi/JIVE)
+<p align="center">
+  <img src="https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white"/>
+  <img src="https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white"/>
+  <img src="https://img.shields.io/static/v1?logo=data:image/png;base64,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&label=&message=JUCE&style=for-the-badge&color=9E24C0"/>
+  <img src="https://img.shields.io/badge/codecov-%23ff0077.svg?style=for-the-badge&logo=codecov&logoColor=white"/>
+</p>
 
-JIVE is a collection of JUCE modules aimed at making front-end development much simpler.
+<p align="center">
+  <img src="https://img.shields.io/github/workflow/status/ImJimmi/JIVE/test-runner?label=Tests&logo=github&style=for-the-badge"/>
+  <img src="https://img.shields.io/codecov/c/gh/ImJimmi/JIVE?label=Test%20Coverage&logo=codecov&logoColor=white&style=for-the-badge&token=827SYOR678"/>
+</p>
 
-Developing UIs with JUCE can be cumbersome and downright frustrating at times. Using a proper architecture, such as the [MVP pattern](https://www.martinfowler.com/eaaDev/uiArchs.html#Model-view-presentermvp), can massively improve this experience; however there's a limit to how well you can polish the turd that is UI development in C++. Each of JIVE's modules aims to tackle a specific part of UI development to make the whole experience much more enjoyable!
+<p align="center">
+  <img src="https://img.shields.io/github/stars/ImJimmi/JIVE?logo=github&style=for-the-badge"/>
+  <img src="https://img.shields.io/github/contributors/ImJimmi/JIVE?logo=github&style=for-the-badge"/>
+  <img src="https://img.shields.io/github/last-commit/ImJimmi/JIVE?logo=git&logoColor=white&style=for-the-badge"/>
+</p>
 
-# Modules
+- [About](#about)
+    - [Improved Developer Experience](#improved-developer-experience)
+    - [Improved Architecture](#improved-architecture)
+- [Approach](#approach)
+    - [Layouts](#layouts)
+    - [Style Sheets](#style-sheets)
+- [Integration](#integration)
+    - [CMake](#cmake)
+    - [Projucer](#projucer)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
 
-## [`jive_layouts`](jive_layouts/)
+## About
 
-_Use XML to describe the content and layout of your UI, removing the bloat of having dozens of component classes, and hundreds of files._
+JIVE is a bundle of [JUCE](https://github.com/juce-framework/JUCE) modules centered around the desire to have a more modern approach to UI development.
 
-Specifically designed to fit with the MVP pattern, `jive_layouts` aims to humanise the _view_ layer of your application by dynamically constructing components from XML documents, which can be dynamically constructed and manipulated by _presenters_ at runtime.
+This approach is inspired by web front-ends where we write declarative markup (HTML) to define what components we have, style those components using style sheets (CSS), and then dynamically update those components at runtime using imperitive code (JavaScript). With JIVE however, all three of these layers are done using tools already available in JUCE - [`juce::ValueTree`](https://docs.juce.com/master/classValueTree.html) for markup, [`juce::var`](https://docs.juce.com/master/classvar.html)/[`juce::DynamicObject`](https://docs.juce.com/master/classDynamicObject.html) for style sheets, and regular old C++ for dynamically updating.
 
-### Example
+### Improved Developer Experience
 
-Describe your content and layout using XML, or Value Trees:
+- Write less UI code than in a typical JUCE project.
+- Write _better_ UI code that's more declarative and uses common terminology with other UI frameworks.
+- Build ideas faster, with much shorter iterations between one design to another.
+- No additional dependencies - built purely from the tools provided by JUCE.
+- Less boilerplate and therefore less time wasted (and maybe even fewer bugs) when developing UI features.
+- Easier onboarding for any team members unfamiliar with the querks and complexities of developing GUIs in JUCE.
 
-#### XML
+### Improved Architecture
+
+- Encourages the separation of the UI from the business logic that controls it.
+- Encapsulates the JUCE backend enabling applications to interact with the UI through common data structures like value-trees and JSON documents.
+- Specifically built to fit the [Model-view-presenter](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93presenter) pattern - although flexible enough to suit any architecture.
+- Inspired by front-end web libraries to more easily build design systems and share components.
+
+## Approach
+
+There are two main constituents to JIVE - [`jive_layouts`](jive_layouts/) and [`jive_style_sheets`](jive_style_sheets/). When used together, these modules completely overhaul the experience of building GUIs in JUCE by removing the boilerplate involved in writing [`Component`](https://docs.juce.com/master/classComponent.html) classes.
+
+### Layouts
+
+`jive_layouts` addresses the hierarchy and layout of GUIs by allowing developers to describe their UI using value-trees.
+
+Unlike in a typical JUCE application where most of your UI code is spent describing _how_ components are shown on the screen, JIVE's approach is inspired by HTML where we simply describe _what_ is on the screen.
+
+<details>
+<summary>Example</summary>
+
+Example XML file that could be parsed to a `juce::ValueTree`
+
+_Note that `juce::ValueTree` doesn't support inline text elements so these will need to be converted to `text` properties before parsing to a `juce::ValueTree`._
 
 ```xml
-<Component id="mainPage">
-    <Label font-size="30">Welcome!</Label>
-    <Label>JIVE is super cool and awesome!</Label>
-</Component>
-```
-
-#### Value Trees
-
-```cpp
-juce::ValueTree buildMainPageMarkup()
-{
-    juce::ValueTree mainPage{ "Component" };
-    mainPage.setProperty("id", "mainPage", nullptr);
-
-    mainPage.appendChild({
-        "Label",
-        {
-            { "font-size", 30 },
-            { "text", "Welcome!" }
-        }
-    }, nullptr);
-
-    mainPage.appendChild({
-        "Label",
-        {
-            { "text", "JIVE is super cool and awesome!" }
-        }
-    }, nullptr);
-
-    return mainPage;
-}
-```
-
-Then, dynamically construct your UI at runtime in a presenter class:
-
-```cpp
-std::unique_ptr<jive::GuiItem> MainPage::createView()
-{
-    const auto markup = buildMainPageMarkup(); // Or, read the XML file.
-
-    jive::ViewRenderer viewRenderer;
-    return viewRenderer.renderView(markup);
-}
-```
-
-### Highlights
-
-<details>
-<summary>Reduce boilerplate by only writing code that's actually relevant</summary>
-
-Same UI, 3 different ways.
-
-<blockquote>
-<details>
-<summary>Typical JUCE component class<br>(42 lines, 1137 characters)</summary>
-
-```cpp
-class MainPage : public juce::Component
-{
-public:
-    MainPage()
-    {
-        coloursBox.setComponentID("colours");
-        coloursBox.addItemList({"Red", "Green", "Blue"}, 1);
-        addAndMakeVisible(coloursBox);
-
-        shapesBox.setComponentID("shapes");
-        shapesBox.addItemList({"Square", "Triangle", "Circle", 1});
-        addAndMakeVisible(shapesBox);
-
-        setComponentID("mainPage");
-        setSize(400, 300);
-    }
-
-    void resized() override
-    {
-        juce::FlexBox flex;
-
-        flex.direction = juce::FlexBox::Direction::column;
-        flex.justifyContent = juce::FlexBox::JustifyContent::center;
-        flex.items = {
-            juce::FlexItem{ coloursBox }
-                .withWidth(100.f)
-                .withHeight(20.f)
-                .withMargin({ 0.0f, 0.0f, 10.f, 0.0f }),
-            juce::FlexItem{ shapesBox }
-                .withWidth(150.f)
-                .withHeight(25.f);
-        };
-
-        flex.performLayout(getLocalBounds().reduced(10));
-    }
-
-private:
-    juce::ComboBox coloursBox;
-    juce::ComboBox shapesBox;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainPage)
-};
-```
-</details>
-</blockquote>
-
-<blockquote>
-<details>
-    <summary>JIVE, using juce::ValueTree<br>(50 lines, 1083 characters)</summary>
-
-```cpp
-juce::ValueTree createColoursBoxMarkup()
-{
-    return {
-        "ComboBox",
-        {
-            { "width", 100 },
-            { "height", 20 },
-            { "margin", "0 0 10 0" }
-        },
-        {
-            { "Option", { { "text", "Red" } } },
-            { "Option", { { "text", "Green" } } },
-            { "Option", { { "text", "Blue" } } }
-        }
-    };
-}
-
-juce::ValueTree createShapesBoxMarkup()
-{
-    return {
-        "ComboBox",
-        {
-            { "width", 150 },
-            { "height", 25 }
-        },
-        {
-            { "Option", { { "text", "Square" } } },
-            { "Option", { { "text", "Triangle" } } },
-            { "Option", { { "text", "Circle" } } }
-        }
-    };
-}
-
-juce::ValueTree createMainPageMarkup()
-{
-    return {
-        "Component",
-        {
-            { "id", "mainPage" },
-            { "width", 400 },
-            { "height", 300 },
-            { "justify-content", "centre" },
-            { "padding", 10 }
-        },
-        {
-            createColoursBoxMarkup(),
-            createShapesBoxMarkup()
-        }
-    };
-}
-```
-</details>
-</blockquote>
-
-<blockquote>
-<details>
-<summary>JIVE, using XML<br>(13 lines, 443 characters)</summary>
-
-```xml
-<Component id="mainPage" width="400" height="300" justify-content="centre" padding="10">
-    <ComboBox id="colours" width="100" height="20" margin="0 0 10 0">
-        <Option>Red</Option>
-        <Option>Green</Option>
-        <Option>Blue</Option>
-    </ComboBox>
-
-    <ComboBox id="shapes" width="150" height="25">
-        <Option>Square</Option>
-        <Option>Triangle</Option>
-        <Option>Circle</Option>
-    </ComboBox>
-</Component>
-```
-</details>
-</blockquote>
-</details>
-</details>
-
-<details>
-<summary>Fewer classes and fewer files - reduce the need for awkward class names</summary>
-
-<blockquote>
-<details>
-<summary>Typical naming of JUCE component classes</summary>
-
-```
-MainPage
-    MainHeader
-    MainContent
-        InputPanelsGroup
-            InputPanel
-                InputPanelButtonsRow
-            InputPanel
-                InputPanelButtonsRow
-        OutputsPanel
-    MainFooter
-```
-
-- Number of _custom_ component classes: 8
-- Number of files: 8 (header-only, 16 for .h/.cpp)
-
-</details>
-</blockquote>
-
-<blockquote>
-<details>
-<summary>Same hierarchy, using JIVE</summary>
-
-```xml
-<Component id="mainPage">
-    <Component id="header"></Component>
-
-    <Component id="mainContent">
-        <Component id="inputs">
-            <Panel id="input0">
-                <Component id="row">
-                </Component>
-            </Panel>
-
-            <Panel id="input1">
-                <Component id="row">
-                </Component>
-            </Panel>
-        </Component>
-
-        <Panel id="outputs">
-        </Panel>
+<Window width="640" height="400" align-items="centre">
+    <Component id="header" align-items="centre">
+        <Text id="title">Welcome to JIVE!</Text>
+        <Text id="subtitle">The ultimate JUCE extension for building GUIs.</Text>
     </Component>
 
-    <Component id="footer"></Component>
-</Component>
+    <Component id="nav" display="grid" template-columns="1fr 1fr 1fr" template-rows="1fr">
+        <Button>
+            <Text>Home</Text>
+        </Button>
+
+        <Button>
+            <Text>About</Text>
+        </Button>
+
+        <Button>
+            <Text>Contact</Text>
+        </Button>
+    </Component>
+</Window>
 ```
-
-- Number of _custom_ component classes: 1 (`<Panel>`)
-- Number of files: 2 (header-only - `main-page.xml`, `MainPage.h`, 3 for .h/.cpp)
-
 </details>
-</blockquote>
-</details>
+
+### Style Sheets
+
+`jive_style_sheets` addresses the styling of GUIs by allowing developers to apply common style properties using JSON documents.
+
+Inspired by CSS, JIVE's style sheets allow common styling properties like background colours, text colours, and font size to be set on any UI element, removing the need to use [`juce::Graphics`](https://docs.juce.com/master/classGraphics.html) for the majority of components.
 
 <details>
-<summary>Make changes at runtime to allow for easier debugging, or allow your UI designers to demo changes in the actual app, all without needing to recompile</summary>
+<summary>Example</summary>
 
-```cpp
-void timerCallback() override
+Example JSON document that could be parsed to a `jive::Object` and set as the top-level window's `style` property.
+
+```json
 {
-    // Read the XML file on a timer - every time you save the changes, the
-    // UI will update in realtime. No need to recompile!
-    const juce::File jiveFile{ "main-page.xml" };
-    const auto jiveSource = jiveFile.loadFileAsString();
+    "background": "#202020",
+    "foreground": "#EEEEEE",
+    "font-family": "Helvetica",
 
-    jive::ViewRenderer renderer;
-    view = renderer.renderView (jiveSource);
+    "#title": {
+        "font-size": "45",
+        "font-style": "bold",
+    },
+    "#subtitle": {
+        "font-size": "25",
+        "font-style": "italic",
+    },
+
+    "Button": {
+        "background": "#303030",
+        "border": "#FF3077",
+    },
 }
 ```
 </details>
 
-<details>
-<summary>Fully supports custom components, allowing for a mix of JIVE and JUCE which helps integrate with legacy code</summary>
+## Integration
 
-```cpp
-const auto jiveSource = R"(
-    <MyWindow width="300" height="200">
-        <MyWidget></MyWidget
-    </MyWindow>
-)";
+The simplest way to intergrate JIVE with your JUCE project is with [CPM](https://github.com/cpm-cmake/CPM.cmake):
 
-jive::ViewRenderer renderer;
-renderer.setFactory ("MyWindow", []() { return std::make_unique<MyWindow>() });
-renderer.setFactory ("MyWidget", []() { return std::make_unique<MyWidget>() });
-
-auto view = renderer.renderView (jiveSource);
+```cmake
+CPMAddPackage("gh:ImJimmi/JIVE@main")
 ```
-</details>
 
-<details>
-<summary>Makes front-end testing much simpler by removing the need to test components</summary>
+If not using CPM, you should add JIVE as a submodule to your git repository:
 
-```cpp
-struct MainPageTests : public juce::UnitTest
-{
-    MainPageTests()
-        : juce::UnitTest{ "Main Page Tests" }
-    {
-    }
-
-    void runTest() final
-    {
-        // No need to test the actual rendered UI, we can simply test that our
-        // view builders produce the correct objects so that JIVE will render
-        // our view as we expect
-        const juce::ValueTree jiveTree = buildMainPageJiveTree();
-
-        beginTest("Main page is 300px x 200px");
-        expect(jiveTree["width"] == 300);
-        expect(jiveTree["height"] == 200);
-
-        beginTest("Main page has a title label");
-        const auto title = jiveTree.getChildWithProperty ("id", "title");
-        expect(title.hasType("Label"));
-        expect(title["text"] == "Welcome!");
-    }
-};
+```bash
+git submodule add git@github.com:ImJimmi/JIVE.git
 ```
-</details>
+
+Or simply clone JIVE to use across multiple projects:
+
+```bash
+git clone git@github.com:ImJimmi/JIVE.git
+```
+
+### CMake
+
+![CMake](https://img.shields.io/static/v1?logo=cmake&label=&message=CMake&style=for-the-badge&color=064F8C)
+
+```cmake
+add_subdirectory(path/to/JUCE)
+
+# Recommended
+CPMAddPackage("gh:ImJimmi/JIVE@main")
+
+# If not using CPM
+add_subdirectory(path/to/JIVE)
+
+target_link_libraries(my_juce_project
+PRIVATE
+    jive::jive_layouts
+    jive::jive_style_sheets
+)
+```
+
+### Projucer
+
+![Projucer](https://img.shields.io/static/v1?logo=data:image/png;base64,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&label=&message=Projucer&style=for-the-badge&color=555555)
+
+Add modules to the project by clicking the "+" icon in the "Modules" panel and choosing "Add a module from a specified folder...".
+
+## Getting Started
+
+See [Getting Started](./docs/Getting%20Started.md) for a detailed guide on getting started with JIVE once you have it integrated in your project.
+
+## Contributing
+
+All contributions are welcome!
+
+Please see the [Contribution Guidelines](./CONTRIBUTING.md) before submitting a PR. Be sure to check the [Issues Tab](https://github.com/ImJimmi/JIVE/issues) to avoid duplicates and to contribute to any ongoing conversation.

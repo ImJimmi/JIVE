@@ -14,6 +14,5 @@ namespace jive
 
     private:
         Property<juce::URL> url;
-        Property<juce::String> fontStyle;
     };
 } // namespace jive
