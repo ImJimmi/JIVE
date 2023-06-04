@@ -35,6 +35,21 @@ namespace jive
         return interpret(tree, nullptr);
     }
 
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::XmlElement& xml) const
+    {
+        return interpret(parseXML(xml));
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::String& xmlString) const
+    {
+        return interpret(jive::parseXML(xmlString));
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const void* xmlStringData, int xmlStringDataSize) const
+    {
+        return interpret(parseXML(xmlStringData, xmlStringDataSize));
+    }
+
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         Property<Display> display{ item->state, "display" };
@@ -238,6 +253,7 @@ public:
         testWindowContent();
         testCustomDecorators();
         testAliases();
+        testInterpretingDifferentSources();
     }
 
 private:
@@ -534,6 +550,51 @@ private:
         expectEquals(window->getChildren()[0]->state["padding"].toString(), juce::String{ "10" });
         expectEquals(window->getChildren()[0]->state["margin"].toString(), juce::String{ "1 2 3 4" });
         expect(!static_cast<bool>(window->getChildren()[0]->state["enabled"]));
+    }
+
+    void testInterpretingDifferentSources()
+    {
+        {
+            beginTest("interpreting juce::ValueTree");
+
+            const jive::Interpreter interpreter;
+            const auto result = interpreter.interpret(juce::ValueTree{
+                "Component",
+                {
+                    { "width", 123 },
+                    { "height", 456 },
+                },
+            });
+            expect(result != nullptr);
+        }
+        {
+            beginTest("interpreting juce::XmlElement");
+
+            const jive::Interpreter interpreter;
+            const auto result = interpreter.interpret(*juce::parseXML(R"(
+                <Component width="123" height="456"/>
+            )"));
+            expect(result != nullptr);
+        }
+        {
+            beginTest("interpreting juce::String");
+
+            const jive::Interpreter interpreter;
+            const auto result = interpreter.interpret(R"(
+                <Component width="123" height="456"/>
+            )");
+            expect(result != nullptr);
+        }
+        {
+            beginTest("interpreting string data");
+
+            const jive::Interpreter interpreter;
+            const juce::String source = R"(
+                <Component width="123" height="456"/>
+            )";
+            const auto result = interpreter.interpret(source.toRawUTF8(), source.length());
+            expect(result != nullptr);
+        }
     }
 };
 
