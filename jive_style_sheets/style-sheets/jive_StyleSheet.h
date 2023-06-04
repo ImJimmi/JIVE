@@ -46,9 +46,6 @@ namespace jive
 
         const std::unique_ptr<Selectors> selectors;
 
-        mutable bool fontInvalidated{ true };
-        mutable juce::Font cachedFont;
-
         JUCE_LEAK_DETECTOR(StyleSheet)
     };
 } // namespace jive
