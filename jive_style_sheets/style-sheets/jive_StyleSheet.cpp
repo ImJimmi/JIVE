@@ -159,54 +159,52 @@ namespace jive
 
     juce::Font StyleSheet::getFont() const
     {
-        if (!fontInvalidated)
-            return cachedFont;
+        juce::Font font;
 
         if (const auto fontFamily = findHierarchicalStyleProperty(fontProperties::fontFamily).toString();
             fontFamily.isNotEmpty())
         {
-            cachedFont.setTypefaceName(fontFamily);
+            font.setTypefaceName(fontFamily);
         }
 
         if (const auto fontStyle = findHierarchicalStyleProperty(fontProperties::fontStyle).toString();
             fontStyle.isNotEmpty())
         {
-            cachedFont.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
+            font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
         }
 
         if (const auto weight = findHierarchicalStyleProperty(fontProperties::fontWeight).toString();
             weight.isNotEmpty())
         {
-            cachedFont.setBold(weight.compareIgnoreCase("bold") == 0);
+            font.setBold(weight.compareIgnoreCase("bold") == 0);
         }
 
         if (const auto size = findHierarchicalStyleProperty(fontProperties::fontSize);
             size != juce::var{})
         {
-            cachedFont = cachedFont.withPointHeight(static_cast<float>(size));
+            font = font.withPointHeight(static_cast<float>(size));
         }
 
         if (const auto spacing = findHierarchicalStyleProperty(fontProperties::letterSpacing);
             spacing != juce::var{})
         {
-            const auto extraKerning = static_cast<float>(spacing) / cachedFont.getHeight();
-            cachedFont.setExtraKerningFactor(extraKerning);
+            const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
+            font.setExtraKerningFactor(extraKerning);
         }
 
         if (const auto decoration = findHierarchicalStyleProperty(fontProperties::textDecoration).toString();
             decoration.isNotEmpty())
         {
-            cachedFont.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
+            font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
         }
 
         if (const auto stretch = findHierarchicalStyleProperty(fontProperties::fontStretch);
             stretch != juce::var{})
         {
-            cachedFont.setHorizontalScale(static_cast<float>(stretch));
+            font.setHorizontalScale(static_cast<float>(stretch));
         }
 
-        fontInvalidated = false;
-        return cachedFont;
+        return font;
     }
 
     void StyleSheet::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -233,18 +231,13 @@ namespace jive
                 object->addListener(*this);
             }
 
-            fontInvalidated = true;
             applyStyles();
         }
     }
 
-    void StyleSheet::propertyChanged(Object& object, const juce::Identifier& id)
+    void StyleSheet::propertyChanged(Object& object, const juce::Identifier&)
     {
         jassertquiet(&object == style.get().get());
-
-        if (fontProperties::all.contains(id))
-            fontInvalidated = true;
-
         applyStyles();
     }
 
