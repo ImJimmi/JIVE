@@ -14,7 +14,10 @@ namespace jive
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType);
 
-        std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::XmlElement& xml) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::String& xmlString) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const void* xmlStringData, int xmlStringDataSize) const;
 
     private:
         std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree, GuiItem* const parent) const;

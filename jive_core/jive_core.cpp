@@ -7,6 +7,7 @@
 #include "values/jive_Event.cpp"
 #include "values/jive_Object.cpp"
 #include "values/jive_Property.cpp"
+#include "values/jive_XmlParser.cpp"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.cpp"
 #include "values/variant-converters/jive_FlexVariantConverters.cpp"
 #include "values/variant-converters/jive_GridVariantConverters.cpp"
