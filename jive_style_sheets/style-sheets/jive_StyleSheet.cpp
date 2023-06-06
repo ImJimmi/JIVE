@@ -373,18 +373,15 @@ namespace jive
         backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
 
-        const auto foregroundColour = *getForeground().getColour();
-        const auto font = getFont();
-
         if (auto* text = dynamic_cast<TextComponent*>(component.getComponent()))
         {
-            text->setTextColour(foregroundColour);
-            text->setFont(font);
+            text->setTextColour(*getForeground().getColour());
+            text->setFont(getFont());
         }
         if (state.getType().toString().compareIgnoreCase("svg") == 0)
         {
             state.setProperty("fill",
-                              "#" + foregroundColour.toDisplayString(false),
+                              "#" + getForeground().getColour()->toDisplayString(false),
                               nullptr);
         }
 
