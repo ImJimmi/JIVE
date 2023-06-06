@@ -126,6 +126,8 @@ namespace jive
         {
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
+            else
+                parentItem->state.setProperty("box-model-valid", false, nullptr);
         }
     }
 

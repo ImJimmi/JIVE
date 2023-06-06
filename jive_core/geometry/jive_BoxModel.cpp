@@ -14,7 +14,7 @@ namespace jive
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
-        , isValid{ state, "is-valid", true }
+        , isValid{ state, "box-model-valid", true }
     {
         componentSize = juce::Rectangle{
             calculateComponentWidth(),
