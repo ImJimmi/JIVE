@@ -4,15 +4,22 @@
 
 namespace jive
 {
-    enum class HereditaryValueBehaviour
+    enum class Inheritance
     {
         inheritFromParent,
         inheritFromAncestors,
         doNotInherit,
     };
 
+    enum class Accumulation
+    {
+        accumulate,
+        doNotAccumulate,
+    };
+
     template <typename ValueType,
-              HereditaryValueBehaviour hereditaryBehavior = HereditaryValueBehaviour::doNotInherit>
+              Inheritance inheritance = Inheritance::doNotInherit,
+              Accumulation accumulation = Accumulation::doNotAccumulate>
     class Property : protected juce::ValueTree::Listener
     {
     public:
@@ -23,15 +30,15 @@ namespace jive
             : id{ propertyID }
             , tree{ sourceTree }
         {
-            switch (hereditaryBehavior)
+            switch (inheritance)
             {
-            case HereditaryValueBehaviour::inheritFromParent:
+            case Inheritance::inheritFromParent:
                 treeToListenTo = tree.getParent();
                 break;
-            case HereditaryValueBehaviour::inheritFromAncestors:
+            case Inheritance::inheritFromAncestors:
                 treeToListenTo = tree.getRoot();
                 break;
-            case HereditaryValueBehaviour::doNotInherit:
+            case Inheritance::doNotInherit:
                 treeToListenTo = tree;
             }
 
@@ -58,47 +65,27 @@ namespace jive
 
         virtual ValueType get() const
         {
-            if (exists())
-                return Converter::fromVar(tree[id]);
-
-            switch (hereditaryBehavior)
-            {
-            case HereditaryValueBehaviour::inheritFromParent:
-                return Converter::fromVar(tree.getParent()[id]);
-            case HereditaryValueBehaviour::inheritFromAncestors:
-                return Converter::fromVar(findPropertyInLatestAncestor());
-            case HereditaryValueBehaviour::doNotInherit:
-                return Converter::fromVar(tree[id]);
-            }
-
-            jassertfalse;
-            return Converter::fromVar(juce::var{});
+            return getFrom(getRootOfInheritance());
         }
 
-        ValueType getOr(const ValueType& valueIfNotExists) const
+        ValueType getOr(const ValueType& valueIfNoneSpecified) const
         {
-            if (exists())
-                return get();
-
-            switch (hereditaryBehavior)
+            if (auto root = getRootOfInheritance();
+                root.isValid())
             {
-            case HereditaryValueBehaviour::inheritFromParent:
-            {
-                if (auto value = tree.getParent()[id];
-                    value != juce::var{})
-                    return Converter::fromVar(value);
-            }
-            case HereditaryValueBehaviour::inheritFromAncestors:
-            {
-                if (auto value = findPropertyInLatestAncestor();
-                    value != juce::var{})
-                    return Converter::fromVar(value);
-            }
-            case HereditaryValueBehaviour::doNotInherit:
-                return valueIfNotExists;
+                return getFrom(root);
             }
 
-            return valueIfNotExists;
+            if constexpr (accumulation == Accumulation::accumulate)
+            {
+                if (auto source = getFirstAncestorWithProperty(tree);
+                    source.isValid())
+                {
+                    return getFrom(tree);
+                }
+            }
+
+            return valueIfNoneSpecified;
         }
 
         void set(const ValueType& newValue)
@@ -139,7 +126,7 @@ namespace jive
             return get();
         }
 
-        Property<ValueType, hereditaryBehavior>& operator=(const ValueType& newValue)
+        Property<ValueType, inheritance, accumulation>& operator=(const ValueType& newValue)
         {
             set(newValue);
             return *this;
@@ -160,9 +147,7 @@ namespace jive
                 return;
 
             if (onValueChange != nullptr)
-            {
                 onValueChange();
-            }
         }
 
         bool respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
@@ -170,30 +155,85 @@ namespace jive
             if (treeWhosePropertyChanged == tree)
                 return true;
 
-            switch (hereditaryBehavior)
+            switch (inheritance)
             {
-            case HereditaryValueBehaviour::inheritFromParent:
+            case Inheritance::inheritFromParent:
                 return treeWhosePropertyChanged == tree.getParent();
-            case HereditaryValueBehaviour::inheritFromAncestors:
+            case Inheritance::inheritFromAncestors:
                 return tree.isAChildOf(treeWhosePropertyChanged);
-            case HereditaryValueBehaviour::doNotInherit:
-                return treeWhosePropertyChanged == tree;
+            case Inheritance::doNotInherit:
+                break;
+            }
+
+            switch (accumulation)
+            {
+            case Accumulation::accumulate:
+                return treeWhosePropertyChanged.isAChildOf(tree);
+            case Accumulation::doNotAccumulate:
+                break;
             }
 
             return false;
         }
 
-        juce::var findPropertyInLatestAncestor() const
+        [[nodiscard]] juce::ValueTree getRootOfInheritance() const
         {
-            auto treeToSearch = tree.getParent();
+            if (exists())
+                return tree;
 
-            while (treeToSearch.isValid() && !treeToSearch.hasProperty(id))
-                treeToSearch = treeToSearch.getParent();
-
-            if (treeToSearch.isValid())
-                return treeToSearch[id];
+            if constexpr (inheritance == Inheritance::inheritFromParent)
+            {
+                if (auto parent = tree.getParent();
+                    parent.hasProperty(id))
+                {
+                    return parent;
+                }
+            }
+            if constexpr (inheritance == Inheritance::inheritFromAncestors)
+            {
+                for (auto ancestor = tree.getParent();
+                     ancestor.isValid();
+                     ancestor = ancestor.getParent())
+                {
+                    if (ancestor.hasProperty(id))
+                        return ancestor;
+                }
+            }
 
             return {};
+        }
+
+        [[nodiscard]] juce::ValueTree getFirstAncestorWithProperty(const juce::ValueTree& root) const
+        {
+            for (const auto& child : root)
+            {
+                if (child.hasProperty(id))
+                    return child;
+            }
+
+            for (const auto& child : root)
+            {
+                if (auto ancestor = getFirstAncestorWithProperty(child);
+                    ancestor.isValid())
+                {
+                    return ancestor;
+                }
+            }
+
+            return {};
+        }
+
+        [[nodiscard]] ValueType getFrom(const juce::ValueTree& root) const
+        {
+            auto result = Converter::fromVar(root.hasProperty(id) ? root[id] : getFirstAncestorWithProperty(root).getProperty(id, juce::var{}));
+
+            if constexpr (accumulation == Accumulation::accumulate)
+            {
+                for (const auto& child : root)
+                    result += getFrom(child);
+            }
+
+            return result;
         }
 
         juce::ValueTree treeToListenTo;

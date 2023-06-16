@@ -16,6 +16,7 @@ public:
         testCallback();
         testInitialValue();
         testHereditaryValues();
+        testObservations();
     }
 
 private:
@@ -106,7 +107,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::HereditaryValueBehaviour::inheritFromParent> value{
+            jive::Property<int, jive::Inheritance::inheritFromParent> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -137,7 +138,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::HereditaryValueBehaviour::inheritFromAncestors> value{
+            jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -168,7 +169,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::HereditaryValueBehaviour::doNotInherit> value{
+            jive::Property<int, jive::Inheritance::doNotInherit> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -182,6 +183,70 @@ private:
 
             root.getChild(0).getChild(0).setProperty("value", 777, nullptr);
             expectEquals(value.get(), 777);
+        }
+    }
+
+    void testObservations()
+    {
+        beginTest("observations");
+
+        juce::ValueTree state{
+            "State",
+            {},
+            {
+                juce::ValueTree{
+                    "Child",
+                    {},
+                    {
+                        juce::ValueTree{
+                            "Grandchild",
+                            {},
+                        },
+                    },
+                },
+            }
+        };
+
+        {
+            jive::Property<int> foo{ state, "foo" };
+
+            bool callbackCalled = false;
+            foo.onValueChange = [&callbackCalled]() {
+                callbackCalled = true;
+            };
+
+            state.getChild(0).setProperty("foo", 999, nullptr);
+            expect(!callbackCalled);
+
+            callbackCalled = false;
+            state.getChild(0).getChild(0).setProperty("foo", 647, nullptr);
+            expect(!callbackCalled);
+
+            callbackCalled = false;
+            state.setProperty("foo", 123, nullptr);
+            expect(callbackCalled);
+        }
+        {
+            jive::Property<int,
+                           jive::Inheritance::doNotInherit,
+                           jive::Accumulation::accumulate>
+                foo{ state, "foo" };
+
+            bool callbackCalled = false;
+            foo.onValueChange = [&callbackCalled]() {
+                callbackCalled = true;
+            };
+
+            state.getChild(0).setProperty("foo", 378, nullptr);
+            expect(callbackCalled);
+
+            callbackCalled = false;
+            state.getChild(0).getChild(0).setProperty("foo", 117, nullptr);
+            expect(callbackCalled);
+
+            callbackCalled = false;
+            state.setProperty("foo", 302, nullptr);
+            expect(callbackCalled);
         }
     }
 };

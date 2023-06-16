@@ -26,7 +26,7 @@ namespace jive
         void updateTextComponent();
 
         Property<juce::String> text;
-        Property<float, HereditaryValueBehaviour::inheritFromAncestors> lineSpacing;
+        Property<float, Inheritance::inheritFromAncestors> lineSpacing;
         Property<juce::Justification> justification;
         Property<juce::AttributedString::WordWrap> wordWrap;
         Property<juce::AttributedString::ReadingDirection> direction;
