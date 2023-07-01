@@ -30,6 +30,16 @@ namespace jive
         return const_cast<GuiItemDecorator*>(this)->getParent();
     }
 
+    bool GuiItemDecorator::isContainer() const
+    {
+        return item->isContainer();
+    }
+
+    bool GuiItemDecorator::isContent() const
+    {
+        return item->isContent();
+    }
+
     GuiItem* GuiItemDecorator::getParent()
     {
         if (auto* parentItem = item->getParent())

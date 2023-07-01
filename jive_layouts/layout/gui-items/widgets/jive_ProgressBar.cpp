@@ -114,7 +114,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
-        auto& progressBar = dynamic_cast<jive::ProgressBar&>(*parent->getChildren()[0]);
+        auto& progressBar = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
+                                 .toType<jive::ProgressBar>();
         expect(!progressBar.isContainer());
         expectEquals(jive::BoxModel{ progressBar.state }.getWidth(), 135.0f);
         expectEquals(jive::BoxModel{ progressBar.state }.getHeight(), 20.0f);

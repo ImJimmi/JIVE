@@ -141,9 +141,11 @@ namespace jive
                                       const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
     {
         item = std::make_unique<CommonGuiItem>(std::move(item));
-        item = decorateWithDisplayBehaviour(std::move(item));
         item = decorateWithHereditaryBehaviour(std::move(item));
         item = decorateWithWidgetBehaviour(std::move(item));
+
+        if (!item->isContent())
+            item = decorateWithDisplayBehaviour(std::move(item));
 
         for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->state.getType(), customDecorators))
             item = (*decorateWithCustomDecorations)(std::move(item));
@@ -360,7 +362,9 @@ private:
                 { "height", 333 },
             },
         });
-        expect(dynamic_cast<jive::GuiItem*>(basicView.get()));
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*basicView)
+                   .toType<jive::CommonGuiItem>()
+               != nullptr);
 
         auto flexView = interpreter.interpret(juce::ValueTree{
             "Component",
@@ -373,9 +377,11 @@ private:
                 juce::ValueTree{ "Label" },
             },
         });
-        expect(dynamic_cast<jive::FlexContainer*>(flexView.get()));
-        expect(dynamic_cast<jive::GuiItemDecorator*>(flexView->getChildren()[0])
-                   ->toType<jive::FlexItem>()
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*flexView)
+                   .toType<jive::FlexContainer>()
+               != nullptr);
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*flexView->getChildren()[0])
+                   .toType<jive::FlexItem>()
                != nullptr);
 
         auto gridView = interpreter.interpret(juce::ValueTree{
@@ -389,8 +395,12 @@ private:
                 juce::ValueTree{ "Component" },
             },
         });
-        expect(dynamic_cast<jive::GridContainer*>(gridView.get()));
-        expect(dynamic_cast<jive::GridItem*>(gridView->getChildren()[0]));
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*gridView)
+                   .toType<jive::GridContainer>()
+               != nullptr);
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*gridView->getChildren()[0])
+                   .toType<jive::GridItem>()
+               != nullptr);
 
         auto blockView = interpreter.interpret(juce::ValueTree{
             "Component",
@@ -403,8 +413,12 @@ private:
                 juce::ValueTree{ "Component" },
             },
         });
-        expect(dynamic_cast<jive::GuiItem*>(blockView.get()));
-        expect(dynamic_cast<jive::BlockItem*>(blockView->getChildren()[0]));
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*blockView)
+                   .toType<jive::BlockContainer>()
+               != nullptr);
+        expect(dynamic_cast<jive::GuiItemDecorator&>(*blockView->getChildren()[0])
+                   .toType<jive::BlockItem>()
+               != nullptr);
     }
 
     void testInitialLayout()
@@ -461,8 +475,10 @@ private:
                 },
             },
         });
-        expect(dynamic_cast<jive::Window*>(view.get()) != nullptr);
-        expect(dynamic_cast<jive::Window*>(view.get())->getWindow().getContentComponent() != nullptr);
+        auto& window = dynamic_cast<jive::GuiItemDecorator&>(*view)
+                           .toType<jive::Window>()
+                           ->getWindow();
+        expect(window.getContentComponent() != nullptr);
     }
 
     void testCustomDecorators()

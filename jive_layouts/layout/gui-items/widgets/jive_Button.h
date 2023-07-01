@@ -16,8 +16,6 @@ namespace jive
         explicit Button(std::unique_ptr<GuiItem> itemToDecorate);
         ~Button() override;
 
-        bool isContainer() const override;
-
         juce::Button& getButton();
         const juce::Button& getButton() const;
 

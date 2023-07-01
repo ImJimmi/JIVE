@@ -79,11 +79,6 @@ namespace jive
         getButton().removeListener(this);
     }
 
-    bool Button::isContainer() const
-    {
-        return false;
-    }
-
     juce::Button& Button::getButton()
     {
         return *dynamic_cast<juce::Button*>(component.get());
@@ -136,7 +131,6 @@ public:
 
     void runTest() final
     {
-        testGuiItem();
         testToggleable();
         testClickingTogglesState();
         testRadioGroup();
@@ -151,20 +145,6 @@ private:
         jive::Interpreter interpreter;
 
         return std::make_unique<jive::Button>(interpreter.interpret(tree));
-    }
-
-    void testGuiItem()
-    {
-        beginTest("gui-item");
-
-        auto item = createButton(juce::ValueTree{
-            "Button",
-            {
-                { "width", 222 },
-                { "height", 333 },
-            },
-        });
-        expect(!item->isContainer());
     }
 
     void testToggleable()

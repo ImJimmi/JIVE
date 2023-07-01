@@ -180,17 +180,12 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::ComboBox> createComboBox(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-        return std::unique_ptr<jive::ComboBox>{ dynamic_cast<jive::ComboBox*>(interpreter.interpret(tree).release()) };
-    }
-
     void testGuiItem()
     {
         beginTest("gui-item");
 
-        auto item = createComboBox(juce::ValueTree{
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(juce::ValueTree{
             "ComboBox",
             {
                 { "width", 222 },
@@ -212,11 +207,15 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createComboBox(tree);
-            expect(!item->getComboBox().isTextEditable());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expect(!comboBox.isTextEditable());
 
             tree.setProperty("editable", true, nullptr);
-            expect(item->getComboBox().isTextEditable());
+            expect(comboBox.isTextEditable());
         }
         {
             juce::ValueTree tree{
@@ -227,8 +226,12 @@ private:
                     { "editable", true },
                 },
             };
-            auto item = createComboBox(tree);
-            expect(item->getComboBox().isTextEditable());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expect(comboBox.isTextEditable());
         }
     }
 
@@ -244,11 +247,15 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createComboBox(tree);
-            expect(item->getComboBox().getTooltip().isEmpty());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expect(comboBox.getTooltip().isEmpty());
 
             tree.setProperty("tooltip", "246", nullptr);
-            expectEquals(item->getComboBox().getTooltip(), juce::String{ "246" });
+            expectEquals(comboBox.getTooltip(), juce::String{ "246" });
         }
         {
             juce::ValueTree tree{
@@ -259,8 +266,12 @@ private:
                     { "tooltip", "369" },
                 },
             };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getTooltip(), juce::String{ "369" });
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getTooltip(), juce::String{ "369" });
         }
     }
 
@@ -276,8 +287,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getNumItems(), 0);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getNumItems(), 0);
 
             tree.appendChild(juce::ValueTree{
                                  "Option",
@@ -286,13 +301,13 @@ private:
                                  },
                              },
                              nullptr);
-            expectEquals(item->getComboBox().getNumItems(), 1);
-            expectEquals(item->getComboBox().getItemText(0),
+            expectEquals(comboBox.getNumItems(), 1);
+            expectEquals(comboBox.getItemText(0),
                          juce::String{ "Choose me!" });
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            expectEquals(comboBox.getSelectedId(), 0);
 
             tree.getChild(0).setProperty("selected", true, nullptr);
-            expectEquals(item->getComboBox().getSelectedId(), 1);
+            expectEquals(comboBox.getSelectedId(), 1);
 
             tree.appendChild(juce::ValueTree{
                                  "Option",
@@ -301,26 +316,26 @@ private:
                                  },
                              },
                              nullptr);
-            expectEquals(item->getComboBox().getNumItems(), 2);
-            expectEquals(item->getComboBox().getItemText(1),
+            expectEquals(comboBox.getNumItems(), 2);
+            expectEquals(comboBox.getItemText(1),
                          juce::String{ "Two" });
-            expectEquals(item->getComboBox().getSelectedId(), 1);
+            expectEquals(comboBox.getSelectedId(), 1);
 
             tree.removeChild(0, nullptr);
-            expectEquals(item->getComboBox().getNumItems(), 1);
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            expectEquals(comboBox.getNumItems(), 1);
+            expectEquals(comboBox.getSelectedId(), 0);
 
             tree.getChild(0).setProperty("enabled", false, nullptr);
-            expect(!item->getComboBox().isItemEnabled(1));
+            expect(!comboBox.isItemEnabled(1));
 
             tree.getChild(0).setProperty("text", "new text", nullptr);
-            expectEquals(item->getComboBox().getItemText(0), juce::String{ "new text" });
+            expectEquals(comboBox.getItemText(0), juce::String{ "new text" });
 
             tree.getChild(0).setProperty("selected", true, nullptr);
-            expectEquals(item->getComboBox().getSelectedId(), 1);
+            expectEquals(comboBox.getSelectedId(), 1);
 
             tree.getChild(0).setProperty("selected", false, nullptr);
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            expectEquals(comboBox.getSelectedId(), 0);
         }
         {
             juce::ValueTree tree{
@@ -346,12 +361,16 @@ private:
                     },
                 },
             };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getNumItems(), 2);
-            expectEquals(item->getComboBox().getItemText(0), juce::String{ "One" });
-            expectEquals(item->getComboBox().getItemText(1), juce::String{ "Two" });
-            expectEquals(item->getComboBox().getSelectedId(), 1);
-            expect(!item->getComboBox().isItemEnabled(2));
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getNumItems(), 2);
+            expectEquals(comboBox.getItemText(0), juce::String{ "One" });
+            expectEquals(comboBox.getItemText(1), juce::String{ "Two" });
+            expectEquals(comboBox.getSelectedId(), 1);
+            expect(!comboBox.isItemEnabled(2));
         }
     }
 
@@ -367,35 +386,39 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getSelectedId(), 0);
 
             tree.appendChild(juce::ValueTree{ "Option", { { "text", "1" } } }, nullptr);
             tree.appendChild(juce::ValueTree{ "Option", { { "text", "2" } } }, nullptr);
             tree.appendChild(juce::ValueTree{ "Separator" }, nullptr);
             tree.appendChild(juce::ValueTree{ "Header", { { "text", "Header" } } }, nullptr);
             tree.appendChild(juce::ValueTree{ "Option", { { "text", "3" } } }, nullptr);
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            expectEquals(comboBox.getSelectedId(), 0);
 
             tree.setProperty("selected", 0, nullptr);
-            expectEquals(item->getComboBox().getSelectedItemIndex(), 0);
+            expectEquals(comboBox.getSelectedItemIndex(), 0);
             expect(tree.getChild(0)["selected"]);
             expect(!tree.getChild(1)["selected"]);
             expect(!tree.getChild(4)["selected"]);
 
             tree.setProperty("selected", 2, nullptr);
-            expectEquals(item->getComboBox().getSelectedItemIndex(), 2);
+            expectEquals(comboBox.getSelectedItemIndex(), 2);
             expect(!tree.getChild(0)["selected"]);
             expect(!tree.getChild(1)["selected"]);
             expect(tree.getChild(4)["selected"]);
 
             tree.setProperty("selected", 100, nullptr);
-            expectEquals(item->getComboBox().getSelectedId(), 0);
+            expectEquals(comboBox.getSelectedId(), 0);
             expect(!tree.getChild(0)["selected"]);
             expect(!tree.getChild(1)["selected"]);
             expect(!tree.getChild(4)["selected"]);
 
-            item->getComboBox().setSelectedItemIndex(1, juce::NotificationType::sendNotificationSync);
+            comboBox.setSelectedItemIndex(1, juce::NotificationType::sendNotificationSync);
             expectEquals(static_cast<int>(tree["selected"]), 1);
             expect(!tree.getChild(0)["selected"]);
             expect(tree.getChild(1)["selected"]);
@@ -414,8 +437,12 @@ private:
                     juce::ValueTree{ "Option", { { "text", "Two" } } },
                 },
             };
-            auto item = createComboBox(tree);
-            expectEquals(item->getComboBox().getSelectedItemIndex(), 1);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getSelectedItemIndex(), 1);
         }
     }
 
@@ -446,11 +473,15 @@ private:
                 },
             },
         };
-        auto item = createComboBox(tree);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                             .toType<jive::ComboBox>()
+                             ->getComboBox();
         jive::Event onChange{ tree, "on-change" };
         expectEquals(onChange.getAssumedTriggerCount(), 0);
 
-        item->getComboBox().setSelectedId(2, juce::sendNotificationSync);
+        comboBox.setSelectedId(2, juce::sendNotificationSync);
         expectEquals(onChange.getAssumedTriggerCount(), 1);
     }
 };

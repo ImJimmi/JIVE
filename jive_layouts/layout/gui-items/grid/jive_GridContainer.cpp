@@ -74,6 +74,8 @@ namespace jive
 
     void GridContainer::layOutChildren()
     {
+        GuiItemDecorator::layOutChildren();
+
         const auto bounds = boxModel.getContentBounds().toNearestInt();
 
         if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
