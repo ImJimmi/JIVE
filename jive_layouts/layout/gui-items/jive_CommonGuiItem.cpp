@@ -494,9 +494,10 @@ private:
                     { "visibility", false },
                 },
             };
-            item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                           childTree2,
-                                                           item.get()));
+            item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                              childTree2,
+                                                              item.get()),
+                              -1);
             expect(!item->getChildren()[1]->getComponent()->isVisible());
         }
         {

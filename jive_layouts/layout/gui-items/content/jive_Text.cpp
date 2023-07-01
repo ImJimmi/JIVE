@@ -51,9 +51,9 @@ namespace jive
         getTextComponent().removeListener(*this);
     }
 
-    void Text::addChild(std::unique_ptr<GuiItem> child)
+    void Text::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
-        GuiItemDecorator::addChild(std::move(child));
+        GuiItemDecorator::insertChild(std::move(child), index);
         updateTextComponent();
     }
 

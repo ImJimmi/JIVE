@@ -50,6 +50,42 @@ namespace jive
         return interpret(parseXML(xmlStringData, xmlStringDataSize));
     }
 
+    void Interpreter::listenTo(GuiItem& item)
+    {
+        if (observedItem != nullptr)
+            observedItem->state.removeListener(this);
+
+        observedItem = &item;
+        observedItem->state.addListener(this);
+    }
+
+    [[nodiscard]] GuiItem* findItem(GuiItem& root, const juce::ValueTree& state)
+    {
+        if (root.state == state)
+            return &root;
+
+        for (auto* const child : root.getChildren())
+        {
+            if (auto item = findItem(*child, state))
+                return item;
+        }
+
+        return nullptr;
+    }
+
+    void Interpreter::valueTreeChildAdded(juce::ValueTree& parentTree,
+                                          juce::ValueTree& childWhichHasBeenAdded)
+    {
+        if (observedItem != nullptr)
+        {
+            if (auto* parentItem = findItem(*observedItem, parentTree))
+            {
+                const auto index = parentTree.indexOf(childWhichHasBeenAdded);
+                insertChild(*parentItem, index, childWhichHasBeenAdded);
+            }
+        }
+    }
+
     std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         Property<Display> display{ item->state, "display" };
@@ -213,21 +249,21 @@ namespace jive
         return nullptr;
     }
 
-    void Interpreter::appendChild(GuiItem& item, const juce::ValueTree& childState) const
+    void Interpreter::insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const
     {
         auto childItem = interpret(childState, &item);
 
         if (childItem != nullptr)
         {
             if (item.isContainer() || childItem->isContent())
-                item.addChild(std::move(childItem));
+                item.insertChild(std::move(childItem), index);
         }
     }
 
     void Interpreter::appendChildItems(GuiItem& item) const
     {
         for (auto i = 0; i < item.state.getNumChildren(); i++)
-            appendChild(item, item.state.getChild(i));
+            insertChild(item, i, item.state.getChild(i));
     }
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const

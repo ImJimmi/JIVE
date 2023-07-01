@@ -2,9 +2,11 @@
 
 namespace jive
 {
-    class Interpreter
+    class Interpreter : private juce::ValueTree::Listener
     {
     public:
+        Interpreter() = default;
+
         const ComponentFactory& getComponentFactory() const;
         ComponentFactory& getComponentFactory();
         void setComponentFactory(const ComponentFactory& newFactory);
@@ -19,13 +21,18 @@ namespace jive
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::String& xmlString) const;
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const void* xmlStringData, int xmlStringDataSize) const;
 
+        void listenTo(GuiItem& item);
+
     private:
+        void valueTreeChildAdded(juce::ValueTree& parentTree,
+                                 juce::ValueTree& childWhichHasBeenAdded) final;
+
         std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree, GuiItem* const parent) const;
 
         void expandAlias(juce::ValueTree& tree) const;
 
         std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const;
-        void appendChild(GuiItem& item, const juce::ValueTree& childState) const;
+        void insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const;
         void appendChildItems(GuiItem& item) const;
 
         std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) const;
@@ -37,6 +44,8 @@ namespace jive
             "Text",
             "Image",
         };
+
+        GuiItem* observedItem = nullptr;
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };

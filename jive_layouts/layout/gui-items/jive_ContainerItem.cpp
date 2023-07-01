@@ -16,9 +16,9 @@ namespace jive
         boxModel.removeListener(*this);
     }
 
-    void ContainerItem::addChild(std::unique_ptr<GuiItem> child)
+    void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
-        GuiItemDecorator::addChild(std::move(child));
+        GuiItemDecorator::insertChild(std::move(child), index);
         layoutChanged();
     }
 
