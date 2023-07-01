@@ -18,7 +18,7 @@ namespace jive
 
             callbacks.append(juce::var{
                 [weakThis = juce::WeakReference{ this }](const juce::var::NativeFunctionArgs&) {
-                    if (weakThis->onTrigger != nullptr)
+                    if (weakThis != nullptr && weakThis->onTrigger != nullptr)
                         weakThis->onTrigger();
 
                     return juce::var{};
@@ -69,8 +69,12 @@ namespace jive
         {
             const auto callback = onTrigger;
             onTrigger = nullptr;
+
+            juce::WeakReference weakThis{ this };
             trigger();
-            onTrigger = callback;
+
+            if (weakThis != nullptr)
+                weakThis->onTrigger = callback;
         }
 
         const juce::Identifier id;
