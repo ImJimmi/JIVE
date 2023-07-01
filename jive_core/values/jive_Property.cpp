@@ -14,7 +14,6 @@ public:
         testReading();
         testWriting();
         testCallback();
-        testInitialValue();
         testHereditaryValues();
         testObservations();
     }
@@ -65,24 +64,6 @@ private:
         tree.setProperty("value", 2.46f, nullptr);
 
         expect(callbackCalled);
-    }
-
-    void testInitialValue()
-    {
-        beginTest("initial value");
-
-        {
-            juce::ValueTree tree{ "Tree" };
-            jive::Property<int> value{ tree, "valueThatDoesntExist", 987 };
-
-            expect(value == 987);
-        }
-        {
-            juce::ValueTree tree{ "Tree", { { "value", 574 } } };
-            jive::Property<int> value{ tree, "value", 9226 };
-
-            expect(value == 574);
-        }
     }
 
     void testHereditaryValues()

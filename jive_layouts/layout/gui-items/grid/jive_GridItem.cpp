@@ -5,20 +5,37 @@ namespace jive
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , order{ state, "order" }
-        , justifySelf{ state, "justify-self", juce::GridItem{}.justifySelf }
-        , alignSelf{ state, "align-self", juce::GridItem{}.alignSelf }
-        , gridColumn{ state, "grid-column", juce::GridItem{}.column }
-        , gridRow{ state, "grid-row", juce::GridItem{}.row }
-        , gridArea{ state, "grid-area", juce::GridItem{}.area }
-        , maxWidth{ state, "max-width", juce::GridItem{}.maxWidth }
-        , maxHeight{ state, "max-height", juce::GridItem{}.maxHeight }
-        , width{ state, "width", "auto" }
-        , height{ state, "height", "auto" }
+        , justifySelf{ state, "justify-self" }
+        , alignSelf{ state, "align-self" }
+        , gridColumn{ state, "grid-column" }
+        , gridRow{ state, "grid-row" }
+        , gridArea{ state, "grid-area" }
+        , maxWidth{ state, "max-width" }
+        , maxHeight{ state, "max-height" }
+        , width{ state, "width" }
+        , height{ state, "height" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(getParent() != nullptr);
+
+        static const juce::GridItem defaultGridItem;
+
+        if (!justifySelf.exists())
+            justifySelf = defaultGridItem.justifySelf;
+        if (!alignSelf.exists())
+            alignSelf = defaultGridItem.alignSelf;
+        if (!gridColumn.exists())
+            gridColumn = defaultGridItem.column;
+        if (!gridRow.exists())
+            gridRow = defaultGridItem.row;
+        if (!gridArea.exists())
+            gridArea = defaultGridItem.area;
+        if (!maxWidth.exists())
+            maxWidth = defaultGridItem.maxWidth;
+        if (!maxHeight.exists())
+            maxHeight = defaultGridItem.maxHeight;
 
         const auto invalidateParentBoxModel = [this]() {
             getParent()->state.setProperty("is-valid", false, nullptr);

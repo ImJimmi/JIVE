@@ -4,8 +4,8 @@ namespace jive
 {
     BoxModel::BoxModel(juce::ValueTree stateSource)
         : state{ stateSource }
-        , width{ state, "width", "auto" }
-        , height{ state, "height", "auto" }
+        , width{ state, "width" }
+        , height{ state, "height" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
         , idealWidth{ state, "ideal-width" }
@@ -14,8 +14,15 @@ namespace jive
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
-        , isValid{ state, "box-model-valid", true }
+        , isValid{ state, "box-model-valid" }
     {
+        if (!width.exists())
+            width.setAuto();
+        if (!height.exists())
+            height.setAuto();
+        if (!isValid.exists())
+            isValid = true;
+
         componentSize = juce::Rectangle{
             calculateComponentWidth(),
             calculateComponentHeight(),

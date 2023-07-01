@@ -6,12 +6,19 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , text{ state, "text" }
         , lineSpacing{ state, "line-spacing" }
-        , justification{ state, "justification", juce::Justification::centredLeft }
-        , wordWrap{ state, "word-wrap", juce::AttributedString::WordWrap::byWord }
-        , direction{ state, "direction", juce::AttributedString::ReadingDirection::natural }
+        , justification{ state, "justification" }
+        , wordWrap{ state, "word-wrap" }
+        , direction{ state, "direction" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
     {
+        if (!justification.exists())
+            justification = juce::Justification::centredLeft;
+        if (!wordWrap.exists())
+            wordWrap = juce::AttributedString::WordWrap::byWord;
+        if (!direction.exists())
+            direction = juce::AttributedString::ReadingDirection::natural;
+
         text.onValueChange = [this]() {
             updateTextComponent();
         };

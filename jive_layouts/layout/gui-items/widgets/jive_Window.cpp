@@ -8,23 +8,46 @@ namespace jive
 {
     Window::Window(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , hasShadow{ state, "shadow", true }
-        , isNative{ state, "native", true }
-        , isResizable{ state, "resizable", true }
+        , hasShadow{ state, "shadow" }
+        , isNative{ state, "native" }
+        , isResizable{ state, "resizable" }
         , useCornerResizer{ state, "corner-resizer" }
-        , minWidth{ state, "min-width", 1.0f }
-        , minHeight{ state, "min-height", 1.0f }
-        , maxWidth{ state, "max-width", static_cast<float>(std::numeric_limits<juce::int16>::max()) }
-        , maxHeight{ state, "max-height", static_cast<float>(std::numeric_limits<juce::int16>::max()) }
-        , isDraggable{ state, "draggable", true }
+        , minWidth{ state, "min-width" }
+        , minHeight{ state, "min-height" }
+        , maxWidth{ state, "max-width" }
+        , maxHeight{ state, "max-height" }
+        , isDraggable{ state, "draggable" }
         , isFullScreen{ state, "full-screen" }
         , isMinimised{ state, "minimised" }
-        , name{ state, "name", JUCE_APPLICATION_NAME }
-        , titleBarHeight{ state, "title-bar-height", 26 }
-        , titleBarButtons{ state, "title-bar-buttons", juce::DocumentWindow::allButtons }
+        , name{ state, "name" }
+        , titleBarHeight{ state, "title-bar-height" }
+        , titleBarButtons{ state, "title-bar-buttons" }
         , width{ state, "width" }
         , height{ state, "height" }
     {
+        if (!hasShadow.exists())
+            hasShadow = true;
+        if (!isNative.exists())
+            isNative = true;
+        if (!isResizable.exists())
+            isResizable = true;
+        if (!minWidth.exists())
+            minWidth = 1.0f;
+        if (!minHeight.exists())
+            minHeight = 1.0f;
+        if (!maxWidth.exists())
+            maxWidth = static_cast<float>(std::numeric_limits<juce::int16>::max());
+        if (!maxHeight.exists())
+            maxHeight = static_cast<float>(std::numeric_limits<juce::int16>::max());
+        if (!isDraggable.exists())
+            isDraggable = true;
+        if (!name.exists())
+            name = JUCE_APPLICATION_NAME;
+        if (!titleBarHeight.exists())
+            titleBarHeight = 26;
+        if (!titleBarButtons.exists())
+            titleBarButtons = juce::DocumentWindow::allButtons;
+
         hasShadow.onValueChange = [this]() {
             getWindow().setDropShadowEnabled(hasShadow);
         };

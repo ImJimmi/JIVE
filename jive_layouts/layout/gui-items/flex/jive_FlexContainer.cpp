@@ -4,7 +4,7 @@ namespace jive
 {
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
-        , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::column }
+        , flexDirection{ state, "flex-direction" }
         , flexWrap{ state, "flex-wrap" }
         , flexJustifyContent{ state, "justify-content" }
         , flexAlignItems{ state, "align-items" }
@@ -13,6 +13,9 @@ namespace jive
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
+
+        if (!flexDirection.exists())
+            flexDirection = juce::FlexBox::Direction::column;
 
         flexDirection.onValueChange = [this]() {
             layoutChanged();

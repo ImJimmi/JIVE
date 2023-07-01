@@ -54,15 +54,6 @@ namespace jive
             }
         }
 
-        Property(juce::ValueTree sourceTree,
-                 const juce::Identifier& propertyID,
-                 const ValueType& initialValue)
-            : Property{ sourceTree, propertyID }
-        {
-            if (!exists())
-                *this = initialValue;
-        }
-
         virtual ValueType get() const
         {
             return getFrom(getRootOfInheritance());
