@@ -560,9 +560,6 @@ private:
                           )",
                           nullptr);
         snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        juce::PNGImageFormat format;
-        auto stream = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("snapshot.png").createOutputStream();
-        format.writeImageToStream(snapshot, *stream);
         expect(withinAbsoluteError(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 }, 1));
         expect(withinAbsoluteError(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF161616 }, 1));
         expect(withinAbsoluteError(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF949494 }, 1));
