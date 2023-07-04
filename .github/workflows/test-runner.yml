@@ -52,7 +52,7 @@ jobs:
 
     - name: Generate Coverage Report
       working-directory: ${{github.workspace}}/build
-      run: lcov --directory . --capture --output-file coverage.info
+      run: lcov --directory . --capture --output-file coverage.info --ignore-errors inconsistent --ignore-errors gcov
 
     - name: Upload Coverage
       working-directory: ${{github.workspace}}/build
