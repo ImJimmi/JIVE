@@ -4,21 +4,38 @@ namespace jive
 {
     GridContainer::GridContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem(std::move(itemToDecorate))
-        , justifyItems{ state, "justify-items", juce::Grid{}.justifyItems }
-        , alignItems{ state, "align-items", juce::Grid{}.alignItems }
-        , justifyContent{ state, "justify-content", juce::Grid{}.justifyContent }
-        , alignContent{ state, "align-content", juce::Grid{}.alignContent }
-        , gridAutoFlow{ state, "grid-auto-flow", juce::Grid{}.autoFlow }
+        , justifyItems{ state, "justify-items" }
+        , alignItems{ state, "align-items" }
+        , justifyContent{ state, "justify-content" }
+        , alignContent{ state, "align-content" }
+        , gridAutoFlow{ state, "grid-auto-flow" }
         , gridTemplateColumns{ state, "grid-template-columns" }
         , gridTemplateRows{ state, "grid-template-rows" }
         , gridTemplateAreas{ state, "grid-template-areas" }
-        , gridAutoRows{ state, "grid-auto-rows", juce::Grid{}.autoRows }
-        , gridAutoColumns{ state, "grid-auto-columns", juce::Grid{}.autoColumns }
+        , gridAutoRows{ state, "grid-auto-rows" }
+        , gridAutoColumns{ state, "grid-auto-columns" }
         , gap{ state, "gap" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
+
+        static const juce::Grid defaultGrid;
+
+        if (!justifyItems.exists())
+            justifyItems = defaultGrid.justifyItems;
+        if (!alignItems.exists())
+            alignItems = defaultGrid.alignItems;
+        if (!justifyContent.exists())
+            justifyContent = defaultGrid.justifyContent;
+        if (!alignContent.exists())
+            alignContent = defaultGrid.alignContent;
+        if (!gridAutoFlow.exists())
+            gridAutoFlow = defaultGrid.autoFlow;
+        if (!gridAutoRows.exists())
+            gridAutoRows = defaultGrid.autoRows;
+        if (!gridAutoColumns.exists())
+            gridAutoColumns = defaultGrid.autoColumns;
 
         justifyItems.onValueChange = [this]() {
             layoutChanged();

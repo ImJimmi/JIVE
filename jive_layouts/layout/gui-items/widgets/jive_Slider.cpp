@@ -11,20 +11,31 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , value{ state, "value" }
         , min{ state, "min" }
-        , max{ state, "max", "1.0" }
+        , max{ state, "max" }
         , mid{ state, "mid" }
         , interval{ state, "interval" }
         , orientation{ state, "orientation" }
         , width{ state, "width" }
         , height{ state, "height" }
-        , sensitivity{ state, "sensitivity", 1.0 }
+        , sensitivity{ state, "sensitivity" }
         , isInVelocityMode{ state, "velocity-mode" }
-        , velocitySensitivity{ state, "velocity-sensitivity", 1.0 }
-        , velocityThreshold{ state, "velocity-threshold", 1 }
+        , velocitySensitivity{ state, "velocity-sensitivity" }
+        , velocityThreshold{ state, "velocity-threshold" }
         , velocityOffset{ state, "velocity-offset" }
-        , snapToMouse{ state, "snap-to-mouse", true }
+        , snapToMouse{ state, "snap-to-mouse" }
         , onChange{ state, "on-change" }
     {
+        if (!max.exists())
+            max = "1.0";
+        if (!sensitivity.exists())
+            sensitivity = 1.0;
+        if (!velocitySensitivity.exists())
+            velocitySensitivity = 1.0;
+        if (!velocityThreshold.exists())
+            velocityThreshold = 1;
+        if (!snapToMouse.exists())
+            snapToMouse = true;
+
         min.onValueChange = [this]() {
             updateRange();
         };

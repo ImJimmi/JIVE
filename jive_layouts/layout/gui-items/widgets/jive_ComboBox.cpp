@@ -8,7 +8,7 @@ namespace jive
         , index{ itemIndex }
         , id{ index + 1 }
         , text{ tree, "text" }
-        , enabled{ tree, "enabled", true }
+        , enabled{ tree, "enabled" }
         , selected{ tree, "selected" }
     {
         comboBox.addItem(text, id);

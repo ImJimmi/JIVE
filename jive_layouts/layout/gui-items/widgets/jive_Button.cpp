@@ -20,15 +20,24 @@ namespace jive
         , toggled{ state, "toggled" }
         , toggleOnClick{ state, "toggle-on-click" }
         , radioGroup{ state, "radio-group" }
-        , triggerEvent{ state, "trigger-event", TriggerEvent::mouseUp }
+        , triggerEvent{ state, "trigger-event" }
         , tooltip{ state, "tooltip" }
-        , flexDirection{ state, "flex-direction", juce::FlexBox::Direction::row }
-        , justifyContent{ state, "justify-content", juce::FlexBox::JustifyContent::center }
-        , padding{ state, "padding", juce::BorderSize<float>{ 0.0f, 5.0f, 0.0f, 5.0f } }
-        , minWidth{ state, "min-width", 50.0f }
-        , minHeight{ state, "min-height", 20.0f }
+        , flexDirection{ state, "flex-direction" }
+        , justifyContent{ state, "justify-content" }
+        , padding{ state, "padding" }
+        , minWidth{ state, "min-width" }
+        , minHeight{ state, "min-height" }
         , onClick{ state, "on-click" }
     {
+        if (!triggerEvent.exists())
+            triggerEvent = TriggerEvent::mouseUp;
+        if (!padding.exists())
+            padding = juce::BorderSize{ 0.0f, 5.0f, 0.0f, 5.0f };
+        if (!minWidth.exists())
+            minWidth = 50.0f;
+        if (!minHeight.exists())
+            minHeight = 20.0f;
+
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
         };

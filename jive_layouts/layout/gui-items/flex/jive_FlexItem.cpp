@@ -6,11 +6,11 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , order{ state, "order" }
         , flexGrow{ state, "flex-grow" }
-        , flexShrink{ state, "flex-shrink", 1 }
+        , flexShrink{ state, "flex-shrink" }
         , flexBasis{ state, "flex-basis" }
         , alignSelf{ state, "align-self" }
-        , width{ state, "width", "auto" }
-        , height{ state, "height", "auto" }
+        , width{ state, "width" }
+        , height{ state, "height" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
         , idealWidth{ state, "ideal-width" }
@@ -18,6 +18,9 @@ namespace jive
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(getParent() != nullptr);
+
+        if (!flexShrink.exists())
+            flexShrink = 1;
 
         const auto updateParentLayout = [this]() {
             getParent()->layOutChildren();

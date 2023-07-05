@@ -10,21 +10,34 @@ namespace jive
         , id{ state, "id" }
         , description{ state, "description" }
         , tooltip{ state, "tooltip" }
-        , enabled{ state, "enabled", true }
-        , visibility{ state, "visibility", true }
+        , enabled{ state, "enabled" }
+        , visibility{ state, "visibility" }
         , alwaysOnTop{ state, "always-on-top" }
         , bufferedToImage{ state, "buffered-to-image" }
         , opaque{ state, "opaque" }
         , focusable{ state, "focusable" }
-        , clickingGrabsFocus{ state, "clicking-grabs-focus", true }
+        , clickingGrabsFocus{ state, "clicking-grabs-focus" }
         , focusOutline{ state, "focus-outline" }
         , focusOrder{ state, "focus-order" }
-        , opacity{ state, "opacity", 1.f }
-        , cursor{ state, "cursor", juce::MouseCursor::NormalCursor }
-        , display{ state, "display", Display::flex }
-        , width{ state, "width", "auto" }
-        , height{ state, "height", "auto" }
+        , opacity{ state, "opacity" }
+        , cursor{ state, "cursor" }
+        , display{ state, "display" }
+        , width{ state, "width" }
+        , height{ state, "height" }
     {
+        if (!enabled.exists())
+            enabled = true;
+        if (!visibility.exists())
+            visibility = true;
+        if (!clickingGrabsFocus.exists())
+            clickingGrabsFocus = true;
+        if (!opacity.exists())
+            opacity = 1.0f;
+        if (!cursor.exists())
+            cursor = juce::MouseCursor::NormalCursor;
+        if (!display.exists())
+            display = Display::flex;
+
         name.onValueChange = [this]() {
             component->setName(name);
         };

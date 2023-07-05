@@ -5,13 +5,16 @@ namespace jive
     Image::Image(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , source{ state, "source" }
-        , placement{ state, "placement", juce::RectanglePlacement::centred }
+        , placement{ state, "placement" }
         , width{ state, "width" }
         , height{ state, "height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
+        if (!placement.exists())
+            placement = juce::RectanglePlacement::centred;
+
         source.onValueChange = [this]() {
             setChildComponent(createChildComponent());
         };
