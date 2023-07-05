@@ -11,6 +11,8 @@ namespace jive
 
     void BlockContainer::layOutChildren()
     {
+        GuiItemDecorator::layOutChildren();
+
         for (auto child : getChildren())
         {
             auto& blockItem = *dynamic_cast<GuiItemDecorator&>(*child).toType<BlockItem>();

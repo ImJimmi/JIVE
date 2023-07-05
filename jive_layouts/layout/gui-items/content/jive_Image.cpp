@@ -243,14 +243,6 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Image> createImage(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-        return std::unique_ptr<jive::Image>{
-            dynamic_cast<jive::Image*>(interpreter.interpret(tree).release()),
-        };
-    }
-
     void testImage()
     {
         beginTest("image");
@@ -263,16 +255,19 @@ private:
                     { "height", 333 },
                 }
             };
-            auto item = createImage(tree);
-            expect(item->getDrawable().isEmpty());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            expect(imageItem.getDrawable().isEmpty());
 
             const juce::Image image{ juce::Image::ARGB, 120, 40, true };
             tree.setProperty("source", juce::VariantConverter<juce::Image>::toVar(image), nullptr);
-            expect(item->getDrawable().isImage());
-            expectEquals(static_cast<juce::Image>(item->getDrawable()).getWidth(), image.getWidth());
-            expectEquals(static_cast<juce::Image>(item->getDrawable()).getHeight(), image.getHeight());
-            expect(static_cast<juce::Image>(item->getDrawable()).getPixelData() == image.getPixelData());
-            expect(dynamic_cast<juce::ImageComponent*>(item->getComponent()->getChildComponent(0)) != nullptr);
+            expect(imageItem.getDrawable().isImage());
+            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getWidth(), image.getWidth());
+            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getHeight(), image.getHeight());
+            expect(static_cast<juce::Image>(imageItem.getDrawable()).getPixelData() == image.getPixelData());
+            expect(dynamic_cast<juce::ImageComponent*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
@@ -284,11 +279,14 @@ private:
                     { "source", juce::VariantConverter<juce::Image>::toVar(image) },
                 },
             };
-            auto item = createImage(tree);
-            expect(item->getDrawable().isImage());
-            expectEquals(static_cast<juce::Image>(item->getDrawable()).getWidth(), image.getWidth());
-            expectEquals(static_cast<juce::Image>(item->getDrawable()).getHeight(), image.getHeight());
-            expect(static_cast<juce::Image>(item->getDrawable()).getPixelData() == image.getPixelData());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            expect(imageItem.getDrawable().isImage());
+            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getWidth(), image.getWidth());
+            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getHeight(), image.getHeight());
+            expect(static_cast<juce::Image>(imageItem.getDrawable()).getPixelData() == image.getPixelData());
         }
     }
 
@@ -305,8 +303,11 @@ private:
                     { "source", juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 51, 54, true }) },
                 },
             };
-            auto item = createImage(tree);
-            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent()->getChildComponent(0));
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            auto& image = dynamic_cast<juce::ImageComponent&>(*imageItem.getComponent()->getChildComponent(0));
             expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::centred));
 
             tree.setProperty("placement", "top right reduce-only", nullptr);
@@ -324,8 +325,11 @@ private:
                     { "placement", "stretch fill increase-only" },
                 },
             };
-            auto item = createImage(tree);
-            auto& image = dynamic_cast<juce::ImageComponent&>(*item->getComponent()->getChildComponent(0));
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            auto& image = dynamic_cast<juce::ImageComponent&>(*imageItem.getComponent()->getChildComponent(0));
             expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::stretchToFit
                                                        + juce::RectanglePlacement::fillDestination
                                                        + juce::RectanglePlacement::onlyIncreaseInSize));
@@ -390,12 +394,15 @@ private:
                     { "height", 333 },
                 }
             };
-            auto item = createImage(tree);
-            expect(item->getDrawable().isEmpty());
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            expect(imageItem.getDrawable().isEmpty());
 
             tree.setProperty("source", svg, nullptr);
-            expect(item->getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(item->getComponent()->getChildComponent(0)) != nullptr);
+            expect(imageItem.getDrawable().isSVG());
+            expect(dynamic_cast<juce::Drawable*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
@@ -427,9 +434,12 @@ private:
                     },
                 },
             };
-            auto item = createImage(tree);
-            expect(item->getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(item->getComponent()->getChildComponent(0)) != nullptr);
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                   .toType<jive::Image>();
+            expect(imageItem.getDrawable().isSVG());
+            expect(dynamic_cast<juce::Drawable*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
         }
     }
 

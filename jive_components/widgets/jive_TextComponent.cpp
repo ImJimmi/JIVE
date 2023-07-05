@@ -115,7 +115,6 @@ namespace jive
 
         attributedString.setText(text);
 
-        attributedString.setColour(textColour);
         attributedString.setFont(font);
         attributedString.setJustification(justification);
         attributedString.setLineSpacing(lineSpacing);
@@ -124,6 +123,11 @@ namespace jive
 
         for (const auto& appendix : appendices)
             attributedString.append(appendix);
+
+        if (textColour.has_value())
+            attributedString.setColour(*textColour);
+        else if (appendices.size() == 0)
+            attributedString.setColour(juce::Colours::black);
 
         return attributedString;
     }

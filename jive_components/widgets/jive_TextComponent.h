@@ -45,7 +45,7 @@ namespace jive
         juce::Justification justification{ juce::Justification::topLeft };
         float lineSpacing{ 0.0f };
         juce::String text;
-        juce::Colour textColour{ juce::Colours::black };
+        std::optional<juce::Colour> textColour{ juce::Colours::black };
         juce::AttributedString::WordWrap wordWrap{ juce::AttributedString::WordWrap::byWord };
         juce::Array<juce::AttributedString> appendices;
 

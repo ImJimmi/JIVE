@@ -13,6 +13,9 @@ namespace jive
         const GuiItem* getParent() const override;
         GuiItem* getParent() override;
 
+        bool isContainer() const override;
+        bool isContent() const override;
+
         GuiItemDecorator& getTopLevelDecorator();
         const GuiItemDecorator& getTopLevelDecorator() const;
 

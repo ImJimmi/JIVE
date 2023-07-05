@@ -36,6 +36,8 @@ namespace jive
 
     void FlexContainer::layOutChildren()
     {
+        GuiItemDecorator::layOutChildren();
+
         const auto bounds = boxModel.getContentBounds();
 
         if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
@@ -65,9 +67,11 @@ namespace jive
             jassertfalse;
         }
 
-        const auto flex = const_cast<FlexContainer&>(*this)
-                              .buildFlexBox(constraints, LayoutStrategy::dummy);
-        juce::Point<float> extremities{ -1.0f, -1.0f };
+        auto flex = const_cast<FlexContainer&>(*this)
+                        .buildFlexBox(constraints, LayoutStrategy::dummy);
+        flex.performLayout(constraints);
+
+        juce::Point extremities{ -1.0f, -1.0f };
 
         for (const auto& flexItem : flex.items)
         {
@@ -134,9 +138,6 @@ namespace jive
             flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
             flex.alignItems = juce::FlexBox::AlignItems::flexStart;
             flex.alignContent = juce::FlexBox::AlignContent::flexStart;
-
-            flex.performLayout(bounds);
-
             break;
         default:
             jassertfalse;
@@ -169,13 +170,6 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::FlexContainer> createFlexContainer(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
-
-        return std::unique_ptr<jive::FlexContainer>(dynamic_cast<jive::FlexContainer*>(interpreter.interpret(tree).release()));
-    }
-
     void testDirection()
     {
         beginTest("direction");
@@ -187,13 +181,16 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.flexDirection == juce::FlexBox::Direction::column);
 
         tree.setProperty("flex-direction", "row-reverse", nullptr);
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.flexDirection == juce::FlexBox::Direction::rowReverse);
     }
@@ -209,13 +206,16 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.flexWrap == juce::FlexBox::Wrap::noWrap);
 
         tree.setProperty("flex-wrap", "wrap-reverse", nullptr);
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.flexWrap == juce::FlexBox::Wrap::wrapReverse);
     }
@@ -231,13 +231,16 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.alignContent == juce::FlexBox::AlignContent::stretch);
 
         tree.setProperty("align-content", "space-between", nullptr);
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.alignContent == juce::FlexBox::AlignContent::spaceBetween);
     }
@@ -253,13 +256,16 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.alignItems == juce::FlexBox::AlignItems::stretch);
 
         tree.setProperty("align-items", "centre", nullptr);
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.alignItems == juce::FlexBox::AlignItems::center);
     }
@@ -275,13 +281,16 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.justifyContent == juce::FlexBox::JustifyContent::flexStart);
 
         tree.setProperty("justify-content", "centre", nullptr);
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.justifyContent == juce::FlexBox::JustifyContent::center);
     }
@@ -297,8 +306,10 @@ private:
                 { "height", 333 },
             },
         };
-        auto item = createFlexContainer(tree);
-        auto flexBox = static_cast<juce::FlexBox>(*item);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                       .toType<jive::FlexContainer>());
 
         expect(flexBox.items.isEmpty());
 
@@ -306,7 +317,8 @@ private:
         tree.appendChild(juce::ValueTree{ "Component" }, nullptr);
         tree.appendChild(juce::ValueTree{ "Component" }, nullptr);
 
-        flexBox = static_cast<juce::FlexBox>(*item);
+        flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                                  .toType<jive::FlexContainer>());
 
         expect(flexBox.items.size() == item->getChildren().size());
     }
@@ -331,7 +343,8 @@ private:
                 },
             },
         };
-        auto item = createFlexContainer(tree);
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
         expectEquals(item->getChildren()[0]->getComponent()->getPosition(),
                      juce::Point<int>{ 0, 0 });
 
