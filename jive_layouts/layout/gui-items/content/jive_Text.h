@@ -10,7 +10,7 @@ namespace jive
         explicit Text(std::unique_ptr<GuiItem> itemToDecorate);
         ~Text();
 
-        void addChild(std::unique_ptr<GuiItem> child) override;
+        void insertChild(std::unique_ptr<GuiItem> child, int index) override;
 
         bool isContainer() const override;
         bool isContent() const override;

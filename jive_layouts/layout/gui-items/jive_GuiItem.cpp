@@ -14,6 +14,7 @@ namespace jive
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
         , styleSheet{ sheet }
 #endif
+        , remover{ std::make_unique<Remover>(*this) }
     {
         jassert(component != nullptr);
     }
@@ -59,10 +60,15 @@ namespace jive
         return component;
     }
 
-    void GuiItem::addChild(std::unique_ptr<GuiItem> child)
+    void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
-        auto* newlyAddedChild = children.add(std::move(child));
+        auto* newlyAddedChild = children.insert(index, std::move(child));
         component->addChildComponent(*newlyAddedChild->getComponent());
+    }
+
+    void GuiItem::removeChild(GuiItem& childToRemove)
+    {
+        children.removeObject(&childToRemove);
     }
 
     juce::Array<GuiItem*> GuiItem::getChildren()
@@ -99,6 +105,28 @@ namespace jive
     {
         return false;
     }
+
+    GuiItem::Remover::Remover(GuiItem& guiItem)
+        : item{ guiItem }
+        , parent{ item.getParent() }
+    {
+        if (parent != nullptr)
+            parent->state.addListener(this);
+    }
+
+    GuiItem::Remover::~Remover()
+    {
+        if (parent != nullptr)
+            parent->state.removeListener(this);
+    }
+
+    void GuiItem::Remover::valueTreeChildRemoved(juce::ValueTree&,
+                                                 juce::ValueTree& childWhichHasBeenRemoved,
+                                                 int)
+    {
+        if (childWhichHasBeenRemoved == item.state && parent != nullptr)
+            parent->removeChild(item);
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
@@ -130,20 +158,41 @@ private:
         });
         expectEquals(item->getChildren().size(), 0);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+        expectEquals(item->state.getNumChildren(), 0);
 
-        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                       juce::ValueTree{ "Component" },
-                                                       item.get()));
+        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          item->state.getChild(0),
+                                                          item.get()),
+                          -1);
         expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
 
-        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                       juce::ValueTree{ "Component" },
-                                                       item.get()));
-        item->addChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                       juce::ValueTree{ "Component" },
-                                                       item.get()));
+        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          item->state.getChild(1),
+                                                          item.get()),
+                          -1);
+        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                          item->state.getChild(2),
+                                                          item.get()),
+                          -1);
         expectEquals(item->getChildren().size(), 3);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+
+        auto* child0 = item->getChildren()[0];
+        expect(child0 != nullptr);
+        item->removeChild(*child0);
+        expectEquals(item->getChildren().size(), 2);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+
+        item->state.removeChild(0, nullptr);
+        expectEquals(item->getChildren().size(), 2);
+        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+
+        item->state.removeChild(0, nullptr);
+        expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
     }
 };

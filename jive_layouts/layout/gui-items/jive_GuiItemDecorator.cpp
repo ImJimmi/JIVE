@@ -10,9 +10,14 @@ namespace jive
             decorator->owner = this;
     }
 
-    void GuiItemDecorator::addChild(std::unique_ptr<GuiItem> child)
+    void GuiItemDecorator::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
-        item->addChild(std::move(child));
+        item->insertChild(std::move(child), index);
+    }
+
+    void GuiItemDecorator::removeChild(GuiItem& child)
+    {
+        item->removeChild(child);
     }
 
     juce::Array<GuiItem*> GuiItemDecorator::getChildren()

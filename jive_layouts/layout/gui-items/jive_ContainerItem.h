@@ -10,7 +10,7 @@ namespace jive
         explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
         ~ContainerItem() override;
 
-        void addChild(std::unique_ptr<GuiItem> child) override;
+        void insertChild(std::unique_ptr<GuiItem> child, int index) override;
 
     protected:
         void boxModelInvalidated(BoxModel& boxModel) override;
