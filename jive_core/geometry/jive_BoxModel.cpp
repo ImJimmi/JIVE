@@ -22,11 +22,13 @@ namespace jive
             height.setAuto();
         if (!isValid.exists())
             isValid = true;
-
-        componentSize = juce::Rectangle{
-            calculateComponentWidth(),
-            calculateComponentHeight(),
-        };
+        if (!componentSize.exists())
+        {
+            componentSize = juce::Rectangle{
+                calculateComponentWidth(),
+                calculateComponentHeight(),
+            };
+        }
 
         const auto onBoxModelChanged = [this]() {
             isValid = true;
