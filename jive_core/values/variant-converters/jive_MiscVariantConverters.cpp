@@ -215,7 +215,7 @@ namespace juce
         return stringFlagPair->first;
     }
 
-    StringArray getTokensBetweenParentheses(const String& text)
+    static StringArray getTokensBetweenParentheses(const String& text)
     {
         static constexpr auto includeSubString = false;
         static constexpr auto ignoreCase = true;
@@ -224,7 +224,7 @@ namespace juce
         return StringArray::fromTokens(values, ",", "");
     }
 
-    Colour parseRgbColourString(const String& text)
+    static Colour parseRgbColourString(const String& text)
     {
         const auto tokens = getTokensBetweenParentheses(text);
         jassert(tokens.size() >= 3);
@@ -237,7 +237,7 @@ namespace juce
         return Colour::fromRGBA(red, green, blue, alpha);
     }
 
-    Colour parseHslColourString(const String& text)
+    static Colour parseHslColourString(const String& text)
     {
         const auto tokens = getTokensBetweenParentheses(text);
         jassert(tokens.size() >= 3);

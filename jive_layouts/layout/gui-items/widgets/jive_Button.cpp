@@ -2,7 +2,7 @@
 
 namespace jive
 {
-    void triggerClick(juce::Button& button)
+    static void triggerClick(juce::Button& button)
     {
 #if JIVE_UNIT_TESTS
         // Pretty horrible hack to have the triggerClick command message

@@ -8,7 +8,7 @@ namespace jive
     {
     public:
         explicit Text(std::unique_ptr<GuiItem> itemToDecorate);
-        ~Text();
+        ~Text() override;
 
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
 

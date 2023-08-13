@@ -4,7 +4,7 @@ namespace jive
 {
     bool Gradient::ColourStop::operator==(const ColourStop& other) const
     {
-        return proportion == other.proportion
+        return juce::approximatelyEqual(proportion, other.proportion)
             && colour == other.colour;
     }
 

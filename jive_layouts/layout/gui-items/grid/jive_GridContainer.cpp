@@ -123,7 +123,7 @@ namespace jive
         };
     }
 
-    void appendChildren(GuiItem& container, juce::Grid& grid)
+    static void appendChildren(GuiItem& container, juce::Grid& grid)
     {
         for (auto* child : container.getChildren())
         {
@@ -177,18 +177,18 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
+static bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {
     return (a.isAuto() == b.isAuto())
         && (a.isFractional() == b.isFractional())
         && (a.isPixels() == b.isPixels())
         && (a.getStartLineName() == b.getStartLineName())
         && (a.getEndLineName() == b.getEndLineName())
-        && (a.getSize() == b.getSize());
+        && (juce::approximatelyEqual(a.getSize(), b.getSize()));
 }
 
-bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
-             const juce::Array<juce::Grid::TrackInfo>& b)
+static bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
+                    const juce::Array<juce::Grid::TrackInfo>& b)
 {
     if (a.size() != b.size())
         return false;
@@ -670,20 +670,20 @@ private:
         auto item = interpreter.interpret(state);
         auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                  .toType<jive::GridContainer>());
-        expect(grid.columnGap.pixels == 0);
-        expect(grid.rowGap.pixels == 0);
+        expectEquals(grid.columnGap.pixels, 0.0L);
+        expectEquals(grid.rowGap.pixels, 0.0L);
 
         state.setProperty("gap", "10", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
-        expect(grid.columnGap.pixels == 10);
-        expect(grid.rowGap.pixels == 10);
+        expectEquals(grid.columnGap.pixels, 10.0L);
+        expectEquals(grid.rowGap.pixels, 10.0L);
 
         state.setProperty("gap", "5 33", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
-        expect(grid.columnGap.pixels == 33);
-        expect(grid.rowGap.pixels == 5);
+        expectEquals(grid.columnGap.pixels, 33.0L);
+        expectEquals(grid.rowGap.pixels, 5.0L);
     }
 
     void testItems()

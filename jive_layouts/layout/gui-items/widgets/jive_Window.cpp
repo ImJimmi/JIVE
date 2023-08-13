@@ -116,9 +116,9 @@ namespace jive
         getWindow().setName(name);
 
         titleBarHeight.onValueChange = [this]() {
-            getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight));
+            getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.get()));
         };
-        getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight));
+        getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.get()));
 
 #if JUCE_MAC
         static constexpr auto leftAlignButtons = true;

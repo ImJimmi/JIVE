@@ -23,7 +23,7 @@ namespace jive
         };
     } // namespace fontProperties
 
-    juce::StringArray getAncestorTypes(const juce::ValueTree& child)
+    static juce::StringArray getAncestorTypes(const juce::ValueTree& child)
     {
         juce::StringArray types;
 
@@ -393,7 +393,7 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/jive_layouts.h>
 
-bool compare(const juce::Image& image, juce::Colour colour)
+static bool compare(const juce::Image& image, juce::Colour colour)
 {
     for (auto y = 0; y < image.getHeight(); y++)
     {
@@ -407,7 +407,7 @@ bool compare(const juce::Image& image, juce::Colour colour)
     return true;
 }
 
-bool withinAbsoluteError(juce::Colour lhs, juce::Colour rhs, juce::uint8 tolerance)
+static bool withinAbsoluteError(juce::Colour lhs, juce::Colour rhs, juce::uint8 tolerance)
 {
     return std::abs(lhs.getAlpha() - rhs.getAlpha()) <= tolerance
         && std::abs(lhs.getRed() - rhs.getRed()) <= tolerance

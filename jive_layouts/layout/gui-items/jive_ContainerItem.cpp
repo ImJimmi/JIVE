@@ -25,8 +25,8 @@ namespace jive
     void ContainerItem::boxModelInvalidated(BoxModel& box)
     {
         const auto newIdealSize = calculateIdealSize(box.getBounds());
-        const auto idealWidthChanged = newIdealSize.getWidth() != idealWidth.get();
-        const auto idealHeightChanged = newIdealSize.getHeight() != idealHeight.get();
+        const auto idealWidthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
+        const auto idealHeightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
 
         idealWidth = newIdealSize.getWidth();
         idealHeight = newIdealSize.getHeight();

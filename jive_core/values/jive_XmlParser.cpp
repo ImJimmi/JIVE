@@ -2,7 +2,7 @@
 
 namespace jive
 {
-    juce::String accumulateInlineText(juce::XmlElement& xml)
+    static juce::String accumulateInlineText(juce::XmlElement& xml)
     {
         juce::String result;
 
@@ -15,7 +15,7 @@ namespace jive
         return result;
     }
 
-    void replaceInlineTextWithProperty(juce::XmlElement& xml)
+    static void replaceInlineTextWithProperty(juce::XmlElement& xml)
     {
         const auto text = xml.getStringAttribute("text", "")
                         + accumulateInlineText(xml);
@@ -26,7 +26,7 @@ namespace jive
         xml.deleteAllTextElements();
     }
 
-    void replaceInlineTextWithTextElement(juce::XmlElement& xml)
+    static void replaceInlineTextWithTextElement(juce::XmlElement& xml)
     {
         if (const auto text = accumulateInlineText(xml);
             text.isNotEmpty())
@@ -39,7 +39,7 @@ namespace jive
         xml.deleteAllTextElements();
     }
 
-    void replaceInlineTextRecursive(juce::XmlElement& xml)
+    static void replaceInlineTextRecursive(juce::XmlElement& xml)
     {
         if (xml.getTagName() == "Text")
             replaceInlineTextWithProperty(xml);
