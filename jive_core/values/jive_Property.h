@@ -54,6 +54,12 @@ namespace jive
             }
         }
 
+        Property(const Property& other) = delete;
+        Property(Property&& other) = delete;
+        Property& operator=(const Property& other) = delete;
+        Property& operator=(Property&& other) = delete;
+        ~Property() override = default;
+
         virtual ValueType get() const
         {
             return getFrom(getRootOfInheritance());

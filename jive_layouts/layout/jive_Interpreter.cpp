@@ -59,7 +59,7 @@ namespace jive
         observedItem->state.addListener(this);
     }
 
-    [[nodiscard]] GuiItem* findItem(GuiItem& root, const juce::ValueTree& state)
+    [[nodiscard]] static GuiItem* findItem(GuiItem& root, const juce::ValueTree& state)
     {
         if (root.state == state)
             return &root;
@@ -86,7 +86,7 @@ namespace jive
         }
     }
 
-    std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
+    static std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         Property<Display> display{ item->state, "display" };
 
@@ -105,7 +105,7 @@ namespace jive
         return nullptr;
     }
 
-    std::unique_ptr<GuiItem> decorateWithHereditaryBehaviour(std::unique_ptr<GuiItem> item)
+    static std::unique_ptr<GuiItem> decorateWithHereditaryBehaviour(std::unique_ptr<GuiItem> item)
     {
         if (item->getParent() == nullptr)
             return item;
@@ -127,7 +127,7 @@ namespace jive
         return nullptr;
     }
 
-    std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item)
+    static std::unique_ptr<GuiItem> decorateWithWidgetBehaviour(std::unique_ptr<GuiItem> item)
     {
         const auto name = item->state.getType().toString();
 
@@ -159,8 +159,8 @@ namespace jive
 
     using DecoratorCreator = std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>;
 
-    std::vector<const DecoratorCreator*> collectDecoratorCreators(const juce::Identifier& itemType,
-                                                                  const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& decorators)
+    static std::vector<const DecoratorCreator*> collectDecoratorCreators(const juce::Identifier& itemType,
+                                                                         const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& decorators)
     {
         std::vector<const DecoratorCreator*> creators;
 
@@ -173,8 +173,8 @@ namespace jive
         return creators;
     }
 
-    std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
-                                      const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
+    static std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
+                                             const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
     {
         item = std::make_unique<CommonGuiItem>(std::move(item));
         item = decorateWithHereditaryBehaviour(std::move(item));

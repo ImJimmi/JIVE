@@ -36,4 +36,9 @@ namespace juce
                    << time.toISO8601(includeDividers)
                    << " }";
     }
+
+    String& operator<<(String& str, long double value)
+    {
+        return str << juce::String{ static_cast<double>(value) };
+    }
 } // namespace juce

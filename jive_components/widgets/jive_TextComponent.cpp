@@ -81,7 +81,7 @@ namespace jive
 
     void TextComponent::setLineSpacing(float newLineSpacing)
     {
-        if (newLineSpacing != lineSpacing)
+        if (!juce::approximatelyEqual(newLineSpacing, lineSpacing))
         {
             lineSpacing = newLineSpacing;
             canvas.repaint();

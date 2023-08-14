@@ -2,7 +2,7 @@
 
 namespace jive
 {
-    juce::BorderSize<int> toNearestInt(juce::BorderSize<float> border)
+    static juce::BorderSize<int> toNearestInt(juce::BorderSize<float> border)
     {
         return juce::BorderSize<int>{
             juce::roundToInt(border.getTop()),

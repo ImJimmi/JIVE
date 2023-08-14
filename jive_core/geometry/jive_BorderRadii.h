@@ -58,10 +58,10 @@ namespace jive
 
         bool operator==(const BorderRadii<Arithmetic>& other) const
         {
-            return topLeft == other.topLeft
-                && topRight == other.topRight
-                && bottomRight == other.bottomRight
-                && bottomLeft == other.bottomLeft;
+            return juce::approximatelyEqual(topLeft, other.topLeft)
+                && juce::approximatelyEqual(topRight, other.topRight)
+                && juce::approximatelyEqual(bottomRight, other.bottomRight)
+                && juce::approximatelyEqual(bottomLeft, other.bottomLeft);
         }
 
         bool operator!=(const BorderRadii<Arithmetic>& other) const

@@ -32,7 +32,7 @@ namespace jive
         alignSelf.onValueChange = updateParentLayout;
     }
 
-    juce::FlexItem::Margin transform(const juce::BorderSize<float>& border)
+    static juce::FlexItem::Margin transform(const juce::BorderSize<float>& border)
     {
         return juce::FlexItem::Margin{
             border.getTop(),
@@ -290,7 +290,7 @@ private:
                        .toType<jive::FlexItem>()
                        ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
-        expect(flexItem.flexShrink == 3.4f);
+        expectEquals(flexItem.flexShrink, 3.4f);
     }
 
     void testFlexBasis()

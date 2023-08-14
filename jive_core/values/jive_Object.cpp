@@ -97,7 +97,7 @@ namespace jive
         listeners.remove(&listener);
     }
 
-    void replaceDynamicObjectsWithJiveObjects(juce::var& value)
+    static void replaceDynamicObjectsWithJiveObjects(juce::var& value)
     {
         if (auto* dynamicObject = value.getDynamicObject())
         {

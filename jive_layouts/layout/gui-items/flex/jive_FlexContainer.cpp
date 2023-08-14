@@ -102,10 +102,10 @@ namespace jive
         };
     }
 
-    void appendChildren(GuiItem& container,
-                        juce::FlexBox& flex,
-                        juce::Rectangle<float> bounds,
-                        LayoutStrategy strategy)
+    static void appendChildren(GuiItem& container,
+                               juce::FlexBox& flex,
+                               juce::Rectangle<float> bounds,
+                               LayoutStrategy strategy)
     {
         for (auto* child : container.getChildren())
         {

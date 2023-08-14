@@ -7,7 +7,7 @@ namespace jive
         setInterceptsMouseClicks(false, false);
     }
 
-    void apply(const Fill& fill, juce::Graphics& g, juce::Rectangle<float> bounds)
+    static void apply(const Fill& fill, juce::Graphics& g, juce::Rectangle<float> bounds)
     {
         if (fill.getGradient().has_value())
             g.setGradientFill(fill.getGradient()->toJuceGradient(bounds));
@@ -67,7 +67,7 @@ namespace jive
 
     void BackgroundCanvas::setBorderWidth(float newWidth)
     {
-        if (newWidth != borderWidth)
+        if (!juce::approximatelyEqual(newWidth, borderWidth))
             updateShape();
 
         borderWidth = newWidth;
@@ -94,8 +94,8 @@ namespace jive
         juce::Point<float> end{ 1.0f, 1.0f };
     };
 
-    std::array<CubicBezier, 4> getCorners(BorderRadii<float> radii,
-                                          juce::Rectangle<float> bounds)
+    static std::array<CubicBezier, 4> getCorners(BorderRadii<float> radii,
+                                                 juce::Rectangle<float> bounds)
     {
         static constexpr auto relativeControlPointOffsetForNearPerfectEllipse = 0.552f;
 
