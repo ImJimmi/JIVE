@@ -32,10 +32,22 @@ namespace jive
         flexAlignContent.onValueChange = [this]() {
             layoutChanged();
         };
+
+        state.addListener(this);
+    }
+
+    FlexContainer::~FlexContainer()
+    {
+        state.removeListener(this);
     }
 
     void FlexContainer::layOutChildren()
     {
+        if (layoutRecursionLock)
+            return;
+
+        const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
+
         GuiItemDecorator::layOutChildren();
 
         const auto bounds = boxModel.getContentBounds();
@@ -43,7 +55,13 @@ namespace jive
         if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
             return;
 
-        buildFlexBox(bounds, LayoutStrategy::real).performLayout(bounds);
+        do
+        {
+            changesDuringLayout = false;
+            buildFlexBox(bounds, LayoutStrategy::real)
+                .performLayout(bounds);
+        }
+        while (changesDuringLayout);
     }
 
     FlexContainer::operator juce::FlexBox()
@@ -115,6 +133,12 @@ namespace jive
                     flex.items.add(flexItem->toJuceFlexItem(bounds, strategy));
             }
         }
+    }
+
+    void FlexContainer::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
+    {
+        if (layoutRecursionLock)
+            changesDuringLayout = true;
     }
 
     juce::FlexBox FlexContainer::buildFlexBox(juce::Rectangle<float> bounds,
