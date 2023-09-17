@@ -16,10 +16,9 @@ namespace jive
         };
 
         Object();
-
+        Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties);
         Object(const Object& other);
         Object(Object&& other);
-
         Object(const juce::DynamicObject& other);
 
         void setProperty(const juce::Identifier& propertyName,
@@ -28,6 +27,8 @@ namespace jive
 
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
+
+        const juce::var& operator[](const juce::Identifier& name) const noexcept;
 
     private:
         class InternalListener;
