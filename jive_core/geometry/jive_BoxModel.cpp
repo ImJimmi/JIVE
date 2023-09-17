@@ -108,7 +108,7 @@ namespace jive
         return margin;
     }
 
-    juce::Rectangle<float> BoxModel::getBounds() const
+    juce::Rectangle<float> BoxModel::getOuterBounds() const
     {
         return componentSize.get();
     }
@@ -138,7 +138,7 @@ namespace jive
             .get()
             .subtractedFrom(border
                                 .get()
-                                .subtractedFrom(getBounds()));
+                                .subtractedFrom(getOuterBounds()));
     }
 
     void BoxModel::addListener(Listener& listener) const

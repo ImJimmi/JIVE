@@ -38,7 +38,7 @@ namespace jive
             maxHeight = defaultGridItem.maxHeight;
 
         const auto invalidateParentBoxModel = [this]() {
-            getParent()->state.setProperty("is-valid", false, nullptr);
+            getParent()->state.setProperty("box-model-valid", false, nullptr);
         };
         order.onValueChange = invalidateParentBoxModel;
         justifySelf.onValueChange = invalidateParentBoxModel;
@@ -69,7 +69,7 @@ namespace jive
     GridItem::operator juce::GridItem()
     {
         juce::GridItem gridItem{ *component };
-        const auto parentBounds = dynamic_cast<GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel.getBounds();
+        const auto parentBounds = dynamic_cast<GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel.getContentBounds();
 
         if (!width.isAuto())
             gridItem.width = width.toPixels(parentBounds);

@@ -24,7 +24,7 @@ namespace jive
 
     void ContainerItem::boxModelInvalidated(BoxModel& box)
     {
-        const auto newIdealSize = calculateIdealSize(box.getBounds());
+        const auto newIdealSize = calculateIdealSize(box.getContentBounds());
         const auto idealWidthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
         const auto idealHeightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
 
@@ -47,3 +47,56 @@ namespace jive
         idealHeight = newIdealSize.getHeight();
     }
 } // namespace jive
+
+#if JIVE_UNIT_TESTS
+class ContainerItemUnitTest : public juce::UnitTest
+{
+public:
+    ContainerItemUnitTest()
+        : juce::UnitTest{ "jive::ContainerItem", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        testIdealSizeCalculation();
+    }
+
+private:
+    void testIdealSizeCalculation()
+    {
+        beginTest("ideal-size calculation");
+
+        class SpyContainer : public jive::ContainerItem
+        {
+        public:
+            using jive::ContainerItem::ContainerItem;
+
+            mutable juce::Rectangle<float> givenConstraints;
+
+        protected:
+            juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const final
+            {
+                givenConstraints = constraints;
+                return constraints;
+            }
+        };
+
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 300 },
+                { "height", 200 },
+                { "padding", 13 },
+                { "border-width", 11 },
+            },
+        };
+        auto commonItem = std::make_unique<jive::CommonGuiItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), state));
+        SpyContainer container{ std::move(commonItem) };
+        state.setProperty("box-model-valid", false, nullptr);
+        expectEquals(container.givenConstraints, jive::BoxModel{ state }.getContentBounds());
+    }
+};
+
+static ContainerItemUnitTest containerItemUnitTest;
+#endif
