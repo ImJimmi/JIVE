@@ -71,6 +71,8 @@ namespace jive
 
     juce::Rectangle<float> FlexContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
     {
+        constraints = constraints.withZeroOrigin();
+
         switch (flexDirection.getOr(juce::FlexBox{}.flexDirection))
         {
         case juce::FlexBox::Direction::column:
@@ -497,10 +499,13 @@ private:
     {
         beginTest("nested widget with text");
 
+        static constexpr auto containerPadding = 20;
+
         juce::ValueTree containerState{
             "Component",
             {
                 { "display", "flex" },
+                { "padding", containerPadding },
             },
         };
         juce::ValueTree windowState{
@@ -542,8 +547,8 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getWidth(), 50.0f);
-            expectEquals(jive::BoxModel{ container.state }.getHeight(), 20.0f);
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(), 50.f);
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), 20.0f);
         }
 
         buttonState.removeProperty("width", nullptr);
@@ -566,9 +571,9 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getWidth(),
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(),
                          std::ceil(font.getStringWidthFloat(textState["text"])));
-            expectEquals(jive::BoxModel{ container.state }.getHeight(),
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(),
                          font.getHeight());
         }
 
@@ -579,13 +584,14 @@ private:
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
+            const auto& container = *window->getChildren()[0];
+
             const juce::AttributedString attributedString{ lorumIpsumSentence };
             juce::TextLayout layout;
-            layout.createLayout(attributedString, 150.0f);
+            layout.createLayout(attributedString, jive::BoxModel{ container.state }.getContentBounds().getWidth());
 
-            const auto& container = *window->getChildren()[0];
             expectEquals(jive::BoxModel{ container.state }.getWidth(), 150.0f);
-            expectEquals(jive::BoxModel{ container.state }.getHeight(), std::ceil(layout.getHeight()));
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
         }
     }
 };

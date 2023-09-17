@@ -25,8 +25,19 @@ namespace jive
         juce::BorderSize<float> getBorder() const;
         juce::BorderSize<float> getMargin() const;
 
-        juce::Rectangle<float> getBounds() const;
+        /** Returns the outer bounds of this item.
+            The outer bounds is the area including the padding and border (but
+            excluding the margin), so you can think of this as the sort of
+            "physical" bounds of the item, i.e. the bounds of the component.
+        */
+        juce::Rectangle<float> getOuterBounds() const;
+
         juce::Rectangle<float> getMinimumBounds() const;
+
+        /** Returns the inner bounds of this item.
+            This is the area that the item's content should occupy, i.e. the
+            inner-most area within the border and padding.
+         */
         juce::Rectangle<float> getContentBounds() const;
 
         void addListener(Listener& listener) const;

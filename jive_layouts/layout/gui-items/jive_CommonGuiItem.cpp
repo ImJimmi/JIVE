@@ -125,8 +125,8 @@ namespace jive
             jassert(!boxModel.hasAutoHeight());
         }
 
-        component->setSize(juce::roundToInt(boxModel.getBounds().getWidth()),
-                           juce::roundToInt(boxModel.getBounds().getHeight()));
+        component->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
+                           juce::roundToInt(boxModel.getOuterBounds().getHeight()));
 
         component->addComponentListener(this);
         boxModel.addListener(*this);
