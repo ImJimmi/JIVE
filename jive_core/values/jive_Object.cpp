@@ -55,6 +55,13 @@ namespace jive
     {
     }
 
+    Object::Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties)
+        : internalListener{ std::make_unique<InternalListener>(*this) }
+    {
+        for (auto& pair : initialProperties)
+            setProperty(pair.name, pair.value);
+    }
+
     Object::Object(const Object& other)
         : juce::DynamicObject{ dynamic_cast<const DynamicObject&>(other) }
         , internalListener{ std::make_unique<InternalListener>(*this) }
@@ -95,6 +102,11 @@ namespace jive
     void Object::removeListener(Listener& listener) const
     {
         listeners.remove(&listener);
+    }
+
+    const juce::var& Object::operator[](const juce::Identifier& name) const noexcept
+    {
+        return getProperties()[name];
     }
 
     static void replaceDynamicObjectsWithJiveObjects(juce::var& value)
@@ -161,6 +173,7 @@ public:
     {
         testListener();
         testJsonParsing();
+        testInitialiserListConstruction();
     }
 
 private:
@@ -255,6 +268,25 @@ private:
 
         nested->setProperty("number", 2738);
         expect(listenerCalled);
+    }
+
+    void testInitialiserListConstruction()
+    {
+        beginTest("initialiser-list construction");
+
+        const jive::Object object{
+            { "foo", 10 },
+            { "bar", 20 },
+            {
+                "wizz",
+                new jive::Object{
+                    { "bang", 30 },
+                },
+            },
+        };
+        expectEquals(object["foo"], juce::var{ 10 });
+        expectEquals(object["bar"], juce::var{ 20 });
+        expectEquals(object["wizz"]["bang"], juce::var{ 30 });
     }
 };
 
