@@ -126,7 +126,7 @@ namespace jive
             }
         }
 
-        idealWidth = std::ceil(buildTextLayout(std::numeric_limits<float>::max())
+        idealWidth = std::ceil(buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()))
                                    .getWidth());
 
         if (auto* parentItem = getParent())

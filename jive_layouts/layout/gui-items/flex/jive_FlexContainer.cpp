@@ -77,11 +77,11 @@ namespace jive
         {
         case juce::FlexBox::Direction::column:
         case juce::FlexBox::Direction::columnReverse:
-            constraints.setHeight(std::numeric_limits<float>::max());
+            constraints.setHeight(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
             break;
         case juce::FlexBox::Direction::row:
         case juce::FlexBox::Direction::rowReverse:
-            constraints.setWidth(std::numeric_limits<float>::max());
+            constraints.setWidth(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
             break;
         default:
             jassertfalse;
