@@ -28,6 +28,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "values/variant-converters/jive_FlexVariantConverters.h"
 #include "values/variant-converters/jive_GridVariantConverters.h"
 #include "values/variant-converters/jive_MiscVariantConverters.h"
+#include "values/variant-converters/jive_VariantConvertion.h"
 
 #include "geometry/jive_BorderRadii.h"
 #include "geometry/jive_Length.h"
