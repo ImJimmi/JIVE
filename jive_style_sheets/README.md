@@ -20,6 +20,7 @@
             - [`focus`](#focus)
             - [`disabled`](#disabled)
             - [Example](#example)
+        - [IDs](#ids)
         - [Child Components](#child-components)
 
 
@@ -215,6 +216,22 @@ Styles in the `disabled` object will be applied when the component is not enable
     },
     "disabled": {
         "background": "grey",
+    }
+}
+```
+
+### IDs
+
+Styles can be applied to elements with a specified `"id"` property. The style sheet must append a `"#"` to the ID of the element it's targetting. For example:
+
+```xml
+<Button id="save-button"></Button>
+```
+
+```json
+{
+    "#save-button": {
+        "foreground": "blue"
     }
 }
 ```

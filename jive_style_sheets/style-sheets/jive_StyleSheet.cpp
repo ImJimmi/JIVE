@@ -1,4 +1,4 @@
-#include <jive_style_sheets/jive_style_sheets.h>
+#include "jive_StyleSheet.h"
 
 namespace jive
 {
@@ -11,19 +11,9 @@ namespace jive
         static const juce::Identifier letterSpacing{ "letter-spacing" };
         static const juce::Identifier textDecoration{ "text-decoration" };
         static const juce::Identifier fontStretch{ "font-stretch" };
-
-        static const juce::Array all{
-            fontFamily,
-            fontStyle,
-            fontWeight,
-            fontSize,
-            letterSpacing,
-            textDecoration,
-            fontStretch,
-        };
     } // namespace fontProperties
 
-    static juce::StringArray getAncestorTypes(const juce::ValueTree& child)
+    [[nodiscard]] static auto getAncestorTypes(const juce::ValueTree& child)
     {
         juce::StringArray types;
 
@@ -42,22 +32,29 @@ namespace jive
     public:
         explicit Selectors(const juce::ValueTree& sourceState)
             : state{ sourceState }
-            , enabled{ state, enabledID }
-            , mouse{ state, mouseID }
-            , keyboard{ state, keyboardID }
+            , id{ state, "id" }
+            , enabled{ state, "enabled" }
+            , mouse{ state, "mouse" }
+            , keyboard{ state, "keyboard" }
         {
             const auto informListeners = [this]() {
                 if (onChange != nullptr)
                     onChange();
             };
+            id.onValueChange = informListeners;
             enabled.onValueChange = informListeners;
             mouse.onValueChange = informListeners;
             keyboard.onValueChange = informListeners;
         }
 
-        juce::StringArray getSelectorsInOrderOfSpecificity() const
+        [[nodiscard]] auto getSelectorsInOrderOfSpecificity() const
         {
-            juce::StringArray result{ state.getType() };
+            juce::StringArray result;
+
+            if (id.exists())
+                result.add("#" + id.get());
+
+            result.add(state.getType().toString());
             result.addArray(getAncestorTypes(state));
 
             if (!enabled.get())
@@ -75,11 +72,8 @@ namespace jive
         std::function<void()> onChange = nullptr;
 
     private:
-        static const inline juce::Identifier enabledID{ "enabled" };
-        static const inline juce::Identifier mouseID{ "mouse" };
-        static const inline juce::Identifier keyboardID{ "keyboard" };
-
         juce::ValueTree state;
+        Property<juce::String> id;
         Property<bool> enabled;
         Property<ComponentInteractionState::Mouse> mouse;
         Property<ComponentInteractionState::Keyboard> keyboard;
@@ -435,6 +429,7 @@ public:
         testBackgroundColour();
         testLinearBackgroundGradient();
         testTypeStyling();
+        testIdStyling();
     #endif
 
         testFont();
@@ -603,6 +598,36 @@ private:
                           nullptr);
         snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFF7F7F7F }));
+    }
+
+    void testIdStyling()
+    {
+        beginTest("ID styling");
+
+        juce::Component component;
+        juce::ValueTree state{ "Component" };
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{
+            component,
+            state,
+        };
+
+        component.setBounds(0, 0, 10, 10);
+        state.setProperty("style",
+                          new jive::Object{
+                              {
+                                  "#my-widget",
+                                  new jive::Object{
+                                      { "background", "#FACADE" },
+                                  },
+                              },
+                          },
+                          nullptr);
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
+
+        state.setProperty("id", "my-widget", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0xFFFACADE }));
     }
 
     void testFont()
