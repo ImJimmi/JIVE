@@ -116,7 +116,7 @@ namespace juce
             return result;
         }
 
-        return StringArray::fromTokens(v.toString(), " ", {});
+        return StringArray::fromTokens(v.toString(), " ,;|", "'\"");
     }
 
     var VariantConverter<StringArray>::toVar(const StringArray& array)
