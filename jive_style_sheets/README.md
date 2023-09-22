@@ -21,6 +21,7 @@
             - [`disabled`](#disabled)
             - [Example](#example)
         - [IDs](#ids)
+        - [Classes](#classes)
         - [Child Components](#child-components)
 
 
@@ -234,6 +235,51 @@ Styles can be applied to elements with a specified `"id"` property. The style sh
         "foreground": "blue"
     }
 }
+```
+
+### Classes
+
+Styles can be applied to elements according to one or more tokens from the element's `"class"` property. The style sheet must append a `"."` to the class name it's targetting. For example:
+
+```xml
+<Button class="button-primary bg-red"></Button>
+```
+
+```json
+{
+    ".button-primary": {
+        "border-radius": 10,
+        "font-weight": "bold",
+    },
+    ".bg-red": {
+        "background": "red",
+    }
+}
+```
+
+Note that if two or more classes define the same property, the element will take the value of the _first_ element in its `"class"` list. For example:
+
+```json
+{
+    ".foo": {
+        "background": "red"
+    },
+    ".bar": {
+        "background": "green"
+    }
+}
+```
+
+This element will have a red background:
+
+```xml
+<Component class="foo bar"></Component>
+```
+
+This element will have a green background:
+
+```xml
+<Component class="bar foo"></Component>
 ```
 
 ### Child Components

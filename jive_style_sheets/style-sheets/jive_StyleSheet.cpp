@@ -33,6 +33,7 @@ namespace jive
         explicit Selectors(const juce::ValueTree& sourceState)
             : state{ sourceState }
             , id{ state, "id" }
+            , classes{ state, "class" }
             , enabled{ state, "enabled" }
             , mouse{ state, "mouse" }
             , keyboard{ state, "keyboard" }
@@ -45,6 +46,7 @@ namespace jive
             enabled.onValueChange = informListeners;
             mouse.onValueChange = informListeners;
             keyboard.onValueChange = informListeners;
+            classes.onValueChange = informListeners;
         }
 
         [[nodiscard]] auto getSelectorsInOrderOfSpecificity() const
@@ -53,6 +55,16 @@ namespace jive
 
             if (id.exists())
                 result.add("#" + id.get());
+
+            for (auto className : classes.get())
+            {
+                className.trim();
+
+                if (className.isEmpty())
+                    continue;
+
+                result.addIfNotAlreadyThere("." + className);
+            }
 
             result.add(state.getType().toString());
             result.addArray(getAncestorTypes(state));
@@ -74,6 +86,7 @@ namespace jive
     private:
         juce::ValueTree state;
         Property<juce::String> id;
+        Property<juce::StringArray> classes;
         Property<bool> enabled;
         Property<ComponentInteractionState::Mouse> mouse;
         Property<ComponentInteractionState::Keyboard> keyboard;
@@ -430,6 +443,7 @@ public:
         testLinearBackgroundGradient();
         testTypeStyling();
         testIdStyling();
+        testClassStyling();
     #endif
 
         testFont();
@@ -628,6 +642,63 @@ private:
         state.setProperty("id", "my-widget", nullptr);
         snapshot = component.createComponentSnapshot(component.getLocalBounds());
         expect(compare(snapshot, juce::Colour{ 0xFFFACADE }));
+    }
+
+    void testClassStyling()
+    {
+        beginTest("class styling");
+
+        juce::Component component;
+        juce::ValueTree state{ "Component" };
+        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{
+            component,
+            state,
+        };
+
+        component.setBounds(0, 0, 10, 10);
+        state.setProperty("style",
+                          new jive::Object{
+                              {
+                                  ".baffled",
+                                  new jive::Object{
+                                      { "background", "#BAFF1E" },
+                                  },
+                              },
+                          },
+                          nullptr);
+        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
+
+        state.setProperty("class", "baffled", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
+
+        state.setProperty("style",
+                          new jive::Object{
+                              {
+                                  ".baffled",
+                                  new jive::Object{
+                                      { "background", "#BAFF1E" },
+                                  },
+                              },
+                              {
+                                  ".feeble",
+                                  new jive::Object{
+                                      { "background", "#F33B1E" },
+                                  },
+                              },
+                          },
+                          nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
+
+        state.setProperty("class", "baffled,;feeble", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
+
+        state.setProperty("class", "feeble||baffled", nullptr);
+        snapshot = component.createComponentSnapshot(component.getLocalBounds());
+        expect(compare(snapshot, juce::Colour{ 0xFFF33B1E }));
     }
 
     void testFont()
