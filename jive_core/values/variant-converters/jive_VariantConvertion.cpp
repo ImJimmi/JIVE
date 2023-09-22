@@ -13,6 +13,7 @@ public:
     {
         testToVar();
         testFromVar();
+        testOptionalParsing();
     }
 
 private:
@@ -31,6 +32,14 @@ private:
 
         expectEquals(jive::fromVar<long long>(juce::var{ 808 }), 808LL);
         expectEquals(jive::fromVar<juce::Rectangle<int>>("2 4 5 6"), juce::Rectangle{ 2, 4, 6, 8 });
+    }
+
+    void testOptionalParsing()
+    {
+        beginTest("optionals");
+
+        expectEquals(jive::toVar(std::optional<int>{}), juce::var{});
+        expectEquals(jive::toVar(std::make_optional(123)), juce::var{ 123 });
     }
 };
 #endif

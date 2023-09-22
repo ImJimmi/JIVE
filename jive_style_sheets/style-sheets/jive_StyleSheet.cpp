@@ -373,15 +373,20 @@ namespace jive
         backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
 
+        const auto foreground = getForeground();
+
         if (auto* text = dynamic_cast<TextComponent*>(component.getComponent()))
         {
-            text->setTextColour(*getForeground().getColour());
+            // TextComponent uses `juce::AttributedString` which doesn't
+            // currently support anything other than solid colours!
+            jassert(foreground.getColour().has_value());
+            text->setTextColour(foreground.getColour().value_or(juce::Colours::hotpink));
             text->setFont(getFont());
         }
         if (state.getType().toString().compareIgnoreCase("svg") == 0)
         {
             state.setProperty("fill",
-                              "#" + getForeground().getColour()->toDisplayString(false),
+                              "#" + foreground.getColour()->toDisplayString(false),
                               nullptr);
         }
 

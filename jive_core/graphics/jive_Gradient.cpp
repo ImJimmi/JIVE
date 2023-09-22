@@ -43,8 +43,9 @@ namespace jive
         {
             jassert(!orientation.hasValue());
 
-            gradient.point1 = startEndPoints->getStart();
-            gradient.point2 = startEndPoints->getEnd();
+            const auto bottomRightRelative = bounds.getBottomRight() - bounds.getTopLeft();
+            gradient.point1 = bounds.getTopLeft() + startEndPoints->getStart() * bottomRightRelative;
+            gradient.point2 = bounds.getTopLeft() + startEndPoints->getEnd() * bottomRightRelative;
         }
 
         return gradient;
