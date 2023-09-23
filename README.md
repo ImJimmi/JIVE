@@ -23,11 +23,11 @@
 </p>
 
 - [About](#about)
-    - [Improved Developer Experience](#improved-developer-experience)
-    - [Improved Architecture](#improved-architecture)
+    - [🧑‍💻 Improved Developer Experience](#-improved-developer-experience)
+    - [👷 Improved Architecture](#-improved-architecture)
 - [Approach](#approach)
-    - [Layouts](#layouts)
-    - [Style Sheets](#style-sheets)
+    - [🧩 Layouts](#-layouts)
+    - [🎨 Style Sheets](#-style-sheets)
 - [Integration](#integration)
     - [CMake](#cmake)
     - [Projucer](#projucer)
@@ -40,7 +40,7 @@ JIVE is a bundle of [JUCE](https://github.com/juce-framework/JUCE) modules cente
 
 This approach is inspired by web front-ends where we write declarative markup (HTML) to define what components we have, style those components using style sheets (CSS), and then dynamically update those components at runtime using imperitive code (JavaScript). With JIVE however, all three of these layers are done using tools already available in JUCE - [`juce::ValueTree`](https://docs.juce.com/master/classValueTree.html) for markup, [`juce::var`](https://docs.juce.com/master/classvar.html)/[`juce::DynamicObject`](https://docs.juce.com/master/classDynamicObject.html) for style sheets, and regular old C++ for dynamically updating.
 
-### Improved Developer Experience
+### 🧑‍💻 Improved Developer Experience
 
 - Write less UI code than in a typical JUCE project.
 - Write _better_ UI code that's more declarative and uses common terminology with other UI frameworks.
@@ -49,7 +49,7 @@ This approach is inspired by web front-ends where we write declarative markup (H
 - Less boilerplate and therefore less time wasted (and maybe even fewer bugs) when developing UI features.
 - Easier onboarding for any team members unfamiliar with the querks and complexities of developing GUIs in JUCE.
 
-### Improved Architecture
+### 👷 Improved Architecture
 
 - Encourages the separation of the UI from the business logic that controls it.
 - Encapsulates the JUCE backend enabling applications to interact with the UI through common data structures like value-trees and JSON documents.
@@ -60,7 +60,7 @@ This approach is inspired by web front-ends where we write declarative markup (H
 
 There are two main constituents to JIVE - [`jive_layouts`](jive_layouts/) and [`jive_style_sheets`](jive_style_sheets/). When used together, these modules completely overhaul the experience of building GUIs in JUCE by removing the boilerplate involved in writing [`Component`](https://docs.juce.com/master/classComponent.html) classes.
 
-### Layouts
+### 🧩 Layouts
 
 `jive_layouts` addresses the hierarchy and layout of GUIs by allowing developers to describe their UI using value-trees.
 
@@ -97,7 +97,7 @@ _Note that `juce::ValueTree` doesn't support inline text elements so these will 
 ```
 </details>
 
-### Style Sheets
+### 🎨 Style Sheets
 
 `jive_style_sheets` addresses the styling of GUIs by allowing developers to apply common style properties using JSON documents.
 
