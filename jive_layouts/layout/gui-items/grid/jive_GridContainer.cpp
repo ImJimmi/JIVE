@@ -74,33 +74,50 @@ namespace jive
 
     void GridContainer::layOutChildren()
     {
+        if (layoutRecursionLock)
+            return;
+
+        const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
+
         GuiItemDecorator::layOutChildren();
 
         const auto bounds = boxModel.getContentBounds().toNearestInt();
 
         if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
             return;
-
-        buildGrid().performLayout(bounds);
+        do
+        {
+            changesDuringLayout = false;
+            buildGrid(bounds, LayoutStrategy::real)
+                .performLayout(bounds);
+        }
+        while (changesDuringLayout);
     }
 
     GridContainer::operator juce::Grid()
     {
-        return buildGrid();
+        return buildGrid(boxModel.getContentBounds().toNearestInt(),
+                         LayoutStrategy::real);
     }
 
-    juce::Rectangle<float> GridContainer::calculateIdealSize(juce::Rectangle<float>) const
+    juce::Rectangle<float> GridContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
     {
-        const auto grid = buildGridWithDummyItems();
-        juce::Point<float> extremities{ -1.0f, -1.0f };
+        auto integerConstraints = constraints.toNearestInt().withZeroOrigin();
+        integerConstraints.setHeight(static_cast<int>(std::numeric_limits<juce::uint16>::max()));
+
+        auto grid = const_cast<GridContainer&>(*this)
+                        .buildGrid(integerConstraints, LayoutStrategy::dummy);
+        grid.performLayout(integerConstraints);
+
+        juce::Point extremities{ -1.0f, -1.0f };
 
         for (const auto& gridItem : grid.items)
         {
             const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
-            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
-
             if (right > extremities.x)
                 extremities.x = right;
+
+            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
             if (bottom > extremities.y)
                 extremities.y = bottom;
         }
@@ -123,28 +140,27 @@ namespace jive
         };
     }
 
-    static void appendChildren(GuiItem& container, juce::Grid& grid)
+    static void appendChildren(GuiItem& container,
+                               juce::Grid& grid,
+                               juce::Rectangle<int> bounds,
+                               LayoutStrategy strategy)
     {
         for (auto* child : container.getChildren())
         {
             if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(child))
             {
                 if (auto* const gridItem = decoratedItem->toType<GridItem>())
-                    grid.items.add(*gridItem);
+                    grid.items.add(gridItem->toJuceGridItem(bounds.toFloat(), strategy));
             }
         }
     }
 
-    juce::Grid GridContainer::buildGrid()
+    juce::Grid GridContainer::buildGrid(juce::Rectangle<int> bounds,
+                                        LayoutStrategy strategy)
     {
         juce::Grid grid;
 
-        grid.justifyItems = justifyItems;
-        grid.alignItems = alignItems;
-        grid.justifyContent = justifyContent;
-        grid.alignContent = alignContent;
         grid.autoFlow = gridAutoFlow;
-
         grid.templateColumns = gridTemplateColumns;
         grid.templateRows = gridTemplateRows;
         grid.templateAreas = gridTemplateAreas;
@@ -155,22 +171,35 @@ namespace jive
         grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
         grid.columnGap = gaps.size() > 1 ? gaps.getUnchecked(1) : grid.rowGap;
 
-        appendChildren(*this, grid);
+        appendChildren(*this, grid, bounds, strategy);
 
-        return grid;
-    }
+        switch (strategy)
+        {
+        case LayoutStrategy::real:
+            grid.justifyItems = justifyItems;
+            grid.alignItems = alignItems;
+            grid.justifyContent = justifyContent;
+            grid.alignContent = alignContent;
+            break;
+        case LayoutStrategy::dummy:
+            grid.justifyItems = juce::Grid::JustifyItems::start;
+            grid.alignItems = juce::Grid::AlignItems::start;
+            grid.justifyContent = juce::Grid::JustifyContent::start;
+            grid.alignContent = juce::Grid::AlignContent::start;
 
-    juce::Grid GridContainer::buildGridWithDummyItems() const
-    {
-        auto grid = const_cast<GridContainer*>(this)->buildGrid();
+            for (auto& column : grid.templateColumns)
+            {
+                if (column.isFractional())
+                    column = juce::Grid::TrackInfo{};
+            }
+            for (auto& row : grid.templateRows)
+            {
+                if (row.isFractional())
+                    row = juce::Grid::TrackInfo{};
+            }
 
-        grid.autoRows = juce::Grid::Px{ 1 };
-        grid.autoColumns = juce::Grid::Px{ 1 };
-
-        for (auto& gridItem : grid.items)
-            gridItem.associatedComponent = nullptr;
-
-        grid.performLayout(juce::Rectangle{ 1, 1 });
+            break;
+        }
 
         return grid;
     }
@@ -226,6 +255,7 @@ public:
         testItems();
         testLayout();
         testAutoSize();
+        testNestedText();
     }
 
 private:
@@ -803,6 +833,54 @@ private:
         auto& item = *parent->getChildren()[0];
         expectEquals(jive::BoxModel{ item.state }.getWidth(), 25.f);
         expectEquals(jive::BoxModel{ item.state }.getHeight(), 15.f);
+    }
+
+    void testNestedText()
+    {
+        beginTest("nested text");
+
+        juce::ValueTree state{
+            "Window",
+            {
+                { "width", 200 },
+                { "height", 500 },
+                { "align-items", "flex-start" },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "display", "grid" },
+                        { "grid-template-columns", "1fr 1fr" },
+                        { "grid-template-rows", "1fr 1fr" },
+                    },
+                    {
+                        juce::ValueTree{ "Text", { { "text", "hello" } } },
+                        juce::ValueTree{ "Text", { { "text", "world" } } },
+                        juce::ValueTree{ "Text", { { "text", "foo" } } },
+                        juce::ValueTree{ "Text", { { "text", "bar" } } },
+                    },
+                },
+            },
+        };
+        jive::Interpreter interpreter;
+        const auto window = interpreter.interpret(state);
+        auto& container = *window->getChildren()[0];
+        const jive::BoxModel boxModel{ container.state };
+        const auto font = dynamic_cast<jive::GuiItemDecorator*>(container.getChildren()[0])
+                              ->toType<jive::Text>()
+                              ->getTextComponent()
+                              .getFont();
+
+        const auto expectedWidth = std::ceil(font.getStringWidthFloat("hello")) + std::ceil(font.getStringWidthFloat("world"));
+        expectEquals(boxModel.getContentBounds().getWidth(), expectedWidth);
+
+        const auto expectedHeight = std::ceil(font.getHeight()) * 2.0f;
+        expectEquals(boxModel.getContentBounds().getHeight(), expectedHeight);
+
+        container.state.getChild(0).setProperty("text", "hello world lorum ipsum dolor etc...", nullptr);
+        expectEquals(boxModel.getContentBounds().getWidth(), static_cast<float>(state["width"]));
+        expectEquals(jive::BoxModel{ container.getChildren()[0]->state }.getHeight(), font.getHeight() * 2.0f);
     }
 };
 

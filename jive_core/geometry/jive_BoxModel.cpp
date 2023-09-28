@@ -8,6 +8,8 @@ namespace jive
         , height{ state, "height" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
+        , maxWidth{ state, "max-width" }
+        , maxHeight{ state, "max-height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
         , componentSize{ state, "component-size" }
@@ -51,6 +53,10 @@ namespace jive
         padding.onValueChange = recalculateSize;
         border.onValueChange = recalculateSize;
         margin.onValueChange = recalculateSize;
+        minWidth.onValueChange = recalculateSize;
+        minHeight.onValueChange = recalculateSize;
+        maxWidth.onValueChange = recalculateSize;
+        maxHeight.onValueChange = recalculateSize;
 
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
@@ -113,15 +119,13 @@ namespace jive
         return componentSize.get();
     }
 
-    juce::Rectangle<float> BoxModel::getParentBounds() const
+    juce::Rectangle<float> BoxModel::getContentBounds() const
     {
-        if (state.getParent().isValid())
-        {
-            const Property<juce::Rectangle<float>> parentSize{ state.getParent(), componentSize.id };
-            return parentSize.get();
-        }
-
-        return juce::Rectangle<float>{};
+        return padding
+            .get()
+            .subtractedFrom(border
+                                .get()
+                                .subtractedFrom(getOuterBounds()));
     }
 
     juce::Rectangle<float> BoxModel::getMinimumBounds() const
@@ -132,13 +136,12 @@ namespace jive
         };
     }
 
-    juce::Rectangle<float> BoxModel::getContentBounds() const
+    juce::Rectangle<float> BoxModel::getMaximumBounds() const
     {
-        return padding
-            .get()
-            .subtractedFrom(border
-                                .get()
-                                .subtractedFrom(getOuterBounds()));
+        return {
+            maxWidth.exists() ? maxWidth.toPixels(getParentBounds()) : -1.0f,
+            maxHeight.exists() ? maxHeight.toPixels(getParentBounds()) : -1.0f,
+        };
     }
 
     void BoxModel::addListener(Listener& listener) const
@@ -149,6 +152,17 @@ namespace jive
     void BoxModel::removeListener(Listener& listener) const
     {
         const_cast<juce::ListenerList<Listener>*>(&listeners)->remove(&listener);
+    }
+
+    juce::Rectangle<float> BoxModel::getParentBounds() const
+    {
+        if (state.getParent().isValid())
+        {
+            const Property<juce::Rectangle<float>> parentSize{ state.getParent(), componentSize.id };
+            return parentSize.get();
+        }
+
+        return juce::Rectangle<float>{};
     }
 
     float BoxModel::calculateComponentWidth() const

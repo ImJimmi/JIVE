@@ -2,12 +2,13 @@
 
 namespace jive
 {
-    class GridItem : public GuiItemDecorator
+    class GridItem : public ContainerItem::Child
     {
     public:
         explicit GridItem(std::unique_ptr<GuiItem> itemToDecorate);
 
-        operator juce::GridItem();
+        [[nodiscard]] juce::GridItem toJuceGridItem(juce::Rectangle<float> parentContentBounds,
+                                                    LayoutStrategy strategy) const;
 
     private:
         Property<int> order;
@@ -16,15 +17,5 @@ namespace jive
         Property<juce::GridItem::StartAndEndProperty> gridColumn;
         Property<juce::GridItem::StartAndEndProperty> gridRow;
         Property<juce::String> gridArea;
-        Property<float> maxWidth;
-        Property<float> maxHeight;
-        Length width;
-        Length height;
-        Length minWidth;
-        Length minHeight;
-
-        const BoxModel& boxModel;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridItem)
     };
 } // namespace jive

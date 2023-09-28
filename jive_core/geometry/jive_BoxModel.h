@@ -32,13 +32,14 @@ namespace jive
         */
         juce::Rectangle<float> getOuterBounds() const;
 
-        juce::Rectangle<float> getMinimumBounds() const;
-
         /** Returns the inner bounds of this item.
             This is the area that the item's content should occupy, i.e. the
             inner-most area within the border and padding.
          */
         juce::Rectangle<float> getContentBounds() const;
+
+        juce::Rectangle<float> getMinimumBounds() const;
+        juce::Rectangle<float> getMaximumBounds() const;
 
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
@@ -55,6 +56,8 @@ namespace jive
         Length height;
         Length minWidth;
         Length minHeight;
+        Length maxWidth;
+        Length maxHeight;
         Property<float> idealWidth;
         Property<float> idealHeight;
         Property<juce::Rectangle<float>> componentSize;
