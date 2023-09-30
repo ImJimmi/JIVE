@@ -16,6 +16,7 @@ public:
         testCallback();
         testHereditaryValues();
         testObservations();
+        testFunctionalProperties();
     }
 
 private:
@@ -229,6 +230,21 @@ private:
             state.setProperty("foo", 302, nullptr);
             expect(callbackCalled);
         }
+    }
+
+    void testFunctionalProperties()
+    {
+        beginTest("functional properties");
+
+        juce::ValueTree state{ "State" };
+        jive::Property<int> value{ state, "value" };
+        expect(!value.isFunctional());
+
+        value = [] {
+            return 300;
+        };
+        expect(value.isFunctional());
+        expectEquals(value.get(), 300);
     }
 };
 
