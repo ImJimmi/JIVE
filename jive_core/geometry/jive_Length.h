@@ -6,17 +6,20 @@ namespace jive
     {
     public:
         using Property<juce::String>::Property;
-
-        float toPixels(const juce::Rectangle<float>& parentBounds) const;
-
-        bool isPixels() const;
-        bool isPercent() const;
-
         using Property<juce::String>::operator=;
 
-        static const float pixelValueWhenAuto;
+        [[nodiscard]] float toPixels(const juce::Rectangle<float>& parentBounds) const;
+
+        [[nodiscard]] bool isPixels() const;
+        [[nodiscard]] bool isPercent() const;
+        [[nodiscard]] bool isEm() const;
+        [[nodiscard]] bool isRem() const;
+
+        static constexpr auto pixelValueWhenAuto = 0.0f;
 
     private:
-        double getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const;
+        [[nodiscard]] double getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const;
+        [[nodiscard]] float getFontSize() const;
+        [[nodiscard]] float getRootFontSize() const;
     };
 } // namespace jive
