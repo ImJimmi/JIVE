@@ -60,12 +60,12 @@ namespace jive
         Property& operator=(Property&& other) = delete;
         ~Property() override = default;
 
-        virtual ValueType get() const
+        [[nodiscard]] virtual ValueType get() const
         {
             return getFrom(getRootOfInheritance());
         }
 
-        ValueType getOr(const ValueType& valueIfNoneSpecified) const
+        [[nodiscard]] auto getOr(const ValueType& valueIfNoneSpecified) const
         {
             if (auto root = getRootOfInheritance();
                 root.isValid())
@@ -90,6 +90,14 @@ namespace jive
             tree.setProperty(id, Converter::toVar(newValue), nullptr);
         }
 
+        void set(std::function<ValueType()> function)
+        {
+            const auto nativeFunction = [function](const auto&) {
+                return Converter::toVar(function());
+            };
+            tree.setProperty(id, juce::var{ nativeFunction }, nullptr);
+        }
+
         void setAuto()
         {
             tree.setProperty(id, "auto", nullptr);
@@ -100,32 +108,49 @@ namespace jive
             tree.removeProperty(id, nullptr);
         }
 
-        bool exists() const
+        [[nodiscard]] auto exists() const
         {
             return tree.hasProperty(id);
         }
 
-        bool isAuto() const
+        [[nodiscard]] auto isAuto() const
         {
             return (!exists()) || tree[id].toString().trim().equalsIgnoreCase("auto");
         }
 
-        juce::String toString() const
+        [[nodiscard]] auto isFunctional() const
+        {
+            return exists() && tree[id].isMethod();
+        }
+
+        [[nodiscard]] auto toString() const
         {
             if (!exists())
-                return "";
+                return juce::String{};
 
             return tree[id].toString();
         }
 
-        operator ValueType() const
+        [[nodiscard]] operator ValueType() const
         {
             return get();
         }
 
-        Property<ValueType, inheritance, accumulation>& operator=(const ValueType& newValue)
+        auto& operator=(const ValueType& newValue)
         {
             set(newValue);
+            return *this;
+        }
+
+        auto& operator=(std::function<ValueType()> function)
+        {
+            set(function);
+            return *this;
+        }
+
+        auto& operator=(std::function<ValueType(std::vector<juce::var>)> function)
+        {
+            set(function);
             return *this;
         }
 
@@ -147,7 +172,7 @@ namespace jive
                 onValueChange();
         }
 
-        bool respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
+        [[nodiscard]] auto respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
         {
             if (treeWhosePropertyChanged == tree)
                 return true;
@@ -173,7 +198,7 @@ namespace jive
             return false;
         }
 
-        [[nodiscard]] juce::ValueTree getRootOfInheritance() const
+        [[nodiscard]] auto getRootOfInheritance() const
         {
             if (exists())
                 return tree;
@@ -197,10 +222,10 @@ namespace jive
                 }
             }
 
-            return {};
+            return juce::ValueTree{};
         }
 
-        [[nodiscard]] juce::ValueTree getFirstAncestorWithProperty(const juce::ValueTree& root) const
+        [[nodiscard]] auto getFirstAncestorWithProperty(const juce::ValueTree& root) const
         {
             for (const auto& child : root)
             {
@@ -217,12 +242,20 @@ namespace jive
                 }
             }
 
-            return {};
+            return juce::ValueTree{};
         }
 
         [[nodiscard]] ValueType getFrom(const juce::ValueTree& root) const
         {
-            auto result = Converter::fromVar(root.hasProperty(id) ? root[id] : getFirstAncestorWithProperty(root).getProperty(id, juce::var{}));
+            auto var = root.hasProperty(id) ? root[id] : getFirstAncestorWithProperty(root).getProperty(id, juce::var{});
+
+            if (var.isMethod())
+            {
+                juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
+                var = var.getNativeFunction()(args);
+            }
+
+            auto result = Converter::fromVar(var);
 
             if constexpr (accumulation == Accumulation::accumulate)
             {
