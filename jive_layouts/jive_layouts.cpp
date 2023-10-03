@@ -10,6 +10,7 @@
 
 #include "layout/gui-items/jive_CommonGuiItem.cpp"
 #include "layout/gui-items/jive_ContainerItem.cpp"
+#include "layout/gui-items/jive_ContainerItemChild.cpp"
 
 #include "layout/gui-items/block/jive_BlockContainer.cpp"
 #include "layout/gui-items/block/jive_BlockItem.cpp"

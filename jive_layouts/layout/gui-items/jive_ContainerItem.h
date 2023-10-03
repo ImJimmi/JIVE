@@ -7,6 +7,24 @@ namespace jive
         , private BoxModel::Listener
     {
     public:
+        class Child : public GuiItemDecorator
+        {
+        public:
+            explicit Child(std::unique_ptr<GuiItem> itemToDecorate);
+            ~Child() override = default;
+
+        protected:
+            template <typename FlexOrGridItem>
+            void applyConstraints(FlexOrGridItem& item,
+                                  juce::Rectangle<float> parentContentBounds,
+                                  Orientation orientation,
+                                  LayoutStrategy strategy) const;
+
+        private:
+            class Pimpl;
+            const std::unique_ptr<Pimpl> pimpl;
+        };
+
         explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
         ~ContainerItem() override;
 

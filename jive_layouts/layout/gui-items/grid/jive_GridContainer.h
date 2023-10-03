@@ -15,8 +15,8 @@ namespace jive
         juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
 
     private:
-        juce::Grid buildGrid();
-        juce::Grid buildGridWithDummyItems() const;
+        juce::Grid buildGrid(juce::Rectangle<int> bounds,
+                             LayoutStrategy strategy);
 
         Property<juce::Grid::JustifyItems> justifyItems;
         Property<juce::Grid::AlignItems> alignItems;
@@ -29,6 +29,9 @@ namespace jive
         Property<juce::Grid::TrackInfo> gridAutoRows;
         Property<juce::Grid::TrackInfo> gridAutoColumns;
         Property<juce::Array<juce::Grid::Px>> gap;
+
+        bool layoutRecursionLock = false;
+        bool changesDuringLayout = false;
 
         const BoxModel& boxModel;
 
