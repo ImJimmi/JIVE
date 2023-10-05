@@ -200,7 +200,7 @@ namespace jive
 
         [[nodiscard]] auto getRootOfInheritance() const
         {
-            if (exists())
+            if (exists() || accumulation == Accumulation::accumulate)
                 return tree;
 
             if constexpr (inheritance == Inheritance::inheritFromParent)
@@ -247,23 +247,27 @@ namespace jive
 
         [[nodiscard]] ValueType getFrom(const juce::ValueTree& root) const
         {
-            auto var = root.hasProperty(id) ? root[id] : getFirstAncestorWithProperty(root).getProperty(id, juce::var{});
-
-            if (var.isMethod())
-            {
-                juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
-                var = var.getNativeFunction()(args);
-            }
-
-            auto result = Converter::fromVar(var);
-
             if constexpr (accumulation == Accumulation::accumulate)
             {
+                auto result = Converter::fromVar(root[id]);
+
                 for (const auto& child : root)
                     result += getFrom(child);
-            }
 
-            return result;
+                return result;
+            }
+            else
+            {
+                auto var = root.hasProperty(id) ? root[id] : getFirstAncestorWithProperty(root).getProperty(id, juce::var{});
+
+                if (var.isMethod())
+                {
+                    juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
+                    var = var.getNativeFunction()(args);
+                }
+
+                return Converter::fromVar(var);
+            }
         }
 
         juce::ValueTree treeToListenTo;

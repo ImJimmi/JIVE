@@ -230,6 +230,21 @@ private:
             state.setProperty("foo", 302, nullptr);
             expect(callbackCalled);
         }
+        {
+            juce::ValueTree tree{
+                "Foo",
+                {},
+                {
+                    juce::ValueTree{ "Bar", { { "value", 12 } } },
+                    juce::ValueTree{ "Bar", { { "value", 38 } } },
+                },
+            };
+            const jive::Property<int,
+                                 jive::Inheritance::doNotInherit,
+                                 jive::Accumulation::accumulate>
+                value{ tree, "value" };
+            expectEquals(value.get(), 50);
+        }
     }
 
     void testFunctionalProperties()
