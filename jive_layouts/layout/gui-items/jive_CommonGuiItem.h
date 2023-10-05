@@ -19,6 +19,7 @@ namespace jive
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
         void componentChildrenChanged(juce::Component& component) override;
+        void componentParentHierarchyChanged(juce::Component& component) override;
         void boxModelChanged(BoxModel& boxModel) override;
 
     private:
@@ -28,6 +29,7 @@ namespace jive
         Property<juce::String> description;
         Property<juce::String> tooltip;
         Property<bool> enabled;
+        Property<bool> accessible;
         Property<bool> visibility;
         Property<bool> alwaysOnTop;
         Property<bool> bufferedToImage;
