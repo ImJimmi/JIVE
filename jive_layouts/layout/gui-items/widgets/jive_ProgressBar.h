@@ -16,6 +16,7 @@ namespace jive
         Property<double> value;
         Length width;
         Length height;
+        Property<bool> focusable;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressBar)
     };

@@ -22,11 +22,13 @@ namespace jive
         , radioGroup{ state, "radio-group" }
         , triggerEvent{ state, "trigger-event" }
         , tooltip{ state, "tooltip" }
+        , text{ state, "text" }
         , flexDirection{ state, "flex-direction" }
         , justifyContent{ state, "justify-content" }
         , padding{ state, "padding" }
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
+        , focusable{ state, "focusable" }
         , onClick{ state, "on-click" }
     {
         if (!triggerEvent.exists())
@@ -37,6 +39,8 @@ namespace jive
             minWidth = 50.0f;
         if (!minHeight.exists())
             minHeight = 20.0f;
+        if (!focusable.exists())
+            focusable = true;
 
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -67,6 +71,11 @@ namespace jive
             getButton().setTooltip(tooltip);
         };
         getButton().setTooltip(tooltip);
+
+        text.onValueChange = [this]() {
+            getButton().setTitle(text);
+        };
+        getButton().setTitle(text);
 
         onClick.onTrigger = [this]() {
             triggerClick(getButton());
