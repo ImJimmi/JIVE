@@ -61,6 +61,7 @@ namespace jive
         Property<int> selected;
         Length width;
         Length height;
+        Property<bool> focusable;
 
         Event onChange;
 

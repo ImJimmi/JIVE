@@ -40,6 +40,7 @@ namespace jive
         Property<int> velocityThreshold;
         Property<double> velocityOffset;
         Property<bool> snapToMouse;
+        Property<bool> focusable;
 
         Event onChange;
 

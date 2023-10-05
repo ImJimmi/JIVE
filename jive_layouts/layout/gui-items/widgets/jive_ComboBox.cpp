@@ -65,8 +65,12 @@ namespace jive
         , selected{ state, "selected" }
         , width{ state, "width" }
         , height{ state, "height" }
+        , focusable{ state, "focusable" }
         , onChange{ state, "on-change" }
     {
+        if (!focusable.exists())
+            focusable = true;
+
         editable.onValueChange = [this]() {
             getComboBox().setEditableText(editable);
         };

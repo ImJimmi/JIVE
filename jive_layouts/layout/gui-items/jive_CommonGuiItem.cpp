@@ -11,6 +11,7 @@ namespace jive
         , description{ state, "description" }
         , tooltip{ state, "tooltip" }
         , enabled{ state, "enabled" }
+        , accessible{ state, "accessible" }
         , visibility{ state, "visibility" }
         , alwaysOnTop{ state, "always-on-top" }
         , bufferedToImage{ state, "buffered-to-image" }
@@ -27,16 +28,22 @@ namespace jive
     {
         if (!enabled.exists())
             enabled = true;
+        if (!accessible.exists())
+            accessible = true;
         if (!visibility.exists())
             visibility = true;
         if (!clickingGrabsFocus.exists())
             clickingGrabsFocus = true;
+        if (!focusOrder.exists())
+            focusOrder = state.getParent().indexOf(state) + 1;
         if (!opacity.exists())
             opacity = 1.0f;
         if (!cursor.exists())
             cursor = juce::MouseCursor::NormalCursor;
         if (!display.exists())
             display = Display::flex;
+
+        component->addComponentListener(this);
 
         name.onValueChange = [this]() {
             component->setName(name);
@@ -67,6 +74,11 @@ namespace jive
             component->setEnabled(enabled);
         };
         component->setEnabled(enabled);
+
+        accessible.onValueChange = [this]() {
+            component->setAccessible(accessible);
+        };
+        component->setAccessible(accessible);
 
         visibility.onValueChange = [this]() {
             component->setVisible(visibility);
@@ -128,7 +140,6 @@ namespace jive
         component->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
                            juce::roundToInt(boxModel.getOuterBounds().getHeight()));
 
-        component->addComponentListener(this);
         boxModel.addListener(*this);
     }
 
@@ -182,6 +193,67 @@ namespace jive
             return;
 
         getTopLevelDecorator().layOutChildren();
+    }
+
+    [[nodiscard]] static auto hasWidgetRole(const juce::Component& component)
+    {
+        if (auto* handler = const_cast<juce::Component*>(&component)->getAccessibilityHandler())
+        {
+            switch (handler->getRole())
+            {
+            case juce::AccessibilityRole::button:
+            case juce::AccessibilityRole::toggleButton:
+            case juce::AccessibilityRole::radioButton:
+            case juce::AccessibilityRole::comboBox:
+            case juce::AccessibilityRole::image:
+            case juce::AccessibilityRole::slider:
+            case juce::AccessibilityRole::label:
+            case juce::AccessibilityRole::staticText:
+            case juce::AccessibilityRole::editableText:
+            case juce::AccessibilityRole::hyperlink:
+            case juce::AccessibilityRole::progressBar:
+            case juce::AccessibilityRole::scrollBar:
+            case juce::AccessibilityRole::tooltip:
+                return true;
+
+            case juce::AccessibilityRole::menuItem:
+            case juce::AccessibilityRole::menuBar:
+            case juce::AccessibilityRole::popupMenu:
+            case juce::AccessibilityRole::table:
+            case juce::AccessibilityRole::tableHeader:
+            case juce::AccessibilityRole::column:
+            case juce::AccessibilityRole::row:
+            case juce::AccessibilityRole::cell:
+            case juce::AccessibilityRole::list:
+            case juce::AccessibilityRole::listItem:
+            case juce::AccessibilityRole::tree:
+            case juce::AccessibilityRole::treeItem:
+            case juce::AccessibilityRole::group:
+            case juce::AccessibilityRole::dialogWindow:
+            case juce::AccessibilityRole::window:
+            case juce::AccessibilityRole::splashScreen:
+            case juce::AccessibilityRole::ignored:
+            case juce::AccessibilityRole::unspecified:
+            default:
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    void CommonGuiItem::componentParentHierarchyChanged(juce::Component& componentThatsParentChanged)
+    {
+        if (&componentThatsParentChanged != component.get())
+            return;
+
+        if (auto* parentComponent = component->getParentComponent())
+        {
+            if (hasWidgetRole(*parentComponent))
+                component->setAccessible(false);
+            else
+                component->setAccessible(accessible);
+        }
     }
 
     void CommonGuiItem::boxModelChanged(BoxModel& boxModelThatChanged)

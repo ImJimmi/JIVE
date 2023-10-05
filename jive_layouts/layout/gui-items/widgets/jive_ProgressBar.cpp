@@ -7,7 +7,11 @@ namespace jive
         , value{ state, "value" }
         , width{ state, "width" }
         , height{ state, "height" }
+        , focusable{ state, "focusable" }
     {
+        if (!focusable.exists())
+            focusable = true;
+
         value.onValueChange = [this]() {
             getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
         };

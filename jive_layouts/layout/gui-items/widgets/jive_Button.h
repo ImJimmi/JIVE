@@ -30,11 +30,13 @@ namespace jive
         Property<int> radioGroup;
         Property<TriggerEvent> triggerEvent;
         Property<juce::String> tooltip;
+        Property<juce::String, Inheritance::doNotInherit, Accumulation::accumulate> text;
         Property<juce::FlexBox::Direction> flexDirection;
         Property<juce::FlexBox::JustifyContent> justifyContent;
         Property<juce::BorderSize<float>> padding;
         Property<float> minWidth;
         Property<float> minHeight;
+        Property<bool> focusable;
 
         Event onClick;
 

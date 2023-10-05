@@ -23,6 +23,7 @@ namespace jive
         , velocityThreshold{ state, "velocity-threshold" }
         , velocityOffset{ state, "velocity-offset" }
         , snapToMouse{ state, "snap-to-mouse" }
+        , focusable{ state, "focusable" }
         , onChange{ state, "on-change" }
     {
         if (!max.exists())
@@ -35,6 +36,8 @@ namespace jive
             velocityThreshold = 1;
         if (!snapToMouse.exists())
             snapToMouse = true;
+        if (!focusable.exists())
+            focusable = true;
 
         min.onValueChange = [this]() {
             updateRange();
