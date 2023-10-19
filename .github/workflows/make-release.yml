@@ -1,0 +1,14 @@
+on:
+    push:
+        tags:
+            - v**
+
+jobs:
+    make-release:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "VERSION=$(echo "${{github.ref}}" | sed 's:.*/::')" >> $GITHUB_ENV
+            - name: Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: "JIVE ${{ env.VERSION }}"

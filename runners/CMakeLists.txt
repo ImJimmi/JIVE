@@ -1,3 +1,7 @@
 if (JIVE_BUILD_TEST_RUNNER)
     add_subdirectory(test-runner)
 endif()
+
+if (JIVE_BUILD_DEMO_RUNNER)
+    add_subdirectory(demo-runner)
+endif()
