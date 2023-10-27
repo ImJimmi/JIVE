@@ -2,138 +2,53 @@
 
 - [Getting Started](#getting-started)
     - [Creating the page template](#creating-the-page-template)
-        - [Parsing XML files (recommended)](#parsing-xml-files-recommended)
-        - [Inline Construction](#inline-construction)
-        - [Inline XML String](#inline-xml-string)
     - [Creating the window](#creating-the-window)
     - [Styling](#styling)
-        - [Parsing JSON files (recommended)](#parsing-json-files-recommended)
-        - [Inline JSON String](#inline-json-string)
     - [Testing](#testing)
 
 Once you have JIVE integrated with your project as shown in the [README](../README.md), you can get started writing code to create your first window with JIVE!
 
 ## Creating the page template
 
-The first thing we need to do is to create a [`juce::ValueTree`](https://docs.juce.com/master/classValueTree.html) object describing what elements we want to display. There are a few different ways to do this:
-
-### Parsing XML files (recommended)
-
-<details open>
-
-_WindowPresenter.h_
+The first thing we need to do is to create a [`juce::ValueTree`](https://docs.juce.com/master/classValueTree.html) object describing what elements we want to display. You can do this however you like, but the recommended approach is to use free functions that return Value Trees:
 
 ```cpp
 // Note how we don't need to include JIVE here!
 // The presenters only depend on `juce::ValueTree`.
-#include <BinaryData.h>
-#include <juce_core/juce_core.h>
+#include <juce_data_structures/juce_data_structures.h>
 
-class WindowPresenter
+namespace views
 {
-public:
-    WindowPresenter()
-        : view{
-            juce::ValueTree::fromXml(juce::String::createStringFromData(
-                BinaryData::window_xml,
-                BinaryData::window_xmlSize
-            )),
-        }
+    juce::ValueTree welcomeText()
     {
+        return juce::ValueTree {
+            "Text",
+            {
+                { "text", "Hello, World!" },
+            },
+        };
     }
 
-    juce::ValueTree preset()
+    juce::ValueTree window()
     {
-        return view;
-    }
-
-private:
-    juce::ValueTree view;
-};
-```
-
-_window.xml_
-
-```xml
-<Window width="640" height="400">
-    <Text text="Hello, World!"></Text>
-</Window>
-```
-
-_CMakeLists.txt_
-
-```cmake
-target_sources(my_juce_project
-    # ...
-    path/to/WindowPresenter.h
-)
-
-juce_add_binary_data(my_juce_project
-    # ...
-    path/to/window.xml
-)
-```
-</details>
-
-### Inline Construction
-
-<details>
-
-_WindowPresenter.h_
-
-```cpp
-class WindowPresenter
-{
-public:
-    WindowPresenter()
-        : view{
+        return juce::ValueTree {
             "Window",
             {
                 { "width", 640 },
                 { "height", 400 },
             },
             {
-                juce::ValueTree {
-                    "Text",
-                    {
-                        { "text", "Hello, World!" },
-                    },
-                },
+                welcomeText(),
             },
-        }
-    {
+        };
     }
+} // namespace views
 
-    juce::ValueTree preset()
-    {
-        return view;
-    }
-
-private:
-    juce::ValueTree view;
-};
-```
-
-</details>
-
-### Inline XML String
-
-<details>
-
-_WindowPresenter.h_
-
-```cpp
 class WindowPresenter
 {
 public:
     WindowPresenter()
-        : view{
-            juce::ValueTree::fromXml(R"(
-                <Window width="640", height="400">
-                    <Text text="Hello, World!"></Text>
-                </Window>
-            )")
-        }
+        : view{ views::window() }
     {
     }
 
@@ -147,15 +62,15 @@ private:
 };
 ```
 
-</details>
-
 ## Creating the window
 
-Now that we have our `juce::ValueTree` describing what we'd like to be shown, let's actually have it shown! To do this, we simply pass the value-tree to a `jive::Interpreter` which will give us back a `std::unique_ptr<jive::GuiItem>` if it parsed successfully:
+Now that we have our `juce::ValueTree` describing what we'd like to be shown, let's actually have it shown! To do this, we simply pass the `juce::ValueTree` to a `jive::Interpreter` which will give us back a `std::unique_ptr<jive::GuiItem>` if it parsed successfully:
 
 _MyJuceApp.h_
 
 ```cpp
+#include "WindowPresenter.h"
+
 #include <jive_layouts/jive_layouts.h>
 
 class MyJuceApp : public juce::JUCEApplication
@@ -184,84 +99,37 @@ START_JUCE_APPLICATION(MyJuceApp)
 
 ## Styling
 
-Now we have a window, but it doesn't look particularly exciting. Let's define some styling using JSON.
-
-Once again, there's a few different approaches to this:
-
-### Parsing JSON files (recommended)
-
-<details open>
-
-_WindowPresenter.h_
+Now we have a window, but it doesn't look particularly exciting. Let's define some styling using `jive::Object`:
 
 ```cpp
-//...
-#include <jive_core/jive_core.h>
-
-class WindowPresenter
+namespace views
 {
-public:
-    WindowPresenter()
-        : view{/*...*/}
+    // Our window() function from earlier...
+    juce::ValueTree window()
     {
-        view.setProperty("style",
-                         jive::parseJSON(juce::String::createStringFromData(
-                            BinaryData::styles_json,
-                            BinaryData::styles_jsonSize
-                         )),
-                         nullptr);
+        static constexpr auto style = [] {
+            return new jive::Object {
+                { "background", "#254E70" },
+                { "foreground", "#AEF3E7" },
+                { "font-family", "Helvetica" },
+                { "font-size", 15 },
+            };
+        };
+
+        return juce::ValueTree {
+            "Window",
+            {
+                { "width", 640 },
+                { "height", 400 },
+                { "style", style() },
+            },
+            {
+                welcomeText(),
+            },
+        };
     }
-
-    //...
-};
-```
-
-_styles.json_
-
-```json
-{
-    "background": "#254E70",
-    "foreground": "#AEF3E7",
-
-    "font-family": "Helvetica",
-    "font-size": 15,
 }
 ```
-
-</details>
-
-### Inline JSON String
-
-<details>
-
-_WindowPresenter.h_
-
-```cpp
-//...
-#include <jive_core/jive_core.h>
-
-class WindowPresenter
-{
-public:
-    WindowPresenter()
-        : view{/*...*/}
-    {
-        view.setProperty("style",
-                         jive::parseJSON(R"({
-                            "background": "#254E70",
-                            "foreground": "#AEF3E7",
-
-                            "font-family": "Helvetica",
-                            "font-size": 15,
-                         })"),
-                         nullptr);
-    }
-
-    //...
-};
-```
-
-</details>
 
 ## Testing
 
