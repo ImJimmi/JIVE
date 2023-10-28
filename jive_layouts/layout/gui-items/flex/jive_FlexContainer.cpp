@@ -511,6 +511,7 @@ private:
         juce::ValueTree windowState{
             "Window",
             {
+                { "native", true },
                 { "width", 150 },
                 { "height", 1000 },
                 { "align-items", "flex-start" },
