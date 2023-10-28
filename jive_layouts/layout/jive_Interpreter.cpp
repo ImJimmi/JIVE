@@ -196,7 +196,7 @@ namespace jive
         if (item != nullptr)
         {
             item = decorate(std::move(item), customDecorators);
-            appendChildItems(*item);
+            setChildItems(*item);
         }
 
         return item;
@@ -260,10 +260,21 @@ namespace jive
         }
     }
 
-    void Interpreter::appendChildItems(GuiItem& item) const
+    void Interpreter::setChildItems(GuiItem& item) const
     {
+        std::vector<std::unique_ptr<GuiItem>> children;
+
         for (auto i = 0; i < item.state.getNumChildren(); i++)
-            insertChild(item, i, item.state.getChild(i));
+        {
+            if (auto child = interpret(item.state.getChild(i), &item);
+                child != nullptr)
+            {
+                if (item.isContainer() || child->isContent())
+                    children.push_back(std::move(child));
+            }
+        }
+
+        item.setChildren(std::move(children));
     }
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const
@@ -292,6 +303,8 @@ public:
         testCustomDecorators();
         testAliases();
         testInterpretingDifferentSources();
+        testInterpretingContentAndContainers();
+        testListening();
     }
 
 private:
@@ -647,6 +660,70 @@ private:
             const auto result = interpreter.interpret(source.toRawUTF8(), source.length());
             expect(result != nullptr);
         }
+    }
+
+    void testInterpretingContentAndContainers()
+    {
+        beginTest("Content and containers");
+
+        jive::Interpreter interpreter;
+
+        static const juce::ValueTree state{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+                juce::ValueTree{
+                    "Text",
+                    {},
+                    {
+                        juce::ValueTree{
+                            "Text",
+                            {
+                                { "text", "first" },
+                            },
+                        },
+                        juce::ValueTree{
+                            "Text",
+                            {
+                                { "text", "second" },
+                            },
+                        },
+                        juce::ValueTree{ "Component" },
+                    },
+                },
+            },
+        };
+        const auto item = interpreter.interpret(state);
+        expectEquals(item->getChildren().size(), 2);
+        expectEquals(item->getChildren()[1]->getChildren().size(), 2);
+        expectEquals<juce::String>(item->getChildren()[1]->getChildren()[0]->state["text"], "first");
+        expectEquals<juce::String>(item->getChildren()[1]->getChildren()[1]->state["text"], "second");
+    }
+
+    void testListening()
+    {
+        beginTest("listening");
+
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(juce::ValueTree{
+            "Component",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{ "Component" },
+            },
+        });
+        expectEquals(item->getChildren().size(), 1);
+
+        interpreter.listenTo(*item);
+        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        expectEquals(item->getChildren().size(), 2);
     }
 };
 
