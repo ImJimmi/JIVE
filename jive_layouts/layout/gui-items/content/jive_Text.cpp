@@ -503,15 +503,16 @@ private:
                                   .getAttribute(0)
                                   .font;
 
-            expectEquals(jive::BoxModel{ item.state }.getWidth(),
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(),
                          std::ceil(font.getStringWidthFloat("This side up.")));
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), std::ceil(font.getHeight()));
+            expectEquals(boxModel.getHeight(), std::ceil(font.getHeight()));
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
-            expectEquals(jive::BoxModel{ item.state }.getWidth(),
+            expectEquals(boxModel.getWidth(),
                          std::ceil(std::max({ font.getStringWidthFloat("This one spans"),
                                               font.getStringWidthFloat("multiple lines.") })));
-            expectEquals(jive::BoxModel{ item.state }.getHeight(),
+            expectEquals(boxModel.getHeight(),
                          std::ceil(font.getHeight()) * 2.0f);
 
             textTree.setProperty("width", 100.0f, nullptr);
@@ -519,7 +520,7 @@ private:
                                  "A very very very very very very very very very "
                                  "very very long line.",
                                  nullptr);
-            expectGreaterThan(jive::BoxModel{ item.state }.getHeight(), font.getHeight());
+            expectGreaterThan(boxModel.getHeight(), font.getHeight());
         }
         {
             juce::ValueTree tree{
@@ -542,8 +543,9 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
             auto& item = *parent->getChildren()[0];
-            expectLessOrEqual(jive::BoxModel{ item.state }.getWidth(), 40.0f);
-            expectGreaterThan(jive::BoxModel{ item.state }.getWidth(), 0.0f);
+            const auto& boxModel = jive::boxModel(item);
+            expectLessOrEqual(boxModel.getWidth(), 40.0f);
+            expectGreaterThan(boxModel.getWidth(), 0.0f);
         }
         {
             juce::ValueTree state{

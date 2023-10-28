@@ -100,7 +100,7 @@ private:
         auto commonItem = std::make_unique<jive::CommonGuiItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), state));
         SpyContainer container{ std::move(commonItem) };
         state.setProperty("box-model-valid", false, nullptr);
-        expectEquals(container.givenConstraints, jive::BoxModel{ state }.getContentBounds());
+        expectEquals(container.givenConstraints, jive::boxModel(container).getContentBounds());
     }
 };
 

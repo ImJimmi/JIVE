@@ -404,8 +404,9 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
             auto& item = *parent->getChildren()[0];
-            expectEquals(jive::BoxModel{ item.state }.getWidth(), 0.0f);
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), 0.0f);
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 0.0f);
+            expectEquals(boxModel.getHeight(), 0.0f);
         }
         {
             juce::ValueTree parentState{
@@ -438,10 +439,12 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
             auto& item = *parent->getChildren()[0];
-            expectEquals(jive::BoxModel{ item.state }.getWidth(), 222.0f);
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), 84.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
+            const auto& boxModel = jive::boxModel(item);
+            const auto& childBoxModel = jive::boxModel(*item.getChildren()[0]);
+            expectEquals(boxModel.getWidth(), 222.0f);
+            expectEquals(boxModel.getHeight(), 84.0f);
+            expectEquals(childBoxModel.getWidth(), 43.0f);
+            expectEquals(childBoxModel.getHeight(), 84.0f);
         }
         {
             juce::ValueTree parentState{
@@ -478,20 +481,23 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(parentState);
             auto& item = *parent->getChildren()[0];
-            expectEquals(jive::BoxModel{ item.state }.getWidth(), 222.0f);
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), 193.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getWidth(), 37.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getHeight(), 99.0f);
+            const auto& boxModel = jive::boxModel(item);
+            const auto& child0BoxModel = jive::boxModel(*item.getChildren()[0]);
+            const auto& child1BoxModel = jive::boxModel(*item.getChildren()[1]);
+            expectEquals(boxModel.getWidth(), 222.0f);
+            expectEquals(boxModel.getHeight(), 193.0f);
+            expectEquals(child0BoxModel.getWidth(), 43.0f);
+            expectEquals(child0BoxModel.getHeight(), 84.0f);
+            expectEquals(child1BoxModel.getWidth(), 37.0f);
+            expectEquals(child1BoxModel.getHeight(), 99.0f);
 
             item.state.setProperty("flex-direction", "row", nullptr);
-            expectGreaterOrEqual(jive::BoxModel{ item.state }.getWidth(), 90.0f);
-            expectGreaterOrEqual(jive::BoxModel{ item.state }.getHeight(), 109.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getWidth(), 43.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[0]->state }.getHeight(), 84.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getWidth(), 37.0f);
-            expectEquals(jive::BoxModel{ item.getChildren()[1]->state }.getHeight(), 99.0f);
+            expectGreaterOrEqual(boxModel.getWidth(), 90.0f);
+            expectGreaterOrEqual(boxModel.getHeight(), 109.0f);
+            expectEquals(child0BoxModel.getWidth(), 43.0f);
+            expectEquals(child0BoxModel.getHeight(), 84.0f);
+            expectEquals(child1BoxModel.getWidth(), 37.0f);
+            expectEquals(child1BoxModel.getHeight(), 99.0f);
         }
     }
 
@@ -527,8 +533,9 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(), 0.0f);
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), 0.0f);
+            const auto& boxModel = jive::boxModel(container);
+            expectEquals(boxModel.getContentBounds().getWidth(), 0.0f);
+            expectEquals(boxModel.getContentBounds().getHeight(), 0.0f);
         }
 
         juce::ValueTree buttonState{
@@ -548,8 +555,9 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(), 50.f);
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), 20.0f);
+            const auto& boxModel = jive::boxModel(container);
+            expectEquals(boxModel.getContentBounds().getWidth(), 50.f);
+            expectEquals(boxModel.getContentBounds().getHeight(), 20.0f);
         }
 
         buttonState.removeProperty("width", nullptr);
@@ -572,9 +580,10 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(),
+            const auto& boxModel = jive::boxModel(container);
+            expectEquals(boxModel.getContentBounds().getWidth(),
                          std::ceil(font.getStringWidthFloat(textState["text"])));
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(),
+            expectEquals(boxModel.getContentBounds().getHeight(),
                          font.getHeight());
         }
 
@@ -589,10 +598,11 @@ private:
 
             const juce::AttributedString attributedString{ lorumIpsumSentence };
             juce::TextLayout layout;
-            layout.createLayout(attributedString, jive::BoxModel{ container.state }.getContentBounds().getWidth());
+            layout.createLayout(attributedString, jive::boxModel(container).getContentBounds().getWidth());
 
-            expectEquals(jive::BoxModel{ container.state }.getWidth(), 150.0f);
-            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
+            const auto& boxModel = jive::boxModel(container);
+            expectEquals(boxModel.getWidth(), 150.0f);
+            expectEquals(boxModel.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
         }
     }
 };

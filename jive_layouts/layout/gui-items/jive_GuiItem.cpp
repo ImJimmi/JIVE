@@ -142,6 +142,23 @@ namespace jive
         if (childWhichHasBeenRemoved == item.state && parent != nullptr)
             parent->removeChild(item);
     }
+
+    BoxModel& boxModel(GuiItem& item)
+    {
+        // This is a convenience function that only works if the given GUI item
+        // is decorated as a CommonGuiItem!
+        auto* decorated = dynamic_cast<jive::GuiItemDecorator*>(&item);
+        jassert(decorated != nullptr);
+        auto* common = decorated->getTopLevelDecorator().toType<jive::CommonGuiItem>();
+        jassert(common != nullptr);
+
+        return common->boxModel;
+    }
+
+    const BoxModel& boxModel(const GuiItem& item)
+    {
+        return boxModel(*const_cast<GuiItem*>(&item));
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
@@ -246,6 +263,26 @@ private:
             item.setChildren(std::move(children));
             expectEquals(item.getChildren().size(), 1000);
         }
+    }
+};
+
+struct BoxModelFreeFunctionTest : juce::UnitTest
+{
+    BoxModelFreeFunctionTest()
+        : juce::UnitTest{ "jive::boxModel()", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        beginTest("Common GUI item");
+
+        const jive::CommonGuiItem item{
+            std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                            juce::ValueTree{ "Component" }),
+        };
+        const auto& box = jive::boxModel(item);
+        expect(&box == &item.boxModel);
     }
 };
 

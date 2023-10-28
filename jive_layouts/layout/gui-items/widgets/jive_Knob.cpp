@@ -73,14 +73,15 @@ private:
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
-        expectEquals(jive::BoxModel{ item.state }.getWidth(), 55.0f);
-        expectEquals(jive::BoxModel{ item.state }.getHeight(), 55.0f);
+        const auto& boxModel = jive::boxModel(item);
+        expectEquals(boxModel.getWidth(), 55.0f);
+        expectEquals(boxModel.getHeight(), 55.0f);
 
         parentState.getChild(0).setProperty("width", 100.0f, nullptr);
-        expectEquals(jive::BoxModel{ item.state }.getWidth(), 100.0f);
+        expectEquals(boxModel.getWidth(), 100.0f);
 
         parentState.getChild(0).setProperty("height", 78.0f, nullptr);
-        expectEquals(jive::BoxModel{ item.state }.getHeight(), 78.0f);
+        expectEquals(boxModel.getHeight(), 78.0f);
     }
 };
 

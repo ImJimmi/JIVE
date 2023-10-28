@@ -71,4 +71,7 @@ namespace jive
 
         JUCE_LEAK_DETECTOR(GuiItem)
     };
+
+    [[nodiscard]] BoxModel& boxModel(GuiItem& decoratedItem);
+    [[nodiscard]] const BoxModel& boxModel(const GuiItem& decoratedItem);
 } // namespace jive

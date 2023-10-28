@@ -388,8 +388,9 @@ private:
         auto parent = interpreter.interpret(parentState);
         auto& button = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                             .toType<jive::Button>();
-        expectEquals(jive::BoxModel{ button.state }.getWidth(), 50.0f);
-        expectEquals(jive::BoxModel{ button.state }.getHeight(), 20.0f);
+        const auto& boxModel = jive::boxModel(button);
+        expectEquals(boxModel.getWidth(), 50.0f);
+        expectEquals(boxModel.getHeight(), 20.0f);
     }
 
     void testEvents()
