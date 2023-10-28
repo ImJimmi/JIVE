@@ -19,6 +19,7 @@ namespace jive
         const std::shared_ptr<juce::Component> getComponent();
 
         virtual void insertChild(std::unique_ptr<GuiItem> child, int index);
+        virtual void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children);
         virtual void removeChild(GuiItem& childToRemove);
         virtual juce::Array<GuiItem*> getChildren();
         virtual juce::Array<const GuiItem*> getChildren() const;

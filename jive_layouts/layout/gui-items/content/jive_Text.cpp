@@ -57,6 +57,12 @@ namespace jive
         updateTextComponent();
     }
 
+    void Text::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        GuiItemDecorator::setChildren(std::move(newChildren));
+        updateTextComponent();
+    }
+
     bool Text::isContainer() const
     {
         return false;

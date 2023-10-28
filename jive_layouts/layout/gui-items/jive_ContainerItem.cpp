@@ -22,6 +22,12 @@ namespace jive
         layoutChanged();
     }
 
+    void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        GuiItemDecorator::setChildren(std::move(newChildren));
+        layoutChanged();
+    }
+
     void ContainerItem::boxModelInvalidated(BoxModel& box)
     {
         const auto newIdealSize = calculateIdealSize(box.getContentBounds());

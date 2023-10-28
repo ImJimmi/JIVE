@@ -62,8 +62,23 @@ namespace jive
 
     void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        if (child == nullptr)
+        {
+            // Trying to add a nonexistant child!
+            jassertfalse;
+            return;
+        }
+
         auto* newlyAddedChild = children.insert(index, std::move(child));
         component->addChildComponent(*newlyAddedChild->getComponent());
+    }
+
+    void GuiItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        children.clearQuick(true);
+
+        for (auto& child : newChildren)
+            insertChild(std::move(child), children.size());
     }
 
     void GuiItem::removeChild(GuiItem& childToRemove)
@@ -141,6 +156,7 @@ public:
     void runTest() final
     {
         testChildren();
+        testAddingMultipleChildrenAtOnce();
     }
 
 private:
@@ -194,6 +210,42 @@ private:
         item->state.removeChild(0, nullptr);
         expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+    }
+
+    void testAddingMultipleChildrenAtOnce()
+    {
+        beginTest("Adding multiple children at once");
+
+        jive::GuiItem item{
+            std::make_unique<juce::Component>(),
+            juce::ValueTree{ "Component" },
+        };
+        expectEquals(item.getChildren().size(), 0);
+
+        item.setChildren({});
+        expectEquals(item.getChildren().size(), 0);
+
+        {
+            std::vector<std::unique_ptr<jive::GuiItem>> children;
+            children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                               juce::ValueTree{ "Component" }));
+            children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                               juce::ValueTree{ "Component" }));
+
+            item.setChildren(std::move(children));
+            expectEquals(item.getChildren().size(), 2);
+        }
+
+        {
+            std::vector<std::unique_ptr<jive::GuiItem>> children;
+
+            for (auto i = 0; i < 1000; i++)
+                children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                   juce::ValueTree{ "Component" }));
+
+            item.setChildren(std::move(children));
+            expectEquals(item.getChildren().size(), 1000);
+        }
     }
 };
 

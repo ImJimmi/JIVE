@@ -121,11 +121,13 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getContentBounds() const
     {
-        return padding
-            .get()
-            .subtractedFrom(border
+        const auto bounds = padding
                                 .get()
-                                .subtractedFrom(getOuterBounds()));
+                                .subtractedFrom(border
+                                                    .get()
+                                                    .subtractedFrom(getOuterBounds()));
+        return bounds.withSize(juce::jmax(0.0f, bounds.getWidth()),
+                               juce::jmax(0.0f, bounds.getHeight()));
     }
 
     juce::Rectangle<float> BoxModel::getMinimumBounds() const

@@ -526,8 +526,8 @@ private:
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
-            expectEquals(jive::BoxModel{ container.state }.getWidth(), 0.0f);
-            expectEquals(jive::BoxModel{ container.state }.getHeight(), 0.0f);
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getWidth(), 0.0f);
+            expectEquals(jive::BoxModel{ container.state }.getContentBounds().getHeight(), 0.0f);
         }
 
         juce::ValueTree buttonState{
