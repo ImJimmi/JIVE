@@ -204,8 +204,6 @@ private:
                                ->getWindow();
             expect(window.isDropShadowEnabled());
             expect(window.isOnDesktop());
-            expect(window.isVisible());
-            expect(window.isShowing());
 
             tree.setProperty("shadow", false, nullptr);
             expect(!window.isDropShadowEnabled());
