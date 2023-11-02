@@ -25,6 +25,8 @@ namespace jive
         , width{ state, "width" }
         , height{ state, "height" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!hasShadow.exists())
             hasShadow = true;
         if (!isNative.exists())

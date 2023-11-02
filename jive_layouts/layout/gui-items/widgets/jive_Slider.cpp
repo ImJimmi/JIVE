@@ -26,6 +26,8 @@ namespace jive
         , focusable{ state, "focusable" }
         , onChange{ state, "on-change" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!max.exists())
             max = "1.0";
         if (!sensitivity.exists())

@@ -31,6 +31,8 @@ namespace jive
         , focusable{ state, "focusable" }
         , onClick{ state, "on-click" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!triggerEvent.exists())
             triggerEvent = TriggerEvent::mouseUp;
         if (!padding.exists())

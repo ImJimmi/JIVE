@@ -12,6 +12,8 @@ namespace jive
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!justification.exists())
             justification = juce::Justification::centredLeft;
         if (!wordWrap.exists())

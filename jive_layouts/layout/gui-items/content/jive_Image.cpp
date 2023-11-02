@@ -12,6 +12,8 @@ namespace jive
         , idealHeight{ state, "ideal-height" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
+
         if (!placement.exists())
             placement = juce::RectanglePlacement::centred;
 

@@ -24,7 +24,11 @@ namespace jive
 
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
     {
-        GuiItemDecorator::setChildren(std::move(newChildren));
+        {
+            BoxModel::ScopedCallbackLock boxModelLock(boxModel);
+            GuiItemDecorator::setChildren(std::move(newChildren));
+        }
+
         layoutChanged();
     }
 

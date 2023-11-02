@@ -9,6 +9,8 @@ namespace jive
         , height{ state, "height" }
         , focusable{ state, "focusable" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!focusable.exists())
             focusable = true;
 

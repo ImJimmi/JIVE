@@ -13,6 +13,25 @@ namespace jive
             virtual void boxModelInvalidated(BoxModel&) {}
         };
 
+        /** Prevents any callbacks being invoked on the given BoxModel object
+            until the lock instance is destroyed.
+
+            Use with caution! This may cause things to break if the BoxModel
+            isn't able to properly respond to vital changes in its given
+            ValueTree. However, so long as you're sure you know what you're
+            doing, this can be very useful when setting several properties at
+            once and you don't want callbacks firing for each one.
+        */
+        class ScopedCallbackLock
+        {
+        public:
+            explicit ScopedCallbackLock(BoxModel& boxModelToLock);
+            ~ScopedCallbackLock();
+
+        private:
+            BoxModel& boxModel;
+        };
+
         explicit BoxModel(juce::ValueTree sourceState);
 
         float getWidth() const;
@@ -47,6 +66,9 @@ namespace jive
         juce::ValueTree state;
 
     private:
+        void lock();
+        void unlock();
+
         juce::Rectangle<float> getParentBounds() const;
         float calculateComponentWidth() const;
         float calculateComponentHeight() const;
@@ -65,6 +87,7 @@ namespace jive
         Property<juce::BorderSize<float>> border;
         Property<juce::BorderSize<float>> margin;
         Property<bool> isValid;
+        Property<bool> callbackLock;
 
         juce::ListenerList<Listener> listeners;
 
