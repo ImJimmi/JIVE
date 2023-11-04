@@ -18,8 +18,11 @@ namespace jive
 
     void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        const auto numChildrenBefore = getChildren().size();
         GuiItemDecorator::insertChild(std::move(child), index);
-        layoutChanged();
+
+        if (getChildren().size() != numChildrenBefore)
+            layoutChanged();
     }
 
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
@@ -29,7 +32,8 @@ namespace jive
             GuiItemDecorator::setChildren(std::move(newChildren));
         }
 
-        layoutChanged();
+        if (!getChildren().isEmpty())
+            layoutChanged();
     }
 
     void ContainerItem::boxModelInvalidated(BoxModel& box)
