@@ -195,13 +195,13 @@ namespace jive
 
     void BoxModel::invalidateParent()
     {
-        if (!state.getParent().isValid())
-            return;
-
-        BoxModel parent{ state.getParent() };
-
-        parent.isValid = true;
-        parent.isValid = false;
+        if (auto parent = state.getParent();
+            parent.isValid())
+        {
+            Property<bool> parentIsValid{ parent, isValid.id };
+            parentIsValid = true;
+            parentIsValid = false;
+        }
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
