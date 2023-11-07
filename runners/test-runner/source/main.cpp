@@ -92,7 +92,7 @@ private:
         else
             std::cout << juce::String{ getNumFailures() } << " tests failed!\n";
 
-        std::cout << "Took " << juce::String{ elapsed.inMilliseconds() / 1000.0 } << "s\n";
+        std::cout << "Took " << juce::String{ static_cast<double>(elapsed.inMilliseconds()) / 1000.0 } << "s\n";
         std::cout << "================================\n\n";
     }
 

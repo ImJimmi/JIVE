@@ -4,8 +4,9 @@ project(JIVE
 )
 configure_file(${CMAKE_SOURCE_DIR}/version.txt.in version.txt)
 
-option(JIVE_BUILD_TEST_RUNNER "Build JIVE's test runner?" OFF)
-option(JIVE_BUILD_DEMO_RUNNER "Build JIVE's demo runner?" OFF)
+include(cmake/jive_options.cmake)
+include(cmake/jive_code_coverage.cmake)
+include(cmake/jive_compiler_and_linker_options.cmake)
 
 if (JIVE_BUILD_TEST_RUNNER OR JIVE_BUILD_DEMO_RUNNER)
     add_subdirectory(runners/libraries)
