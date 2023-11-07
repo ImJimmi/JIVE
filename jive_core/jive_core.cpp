@@ -1,5 +1,6 @@
 #include "jive_core.h"
 
+#include "logging/jive_ConsoleProgressBar.cpp"
 #include "logging/jive_ScopeIndentedLogger.cpp"
 #include "logging/jive_StringStreams.cpp"
 
