@@ -62,6 +62,11 @@ namespace jive
 
     void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        insertChild(std::move(child), index, true);
+    }
+
+    void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback)
+    {
         if (child == nullptr)
         {
             // Trying to add a nonexistant child!
@@ -71,6 +76,9 @@ namespace jive
 
         auto* newlyAddedChild = children.insert(index, std::move(child));
         component->addChildComponent(*newlyAddedChild->getComponent());
+
+        if (invokeCallback)
+            childrenChanged();
     }
 
     void GuiItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
@@ -78,7 +86,9 @@ namespace jive
         children.clearQuick(true);
 
         for (auto& child : newChildren)
-            insertChild(std::move(child), children.size());
+            insertChild(std::move(child), children.size(), false);
+
+        childrenChanged();
     }
 
     void GuiItem::removeChild(GuiItem& childToRemove)

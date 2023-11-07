@@ -187,14 +187,6 @@ namespace jive
         enabled = component->isEnabled();
     }
 
-    void CommonGuiItem::componentChildrenChanged(juce::Component& componentThatsChildrenChanged)
-    {
-        if (&componentThatsChildrenChanged != component.get())
-            return;
-
-        getTopLevelDecorator().layOutChildren();
-    }
-
     [[nodiscard]] static auto hasWidgetRole(const juce::Component& component)
     {
         if (auto* handler = const_cast<juce::Component*>(&component)->getAccessibilityHandler())
@@ -262,6 +254,11 @@ namespace jive
 
         component->setSize(juce::roundToInt(boxModel.getWidth()),
                            juce::roundToInt(boxModel.getHeight()));
+        getTopLevelDecorator().layOutChildren();
+    }
+
+    void CommonGuiItem::childrenChanged()
+    {
         getTopLevelDecorator().layOutChildren();
     }
 } // namespace jive

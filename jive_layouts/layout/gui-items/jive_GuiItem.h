@@ -35,6 +35,8 @@ namespace jive
         juce::ValueTree state;
 
     protected:
+        virtual void childrenChanged() {}
+
         const std::shared_ptr<juce::Component> component;
         GuiItem* const parent;
 
@@ -66,6 +68,8 @@ namespace jive
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
         const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
+
+        void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
 
         std::unique_ptr<Remover> remover;
 
