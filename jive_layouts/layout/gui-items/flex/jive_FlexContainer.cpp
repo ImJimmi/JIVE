@@ -137,10 +137,21 @@ namespace jive
         }
     }
 
-    void FlexContainer::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
+    void FlexContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        if (tree != state && tree.getParent() != state)
+            return;
+
         if (layoutRecursionLock)
-            changesDuringLayout = true;
+        {
+            static const juce::Array<juce::Identifier> propertiesForWhichChangesRequireAnotherLayOut{
+                "ideal-width",
+                "ideal-height",
+            };
+
+            if (propertiesForWhichChangesRequireAnotherLayOut.contains(id))
+                changesDuringLayout = true;
+        }
     }
 
     juce::FlexBox FlexContainer::buildFlexBox(juce::Rectangle<float> bounds,
