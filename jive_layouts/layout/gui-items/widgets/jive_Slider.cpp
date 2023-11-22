@@ -26,6 +26,8 @@ namespace jive
         , focusable{ state, "focusable" }
         , onChange{ state, "on-change" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!max.exists())
             max = "1.0";
         if (!sensitivity.exists())
@@ -125,7 +127,7 @@ namespace jive
 
         if (orientation.isAuto())
         {
-            const BoxModel boxModel{ state };
+            const auto& boxModel = toType<CommonGuiItem>()->boxModel;
 
             if (boxModel.getWidth() < boxModel.getHeight())
                 ori = Orientation::vertical;
@@ -514,14 +516,15 @@ private:
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
-        expectEquals(jive::BoxModel{ item.state }.getWidth(), 135.0f);
-        expectEquals(jive::BoxModel{ item.state }.getHeight(), 20.0f);
+        const auto& boxModel = jive::boxModel(item);
+        expectEquals(boxModel.getWidth(), 135.0f);
+        expectEquals(boxModel.getHeight(), 20.0f);
 
         parentState.getChild(0).setProperty("width", 123.f, nullptr);
-        expectEquals(jive::BoxModel{ item.state }.getWidth(), 123.f);
+        expectEquals(boxModel.getWidth(), 123.f);
 
         parentState.getChild(0).setProperty("height", 311.f, nullptr);
-        expectEquals(jive::BoxModel{ item.state }.getHeight(), 311.f);
+        expectEquals(boxModel.getHeight(), 311.f);
     }
 
     void testEvents()

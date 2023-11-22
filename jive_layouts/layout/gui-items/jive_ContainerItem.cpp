@@ -18,8 +18,22 @@ namespace jive
 
     void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        const auto numChildrenBefore = getChildren().size();
         GuiItemDecorator::insertChild(std::move(child), index);
-        layoutChanged();
+
+        if (getChildren().size() != numChildrenBefore)
+            layoutChanged();
+    }
+
+    void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        {
+            BoxModel::ScopedCallbackLock boxModelLock(boxModel);
+            GuiItemDecorator::setChildren(std::move(newChildren));
+        }
+
+        if (!getChildren().isEmpty())
+            layoutChanged();
     }
 
     void ContainerItem::boxModelInvalidated(BoxModel& box)
@@ -94,7 +108,7 @@ private:
         auto commonItem = std::make_unique<jive::CommonGuiItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), state));
         SpyContainer container{ std::move(commonItem) };
         state.setProperty("box-model-valid", false, nullptr);
-        expectEquals(container.givenConstraints, jive::BoxModel{ state }.getContentBounds());
+        expectEquals(container.givenConstraints, jive::boxModel(container).getContentBounds());
     }
 };
 

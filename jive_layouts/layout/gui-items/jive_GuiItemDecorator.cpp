@@ -13,6 +13,13 @@ namespace jive
     void GuiItemDecorator::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
         item->insertChild(std::move(child), index);
+        childrenChanged();
+    }
+
+    void GuiItemDecorator::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        item->setChildren(std::move(newChildren));
+        childrenChanged();
     }
 
     void GuiItemDecorator::removeChild(GuiItem& child)

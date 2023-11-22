@@ -17,6 +17,7 @@ namespace jive
         , border{ state, "border-width" }
         , margin{ state, "margin" }
         , isValid{ state, "box-model-valid" }
+        , callbackLock{ state, "box-model-callback-lock" }
     {
         if (!width.exists())
             width.setAuto();
@@ -33,11 +34,17 @@ namespace jive
         }
 
         const auto onBoxModelChanged = [this]() {
+            if (callbackLock.get())
+                return;
+
             isValid = true;
             listeners.call(&Listener::boxModelChanged, *this);
             invalidateParent();
         };
         const auto recalculateSize = [this, onBoxModelChanged]() {
+            if (callbackLock.get())
+                return;
+
             const auto sizeBefore = componentSize.get();
             componentSize = juce::Rectangle{
                 calculateComponentWidth(),
@@ -63,6 +70,9 @@ namespace jive
         componentSize.onValueChange = onBoxModelChanged;
 
         isValid.onValueChange = [this]() {
+            if (callbackLock.get())
+                return;
+
             if (!isValid.get())
                 listeners.call(&Listener::boxModelInvalidated, *this);
         };
@@ -121,11 +131,13 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getContentBounds() const
     {
-        return padding
-            .get()
-            .subtractedFrom(border
+        const auto bounds = padding
                                 .get()
-                                .subtractedFrom(getOuterBounds()));
+                                .subtractedFrom(border
+                                                    .get()
+                                                    .subtractedFrom(getOuterBounds()));
+        return bounds.withSize(juce::jmax(0.0f, bounds.getWidth()),
+                               juce::jmax(0.0f, bounds.getHeight()));
     }
 
     juce::Rectangle<float> BoxModel::getMinimumBounds() const
@@ -183,13 +195,34 @@ namespace jive
 
     void BoxModel::invalidateParent()
     {
-        if (!state.getParent().isValid())
-            return;
+        if (auto parent = state.getParent();
+            parent.isValid())
+        {
+            Property<bool> parentIsValid{ parent, isValid.id };
+            parentIsValid = true;
+            parentIsValid = false;
+        }
+    }
 
-        BoxModel parent{ state.getParent() };
+    BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
+        : boxModel{ boxModelToLock }
+    {
+        boxModel.lock();
+    }
 
-        parent.isValid = true;
-        parent.isValid = false;
+    BoxModel::ScopedCallbackLock::~ScopedCallbackLock()
+    {
+        boxModel.unlock();
+    }
+
+    void BoxModel::lock()
+    {
+        callbackLock = true;
+    }
+
+    void BoxModel::unlock()
+    {
+        callbackLock.clear();
     }
 } // namespace jive
 

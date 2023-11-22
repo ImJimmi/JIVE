@@ -68,6 +68,8 @@ namespace jive
         , focusable{ state, "focusable" }
         , onChange{ state, "on-change" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!focusable.exists())
             focusable = true;
 

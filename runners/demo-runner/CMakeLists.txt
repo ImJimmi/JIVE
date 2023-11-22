@@ -27,51 +27,25 @@ SOURCES
     resources/source-code-pro.ttf
 )
 
+target_include_directories(jive-demo-runner
+PRIVATE
+    source
+)
+
 target_compile_definitions(jive-demo-runner
 PRIVATE
-    JIVE_DEMO_APPLICATION_NAME="$<TARGET_PROPERTY:jive-demo-runner,JUCE_PRODUCT_NAME>"
-    JIVE_DEMO_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo-runner,JUCE_VERSION>"
     JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1
+    JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-demo-runner,JUCE_PRODUCT_NAME>"
+    JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo-runner,JUCE_VERSION>"
 )
 
 target_link_libraries(jive-demo-runner
 PRIVATE
     jive-demo-runner-resources
+    jive::compiler_and_linker_options
     jive::jive_layouts
     jive::jive_style_sheets
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
-
-target_include_directories(jive-demo-runner
-PRIVATE
-    source
-)
-
-target_compile_features(jive-demo-runner
-PRIVATE
-    cxx_std_17
-)
-
-if (APPLE)
-    target_compile_options(jive-demo-runner
-    PRIVATE
-        -fsanitize=address
-        -fsanitize=undefined
-        -Werror
-    )
-
-    target_link_options(jive-demo-runner
-    PRIVATE
-        -fsanitize=address
-        -fsanitize=undefined
-    )
-endif()
-
-if (MSVC)
-    target_compile_options(jive-demo-runner
-    PRIVATE
-        /WX
-    )
-endif()

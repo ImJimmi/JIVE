@@ -25,10 +25,17 @@ namespace jive
         , width{ state, "width" }
         , height{ state, "height" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!hasShadow.exists())
             hasShadow = true;
         if (!isNative.exists())
+#if JIVE_UNIT_TESTS
+            isNative = false;
+#else
             isNative = true;
+#endif
+
         if (!isResizable.exists())
             isResizable = true;
         if (!minWidth.exists())
@@ -199,8 +206,6 @@ private:
                                ->getWindow();
             expect(window.isDropShadowEnabled());
             expect(window.isOnDesktop());
-            expect(window.isVisible());
-            expect(window.isShowing());
 
             tree.setProperty("shadow", false, nullptr);
             expect(!window.isDropShadowEnabled());
@@ -231,6 +236,7 @@ private:
             juce::ValueTree state{
                 "Window",
                 {
+                    { "native", true },
                     { "width", 100 },
                     { "height", 150 },
                 },

@@ -29,6 +29,7 @@ namespace jive
         ~ContainerItem() override;
 
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
+        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren) override;
 
     protected:
         void boxModelInvalidated(BoxModel& boxModel) override;

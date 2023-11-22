@@ -12,6 +12,8 @@ namespace jive
         , idealHeight{ state, "ideal-height" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
+
         if (!placement.exists())
             placement = juce::RectanglePlacement::centred;
 
@@ -475,8 +477,9 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
             auto& item = *parent->getChildren()[0];
-            expectEquals(jive::BoxModel{ item.state }.getWidth(), 80.0f);
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), 40.0f);
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 80.0f);
+            expectEquals(boxModel.getHeight(), 40.0f);
         }
         {
             juce::ValueTree tree{
@@ -511,8 +514,9 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
             auto& item = *parent->getChildren()[0];
-            expectEquals(jive::BoxModel{ item.state }.getWidth(), 155.0f);
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), 155.0f);
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 155.0f);
+            expectEquals(boxModel.getHeight(), 155.0f);
         }
     }
 

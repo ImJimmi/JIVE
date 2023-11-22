@@ -33,17 +33,13 @@ namespace jive
 
         std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const;
         void insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const;
-        void appendChildItems(GuiItem& item) const;
+        void setChildItems(GuiItem& item) const;
 
         std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) const;
 
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
-        juce::Array<juce::Identifier> typesWithoutStyleSheets{
-            "Text",
-            "Image",
-        };
 
         GuiItem* observedItem = nullptr;
 

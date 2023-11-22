@@ -831,8 +831,9 @@ private:
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
-        expectEquals(jive::BoxModel{ item.state }.getWidth(), 25.f);
-        expectEquals(jive::BoxModel{ item.state }.getHeight(), 15.f);
+        const auto& boxModel = jive::boxModel(item);
+        expectEquals(boxModel.getWidth(), 25.f);
+        expectEquals(boxModel.getHeight(), 15.f);
     }
 
     void testNestedText()
@@ -866,7 +867,7 @@ private:
         jive::Interpreter interpreter;
         const auto window = interpreter.interpret(state);
         auto& container = *window->getChildren()[0];
-        const jive::BoxModel boxModel{ container.state };
+        const auto& boxModel = jive::boxModel(container);
         const auto font = dynamic_cast<jive::GuiItemDecorator*>(container.getChildren()[0])
                               ->toType<jive::Text>()
                               ->getTextComponent()
@@ -880,7 +881,7 @@ private:
 
         container.state.getChild(0).setProperty("text", "hello world lorum ipsum dolor etc...", nullptr);
         expectEquals(boxModel.getContentBounds().getWidth(), static_cast<float>(state["width"]));
-        expectEquals(jive::BoxModel{ container.getChildren()[0]->state }.getHeight(), font.getHeight() * 2.0f);
+        expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), font.getHeight() * 2.0f);
     }
 };
 

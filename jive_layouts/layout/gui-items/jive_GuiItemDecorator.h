@@ -8,6 +8,7 @@ namespace jive
         explicit GuiItemDecorator(std::unique_ptr<GuiItem> itemToDecorate);
 
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
+        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children) override;
         void removeChild(GuiItem& childToRemove) override;
         juce::Array<GuiItem*> getChildren() override;
         juce::Array<const GuiItem*> getChildren() const override;

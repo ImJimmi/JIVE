@@ -12,6 +12,8 @@ namespace jive
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!justification.exists())
             justification = juce::Justification::centredLeft;
         if (!wordWrap.exists())
@@ -54,6 +56,12 @@ namespace jive
     void Text::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
         GuiItemDecorator::insertChild(std::move(child), index);
+        updateTextComponent();
+    }
+
+    void Text::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        GuiItemDecorator::setChildren(std::move(newChildren));
         updateTextComponent();
     }
 
@@ -497,15 +505,16 @@ private:
                                   .getAttribute(0)
                                   .font;
 
-            expectEquals(jive::BoxModel{ item.state }.getWidth(),
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(),
                          std::ceil(font.getStringWidthFloat("This side up.")));
-            expectEquals(jive::BoxModel{ item.state }.getHeight(), std::ceil(font.getHeight()));
+            expectEquals(boxModel.getHeight(), std::ceil(font.getHeight()));
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
-            expectEquals(jive::BoxModel{ item.state }.getWidth(),
+            expectEquals(boxModel.getWidth(),
                          std::ceil(std::max({ font.getStringWidthFloat("This one spans"),
                                               font.getStringWidthFloat("multiple lines.") })));
-            expectEquals(jive::BoxModel{ item.state }.getHeight(),
+            expectEquals(boxModel.getHeight(),
                          std::ceil(font.getHeight()) * 2.0f);
 
             textTree.setProperty("width", 100.0f, nullptr);
@@ -513,7 +522,7 @@ private:
                                  "A very very very very very very very very very "
                                  "very very long line.",
                                  nullptr);
-            expectGreaterThan(jive::BoxModel{ item.state }.getHeight(), font.getHeight());
+            expectGreaterThan(boxModel.getHeight(), font.getHeight());
         }
         {
             juce::ValueTree tree{
@@ -536,8 +545,9 @@ private:
             jive::Interpreter interpreter;
             auto parent = interpreter.interpret(tree);
             auto& item = *parent->getChildren()[0];
-            expectLessOrEqual(jive::BoxModel{ item.state }.getWidth(), 40.0f);
-            expectGreaterThan(jive::BoxModel{ item.state }.getWidth(), 0.0f);
+            const auto& boxModel = jive::boxModel(item);
+            expectLessOrEqual(boxModel.getWidth(), 40.0f);
+            expectGreaterThan(boxModel.getWidth(), 0.0f);
         }
         {
             juce::ValueTree state{

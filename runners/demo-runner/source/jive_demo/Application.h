@@ -14,12 +14,12 @@ namespace jive_demo
 
         const juce::String getApplicationName() final
         {
-            return JIVE_DEMO_APPLICATION_NAME;
+            return JUCE_APPLICATION_NAME;
         }
 
         const juce::String getApplicationVersion() final
         {
-            return JIVE_DEMO_APPLICATION_VERSION;
+            return JUCE_APPLICATION_VERSION;
         }
 
         void initialise(const juce::String& /*commandLineArguments*/) final

@@ -23,8 +23,14 @@ public:
 
     void initialise(const juce::String&) final
     {
-        runTestsInCategory("jive");
-        logSuccessOrFailure();
+        auto elapsed = 0.0;
+
+        {
+            juce::ScopedTimeMeasurement timer{ elapsed };
+            runTestsInCategory("jive");
+        }
+
+        logSuccessOrFailure(juce::RelativeTime::seconds(elapsed));
         setApplicationReturnValue(getNumFailures());
         quit();
     }
@@ -77,7 +83,7 @@ private:
         return numFailures;
     }
 
-    void logSuccessOrFailure()
+    void logSuccessOrFailure(juce::RelativeTime elapsed)
     {
         std::cout << "\n================================\n";
 
@@ -86,6 +92,7 @@ private:
         else
             std::cout << juce::String{ getNumFailures() } << " tests failed!\n";
 
+        std::cout << "Took " << juce::String{ static_cast<double>(elapsed.inMilliseconds()) / 1000.0 } << "s\n";
         std::cout << "================================\n\n";
     }
 

@@ -11,6 +11,7 @@ namespace jive
         ~Text() override;
 
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
+        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren) override;
 
         bool isContainer() const override;
         bool isContent() const override;

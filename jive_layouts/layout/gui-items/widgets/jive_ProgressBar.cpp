@@ -9,6 +9,8 @@ namespace jive
         , height{ state, "height" }
         , focusable{ state, "focusable" }
     {
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+
         if (!focusable.exists())
             focusable = true;
 
@@ -121,8 +123,9 @@ private:
         auto& progressBar = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                                  .toType<jive::ProgressBar>();
         expect(!progressBar.isContainer());
-        expectEquals(jive::BoxModel{ progressBar.state }.getWidth(), 135.0f);
-        expectEquals(jive::BoxModel{ progressBar.state }.getHeight(), 20.0f);
+        const auto& boxModel = jive::boxModel(progressBar);
+        expectEquals(boxModel.getWidth(), 135.0f);
+        expectEquals(boxModel.getHeight(), 20.0f);
     }
 };
 

@@ -18,9 +18,10 @@ namespace jive
         void componentVisibilityChanged(juce::Component& component) override;
         void componentNameChanged(juce::Component& component) override;
         void componentEnablementChanged(juce::Component& component) override;
-        void componentChildrenChanged(juce::Component& component) override;
         void componentParentHierarchyChanged(juce::Component& component) override;
         void boxModelChanged(BoxModel& boxModel) override;
+
+        void childrenChanged() override;
 
     private:
         Property<juce::String> name;

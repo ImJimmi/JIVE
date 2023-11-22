@@ -62,8 +62,33 @@ namespace jive
 
     void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        insertChild(std::move(child), index, true);
+    }
+
+    void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback)
+    {
+        if (child == nullptr)
+        {
+            // Trying to add a nonexistant child!
+            jassertfalse;
+            return;
+        }
+
         auto* newlyAddedChild = children.insert(index, std::move(child));
         component->addChildComponent(*newlyAddedChild->getComponent());
+
+        if (invokeCallback)
+            childrenChanged();
+    }
+
+    void GuiItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
+    {
+        children.clearQuick(true);
+
+        for (auto& child : newChildren)
+            insertChild(std::move(child), children.size(), false);
+
+        childrenChanged();
     }
 
     void GuiItem::removeChild(GuiItem& childToRemove)
@@ -127,6 +152,23 @@ namespace jive
         if (childWhichHasBeenRemoved == item.state && parent != nullptr)
             parent->removeChild(item);
     }
+
+    BoxModel& boxModel(GuiItem& item)
+    {
+        // This is a convenience function that only works if the given GUI item
+        // is decorated as a CommonGuiItem!
+        auto* decorated = dynamic_cast<jive::GuiItemDecorator*>(&item);
+        jassert(decorated != nullptr);
+        auto* common = decorated->getTopLevelDecorator().toType<jive::CommonGuiItem>();
+        jassert(common != nullptr);
+
+        return common->boxModel;
+    }
+
+    const BoxModel& boxModel(const GuiItem& item)
+    {
+        return boxModel(*const_cast<GuiItem*>(&item));
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
@@ -141,6 +183,7 @@ public:
     void runTest() final
     {
         testChildren();
+        testAddingMultipleChildrenAtOnce();
     }
 
 private:
@@ -194,6 +237,62 @@ private:
         item->state.removeChild(0, nullptr);
         expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
+    }
+
+    void testAddingMultipleChildrenAtOnce()
+    {
+        beginTest("Adding multiple children at once");
+
+        jive::GuiItem item{
+            std::make_unique<juce::Component>(),
+            juce::ValueTree{ "Component" },
+        };
+        expectEquals(item.getChildren().size(), 0);
+
+        item.setChildren({});
+        expectEquals(item.getChildren().size(), 0);
+
+        {
+            std::vector<std::unique_ptr<jive::GuiItem>> children;
+            children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                               juce::ValueTree{ "Component" }));
+            children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                               juce::ValueTree{ "Component" }));
+
+            item.setChildren(std::move(children));
+            expectEquals(item.getChildren().size(), 2);
+        }
+
+        {
+            std::vector<std::unique_ptr<jive::GuiItem>> children;
+
+            for (auto i = 0; i < 1000; i++)
+                children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                                                   juce::ValueTree{ "Component" }));
+
+            item.setChildren(std::move(children));
+            expectEquals(item.getChildren().size(), 1000);
+        }
+    }
+};
+
+struct BoxModelFreeFunctionTest : juce::UnitTest
+{
+    BoxModelFreeFunctionTest()
+        : juce::UnitTest{ "jive::boxModel()", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        beginTest("Common GUI item");
+
+        const jive::CommonGuiItem item{
+            std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
+                                            juce::ValueTree{ "Component" }),
+        };
+        const auto& box = jive::boxModel(item);
+        expect(&box == &item.boxModel);
     }
 };
 

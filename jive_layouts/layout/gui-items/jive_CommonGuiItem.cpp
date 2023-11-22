@@ -187,14 +187,6 @@ namespace jive
         enabled = component->isEnabled();
     }
 
-    void CommonGuiItem::componentChildrenChanged(juce::Component& componentThatsChildrenChanged)
-    {
-        if (&componentThatsChildrenChanged != component.get())
-            return;
-
-        getTopLevelDecorator().layOutChildren();
-    }
-
     [[nodiscard]] static auto hasWidgetRole(const juce::Component& component)
     {
         if (auto* handler = const_cast<juce::Component*>(&component)->getAccessibilityHandler())
@@ -264,6 +256,11 @@ namespace jive
                            juce::roundToInt(boxModel.getHeight()));
         getTopLevelDecorator().layOutChildren();
     }
+
+    void CommonGuiItem::childrenChanged()
+    {
+        getTopLevelDecorator().layOutChildren();
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
@@ -314,8 +311,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(state);
-            expect(!jive::BoxModel{ item->state }.hasAutoWidth());
-            expect(!jive::BoxModel{ item->state }.hasAutoHeight());
+            const auto& boxModel = jive::boxModel(*item);
+            expect(!boxModel.hasAutoWidth());
+            expect(!boxModel.hasAutoHeight());
             expectEquals(item->getComponent()->getWidth(), 222);
             expectEquals(item->getComponent()->getHeight(), 333);
 
@@ -344,8 +342,9 @@ private:
         expect(item->getComponent()->getHeight() == 150);
 
         item->getComponent()->setSize(400, 300);
-        expectEquals(jive::BoxModel{ item->state }.getWidth(), 400.f);
-        expectEquals(jive::BoxModel{ item->state }.getHeight(), 300.f);
+        const auto& boxModel = jive::boxModel(*item);
+        expectEquals(boxModel.getWidth(), 400.f);
+        expectEquals(boxModel.getHeight(), 300.f);
     }
 
     void testName()

@@ -19,6 +19,7 @@ namespace jive
         const std::shared_ptr<juce::Component> getComponent();
 
         virtual void insertChild(std::unique_ptr<GuiItem> child, int index);
+        virtual void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children);
         virtual void removeChild(GuiItem& childToRemove);
         virtual juce::Array<GuiItem*> getChildren();
         virtual juce::Array<const GuiItem*> getChildren() const;
@@ -34,6 +35,8 @@ namespace jive
         juce::ValueTree state;
 
     protected:
+        virtual void childrenChanged() {}
+
         const std::shared_ptr<juce::Component> component;
         GuiItem* const parent;
 
@@ -66,8 +69,13 @@ namespace jive
         const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
 
+        void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
+
         std::unique_ptr<Remover> remover;
 
         JUCE_LEAK_DETECTOR(GuiItem)
     };
+
+    [[nodiscard]] BoxModel& boxModel(GuiItem& decoratedItem);
+    [[nodiscard]] const BoxModel& boxModel(const GuiItem& decoratedItem);
 } // namespace jive
