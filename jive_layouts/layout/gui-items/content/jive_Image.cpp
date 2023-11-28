@@ -221,7 +221,6 @@ namespace jive
         idealHeight = juce::String{ calculateRequiredHeight() };
 
         component->addComponentListener(this);
-        component->setInterceptsMouseClicks(false, false);
     }
 } // namespace jive
 
