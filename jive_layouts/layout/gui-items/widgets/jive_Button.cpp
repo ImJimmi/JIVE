@@ -83,12 +83,10 @@ namespace jive
             triggerClick(getButton());
         };
         getButton().addListener(this);
-        getButton().addComponentListener(this);
     }
 
     Button::~Button()
     {
-        getButton().removeComponentListener(this);
         getButton().removeListener(this);
     }
 
@@ -108,15 +106,6 @@ namespace jive
 
         toggled = getButton().getToggleState();
         onClick.triggerWithoutSelfCallback();
-    }
-
-    void Button::componentChildrenChanged(juce::Component& comp)
-    {
-        auto& button = getButton();
-        jassertquiet(&comp == &button);
-
-        for (auto* child : button.getChildren())
-            child->addMouseListener(&button, true);
     }
 } // namespace jive
 
