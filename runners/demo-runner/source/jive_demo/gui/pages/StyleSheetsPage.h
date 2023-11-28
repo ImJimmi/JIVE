@@ -66,7 +66,7 @@ namespace jive_demo
                                     { "foreground", "#1C3144" },
                                     { "border", "#D00000" },
                                     { "font-size", 12 },
-                                    { "border-radius", 5 },
+                                    { "border-radius", 999 },
                                 },
                             },
                             { "padding", 15 },
