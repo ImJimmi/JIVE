@@ -52,7 +52,7 @@ public:
     {
     }
 
-    juce::ValueTree preset()
+    juce::ValueTree present()
     {
         return view;
     }
