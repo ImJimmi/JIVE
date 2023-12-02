@@ -308,19 +308,6 @@ namespace jive
             return value;
         }
 
-        for (auto stateToSearch = state.getParent();
-             stateToSearch.isValid();
-             stateToSearch = stateToSearch.getParent())
-        {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::childrenOnly>(stateToSearch,
-                                                                                          *selectors,
-                                                                                          propertyName);
-                value != juce::var{})
-            {
-                return value;
-            }
-        }
-
         return {};
     }
 
