@@ -17,6 +17,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "logging/jive_StringStreams.h"
 
 #include "algorithms/jive_Find.h"
+#include "algorithms/jive_Visitor.h"
 
 #include "values/jive_Colours.h"
 #include "values/jive_Event.h"
