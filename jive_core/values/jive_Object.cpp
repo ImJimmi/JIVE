@@ -82,6 +82,9 @@ namespace jive
     void Object::setProperty(const juce::Identifier& propertyName,
                              const juce::var& newValue)
     {
+        if (auto* childObject = dynamic_cast<Object*>(newValue.getDynamicObject()))
+            childObject->parent = this;
+
         const auto propertyChanged = DynamicObject::getProperties()
                                          .set(propertyName, newValue);
 
@@ -92,6 +95,32 @@ namespace jive
     const juce::NamedValueSet& Object::getProperties() const
     {
         return dynamic_cast<juce::DynamicObject*>(const_cast<Object*>(this))->getProperties();
+    }
+
+    Object* Object::getParent() noexcept
+    {
+        return parent;
+    }
+
+    const Object* Object::getParent() const noexcept
+    {
+        return parent;
+    }
+
+    Object* Object::getRoot() noexcept
+    {
+        if (parent == nullptr)
+            return this;
+
+        return parent->getRoot();
+    }
+
+    const Object* Object::getRoot() const noexcept
+    {
+        if (parent == nullptr)
+            return this;
+
+        return parent->getRoot();
     }
 
     void Object::addListener(Listener& listener) const

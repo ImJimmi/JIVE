@@ -42,7 +42,7 @@ namespace jive
 
     [[nodiscard]] double Length::getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const
     {
-        jassert(tree.getParent().isValid());
+        jassert(isValid(getParent(source)));
 
         if (id.toString().containsIgnoreCase("width") || id.toString().containsIgnoreCase("x"))
             return parentBounds.getWidth();
@@ -52,11 +52,11 @@ namespace jive
 
     [[nodiscard]] float Length::getFontSize() const
     {
-        for (auto toSearch = tree;
-             toSearch.isValid();
-             toSearch = toSearch.getParent())
+        for (auto toSearch = source;
+             isValid(source);
+             toSearch = getParent(source))
         {
-            if (const auto style = toSearch["style"];
+            if (const auto style = getVar(toSearch, "style");
                 style.isObject())
             {
                 if (const auto fontSize = style["font-size"];
@@ -72,7 +72,7 @@ namespace jive
 
     [[nodiscard]] float Length::getRootFontSize() const
     {
-        if (const auto style = tree.getRoot()["style"];
+        if (const auto style = getVar(getRoot(source), "style");
             style.isObject())
         {
             if (const auto fontSize = style["font-size"];

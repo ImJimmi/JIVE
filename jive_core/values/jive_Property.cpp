@@ -17,6 +17,7 @@ public:
         testHereditaryValues();
         testObservations();
         testFunctionalProperties();
+        testDynamicObjectSource();
     }
 
 private:
@@ -260,6 +261,120 @@ private:
         };
         expect(value.isFunctional());
         expectEquals(value.get(), 300);
+    }
+
+    void testDynamicObjectSource()
+    {
+        juce::ValueTree state{
+            "State",
+            {
+                {
+                    "object",
+                    new jive::Object{
+                        { "value", 12345 },
+                        {
+                            "inner",
+                            new jive::Object{
+                                { "leaf", new jive::Object{} },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        beginTest("DynamicObject source - standard template args");
+        {
+            jive::Property<int> value{
+                dynamic_cast<jive::Object*>(state["object"].getObject()),
+                "value",
+            };
+            expectEquals(value.get(), 12345);
+
+            value.set(98765);
+            expectEquals(value.get(), 98765);
+
+            expect(!value.isAuto());
+            value.setAuto();
+            expect(value.isAuto());
+
+            expect(value.exists());
+            value.clear();
+            expect(!value.exists());
+
+            expect(!value.isFunctional());
+            value = []() {
+                return 999;
+            };
+            expect(value.isFunctional());
+            expectEquals(value.get(), 999);
+
+            value = 7648;
+            expectEquals<juce::String>(value.toString(), "7648");
+
+            bool receivedCallback = false;
+            value.onValueChange = [&receivedCallback]() {
+                receivedCallback = true;
+            };
+            state["object"].getDynamicObject()->setProperty("foo", 111);
+            expect(!receivedCallback);
+            state["object"].getDynamicObject()->setProperty("value", 11358);
+            expect(receivedCallback);
+        }
+
+        beginTest("DynamicObject source - inheritFromParent");
+        {
+            jive::Property<int, jive::Inheritance::inheritFromParent> value{
+                dynamic_cast<jive::Object*>(state["object"]["inner"].getObject()),
+                "value",
+            };
+            expect(!value.exists());
+            expectEquals(value.get(), static_cast<int>(state["object"]["value"]));
+
+            value = 24816;
+            expectEquals(value.get(), 24816);
+
+            value.clear();
+            expectEquals(value.get(), static_cast<int>(state["object"]["value"]));
+
+            bool receivedCallback = false;
+            value.onValueChange = [&receivedCallback]() {
+                receivedCallback = true;
+            };
+            state["object"]["inner"].getDynamicObject()->setProperty("value", 11358);
+            expect(receivedCallback);
+            receivedCallback = false;
+            state["object"].getDynamicObject()->setProperty("value", 34544);
+            expect(receivedCallback);
+        }
+
+        beginTest("DynamicObject source - inheritFromAncestors");
+        {
+            state["object"]["inner"].getDynamicObject()->removeProperty("value");
+            jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
+                dynamic_cast<jive::Object*>(state["object"]["inner"]["leaf"].getObject()),
+                "value",
+            };
+            expect(!value.exists());
+            expectEquals(value.get(), static_cast<int>(state["object"]["value"]));
+        }
+
+        beginTest("DynamicObject source - accumulate");
+        {
+            state["object"].getDynamicObject()->setProperty("value", 123);
+            state["object"]["inner"].getDynamicObject()->setProperty("value", 456);
+            state["object"]["inner"]["leaf"].getDynamicObject()->setProperty("value", 789);
+
+            jive::Property<int, jive::Inheritance::doNotInherit, jive::Accumulation::accumulate> value{
+                dynamic_cast<jive::Object*>(state["object"].getObject()),
+                "value",
+            };
+            expect(value.exists());
+            expectEquals(value.get(),
+                         static_cast<int>(state["object"]["value"])
+                             + static_cast<int>(state["object"]["inner"]["value"])
+                             + static_cast<int>(state["object"]["inner"]["leaf"]["value"]));
+        }
     }
 };
 
