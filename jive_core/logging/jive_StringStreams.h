@@ -8,6 +8,7 @@ namespace juce
     String& operator<<(String& str, const var& value);
     String& operator<<(String& str, const Time& time);
     String& operator<<(String& str, long double value);
+    String& operator<<(String& str, RelativeTime relativeTime);
 
     template <typename T>
     String& operator<<(String& str, const Point<T>& point)

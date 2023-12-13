@@ -43,3 +43,5 @@ END_JUCE_MODULE_DECLARATION */
 #include "graphics/jive_Fill.h"
 
 #include "interface/jive_ComponentInteractionState.h"
+
+#include "time/jive_Timer.h"
