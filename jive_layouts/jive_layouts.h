@@ -20,6 +20,12 @@ END_JUCE_MODULE_DECLARATION */
     #endif
 #endif
 
+#ifdef JucePlugin_Name
+    #define JIVE_IS_PLUGIN_PROJECT 1
+#else
+    #define JIVE_IS_PLUGIN_PROJECT 0
+#endif
+
 namespace jive
 {
     class GuiItem;
