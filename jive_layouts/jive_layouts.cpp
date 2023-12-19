@@ -27,6 +27,10 @@
 #include "layout/gui-items/widgets/jive_ProgressBar.cpp"
 #include "layout/gui-items/widgets/jive_Slider.cpp"
 
+#if JIVE_IS_PLUGIN_PROJECT
+    #include "layout/gui-items/top-level/jive_PluginEditor.cpp"
+#endif
+
 #include "layout/gui-items/widgets/jive_Hyperlink.cpp"
 #include "layout/gui-items/widgets/jive_Knob.cpp"
 #include "layout/gui-items/widgets/jive_Spinner.cpp"

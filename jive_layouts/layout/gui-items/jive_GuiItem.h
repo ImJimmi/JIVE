@@ -13,7 +13,7 @@ namespace jive
                 GuiItem* parent = nullptr);
 
         GuiItem(const GuiItem& other);
-        virtual ~GuiItem() = default;
+        virtual ~GuiItem();
 
         const std::shared_ptr<const juce::Component> getComponent() const;
         const std::shared_ptr<juce::Component> getComponent();
@@ -72,6 +72,8 @@ namespace jive
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
 
         std::unique_ptr<Remover> remover;
+        juce::WeakReference<GuiItem>::Master masterReference;
+        friend class juce::WeakReference<GuiItem>;
 
         JUCE_LEAK_DETECTOR(GuiItem)
     };

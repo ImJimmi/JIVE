@@ -16,10 +16,15 @@ namespace jive
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType);
 
-        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree) const;
-        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::XmlElement& xml) const;
-        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::String& xmlString) const;
-        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const void* xmlStringData, int xmlStringDataSize) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::XmlElement& xml,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::String& xmlString,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const void* xmlStringData,
+                                                         int xmlStringDataSize,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr) const;
 
         void listenTo(GuiItem& item);
 
@@ -27,7 +32,9 @@ namespace jive
         void valueTreeChildAdded(juce::ValueTree& parentTree,
                                  juce::ValueTree& childWhichHasBeenAdded) final;
 
-        std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree, GuiItem* const parent) const;
+        std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree,
+                                           GuiItem* const parent,
+                                           juce::AudioProcessor* pluginProcessor) const;
 
         void expandAlias(juce::ValueTree& tree) const;
 
@@ -41,7 +48,7 @@ namespace jive
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
 
-        GuiItem* observedItem = nullptr;
+        juce::WeakReference<GuiItem> observedItem = nullptr;
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };

@@ -26,6 +26,11 @@ END_JUCE_MODULE_DECLARATION */
     #define JIVE_IS_PLUGIN_PROJECT 0
 #endif
 
+namespace juce
+{
+    class AudioProcessor;
+} // namespace juce
+
 namespace jive
 {
     class GuiItem;
@@ -57,6 +62,10 @@ namespace jive
 #include "layout/gui-items/widgets/jive_Label.h"
 #include "layout/gui-items/widgets/jive_ProgressBar.h"
 #include "layout/gui-items/widgets/jive_Slider.h"
+
+#if JIVE_IS_PLUGIN_PROJECT
+    #include "layout/gui-items/top-level/jive_PluginEditor.h"
+#endif
 
 #include "layout/gui-items/widgets/jive_Hyperlink.h"
 #include "layout/gui-items/widgets/jive_Knob.h"

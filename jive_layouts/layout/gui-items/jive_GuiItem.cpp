@@ -50,6 +50,11 @@ namespace jive
     {
     }
 
+    GuiItem::~GuiItem()
+    {
+        masterReference.clear();
+    }
+
     const std::shared_ptr<const juce::Component> GuiItem::getComponent() const
     {
         return component;
