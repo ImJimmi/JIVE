@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(JIVE
     VERSION 1.0.0
 )
-configure_file(${CMAKE_SOURCE_DIR}/version.txt.in version.txt)
+configure_file(version.txt.in version.txt)
 
 include(cmake/jive_options.cmake)
 include(cmake/jive_code_coverage.cmake)
