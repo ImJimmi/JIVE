@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AppState.h"
+#include "DemoState.h"
 
 #include <jive_demo/gui/WindowPresenter.h>
 #include <jive_demo/gui/tokens/Typography.h>
@@ -34,10 +34,10 @@ namespace jive_demo
         }
 
     private:
-        AppState state;
+        DemoState state;
 
         jive::Interpreter interpreter;
-        WindowPresenter windowPresenter{ state.getWindowState() };
+        WindowPresenter windowPresenter{ state.getWindowState(), "Window" };
         std::unique_ptr<jive::GuiItem> window;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Application)

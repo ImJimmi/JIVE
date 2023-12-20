@@ -15,7 +15,7 @@ namespace jive_demo
 {
     namespace views
     {
-        [[nodiscard]] static auto window()
+        [[nodiscard]] static auto window(const juce::String& windowType)
         {
             static constexpr auto style = [] {
                 return new jive::Object{
@@ -27,7 +27,7 @@ namespace jive_demo
             };
 
             return juce::ValueTree{
-                "Window",
+                windowType,
                 {
                     { "width", 800 },
                     { "height", 500 },
@@ -43,9 +43,9 @@ namespace jive_demo
     class WindowPresenter : private WindowState::Listener
     {
     public:
-        explicit WindowPresenter(WindowState sourceState)
+        explicit WindowPresenter(WindowState sourceState, const juce::String& windowType)
             : state{ sourceState }
-            , window{ views::window() }
+            , window{ views::window(windowType) }
             , homePage{ sourceState }
             , layoutsPage{ sourceState }
             , styleSheetsPage{ sourceState }
