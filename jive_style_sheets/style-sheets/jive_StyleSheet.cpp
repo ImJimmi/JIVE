@@ -318,7 +318,7 @@ namespace jive
              styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
         {
             if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(styleSheetToSearch->state,
-                                                                                               *styleSheetToSearch->selectors,
+                                                                                               *selectors,
                                                                                                propertyName);
                 value != juce::var{})
             {
