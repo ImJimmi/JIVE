@@ -2,31 +2,6 @@
 
 namespace jive
 {
-    namespace fontProperties
-    {
-        static const juce::Identifier fontFamily{ "font-family" };
-        static const juce::Identifier fontStyle{ "font-style" };
-        static const juce::Identifier fontWeight{ "font-weight" };
-        static const juce::Identifier fontSize{ "font-size" };
-        static const juce::Identifier letterSpacing{ "letter-spacing" };
-        static const juce::Identifier textDecoration{ "text-decoration" };
-        static const juce::Identifier fontStretch{ "font-stretch" };
-    } // namespace fontProperties
-
-    [[nodiscard]] static auto getAncestorTypes(const juce::ValueTree& child)
-    {
-        juce::StringArray types;
-
-        for (auto parent = child.getParent();
-             parent.isValid();
-             parent = parent.getParent())
-        {
-            types.add(parent.getType().toString());
-        }
-
-        return types;
-    }
-
     struct StyleSheet::Selectors
     {
     public:
@@ -67,7 +42,6 @@ namespace jive
             }
 
             result.add(state.getType().toString());
-            result.addArray(getAncestorTypes(state));
 
             if (!enabled.get())
                 result.add("disabled");
@@ -168,44 +142,44 @@ namespace jive
     {
         juce::Font font;
 
-        if (const auto fontFamily = findHierarchicalStyleProperty(fontProperties::fontFamily).toString();
+        if (const auto fontFamily = findHierarchicalStyleProperty("font-family").toString();
             fontFamily.isNotEmpty())
         {
             font.setTypefaceName(fontFamily);
         }
 
-        if (const auto fontStyle = findHierarchicalStyleProperty(fontProperties::fontStyle).toString();
+        if (const auto fontStyle = findHierarchicalStyleProperty("font-style").toString();
             fontStyle.isNotEmpty())
         {
             font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
         }
 
-        if (const auto weight = findHierarchicalStyleProperty(fontProperties::fontWeight).toString();
+        if (const auto weight = findHierarchicalStyleProperty("font-weight").toString();
             weight.isNotEmpty())
         {
             font.setBold(weight.compareIgnoreCase("bold") == 0);
         }
 
-        if (const auto size = findHierarchicalStyleProperty(fontProperties::fontSize);
+        if (const auto size = findHierarchicalStyleProperty("font-size");
             size != juce::var{})
         {
             font = font.withPointHeight(static_cast<float>(size));
         }
 
-        if (const auto spacing = findHierarchicalStyleProperty(fontProperties::letterSpacing);
+        if (const auto spacing = findHierarchicalStyleProperty("letter-spacing");
             spacing != juce::var{})
         {
             const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
             font.setExtraKerningFactor(extraKerning);
         }
 
-        if (const auto decoration = findHierarchicalStyleProperty(fontProperties::textDecoration).toString();
+        if (const auto decoration = findHierarchicalStyleProperty("text-decoration").toString();
             decoration.isNotEmpty())
         {
             font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
         }
 
-        if (const auto stretch = findHierarchicalStyleProperty(fontProperties::fontStretch);
+        if (const auto stretch = findHierarchicalStyleProperty("font-stretch");
             stretch != juce::var{})
         {
             font.setHorizontalScale(static_cast<float>(stretch));
@@ -250,8 +224,8 @@ namespace jive
 
     enum class StyleSearchStrategy
     {
-        objectAndChildren,
-        childrenOnly,
+        explicitAndSelectors,
+        selectorsOnly,
     };
 
     template <StyleSearchStrategy strategy>
@@ -266,16 +240,16 @@ namespace jive
                 const auto& nested = dynamic_cast<Object&>(*object
                                                                 .getProperty(selector)
                                                                 .getDynamicObject());
-                const auto value = findStyleProperty<StyleSearchStrategy::objectAndChildren>(nested,
-                                                                                             selectors,
-                                                                                             propertyName);
+                const auto value = findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(nested,
+                                                                                                selectors,
+                                                                                                propertyName);
 
                 if (value != juce::var{})
                     return value;
             }
         }
 
-        if constexpr (strategy == StyleSearchStrategy::objectAndChildren)
+        if constexpr (strategy == StyleSearchStrategy::explicitAndSelectors)
             return object.getProperty(propertyName);
         else
             return juce::var{};
@@ -300,12 +274,27 @@ namespace jive
 
     juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
     {
-        if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(state,
-                                                                                           *selectors,
-                                                                                           propertyName);
+        ReferenceCountedPointer styleSheetToSearch = const_cast<StyleSheet*>(this);
+
+        if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(styleSheetToSearch->state,
+                                                                                              *selectors,
+                                                                                              propertyName);
             value != juce::var{})
         {
             return value;
+        }
+
+        for (styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet();
+             styleSheetToSearch != nullptr;
+             styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
+        {
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::selectorsOnly>(styleSheetToSearch->state,
+                                                                                           *selectors,
+                                                                                           propertyName);
+                value != juce::var{})
+            {
+                return value;
+            }
         }
 
         return {};
@@ -317,9 +306,9 @@ namespace jive
              styleSheetToSearch != nullptr;
              styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
         {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::objectAndChildren>(styleSheetToSearch->state,
-                                                                                               *selectors,
-                                                                                               propertyName);
+            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(styleSheetToSearch->state,
+                                                                                                  *selectors,
+                                                                                                  propertyName);
                 value != juce::var{})
             {
                 return value;
@@ -424,6 +413,8 @@ public:
 
     void runTest() final
     {
+        testInheritingProperties();
+
     #if JUCE_MAC
         // These tests were flakey on Windows so for now, only run on macOS
         testBackgroundColour();
@@ -437,6 +428,60 @@ public:
     }
 
 private:
+    void testInheritingProperties()
+    {
+        beginTest("inheriting properties");
+
+        juce::ValueTree state{
+            "Component",
+            {
+                {
+                    "style",
+                    new jive::Object{
+                        { "background", "red" },
+                        {
+                            "Button",
+                            new jive::Object{
+                                { "background", "blue" },
+                            },
+                        },
+                        {
+                            "Text",
+                            new jive::Object{
+                                { "background", "green" },
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                juce::ValueTree{
+                    "Button",
+                    {},
+                    {
+                        juce::ValueTree{ "Text" },
+                    },
+                },
+            },
+        };
+        juce::Component component;
+        juce::TextButton button;
+        component.addAndMakeVisible(button);
+        jive::TextComponent text;
+        button.addAndMakeVisible(text);
+
+        jive::StyleSheet::ReferenceCountedPointer componentStyleSheet = new jive::StyleSheet{ component, state };
+        jive::StyleSheet::ReferenceCountedPointer buttonStyleSheet = new jive::StyleSheet{ button, state.getChild(0) };
+        jive::StyleSheet::ReferenceCountedPointer textStyleSheet = new jive::StyleSheet{ text, state.getChild(0).getChild(0) };
+        auto& componentCanvas = *jive::find<jive::BackgroundCanvas>(component);
+        auto& buttonCanvas = *jive::find<jive::BackgroundCanvas>(button);
+        auto& textCanvas = *jive::find<jive::BackgroundCanvas>(text);
+
+        expectEquals(*textCanvas.getFill().getColour(), juce::Colours::green);
+        expectEquals(*buttonCanvas.getFill().getColour(), juce::Colours::blue);
+        expectEquals(*componentCanvas.getFill().getColour(), juce::Colours::red);
+    }
+
     void testBackgroundColour()
     {
         beginTest("background colour");
