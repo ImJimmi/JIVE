@@ -1,20 +1,15 @@
 add_library(jive-demo INTERFACE)
 
 juce_add_binary_data(jive-demo-resources
-    HEADER_NAME "binary_data.h"
     NAMESPACE "binary_data"
 
 SOURCES
     resources/icons/back-small.svg
     resources/icons/build-large.svg
-    resources/icons/build-small.svg
     resources/icons/code-large.svg
-    resources/icons/code-small.svg
     resources/icons/layout-large.svg
-    resources/icons/layout-small.svg
     resources/icons/next-small.svg
     resources/icons/palette-large.svg
-    resources/icons/palette-small.svg
     resources/rubik-mono-one.ttf
     resources/rubik.ttf
     resources/source-code-pro.ttf

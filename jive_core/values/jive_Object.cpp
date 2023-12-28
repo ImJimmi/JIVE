@@ -117,7 +117,7 @@ namespace jive
                 replaceDynamicObjectsWithJiveObjects(*dynamicObject->getProperties().getVarPointerAt(i));
 
             Object::ReferenceCountedPointer object = new Object{ std::move(*dynamicObject) };
-            value = object;
+            value = object.get();
         }
 
         if (auto* array = value.getArray())
@@ -156,7 +156,7 @@ namespace juce
 
     var VariantConverter<jive::Object::ReferenceCountedPointer>::toVar(jive::Object::ReferenceCountedPointer object)
     {
-        return var{ object };
+        return var{ object.get() };
     }
 } // namespace juce
 
