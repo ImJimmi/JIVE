@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="zMxPxd" name="demo-app" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../source/"
+              defines="JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1&#10;JUCE_APPLICATION_NAME=&quot;jive-demo&quot;&#10;JUCE_APPLICATION_VERSION=&quot;0.0.0&quot;"
+              includeBinaryInJuceHeader="0" companyName="JIVE" companyWebsite="github.com/ImJimmi/JIVE"
+              binaryDataNamespace="binary_data">
+  <MAINGROUP id="ZWHZUu" name="demo-app">
+    <GROUP id="{17432EEE-718B-0A18-5C50-20A4659E5FBB}" name="resources">
+      <GROUP id="{4CD0BE4F-7AD4-9281-9ED6-0CB64C157468}" name="icons">
+        <FILE id="U1Hqjv" name="back-small.svg" compile="0" resource="1" file="resources/icons/back-small.svg"/>
+        <FILE id="aFbjjW" name="build-large.svg" compile="0" resource="1" file="resources/icons/build-large.svg"/>
+        <FILE id="dLodsS" name="code-large.svg" compile="0" resource="1" file="resources/icons/code-large.svg"/>
+        <FILE id="nZzQ90" name="layout-large.svg" compile="0" resource="1"
+              file="resources/icons/layout-large.svg"/>
+        <FILE id="ubYwpi" name="next-small.svg" compile="0" resource="1" file="resources/icons/next-small.svg"/>
+        <FILE id="V8HUP7" name="palette-large.svg" compile="0" resource="1"
+              file="resources/icons/palette-large.svg"/>
+      </GROUP>
+      <FILE id="ju4d01" name="README.md" compile="0" resource="1" file="resources/README.md"/>
+      <FILE id="nhBqiD" name="rubik-mono-one.ttf" compile="0" resource="1"
+            file="resources/rubik-mono-one.ttf"/>
+      <FILE id="EqkfeT" name="rubik.ttf" compile="0" resource="1" file="resources/rubik.ttf"/>
+      <FILE id="K3BOM8" name="source-code-pro.ttf" compile="0" resource="1"
+            file="resources/source-code-pro.ttf"/>
+    </GROUP>
+    <GROUP id="{05E6FF1C-C776-D0ED-B955-02E1AF9CBCCC}" name="source">
+      <GROUP id="{37A596CF-4142-B177-F521-70609490BB69}" name="jive_demo">
+        <GROUP id="{10293FBA-1B70-303C-0E30-6882610918C0}" name="gui">
+          <GROUP id="{3CC800BC-A841-DAE4-820F-CC067A7FE81D}" name="pages">
+            <FILE id="fgljV5" name="ArchitecturePage.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/pages/ArchitecturePage.h"/>
+            <FILE id="RwNofN" name="CodeExamplePage.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/pages/CodeExamplePage.h"/>
+            <FILE id="aJqEcZ" name="DevelopmentPage.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/pages/DevelopmentPage.h"/>
+            <FILE id="H8giG2" name="HomePage.h" compile="0" resource="0" file="source/jive_demo/gui/pages/HomePage.h"/>
+            <FILE id="CcqZxg" name="LayoutsPage.h" compile="0" resource="0" file="source/jive_demo/gui/pages/LayoutsPage.h"/>
+            <FILE id="dBZzqh" name="Pages.h" compile="0" resource="0" file="source/jive_demo/gui/pages/Pages.h"/>
+            <FILE id="x8mCAK" name="PageWithNavigation.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/pages/PageWithNavigation.h"/>
+            <FILE id="dbs7IR" name="StyleSheetsPage.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/pages/StyleSheetsPage.h"/>
+          </GROUP>
+          <GROUP id="{36B36018-40FF-001C-6D34-9C2F1FD6669A}" name="tokens">
+            <FILE id="s86R4B" name="Colours.h" compile="0" resource="0" file="source/jive_demo/gui/tokens/Colours.h"/>
+            <FILE id="mOHE51" name="Typography.h" compile="0" resource="0" file="source/jive_demo/gui/tokens/Typography.h"/>
+          </GROUP>
+          <GROUP id="{F36B9186-8BA0-A07C-658D-6921D99B614D}" name="views">
+            <FILE id="ImUt70" name="DemoCallToAction.h" compile="0" resource="0"
+                  file="source/jive_demo/gui/views/DemoCallToAction.h"/>
+            <FILE id="WFhy9o" name="Icons.h" compile="0" resource="0" file="source/jive_demo/gui/views/Icons.h"/>
+            <FILE id="p4eXJd" name="PageHeader.h" compile="0" resource="0" file="source/jive_demo/gui/views/PageHeader.h"/>
+            <FILE id="a4JmPN" name="PageLink.h" compile="0" resource="0" file="source/jive_demo/gui/views/PageLink.h"/>
+            <FILE id="tuQpl2" name="Subtitle.h" compile="0" resource="0" file="source/jive_demo/gui/views/Subtitle.h"/>
+            <FILE id="DxLCVw" name="Title.h" compile="0" resource="0" file="source/jive_demo/gui/views/Title.h"/>
+          </GROUP>
+          <FILE id="BC2LKk" name="Layouts.h" compile="0" resource="0" file="source/jive_demo/gui/Layouts.h"/>
+          <FILE id="T0iaBc" name="WindowPresenter.h" compile="0" resource="0"
+                file="source/jive_demo/gui/WindowPresenter.h"/>
+          <FILE id="PYhPeO" name="WindowState.h" compile="0" resource="0" file="source/jive_demo/gui/WindowState.h"/>
+        </GROUP>
+        <FILE id="F9abVo" name="Application.h" compile="0" resource="0" file="source/jive_demo/Application.h"/>
+        <FILE id="DxRpZG" name="DemoState.h" compile="0" resource="0" file="source/jive_demo/DemoState.h"/>
+      </GROUP>
+      <FILE id="ujFNtq" name="main.cpp" compile="1" resource="0" file="source/main.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraLinkerFlags="-Wl,-ld_classic">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="demo-app"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="demo-app"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="../libraries/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../libraries/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../libraries/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../libraries/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../libraries/JUCE/modules"/>
+        <MODULEPATH id="jive_components" path="../../../JIVE"/>
+        <MODULEPATH id="jive_core" path="../../../JIVE"/>
+        <MODULEPATH id="jive_layouts" path="../../../JIVE"/>
+        <MODULEPATH id="jive_style_sheets" path="../../../JIVE"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>
