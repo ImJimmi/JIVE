@@ -29,6 +29,12 @@ namespace jive
             },
         });
         creators.insert({
+            "Editor",
+            []() {
+                return std::make_unique<IgnoredComponent>();
+            },
+        });
+        creators.insert({
             "Hyperlink",
             []() {
                 return std::make_unique<juce::HyperlinkButton>();

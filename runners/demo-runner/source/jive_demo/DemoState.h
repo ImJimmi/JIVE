@@ -4,10 +4,10 @@
 
 namespace jive_demo
 {
-    class AppState
+    class DemoState
     {
     public:
-        AppState() = default;
+        DemoState() = default;
 
         [[nodiscard]] WindowState getWindowState()
         {

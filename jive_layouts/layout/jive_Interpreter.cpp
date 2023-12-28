@@ -30,24 +30,24 @@ namespace jive
         });
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, juce::AudioProcessor* pluginProcessor) const
     {
-        return interpret(tree, nullptr);
+        return interpret(tree, nullptr, pluginProcessor);
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::XmlElement& xml) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::XmlElement& xml, juce::AudioProcessor* pluginProcessor) const
     {
-        return interpret(parseXML(xml));
+        return interpret(parseXML(xml), pluginProcessor);
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::String& xmlString) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::String& xmlString, juce::AudioProcessor* pluginProcessor) const
     {
-        return interpret(jive::parseXML(xmlString));
+        return interpret(jive::parseXML(xmlString), pluginProcessor);
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const void* xmlStringData, int xmlStringDataSize) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const void* xmlStringData, int xmlStringDataSize, juce::AudioProcessor* pluginProcessor) const
     {
-        return interpret(parseXML(xmlStringData, xmlStringDataSize));
+        return interpret(parseXML(xmlStringData, xmlStringDataSize), pluginProcessor);
     }
 
     void Interpreter::listenTo(GuiItem& item)
@@ -174,7 +174,8 @@ namespace jive
     }
 
     static std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
-                                             const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators)
+                                             const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& customDecorators,
+                                             [[maybe_unused]] juce::AudioProcessor* pluginProcessor)
     {
         item = std::make_unique<CommonGuiItem>(std::move(item));
         item = decorateWithHereditaryBehaviour(std::move(item));
@@ -186,16 +187,21 @@ namespace jive
         for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->state.getType(), customDecorators))
             item = (*decorateWithCustomDecorations)(std::move(item));
 
+#if JIVE_IS_PLUGIN_PROJECT
+        if (item->state.getType().toString() == "Editor")
+            item = std::make_unique<PluginEditor>(std::move(item), pluginProcessor);
+#endif
+
         return item;
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, GuiItem* const parent, juce::AudioProcessor* pluginProcessor) const
     {
         auto item = createUndecoratedItem(tree, parent);
 
         if (item != nullptr)
         {
-            item = decorate(std::move(item), customDecorators);
+            item = decorate(std::move(item), customDecorators, pluginProcessor);
             setChildItems(*item);
         }
 
@@ -251,7 +257,7 @@ namespace jive
 
     void Interpreter::insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const
     {
-        auto childItem = interpret(childState, &item);
+        auto childItem = interpret(childState, &item, nullptr);
 
         if (childItem != nullptr)
         {
@@ -266,7 +272,7 @@ namespace jive
 
         for (auto i = 0; i < item.state.getNumChildren(); i++)
         {
-            if (auto child = interpret(item.state.getChild(i), &item);
+            if (auto child = interpret(item.state.getChild(i), &item, nullptr);
                 child != nullptr)
             {
                 if (item.isContainer() || child->isContent())
