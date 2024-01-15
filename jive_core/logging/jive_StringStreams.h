@@ -30,4 +30,17 @@ namespace juce
                    << ", " << rect.getHeight()
                    << " }";
     }
+
+    template <typename T>
+    String& operator<<(String& str, const std::optional<T>& optional)
+    {
+        str << "std::optional<" << typeid(T).name() << "> { ";
+
+        if (optional.has_value())
+            str << *optional;
+        else
+            str << "NULL";
+
+        return str << " }";
+    }
 } // namespace juce
