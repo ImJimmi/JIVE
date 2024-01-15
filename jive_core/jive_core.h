@@ -17,8 +17,13 @@ END_JUCE_MODULE_DECLARATION */
 #include "logging/jive_StringStreams.h"
 
 #include "algorithms/jive_Find.h"
+#include "algorithms/jive_Interpolate.h"
+#include "algorithms/jive_TransferFunction.h"
 #include "algorithms/jive_Visitor.h"
 
+#include "algorithms/jive_Bezier.h"
+
+#include "time/jive_TimeParser.h"
 #include "values/jive_Colours.h"
 #include "values/jive_Event.h"
 #include "values/jive_Object.h"
@@ -46,3 +51,6 @@ END_JUCE_MODULE_DECLARATION */
 #include "interface/jive_ComponentInteractionState.h"
 
 #include "time/jive_Timer.h"
+
+#include "kinetics/jive_Easing.h"
+#include "kinetics/jive_Transitions.h"

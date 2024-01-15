@@ -3,8 +3,11 @@ add_library(jive::jive_core ALIAS jive_core)
 
 target_sources(jive_core
 PUBLIC
+    algorithms/jive_Bezier.h
     algorithms/jive_Find.cpp
     algorithms/jive_Find.h
+    algorithms/jive_Interpolate.h
+    algorithms/jive_TransferFunction.h
     algorithms/jive_Visitor.h
 
     geometry/jive_BorderRadii.h
@@ -27,6 +30,11 @@ PUBLIC
     interface/jive_ComponentInteractionState.cpp
     interface/jive_ComponentInteractionState.h
 
+    kinetics/jive_Easing.cpp
+    kinetics/jive_Easing.h
+    kinetics/jive_Transitions.cpp
+    kinetics/jive_Transitions.h
+
     logging/jive_ConsoleProgressBar.cpp
     logging/jive_ConsoleProgressBar.h
     logging/jive_ScopeIndentedLogger.cpp
@@ -36,6 +44,7 @@ PUBLIC
 
     time/jive_Timer.cpp
     time/jive_Timer.h
+    time/jive_TimeParser.h
 
     values/variant-converters/jive_AttributedStringVariantConverters.cpp
     values/variant-converters/jive_AttributedStringVariantConverters.h

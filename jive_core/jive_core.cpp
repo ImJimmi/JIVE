@@ -28,3 +28,6 @@
 #include "interface/jive_ComponentInteractionState.cpp"
 
 #include "time/jive_Timer.cpp"
+
+#include "kinetics/jive_Easing.cpp"
+#include "kinetics/jive_Transitions.cpp"
