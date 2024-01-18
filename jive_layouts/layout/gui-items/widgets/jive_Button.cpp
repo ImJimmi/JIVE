@@ -14,6 +14,17 @@ namespace jive
 #endif
     }
 
+    [[nodiscard]] static juce::Button* findFirstChildButton(const juce::Component& container)
+    {
+        for (auto* child : container.getChildren())
+        {
+            if (auto* button = dynamic_cast<juce::Button*>(child))
+                return button;
+        }
+
+        return nullptr;
+    }
+
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , toggleable{ state, "toggleable" }
@@ -83,10 +94,12 @@ namespace jive
             triggerClick(getButton());
         };
         getButton().addListener(this);
+        getButton().addComponentListener(this);
     }
 
     Button::~Button()
     {
+        getButton().removeComponentListener(this);
         getButton().removeListener(this);
     }
 
@@ -106,6 +119,17 @@ namespace jive
 
         toggled = getButton().getToggleState();
         onClick.triggerWithoutSelfCallback();
+    }
+
+    void Button::componentParentHierarchyChanged(juce::Component& comp)
+    {
+        jassertquiet(&comp == &getButton());
+
+        if (radioGroup.get() != 0 && !toggled.get())
+        {
+            if (auto* parentComponent = getButton().getParentComponent())
+                toggled = findFirstChildButton(*parentComponent) == &getButton();
+        }
     }
 } // namespace jive
 

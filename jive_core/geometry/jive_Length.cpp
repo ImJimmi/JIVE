@@ -6,20 +6,27 @@ namespace jive
 {
     [[nodiscard]] float Length::toPixels(const juce::Rectangle<float>& parentBounds) const
     {
+        const auto getCurrent = [this] {
+            if (auto* transition = getTransition())
+                return transition->calculateCurrent<float>();
+
+            return get().getFloatValue();
+        };
+
         if (isAuto())
             return pixelValueWhenAuto;
 
         if (isPixels())
-            return get().getFloatValue();
+            return getCurrent();
 
         if (isPercent())
         {
-            const auto scale = static_cast<double>(get().getFloatValue()) * 0.01;
+            const auto scale = static_cast<double>(getCurrent()) * 0.01;
             return static_cast<float>(scale * getRelativeParentLength(parentBounds.toDouble()));
         }
 
         const auto fontSize = isRem() ? getRootFontSize() : getFontSize();
-        return fontSize * get().getFloatValue();
+        return fontSize * getCurrent();
     }
 
     [[nodiscard]] bool Length::isPixels() const

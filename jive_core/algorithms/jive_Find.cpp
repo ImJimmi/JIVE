@@ -1,5 +1,7 @@
 #include "jive_Find.h"
 
+#include <jive_core/values/variant-converters/jive_VariantConvertion.h>
+
 namespace jive
 {
     juce::ValueTree find(const juce::ValueTree& root,
@@ -24,6 +26,15 @@ namespace jive
         }
 
         return {};
+    }
+
+    juce::ValueTree findElementWithID(const juce::ValueTree& root,
+                                      const juce::Identifier& id)
+    {
+        return find(root,
+                    [id](const auto& element) {
+                        return fromVar<juce::Identifier>(element["id"]) == id;
+                    });
     }
 } // namespace jive
 

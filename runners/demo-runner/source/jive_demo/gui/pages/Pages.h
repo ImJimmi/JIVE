@@ -10,7 +10,7 @@ namespace jive_demo
         layouts,
         styleSheets,
         development,
-        architecture,
+        animations,
 
         numPages,
     };

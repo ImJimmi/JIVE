@@ -18,5 +18,7 @@ namespace jive
         Property<float> flexShrink;
         Property<float> flexBasis;
         Property<juce::FlexItem::AlignSelf> alignSelf;
+
+        const std::unique_ptr<juce::Component> layoutDummy;
     };
 } // namespace jive

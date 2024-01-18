@@ -10,6 +10,7 @@ SOURCES
     resources/icons/build-large.svg
     resources/icons/code-large.svg
     resources/icons/layout-large.svg
+    resources/icons/motion-blur-large.svg
     resources/icons/next-small.svg
     resources/icons/palette-large.svg
     resources/rubik-mono-one.ttf

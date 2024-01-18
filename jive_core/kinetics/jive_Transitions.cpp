@@ -47,9 +47,15 @@ namespace jive
         return static_cast<int>(std::size(transitions));
     }
 
-    Transitions::Transition& Transitions::operator[](const juce::String& propertyName)
+    Transitions::Transition* Transitions::operator[](const juce::String& propertyName)
     {
-        return transitions[propertyName];
+        if (const auto keyValuePair = transitions.find(propertyName);
+            keyValuePair != std::end(transitions))
+        {
+            return &keyValuePair->second;
+        }
+
+        return nullptr;
     }
 
     Transitions::ReferenceCountedPointer Transitions::fromString(const juce::String& s)
@@ -74,6 +80,9 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+    #include <jive_core/values/jive_Property.h>
+
 class TransitionsTests : public juce::UnitTest
 {
 public:
@@ -87,6 +96,7 @@ public:
         testTransitionParsing();
         testTransitionsParsing();
         testInterpolation();
+        testAutoUpdating();
     }
 
 private:
@@ -201,15 +211,25 @@ private:
 
     void testTransitionsParsing()
     {
-        beginTest("transitions");
+        beginTest("transitions property");
+        {
+            juce::ValueTree state{ "State" };
+            jive::Property<jive::Transitions::ReferenceCountedPointer> transitions{ state, "transitions" };
+            expect(!transitions.exists());
+
+            state.setProperty("transitions", "width 100s", nullptr);
+            expect(transitions.exists());
+        }
+
+        beginTest("parsing transitions from string");
         {
             const auto transitions = jive::Transitions::fromString("width 200ms, opacity 400ms");
             expect(transitions != nullptr);
             expectEquals(transitions->size(), 2);
-            expectEquals((*transitions)["width"].duration, juce::RelativeTime::seconds(0.2));
-            expectEquals((*transitions)["opacity"].duration, juce::RelativeTime::seconds(0.4));
-            expectEquals((*transitions)["foo"].duration, juce::RelativeTime::seconds(0.0));
-            expectEquals(transitions->size(), 3);
+            expectEquals((*transitions)["width"]->duration, juce::RelativeTime::seconds(0.2));
+            expectEquals((*transitions)["opacity"]->duration, juce::RelativeTime::seconds(0.4));
+            expect((*transitions)["foo"] == nullptr);
+            expectEquals(transitions->size(), 2);
         }
     }
 
@@ -236,6 +256,36 @@ private:
             jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.21));
             expectLessThan(transition->calculateCurrent(0.0f, 100.0f, commencement), 50.0f);
         }
+    }
+
+    void testAutoUpdating()
+    {
+        beginTest("auto-updating");
+
+        juce::ValueTree state{
+            "Component",
+            {
+                { "width", 0 },
+                { "transition", "width 5s" },
+            },
+        };
+        jive::Property<double> width{ state, "width" };
+        width = 100.0;
+
+        std::optional<double> valueFromLastCallback;
+        width.onTransitionProgressed = [&valueFromLastCallback, &width] {
+            valueFromLastCallback = width.getTransition()->calculateCurrent<double>();
+        };
+        expect(!valueFromLastCallback.has_value());
+
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+        expect(valueFromLastCallback.has_value());
+        expectEquals(valueFromLastCallback.value(), 20.0);
+        valueFromLastCallback = std::nullopt;
+
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(100.0));
+        expect(valueFromLastCallback.has_value());
+        expectEquals(valueFromLastCallback.value(), 100.0);
     }
 };
 

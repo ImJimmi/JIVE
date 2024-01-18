@@ -274,6 +274,7 @@ namespace jive
 
     std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const
     {
+        // jassert(tree.getType().toString() != "svg");
         auto expandedTree = tree;
         expandAlias(expandedTree);
 

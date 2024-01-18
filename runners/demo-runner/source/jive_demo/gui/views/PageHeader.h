@@ -52,7 +52,7 @@ namespace jive_demo::views
                 "Component",
                 {
                     { "flex-direction", "row" },
-                    { "padding", 25 },
+                    { "padding", 20 },
                     { "style", style() },
                     { "align-items", "centre" },
                 },

@@ -41,6 +41,7 @@ namespace jive
             backgroundCanvas.setBorderWidth(borderWidth.calculateCurrent());
         };
         borderWidth.onValueChange = updateBorderWidth;
+        borderWidth.onTransitionProgressed = updateBorderWidth;
 
         component->addComponentListener(this);
     }
@@ -343,7 +344,6 @@ namespace jive
     {
         backgroundCanvas.setFill(getBackground());
         backgroundCanvas.setBorderFill(getBorderFill());
-        // backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
 
         const auto foreground = getForeground();

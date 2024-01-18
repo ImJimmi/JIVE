@@ -4,11 +4,12 @@
 
 namespace jive_demo::colours
 {
-    static const auto page = jive::parseColour("#14181D");
+    static const auto content = jive::parseColour("#CDD9E5");
+    static const auto menu = jive::parseColour("#21262D");
     static const auto widgetStart = jive::parseColour("#181F27");
     static const auto widgetEnd = jive::parseColour("#161D24");
+    static const auto page = jive::parseColour("#14181D");
     static const auto panel = jive::parseColour("#0D1117");
-    static const auto content = jive::parseColour("#CDD9E5");
 
     static const auto red400 = jive::parseColour("#F47067");
     static const auto red500 = jive::parseColour("#E5534B");

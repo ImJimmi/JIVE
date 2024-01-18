@@ -6,7 +6,7 @@
 namespace jive
 {
     BlockItem::BlockItem(std::unique_ptr<GuiItem> itemToDecorate)
-        : GuiItemDecorator{ std::move(itemToDecorate) }
+        : ContainerItem::Child{ std::move(itemToDecorate) }
         , x{ state, "x" }
         , y{ state, "y" }
         , centreX{ state, "centre-x" }
@@ -16,23 +16,42 @@ namespace jive
     {
         jassert(getParent() != nullptr);
 
-        x.onValueChange = [this]() {
+        const auto updateBounds = [this] {
+            getComponent()->setBounds(calculateBounds());
+        };
+
+        x.onValueChange = [this, updateBounds] {
             centreX.clear();
-            getComponent()->setBounds(calculateBounds());
+            updateBounds();
         };
-        y.onValueChange = [this]() {
+        x.onTransitionProgressed = updateBounds;
+
+        y.onValueChange = [this, updateBounds]() {
             centreY.clear();
-            getComponent()->setBounds(calculateBounds());
+            updateBounds();
         };
-        centreX.onValueChange = [this]() {
+        y.onTransitionProgressed = updateBounds;
+
+        centreX.onValueChange = [this, updateBounds]() {
             x.clear();
-            getComponent()->setBounds(calculateBounds());
+            updateBounds();
         };
-        centreY.onValueChange = [this]() {
+        centreX.onTransitionProgressed = updateBounds;
+
+        centreY.onValueChange = [this, updateBounds]() {
             y.clear();
+            updateBounds();
+        };
+        centreY.onTransitionProgressed = updateBounds;
+
+        width.onTransitionProgressed = [this] {
             getComponent()->setBounds(calculateBounds());
         };
-        getComponent()->setBounds(calculateBounds());
+        height.onTransitionProgressed = [this] {
+            getComponent()->setBounds(calculateBounds());
+        };
+
+        updateBounds();
     }
 
     int BlockItem::calculateX() const

@@ -7,13 +7,13 @@ namespace jive_demo::icons
 {
     namespace small
     {
-        [[nodiscard]] static auto back()
+        [[nodiscard]] inline auto back()
         {
             return jive::parseXML(binary_data::backsmall_svg,
                                   binary_data::backsmall_svgSize);
         }
 
-        [[nodiscard]] static auto next()
+        [[nodiscard]] inline auto next()
         {
             return jive::parseXML(binary_data::nextsmall_svg,
                                   binary_data::nextsmall_svgSize);
@@ -22,25 +22,31 @@ namespace jive_demo::icons
 
     namespace large
     {
-        [[nodiscard]] static auto build()
+        [[nodiscard]] inline auto build()
         {
             return jive::parseXML(binary_data::buildlarge_svg,
                                   binary_data::buildlarge_svgSize);
         }
 
-        [[nodiscard]] static auto code()
+        [[nodiscard]] inline auto code()
         {
             return jive::parseXML(binary_data::codelarge_svg,
                                   binary_data::codelarge_svgSize);
         }
 
-        [[nodiscard]] static auto layout()
+        [[nodiscard]] inline auto layout()
         {
             return jive::parseXML(binary_data::layoutlarge_svg,
                                   binary_data::layoutlarge_svgSize);
         }
 
-        [[nodiscard]] static auto palette()
+        [[nodiscard]] inline auto motionBlur()
+        {
+            return jive::parseXML(binary_data::motionblurlarge_svg,
+                                  binary_data::motionblurlarge_svgSize);
+        }
+
+        [[nodiscard]] inline auto palette()
         {
             return jive::parseXML(binary_data::palettelarge_svg,
                                   binary_data::palettelarge_svgSize);

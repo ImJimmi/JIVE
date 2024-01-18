@@ -23,7 +23,11 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "algorithms/jive_Bezier.h"
 
+#include "kinetics/jive_Easing.h"
 #include "time/jive_TimeParser.h"
+#include "time/jive_Timer.h"
+#include "values/jive_PropertyBehaviours.h"
+
 #include "values/jive_Colours.h"
 #include "values/jive_Event.h"
 #include "values/jive_Object.h"
@@ -50,7 +54,4 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "interface/jive_ComponentInteractionState.h"
 
-#include "time/jive_Timer.h"
-
-#include "kinetics/jive_Easing.h"
 #include "kinetics/jive_Transitions.h"

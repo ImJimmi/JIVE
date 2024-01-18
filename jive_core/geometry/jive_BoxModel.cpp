@@ -12,7 +12,8 @@ namespace jive
         , maxHeight{ state, "max-height" }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
-        , componentSize{ state, "component-size" }
+        , componentWidth{ state, "component-width" }
+        , componentHeight{ state, "component-height" }
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
@@ -25,49 +26,70 @@ namespace jive
             height.setAuto();
         if (!isValid.exists())
             isValid = true;
-        if (!componentSize.exists())
-        {
-            componentSize = juce::Rectangle{
-                calculateComponentWidth(),
-                calculateComponentHeight(),
-            };
-        }
+        if (!componentWidth.exists())
+            componentWidth = calculateComponentWidth();
+        if (!componentHeight.exists())
+            componentHeight = calculateComponentHeight();
 
-        const auto onBoxModelChanged = [this]() {
+        const auto informBoxModelChanged = [this]() {
+            listeners.call(&Listener::boxModelChanged, *this);
+        };
+        const auto onBoxModelChanged = [this, informBoxModelChanged]() {
             if (callbackLock.get())
                 return;
 
             isValid = true;
-            listeners.call(&Listener::boxModelChanged, *this);
+            informBoxModelChanged();
             invalidateParent();
         };
-        const auto recalculateSize = [this, onBoxModelChanged]() {
-            if (callbackLock.get())
-                return;
+        const auto handleOnValueChange = [this, onBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
+            const auto recalculateSize = [this, onBoxModelChanged, &property, updateWidth, updateHeight] {
+                if (callbackLock.get())
+                    return;
 
-            const auto sizeBefore = componentSize.get();
-            componentSize = juce::Rectangle{
-                calculateComponentWidth(),
-                calculateComponentHeight(),
+                const auto widthBefore = componentWidth.get();
+
+                if (updateWidth)
+                    componentWidth = calculateComponentWidth();
+
+                const auto heightBefore = componentHeight.get();
+
+                if (updateHeight)
+                    componentHeight = calculateComponentHeight();
+
+                const auto isSameSize = juce::approximatelyEqual(componentWidth.get(), widthBefore)
+                                     && juce::approximatelyEqual(componentHeight.get(), heightBefore);
+
+                if (isSameSize && property.getTransition() == nullptr)
+                    onBoxModelChanged();
             };
 
-            if (componentSize.get() == sizeBefore)
-                onBoxModelChanged();
+            property.onValueChange = recalculateSize;
         };
 
-        width.onValueChange = recalculateSize;
-        height.onValueChange = recalculateSize;
-        padding.onValueChange = recalculateSize;
-        border.onValueChange = recalculateSize;
-        margin.onValueChange = recalculateSize;
-        minWidth.onValueChange = recalculateSize;
-        minHeight.onValueChange = recalculateSize;
-        maxWidth.onValueChange = recalculateSize;
-        maxHeight.onValueChange = recalculateSize;
+        handleOnValueChange(width, true, false);
+        handleOnValueChange(height, false, true);
+        handleOnValueChange(padding, true, true);
+        handleOnValueChange(border, true, true);
+        handleOnValueChange(minWidth, true, false);
+        handleOnValueChange(minHeight, false, true);
+        handleOnValueChange(maxWidth, true, false);
+        handleOnValueChange(maxHeight, false, true);
 
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
-        componentSize.onValueChange = onBoxModelChanged;
+        componentWidth.onValueChange = [this, onBoxModelChanged]() {
+            if (!componentWidth.isTransitioning())
+                onBoxModelChanged();
+        };
+        componentHeight.onValueChange = [this, onBoxModelChanged]() {
+            if (!componentHeight.isTransitioning())
+                onBoxModelChanged();
+        };
+        margin.onValueChange = [this, onBoxModelChanged]() {
+            if (!margin.isTransitioning())
+                onBoxModelChanged();
+        };
 
         isValid.onValueChange = [this]() {
             if (callbackLock.get())
@@ -76,11 +98,31 @@ namespace jive
             if (!isValid.get())
                 listeners.call(&Listener::boxModelInvalidated, *this);
         };
+
+        componentWidth.setTransitionSourceProperty(width.id);
+        componentHeight.setTransitionSourceProperty(height.id);
+
+        componentWidth.onTransitionProgressed = informBoxModelChanged;
+        componentHeight.onTransitionProgressed = informBoxModelChanged;
+        padding.onTransitionProgressed = informBoxModelChanged;
+        border.onTransitionProgressed = informBoxModelChanged;
+        margin.onTransitionProgressed = informBoxModelChanged;
     }
 
     float BoxModel::getWidth() const
     {
-        return componentSize.get().getWidth();
+        if (auto* transition = componentWidth.getTransition())
+            return transition->calculateCurrent<float>();
+
+        return componentWidth;
+    }
+
+    void BoxModel::setWidth(float newWidth)
+    {
+        componentWidth = newWidth;
+
+        if (!state.getParent().isValid())
+            width = juce::String{ juce::roundToInt(newWidth) };
     }
 
     bool BoxModel::hasAutoWidth() const
@@ -90,7 +132,18 @@ namespace jive
 
     float BoxModel::getHeight() const
     {
-        return componentSize.get().getHeight();
+        if (auto* transition = componentHeight.getTransition())
+            return transition->calculateCurrent<float>();
+
+        return componentHeight;
+    }
+
+    void BoxModel::setHeight(float newHeight)
+    {
+        componentHeight = newHeight;
+
+        if (!state.getParent().isValid())
+            height = juce::String{ juce::roundToInt(newHeight) };
     }
 
     bool BoxModel::hasAutoHeight() const
@@ -100,7 +153,8 @@ namespace jive
 
     void BoxModel::setSize(float newWidth, float newHeight)
     {
-        componentSize = juce::Rectangle{ newWidth, newHeight };
+        componentWidth = newWidth;
+        componentHeight = newHeight;
 
         if (!state.getParent().isValid())
         {
@@ -111,30 +165,37 @@ namespace jive
 
     juce::BorderSize<float> BoxModel::getPadding() const
     {
+        if (auto* transition = padding.getTransition())
+            return transition->calculateCurrent<juce::BorderSize<float>>();
+
         return padding;
     }
 
     juce::BorderSize<float> BoxModel::getBorder() const
     {
+        if (auto* transition = border.getTransition())
+            return transition->calculateCurrent<juce::BorderSize<float>>();
+
         return border;
     }
 
     juce::BorderSize<float> BoxModel::getMargin() const
     {
+        if (auto* transition = margin.getTransition())
+            return transition->calculateCurrent<juce::BorderSize<float>>();
+
         return margin;
     }
 
     juce::Rectangle<float> BoxModel::getOuterBounds() const
     {
-        return componentSize.get();
+        return { getWidth(), getHeight() };
     }
 
     juce::Rectangle<float> BoxModel::getContentBounds() const
     {
-        const auto bounds = padding
-                                .get()
-                                .subtractedFrom(border
-                                                    .get()
+        const auto bounds = getPadding()
+                                .subtractedFrom(getBorder()
                                                     .subtractedFrom(getOuterBounds()));
         return bounds.withSize(juce::jmax(0.0f, bounds.getWidth()),
                                juce::jmax(0.0f, bounds.getHeight()));
@@ -170,25 +231,26 @@ namespace jive
     {
         if (state.getParent().isValid())
         {
-            const Property<juce::Rectangle<float>> parentSize{ state.getParent(), componentSize.id };
-            return parentSize.get();
+            const Property<float> parentWidth{ state.getParent(), componentWidth.id };
+            const Property<float> parentHeight{ state.getParent(), componentHeight.id };
+            return { parentWidth.get(), parentHeight.get() };
         }
 
-        return juce::Rectangle<float>{};
+        return {};
     }
 
     float BoxModel::calculateComponentWidth() const
     {
-        if (width.isAuto())
-            return padding.get().getLeftAndRight() + border.get().getLeftAndRight();
+        if (hasAutoWidth())
+            return getPadding().getLeftAndRight() + getBorder().getLeftAndRight();
 
         return width.toPixels(getParentBounds());
     }
 
     float BoxModel::calculateComponentHeight() const
     {
-        if (height.isAuto())
-            return padding.get().getTopAndBottom() + border.get().getTopAndBottom();
+        if (hasAutoHeight())
+            return getPadding().getTopAndBottom() + getBorder().getTopAndBottom();
 
         return height.toPixels(getParentBounds());
     }
@@ -228,6 +290,7 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/logging/jive_StringStreams.h>
+    #include <jive_core/time/jive_Timer.h>
 
 class BoxModelUnitTest : public juce::UnitTest
 {
@@ -244,6 +307,7 @@ public:
         testBorder();
         testMargin();
         testContentBounds();
+        testTransitions();
     }
 
 private:
@@ -374,6 +438,164 @@ private:
                          200.0f - 30.0f - 30.0f - 10.0f - 20.0f,
                          150.0f - 30.0f - 30.0f - 5.0f - 15.0f,
                      });
+    }
+
+    struct Listener : public jive::BoxModel::Listener
+    {
+        void boxModelChanged(jive::BoxModel&) final
+        {
+            ++callbackCount;
+        }
+
+        int callbackCount = 0;
+    };
+
+    void testTransitions()
+    {
+        beginTest("component size transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 0 },
+                    { "height", 0 },
+                    { "padding", 10 },
+                    { "border-width", 10 },
+                    { "margin", 10 },
+                    { "transition", "width 5s, height 3s" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            Listener listener;
+            boxModel.addListener(listener);
+            expectEquals(boxModel.getWidth(), 0.0f);
+            expectEquals(boxModel.getHeight(), 0.0f);
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 0.0f, 0.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 0.0f, 0.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            state.setProperty("width", 100, nullptr);
+            expectEquals(boxModel.getWidth(), 0.0f);
+            expectEquals(boxModel.getHeight(), 0.0f);
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 0.0f, 0.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 0.0f, 0.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(boxModel.getWidth(), 20.0f);
+            expectEquals(boxModel.getHeight(), 0.0f);
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 20.0f, 0.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 0.0f, 0.0f });
+            expectWithinAbsoluteError(listener.callbackCount, 60, 1);
+
+            state.setProperty("height", 90, nullptr);
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(boxModel.getWidth(), 40.0f);
+            expectEquals(boxModel.getHeight(), 30.0f);
+            expectWithinAbsoluteError(listener.callbackCount, 180, 2);
+        }
+
+        beginTest("padding transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                    { "padding", 0 },
+                    { "border-width", 10 },
+                    { "margin", 10 },
+                    { "transition", "padding 200ms" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            Listener listener;
+            boxModel.addListener(listener);
+            expectEquals(boxModel.getPadding(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 10.0f, 10.0f, 80.0f, 80.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            state.setProperty("padding", "10 20 30 40", nullptr);
+            expectEquals(boxModel.getPadding(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 10.0f, 10.0f, 80.0f, 80.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.1));
+            expectEquals(boxModel.getPadding(), juce::BorderSize{ 5.0f, 20.0f, 15.0f, 10.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 30.0f, 15.0f, 50.0f, 60.0f });
+            expectWithinAbsoluteError(listener.callbackCount, 5, 1);
+        }
+
+        beginTest("border transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                    { "padding", 10 },
+                    { "border-width", 0 },
+                    { "margin", 10 },
+                    { "transition", "border-width 10s" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            Listener listener;
+            boxModel.addListener(listener);
+            expectEquals(boxModel.getBorder(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 10.0f, 10.0f, 80.0f, 80.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            state.setProperty("border-width", "100 200 300 400", nullptr);
+            expectEquals(boxModel.getBorder(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 10.0f, 10.0f, 80.0f, 80.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(boxModel.getBorder(), juce::BorderSize{ 10.0f, 40.0f, 30.0f, 20.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 50.0f, 20.0f, 20.0f, 40.0f });
+            expectWithinAbsoluteError(listener.callbackCount, 60, 1);
+        }
+
+        beginTest("margin transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                    { "padding", 10 },
+                    { "border-width", 10 },
+                    { "margin", 0 },
+                    { "transition", "margin 10s" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            Listener listener;
+            boxModel.addListener(listener);
+            expectEquals(boxModel.getMargin(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 60.0f, 60.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            state.setProperty("margin", "100 200 300 400", nullptr);
+            expectEquals(boxModel.getMargin(), juce::BorderSize{ 0.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 60.0f, 60.0f });
+            expectEquals(listener.callbackCount, 0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(boxModel.getMargin(), juce::BorderSize{ 10.0f, 40.0f, 30.0f, 20.0f });
+            expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
+            expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 60.0f, 60.0f });
+            expectWithinAbsoluteError(listener.callbackCount, 60, 1);
+        }
     }
 };
 

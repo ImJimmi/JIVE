@@ -2,7 +2,7 @@
 
 #include "WindowState.h"
 
-#include <jive_demo/gui/pages/ArchitecturePage.h>
+#include <jive_demo/gui/pages/AnimationsPage.h>
 #include <jive_demo/gui/pages/DevelopmentPage.h>
 #include <jive_demo/gui/pages/HomePage.h>
 #include <jive_demo/gui/pages/LayoutsPage.h>
@@ -50,7 +50,7 @@ namespace jive_demo
             , layoutsPage{ sourceState }
             , styleSheetsPage{ sourceState }
             , developmentPage{ sourceState }
-            , architecturePage{ sourceState }
+            , animationsPage{ sourceState }
         {
             window.appendChild(getView(state.getPage()), nullptr);
             state.addListener(*this);
@@ -80,8 +80,8 @@ namespace jive_demo
                 return styleSheetsPage.present();
             case Page::development:
                 return developmentPage.present();
-            case Page::architecture:
-                return architecturePage.present();
+            case Page::animations:
+                return animationsPage.present();
             case Page::numPages:
                 [[fallthrough]];
             default:
@@ -101,6 +101,6 @@ namespace jive_demo
         LayoutsPagePresenter layoutsPage;
         StyleSheetsPagePresenter styleSheetsPage;
         DevelopmentPagePresenter developmentPage;
-        ArchitecturePagePresenter architecturePage;
+        AnimationsPagePresenter animationsPage;
     };
 } // namespace jive_demo

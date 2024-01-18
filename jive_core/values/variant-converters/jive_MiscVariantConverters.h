@@ -446,4 +446,20 @@ namespace juce
             return var{ String{ cString } };
         }
     };
+
+    template <>
+    class VariantConverter<URL>
+    {
+    public:
+        static URL fromVar(const var& v)
+        {
+            return { v.toString() };
+        }
+
+        static var toVar(const URL& url)
+        {
+            static constexpr auto includeGetParameters = true;
+            return url.toString(includeGetParameters);
+        }
+    };
 } // namespace juce

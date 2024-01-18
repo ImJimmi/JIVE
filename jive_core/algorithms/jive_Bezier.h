@@ -4,7 +4,7 @@
 
 namespace jive
 {
-    [[nodiscard]] static auto cubicBezier(juce::Point<float> startControlPoint,
+    [[nodiscard]] inline auto cubicBezier(juce::Point<float> startControlPoint,
                                           juce::Point<float> endControlPoint)
     {
         juce::Path path;

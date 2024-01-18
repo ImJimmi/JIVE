@@ -2,6 +2,30 @@
 
 namespace jive
 {
+    class FlexLayoutDummy : public juce::Component
+    {
+    public:
+        explicit FlexLayoutDummy(GuiItem& owner)
+            : item{ owner }
+        {
+        }
+
+        void resized() final
+        {
+            boxModel(item)
+                .setSize(static_cast<float>(getWidth()),
+                         static_cast<float>(getHeight()));
+        }
+
+        void moved() final
+        {
+            item.getComponent()->setTopLeftPosition(getPosition());
+        }
+
+    private:
+        GuiItem& item;
+    };
+
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
         , order{ state, "order" }
@@ -9,6 +33,7 @@ namespace jive
         , flexShrink{ state, "flex-shrink" }
         , flexBasis{ state, "flex-basis" }
         , alignSelf{ state, "align-self" }
+        , layoutDummy{ std::make_unique<FlexLayoutDummy>(*this) }
     {
         if (!flexShrink.exists())
             flexShrink = juce::FlexItem{}.flexShrink;
@@ -26,14 +51,16 @@ namespace jive
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
-        juce::FlexItem flexItem{ *getComponent() };
+        juce::FlexItem flexItem{ *layoutDummy };
 
-        flexItem.flexGrow = flexGrow;
         flexItem.flexShrink = flexShrink;
         flexItem.flexBasis = flexBasis;
 
         if (strategy == LayoutStrategy::real)
+        {
+            flexItem.flexGrow = flexGrow;
             flexItem.alignSelf = alignSelf;
+        }
 
         const auto orientation = [this]() {
             const Property<juce::FlexBox::Direction> parentDirection{
@@ -69,7 +96,6 @@ public:
 
     void runTest() final
     {
-        testComponent();
         testOrder();
         testFlexGrow();
         testFlexShrink();
@@ -81,29 +107,6 @@ public:
     }
 
 private:
-    void testComponent()
-    {
-        beginTest("component");
-
-        jive::Interpreter interpreter;
-        juce::ValueTree state{
-            "Component",
-            {
-                { "width", 222 },
-                { "height", 333 },
-            },
-            {
-                juce::ValueTree{ "Component" },
-            },
-        };
-        auto parent = interpreter.interpret(state);
-        auto& item = *parent->getChildren()[0];
-        const auto flexItem = dynamic_cast<jive::GuiItemDecorator&>(item)
-                                  .toType<jive::FlexItem>()
-                                  ->toJuceFlexItem({}, jive::LayoutStrategy::real);
-        expect(flexItem.associatedComponent == item.getComponent().get());
-    }
-
     void testOrder()
     {
         beginTest("order");

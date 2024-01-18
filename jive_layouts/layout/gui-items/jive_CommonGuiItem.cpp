@@ -162,8 +162,11 @@ namespace jive
             return;
 
         const auto componentBounds = getComponent()->getBounds().toFloat();
-        boxModel.setSize(componentBounds.getWidth(),
-                         componentBounds.getHeight());
+
+        if (!width.isTransitioning())
+            boxModel.setWidth(componentBounds.getWidth());
+        if (!height.isTransitioning())
+            boxModel.setHeight(componentBounds.getHeight());
     }
 
     void CommonGuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
@@ -255,8 +258,10 @@ namespace jive
     {
         jassertquiet(&boxModelThatChanged == &boxModel);
 
+        getComponent()->removeComponentListener(this);
         getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
                                 juce::roundToInt(boxModel.getHeight()));
+        getComponent()->addComponentListener(this);
         getTopLevelDecorator().layOutChildren();
     }
 

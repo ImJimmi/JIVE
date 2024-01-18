@@ -38,31 +38,33 @@ namespace jive
 
         explicit BoxModel(juce::ValueTree sourceState);
 
-        float getWidth() const;
-        bool hasAutoWidth() const;
-        float getHeight() const;
-        bool hasAutoHeight() const;
+        [[nodiscard]] float getWidth() const;
+        void setWidth(float newWidth);
+        [[nodiscard]] bool hasAutoWidth() const;
+        [[nodiscard]] float getHeight() const;
+        void setHeight(float newHeight);
+        [[nodiscard]] bool hasAutoHeight() const;
         void setSize(float newWidth, float newHeight);
 
-        juce::BorderSize<float> getPadding() const;
-        juce::BorderSize<float> getBorder() const;
-        juce::BorderSize<float> getMargin() const;
+        [[nodiscard]] juce::BorderSize<float> getPadding() const;
+        [[nodiscard]] juce::BorderSize<float> getBorder() const;
+        [[nodiscard]] juce::BorderSize<float> getMargin() const;
 
         /** Returns the outer bounds of this item.
             The outer bounds is the area including the padding and border (but
             excluding the margin), so you can think of this as the sort of
             "physical" bounds of the item, i.e. the bounds of the component.
         */
-        juce::Rectangle<float> getOuterBounds() const;
+        [[nodiscard]] juce::Rectangle<float> getOuterBounds() const;
 
         /** Returns the inner bounds of this item.
             This is the area that the item's content should occupy, i.e. the
             inner-most area within the border and padding.
          */
-        juce::Rectangle<float> getContentBounds() const;
+        [[nodiscard]] juce::Rectangle<float> getContentBounds() const;
 
-        juce::Rectangle<float> getMinimumBounds() const;
-        juce::Rectangle<float> getMaximumBounds() const;
+        [[nodiscard]] juce::Rectangle<float> getMinimumBounds() const;
+        [[nodiscard]] juce::Rectangle<float> getMaximumBounds() const;
 
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
@@ -86,7 +88,8 @@ namespace jive
         Length maxHeight;
         Property<float> idealWidth;
         Property<float> idealHeight;
-        Property<juce::Rectangle<float>> componentSize;
+        Property<float> componentWidth;
+        Property<float> componentHeight;
         Property<juce::BorderSize<float>> padding;
         Property<juce::BorderSize<float>> border;
         Property<juce::BorderSize<float>> margin;

@@ -7,6 +7,8 @@ namespace jive
     class Event : protected juce::ValueTree::Listener
     {
     public:
+        Event() = delete;
+
         Event(juce::ValueTree sourceState, const juce::Identifier& eventID)
             : id{ eventID }
             , event{ sourceState, eventID }
@@ -27,6 +29,25 @@ namespace jive
 
             event.get()->setProperty("callbacks", callbacks);
         }
+
+        Event(const Event& other)
+            : event{ other.event }
+        {
+        }
+
+        Event(Event&& other)
+            : event{ std::move(other.event) }
+        {
+        }
+
+        Event& operator=(const Event& other)
+        {
+            event = other.event.get();
+            return *this;
+        }
+
+        Event& operator=(Event&& other) = delete;
+        ~Event() = default;
 
         int getAssumedTriggerCount() const
         {

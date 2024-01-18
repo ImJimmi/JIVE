@@ -66,4 +66,17 @@ namespace juce
 
         return str << " }";
     }
+
+    template <typename T>
+    String& operator<<(String& str, const juce::BorderSize<T>& border)
+    {
+        return str << "juce::BorderSize<"
+                   << typeid(T).name()
+                   << "> { "
+                   << border.getTop() << ", "
+                   << border.getLeft() << ", "
+                   << border.getBottom() << ", "
+                   << border.getRight()
+                   << " }";
+    }
 } // namespace juce

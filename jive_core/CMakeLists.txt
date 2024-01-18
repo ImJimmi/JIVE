@@ -42,6 +42,7 @@ PUBLIC
     logging/jive_StringStreams.cpp
     logging/jive_StringStreams.h
 
+    time/jive_TimeParser.h
     time/jive_Timer.cpp
     time/jive_Timer.h
     time/jive_TimeParser.h
@@ -64,6 +65,7 @@ PUBLIC
     values/jive_Property.cpp
     values/jive_Property.h
     values/jive_ReferenceCountedValueTreeWrapper.h
+    values/jive_PropertyBehaviours.h
     values/jive_XmlParser.cpp
     values/jive_XmlParser.h
 
