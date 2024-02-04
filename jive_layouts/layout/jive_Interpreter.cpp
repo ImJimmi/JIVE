@@ -30,6 +30,11 @@ namespace jive
         });
     }
 
+    std::unique_ptr<GuiItem> Interpreter::interpret(View::ReferenceCountedPointer view, juce::AudioProcessor* pluginProcessor) const
+    {
+        return interpret(static_cast<juce::ValueTree>(*view), pluginProcessor);
+    }
+
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, juce::AudioProcessor* pluginProcessor) const
     {
         return interpret(tree, nullptr, pluginProcessor);
@@ -195,7 +200,18 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, GuiItem* const parent, juce::AudioProcessor* pluginProcessor) const
+    void Interpreter::setupItemsRecursive(GuiItem& item) const
+    {
+        for (auto* child : item.getChildren())
+            setupItemsRecursive(*child);
+
+        if (auto view = item.getView(); view != nullptr)
+            view->setup(item);
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree,
+                                                    GuiItem* const parent,
+                                                    juce::AudioProcessor* pluginProcessor) const
     {
         auto item = createUndecoratedItem(tree, parent);
 
@@ -203,6 +219,9 @@ namespace jive
         {
             item = decorate(std::move(item), customDecorators, pluginProcessor);
             setChildItems(*item);
+
+            if (item->isTopLevel())
+                setupItemsRecursive(*item);
         }
 
         return item;
@@ -285,8 +304,21 @@ namespace jive
 
     std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const
     {
-        const auto name = tree.getType();
-        return componentFactory.create(name);
+        for (auto view = tree;
+             view.isValid();
+             view = view.getParent())
+        {
+            if (!view.hasProperty("view-object"))
+                continue;
+
+            if (auto* viewObject = dynamic_cast<jive::View*>(view["view-object"].getObject()))
+            {
+                if (auto component = viewObject->createComponent(tree))
+                    return component;
+            }
+        }
+
+        return componentFactory.create(tree.getType());
     }
 } // namespace jive
 

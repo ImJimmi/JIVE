@@ -38,6 +38,8 @@ namespace jive
 #include "utilities/jive_LayoutStrategy.h"
 #include "utilities/jive_Overflow.h"
 
+#include "hooks/jive_View.h"
+
 #include "layout/gui-items/jive_GuiItem.h"
 #include "layout/gui-items/jive_GuiItemDecorator.h"
 
