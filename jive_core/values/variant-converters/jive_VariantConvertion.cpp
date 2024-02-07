@@ -14,6 +14,7 @@ public:
         testToVar();
         testFromVar();
         testOptionalParsing();
+        testMultiValueParsing();
     }
 
 private:
@@ -40,6 +41,35 @@ private:
 
         expectEquals(jive::toVar(std::optional<int>{}), juce::var{});
         expectEquals(jive::toVar(std::make_optional(123)), juce::var{ 123 });
+    }
+
+    void testMultiValueParsing()
+    {
+        beginTest("multiple values - toVar");
+        {
+            expectEquals(jive::toVar(1, "foo", 66.6),
+                         juce::var{
+                             juce::Array{
+                                 juce::var{ 1 },
+                                 juce::var{ "foo" },
+                                 juce::var{ 66.6 },
+                             },
+                         });
+        }
+
+        beginTest("multiple values - fromVar");
+        {
+            const auto [actualString, actualInt] = jive::fromVar<juce::String, int>(juce::var{
+                juce::Array{
+                    juce::var{ "bar" },
+                    juce::var{ 7531 },
+                },
+            });
+            const juce::String expectedString = "bar";
+            const auto expectedInt = 7531;
+            expectEquals(actualString, expectedString);
+            expectEquals(actualInt, expectedInt);
+        }
     }
 };
 #endif

@@ -237,10 +237,20 @@ namespace juce
         const auto tokens = StringArray::fromTokens(value.toString(), ",", "");
         jassert(tokens.size() == 2);
 
-        return Point<Arithmetic>{
-            static_cast<Arithmetic>(tokens[0].getDoubleValue()),
-            static_cast<Arithmetic>(tokens[1].getDoubleValue()),
-        };
+        if constexpr (std::is_integral<Arithmetic>())
+        {
+            return {
+                static_cast<Arithmetic>(std::round(tokens[0].getDoubleValue())),
+                static_cast<Arithmetic>(std::round(tokens[1].getDoubleValue())),
+            };
+        }
+        else
+        {
+            return {
+                static_cast<Arithmetic>(tokens[0].getDoubleValue()),
+                static_cast<Arithmetic>(tokens[1].getDoubleValue()),
+            };
+        }
     }
 
     template <typename Arithmetic>

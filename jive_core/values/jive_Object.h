@@ -25,6 +25,11 @@ namespace jive
                          const juce::var& newValue) override;
         const juce::NamedValueSet& getProperties() const;
 
+        Object* getParent() noexcept;
+        const Object* getParent() const noexcept;
+        Object* getRoot() noexcept;
+        const Object* getRoot() const noexcept;
+
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
@@ -35,6 +40,7 @@ namespace jive
 
         mutable juce::ListenerList<Listener> listeners;
         const std::unique_ptr<Listener> internalListener;
+        Object* parent = nullptr;
 
         JUCE_LEAK_DETECTOR(Object)
     };

@@ -41,4 +41,9 @@ namespace juce
     {
         return str << juce::String{ static_cast<double>(value) };
     }
+
+    String& operator<<(String& str, RelativeTime relativeTime)
+    {
+        return str << juce::String{ relativeTime.inSeconds() } << "s";
+    }
 } // namespace juce
