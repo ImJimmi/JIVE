@@ -122,12 +122,12 @@ public:
             // When interpreting an "Editor" type, the top-level item will be a
             // jive::GuiItem AND a juce::AudioProcessorEditor. So we can do a
             // dynamic-cast here to check that the editor was created successfully.
-            if (dynamic_cast<juce::AudioProcessorEditor*>(view.get()))
+            if (dynamic_cast<juce::AudioProcessorEditor*>(editor.get()))
             {
-                viewInterpreter.listenTo(*view);
+                viewInterpreter.listenTo(*editor);
 
                 // Release ownership to the caller.
-                return dynamic_cast<juce::AudioProcessorEditor*>(view.release());
+                return dynamic_cast<juce::AudioProcessorEditor*>(editor.release());
             }
         }
 
