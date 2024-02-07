@@ -192,4 +192,19 @@ namespace juce
         static Rectangle<Arithmetic> fromVar(const var& v);
         static var toVar(const Rectangle<Arithmetic>& rectangle);
     };
+
+    template <std::size_t N>
+    class VariantConverter<char[N]>
+    {
+    public:
+        static juce::String fromVar(const var& v)
+        {
+            return v.toString();
+        }
+
+        static var toVar(const char cString[N])
+        {
+            return var{ String{ cString } };
+        }
+    };
 } // namespace juce
