@@ -29,7 +29,7 @@ namespace jive
 
     juce::Label& Label::getLabel()
     {
-        auto* label = dynamic_cast<juce::Label*>(component.get());
+        auto* label = dynamic_cast<juce::Label*>(getComponent().get());
         jassert(label != nullptr);
 
         return *label;
@@ -37,7 +37,7 @@ namespace jive
 
     const juce::Label& Label::getLabel() const
     {
-        const auto* label = dynamic_cast<const juce::Label*>(component.get());
+        const auto* label = dynamic_cast<const juce::Label*>(getComponent().get());
         jassert(label != nullptr);
 
         return *label;

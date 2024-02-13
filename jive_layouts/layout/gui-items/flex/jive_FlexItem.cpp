@@ -24,9 +24,9 @@ namespace jive
     }
 
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
-                                            LayoutStrategy strategy) const
+                                            LayoutStrategy strategy)
     {
-        juce::FlexItem flexItem{ *component };
+        juce::FlexItem flexItem{ *getComponent() };
 
         flexItem.flexGrow = flexGrow;
         flexItem.flexShrink = flexShrink;

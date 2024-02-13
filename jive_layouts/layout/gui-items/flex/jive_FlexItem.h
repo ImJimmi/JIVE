@@ -8,7 +8,7 @@ namespace jive
         explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         [[nodiscard]] juce::FlexItem toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
-                                                    LayoutStrategy strategy) const;
+                                                    LayoutStrategy strategy);
 
     private:
         Property<int> order;

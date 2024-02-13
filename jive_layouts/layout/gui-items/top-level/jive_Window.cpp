@@ -143,7 +143,7 @@ namespace jive
         const auto windowHeight = juce::roundToInt(boxModel.getHeight());
 
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
-        getWindow().setContentNonOwned(component.get(), resizeWindowWhenComponentSizeChanges);
+        getWindow().setContentNonOwned(getComponent().get(), resizeWindowWhenComponentSizeChanges);
         getWindow().centreWithSize(windowWidth, windowHeight);
         getWindow().setLookAndFeel(&lookAndFeel);
     }

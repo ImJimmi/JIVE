@@ -37,9 +37,6 @@ namespace jive
     protected:
         virtual void childrenChanged() {}
 
-        const std::shared_ptr<juce::Component> component;
-        GuiItem* const parent;
-
     private:
         friend class GuiItemDecorator;
 
@@ -63,18 +60,18 @@ namespace jive
 #endif
                 const juce::ValueTree& stateSource);
 
-        juce::OwnedArray<GuiItem> children;
+        void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
         const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
 
-        void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
-
+        const std::shared_ptr<juce::Component> component;
+        GuiItem* const parent;
+        juce::OwnedArray<GuiItem> children;
         std::unique_ptr<Remover> remover;
-        juce::WeakReference<GuiItem>::Master masterReference;
-        friend class juce::WeakReference<GuiItem>;
 
+        JUCE_DECLARE_WEAK_REFERENCEABLE(GuiItem)
         JUCE_LEAK_DETECTOR(GuiItem)
     };
 

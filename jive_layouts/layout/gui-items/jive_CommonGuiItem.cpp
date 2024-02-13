@@ -43,92 +43,92 @@ namespace jive
         if (!display.exists())
             display = Display::flex;
 
-        component->addComponentListener(this);
+        getComponent()->addComponentListener(this);
 
         name.onValueChange = [this]() {
-            component->setName(name);
+            getComponent()->setName(name);
         };
-        component->setName(name);
+        getComponent()->setName(name);
 
         title.onValueChange = [this]() {
-            component->setTitle(title);
+            getComponent()->setTitle(title);
         };
-        component->setTitle(title);
+        getComponent()->setTitle(title);
 
         id.onValueChange = [this]() {
-            component->setComponentID(id.get().toString());
+            getComponent()->setComponentID(id.get().toString());
         };
-        component->setComponentID(id.get().toString());
+        getComponent()->setComponentID(id.get().toString());
 
         description.onValueChange = [this]() {
-            component->setDescription(description);
+            getComponent()->setDescription(description);
         };
-        component->setDescription(description);
+        getComponent()->setDescription(description);
 
         tooltip.onValueChange = [this]() {
-            component->setHelpText(tooltip);
+            getComponent()->setHelpText(tooltip);
         };
-        component->setHelpText(tooltip);
+        getComponent()->setHelpText(tooltip);
 
         enabled.onValueChange = [this]() {
-            component->setEnabled(enabled);
+            getComponent()->setEnabled(enabled);
         };
-        component->setEnabled(enabled);
+        getComponent()->setEnabled(enabled);
 
         accessible.onValueChange = [this]() {
-            component->setAccessible(accessible);
+            getComponent()->setAccessible(accessible);
         };
-        component->setAccessible(accessible);
+        getComponent()->setAccessible(accessible);
 
         visibility.onValueChange = [this]() {
-            component->setVisible(visibility);
+            getComponent()->setVisible(visibility);
         };
-        component->setVisible(visibility);
+        getComponent()->setVisible(visibility);
 
         alwaysOnTop.onValueChange = [this]() {
-            component->setAlwaysOnTop(alwaysOnTop);
+            getComponent()->setAlwaysOnTop(alwaysOnTop);
         };
-        component->setAlwaysOnTop(alwaysOnTop);
+        getComponent()->setAlwaysOnTop(alwaysOnTop);
 
         bufferedToImage.onValueChange = [this]() {
-            component->setBufferedToImage(bufferedToImage);
+            getComponent()->setBufferedToImage(bufferedToImage);
         };
-        component->setBufferedToImage(bufferedToImage);
+        getComponent()->setBufferedToImage(bufferedToImage);
 
         opaque.onValueChange = [this]() {
-            component->setOpaque(opaque);
+            getComponent()->setOpaque(opaque);
         };
-        component->setOpaque(opaque);
+        getComponent()->setOpaque(opaque);
 
         focusable.onValueChange = [this]() {
-            component->setWantsKeyboardFocus(focusable);
+            getComponent()->setWantsKeyboardFocus(focusable);
         };
-        component->setWantsKeyboardFocus(focusable);
+        getComponent()->setWantsKeyboardFocus(focusable);
 
         focusOutline.onValueChange = [this]() {
-            component->setHasFocusOutline(focusOutline);
+            getComponent()->setHasFocusOutline(focusOutline);
         };
-        component->setHasFocusOutline(focusOutline);
+        getComponent()->setHasFocusOutline(focusOutline);
 
         clickingGrabsFocus.onValueChange = [this]() {
-            component->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
+            getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
         };
-        component->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
+        getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
 
         focusOrder.onValueChange = [this]() {
-            component->setExplicitFocusOrder(focusOrder);
+            getComponent()->setExplicitFocusOrder(focusOrder);
         };
-        component->setExplicitFocusOrder(focusOrder);
+        getComponent()->setExplicitFocusOrder(focusOrder);
 
         opacity.onValueChange = [this]() {
-            component->setAlpha(opacity);
+            getComponent()->setAlpha(opacity);
         };
-        component->setAlpha(opacity);
+        getComponent()->setAlpha(opacity);
 
         cursor.onValueChange = [this]() {
-            component->setMouseCursor(juce::MouseCursor{ cursor });
+            getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
         };
-        component->setMouseCursor(juce::MouseCursor{ cursor });
+        getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
 
         if (isTopLevel())
         {
@@ -137,54 +137,54 @@ namespace jive
             jassert(!boxModel.hasAutoHeight());
         }
 
-        component->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
-                           juce::roundToInt(boxModel.getOuterBounds().getHeight()));
+        getComponent()->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
+                                juce::roundToInt(boxModel.getOuterBounds().getHeight()));
 
         boxModel.addListener(*this);
     }
 
     CommonGuiItem::~CommonGuiItem()
     {
-        component->removeComponentListener(this);
+        getComponent()->removeComponentListener(this);
     }
 
     void CommonGuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
                                                 bool /*wasMoved*/,
                                                 bool wasResized)
     {
-        if (&componentThatWasMovedOrResized != component.get())
+        if (&componentThatWasMovedOrResized != getComponent().get())
             return;
 
         if (!wasResized)
             return;
 
-        const auto componentBounds = component->getBounds().toFloat();
+        const auto componentBounds = getComponent()->getBounds().toFloat();
         boxModel.setSize(componentBounds.getWidth(),
                          componentBounds.getHeight());
     }
 
     void CommonGuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
     {
-        if (&componentThatChangedVisiblity != component.get())
+        if (&componentThatChangedVisiblity != getComponent().get())
             return;
 
-        visibility = component->isVisible();
+        visibility = getComponent()->isVisible();
     }
 
     void CommonGuiItem::componentNameChanged(juce::Component& componentThatChangedName)
     {
-        if (&componentThatChangedName != component.get())
+        if (&componentThatChangedName != getComponent().get())
             return;
 
-        name = component->getName();
+        name = getComponent()->getName();
     }
 
     void CommonGuiItem::componentEnablementChanged(juce::Component& componentThatChangedEnablement)
     {
-        if (&componentThatChangedEnablement != component.get())
+        if (&componentThatChangedEnablement != getComponent().get())
             return;
 
-        enabled = component->isEnabled();
+        enabled = getComponent()->isEnabled();
     }
 
     [[nodiscard]] static auto hasWidgetRole(const juce::Component& component)
@@ -236,15 +236,15 @@ namespace jive
 
     void CommonGuiItem::componentParentHierarchyChanged(juce::Component& componentThatsParentChanged)
     {
-        if (&componentThatsParentChanged != component.get())
+        if (&componentThatsParentChanged != getComponent().get())
             return;
 
-        if (auto* parentComponent = component->getParentComponent())
+        if (auto* parentComponent = getComponent()->getParentComponent())
         {
             if (hasWidgetRole(*parentComponent))
-                component->setAccessible(false);
+                getComponent()->setAccessible(false);
             else
-                component->setAccessible(accessible);
+                getComponent()->setAccessible(accessible);
         }
     }
 
@@ -252,8 +252,8 @@ namespace jive
     {
         jassertquiet(&boxModelThatChanged == &boxModel);
 
-        component->setSize(juce::roundToInt(boxModel.getWidth()),
-                           juce::roundToInt(boxModel.getHeight()));
+        getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
+                                juce::roundToInt(boxModel.getHeight()));
         getTopLevelDecorator().layOutChildren();
     }
 

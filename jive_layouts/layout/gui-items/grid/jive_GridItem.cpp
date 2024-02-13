@@ -36,9 +36,9 @@ namespace jive
     }
 
     juce::GridItem GridItem::toJuceGridItem(juce::Rectangle<float> parentContentBounds,
-                                            LayoutStrategy strategy) const
+                                            LayoutStrategy strategy)
     {
-        juce::GridItem gridItem{ *component };
+        juce::GridItem gridItem{ *getComponent() };
 
         gridItem.column = gridColumn;
         gridItem.row = gridRow;

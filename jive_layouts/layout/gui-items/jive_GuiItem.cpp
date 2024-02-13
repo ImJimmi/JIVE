@@ -9,11 +9,11 @@ namespace jive
 #endif
                      const juce::ValueTree& stateSource)
         : state{ stateSource }
-        , component{ comp }
-        , parent{ parentItem }
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
         , styleSheet{ sheet }
 #endif
+        , component{ comp }
+        , parent{ parentItem }
         , remover{ std::make_unique<Remover>(*this) }
     {
         jassert(component != nullptr);

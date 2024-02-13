@@ -13,11 +13,7 @@ END_JUCE_MODULE_DECLARATION */
 #include <jive_components/jive_components.h>
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-    #ifdef __has_include
-        #if __has_include(<jive_style_sheets/jive_style_sheets.h>)
-            #include <jive_style_sheets/jive_style_sheets.h>
-        #endif
-    #endif
+    #include <jive_style_sheets/jive_style_sheets.h>
 #endif
 
 #ifdef JucePlugin_Name

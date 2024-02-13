@@ -77,12 +77,12 @@ namespace jive
 
     TextComponent& Text::getTextComponent()
     {
-        return dynamic_cast<TextComponent&>(*component);
+        return dynamic_cast<TextComponent&>(*getComponent());
     }
 
     const TextComponent& Text::getTextComponent() const
     {
-        return dynamic_cast<const TextComponent&>(*component);
+        return dynamic_cast<const TextComponent&>(*getComponent());
     }
 
     void Text::textFontChanged(TextComponent&)

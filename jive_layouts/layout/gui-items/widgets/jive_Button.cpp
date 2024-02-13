@@ -92,12 +92,12 @@ namespace jive
 
     juce::Button& Button::getButton()
     {
-        return *dynamic_cast<juce::Button*>(component.get());
+        return *dynamic_cast<juce::Button*>(getComponent().get());
     }
 
     const juce::Button& Button::getButton() const
     {
-        return *dynamic_cast<const juce::Button*>(component.get());
+        return *dynamic_cast<const juce::Button*>(getComponent().get());
     }
 
     void Button::buttonClicked(juce::Button* button)
