@@ -195,7 +195,18 @@ namespace jive
         return item;
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, GuiItem* const parent, juce::AudioProcessor* pluginProcessor) const
+    void Interpreter::setupItemsRecursive(GuiItem& item) const
+    {
+        for (auto* child : item.getChildren())
+            setupItemsRecursive(*child);
+
+        if (auto view = item.getView(); view != nullptr)
+            view->setup(item);
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree,
+                                                    GuiItem* const parent,
+                                                    juce::AudioProcessor* pluginProcessor) const
     {
         auto item = createUndecoratedItem(tree, parent);
 
@@ -203,6 +214,9 @@ namespace jive
         {
             item = decorate(std::move(item), customDecorators, pluginProcessor);
             setChildItems(*item);
+
+            if (item->isTopLevel())
+                setupItemsRecursive(*item);
         }
 
         return item;
@@ -242,7 +256,7 @@ namespace jive
         auto expandedTree = tree;
         expandAlias(expandedTree);
 
-        if (auto component = createComponent(expandedTree))
+        if (auto component = createComponent(expandedTree, parent))
         {
             return std::make_unique<GuiItem>(std::move(component),
                                              expandedTree,
@@ -283,10 +297,21 @@ namespace jive
         item.setChildren(std::move(children));
     }
 
-    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const
+    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
     {
-        const auto name = tree.getType();
-        return componentFactory.create(name);
+        if (auto* viewObject = dynamic_cast<jive::View*>(tree["view-object"].getObject()))
+        {
+            if (auto component = viewObject->createComponent(tree))
+                return component;
+        }
+
+        for (auto* ancestor = parent; ancestor != nullptr; ancestor = ancestor->getParent())
+        {
+            if (auto component = ancestor->getView()->createComponent(tree))
+                return component;
+        }
+
+        return componentFactory.create(tree.getType());
     }
 } // namespace jive
 

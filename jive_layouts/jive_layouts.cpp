@@ -5,6 +5,8 @@
 #include "utilities/jive_Drawable.cpp"
 #include "utilities/jive_Overflow.cpp"
 
+#include "hooks/jive_View.cpp"
+
 #include "layout/gui-items/jive_GuiItem.cpp"
 #include "layout/gui-items/jive_GuiItemDecorator.cpp"
 

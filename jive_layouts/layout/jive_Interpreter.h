@@ -38,11 +38,13 @@ namespace jive
 
         void expandAlias(juce::ValueTree& tree) const;
 
-        std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const;
+        std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree,
+                                                       GuiItem* const parent) const;
         void insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const;
         void setChildItems(GuiItem& item) const;
 
-        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) const;
+        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
+        void setupItemsRecursive(GuiItem& item) const;
 
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;

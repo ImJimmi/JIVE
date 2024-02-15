@@ -13,11 +13,7 @@ END_JUCE_MODULE_DECLARATION */
 #include <jive_components/jive_components.h>
 
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-    #ifdef __has_include
-        #if __has_include(<jive_style_sheets/jive_style_sheets.h>)
-            #include <jive_style_sheets/jive_style_sheets.h>
-        #endif
-    #endif
+    #include <jive_style_sheets/jive_style_sheets.h>
 #endif
 
 #ifdef JucePlugin_Name
@@ -41,6 +37,8 @@ namespace jive
 #include "utilities/jive_Drawable.h"
 #include "utilities/jive_LayoutStrategy.h"
 #include "utilities/jive_Overflow.h"
+
+#include "hooks/jive_View.h"
 
 #include "layout/gui-items/jive_GuiItem.h"
 #include "layout/gui-items/jive_GuiItemDecorator.h"

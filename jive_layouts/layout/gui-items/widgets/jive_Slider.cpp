@@ -113,12 +113,12 @@ namespace jive
 
     juce::Slider& Slider::getSlider()
     {
-        return *dynamic_cast<juce::Slider*>(component.get());
+        return *dynamic_cast<juce::Slider*>(getComponent().get());
     }
 
     const juce::Slider& Slider::getSlider() const
     {
-        return *dynamic_cast<const juce::Slider*>(component.get());
+        return *dynamic_cast<const juce::Slider*>(getComponent().get());
     }
 
     void Slider::updateStyle()

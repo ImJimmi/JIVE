@@ -8,7 +8,7 @@ namespace jive
         explicit GridItem(std::unique_ptr<GuiItem> itemToDecorate);
 
         [[nodiscard]] juce::GridItem toJuceGridItem(juce::Rectangle<float> parentContentBounds,
-                                                    LayoutStrategy strategy) const;
+                                                    LayoutStrategy strategy);
 
     private:
         Property<int> order;
