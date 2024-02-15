@@ -2,15 +2,12 @@
 
 namespace jive
 {
-    View::operator juce::ValueTree()
+    juce::ValueTree View::getState()
     {
-        return toValueTree();
-    }
+        if (!state.isValid())
+            state = initialise();
 
-    juce::ValueTree View::toValueTree()
-    {
-        return initialise()
-            .setProperty("view-object", this, nullptr);
+        return state;
     }
 } // namespace jive
 
@@ -66,7 +63,7 @@ private:
                     { "height", 200 },
                 },
                 {
-                    *jive::makeView<View>(),
+                    jive::makeView<View>(),
                 },
             };
             const auto window = interpreter.interpret(state);
@@ -105,7 +102,10 @@ private:
         jive::Interpreter interpreter;
         const auto window = interpreter.interpret(jive::makeView<SpyView>());
         expect(window != nullptr);
-        auto* view = dynamic_cast<SpyView*>(window->state["view-object"].getObject());
+        expect(window->state["view-object"].getObject() == nullptr);
+        expect(window->getView() != nullptr);
+        auto* view = dynamic_cast<SpyView*>(window->getView().get());
+        expect(view != nullptr);
         expectEquals(view->setupCallCount, 1);
         expect(view->lastItemPassedToCallback == window.get());
     }

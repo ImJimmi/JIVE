@@ -30,11 +30,6 @@ namespace jive
         });
     }
 
-    std::unique_ptr<GuiItem> Interpreter::interpret(View::ReferenceCountedPointer view, juce::AudioProcessor* pluginProcessor) const
-    {
-        return interpret(static_cast<juce::ValueTree>(*view), pluginProcessor);
-    }
-
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, juce::AudioProcessor* pluginProcessor) const
     {
         return interpret(tree, nullptr, pluginProcessor);
@@ -261,7 +256,7 @@ namespace jive
         auto expandedTree = tree;
         expandAlias(expandedTree);
 
-        if (auto component = createComponent(expandedTree))
+        if (auto component = createComponent(expandedTree, parent))
         {
             return std::make_unique<GuiItem>(std::move(component),
                                              expandedTree,
@@ -302,20 +297,18 @@ namespace jive
         item.setChildren(std::move(children));
     }
 
-    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree) const
+    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
     {
-        for (auto view = tree;
-             view.isValid();
-             view = view.getParent())
+        if (auto* viewObject = dynamic_cast<jive::View*>(tree["view-object"].getObject()))
         {
-            if (!view.hasProperty("view-object"))
-                continue;
+            if (auto component = viewObject->createComponent(tree))
+                return component;
+        }
 
-            if (auto* viewObject = dynamic_cast<jive::View*>(view["view-object"].getObject()))
-            {
-                if (auto component = viewObject->createComponent(tree))
-                    return component;
-            }
+        for (auto* ancestor = parent; ancestor != nullptr; ancestor = ancestor->getParent())
+        {
+            if (auto component = ancestor->getView()->createComponent(tree))
+                return component;
         }
 
         return componentFactory.create(tree.getType());

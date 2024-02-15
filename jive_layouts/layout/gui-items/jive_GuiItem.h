@@ -6,7 +6,14 @@ namespace jive
     {
     public:
         GuiItem(std::unique_ptr<juce::Component> component,
-                const juce::ValueTree& stateSource,
+                const juce::ValueTree& sourceState,
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+                StyleSheet::ReferenceCountedPointer styleSheet,
+#endif
+                GuiItem* parent = nullptr);
+
+        GuiItem(std::unique_ptr<juce::Component> component,
+                View::ReferenceCountedPointer sourceView,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
                 StyleSheet::ReferenceCountedPointer styleSheet,
 #endif
@@ -15,20 +22,22 @@ namespace jive
         GuiItem(const GuiItem& other);
         virtual ~GuiItem();
 
-        const std::shared_ptr<const juce::Component> getComponent() const;
-        const std::shared_ptr<juce::Component> getComponent();
+        [[nodiscard]] const std::shared_ptr<const juce::Component> getComponent() const;
+        [[nodiscard]] std::shared_ptr<juce::Component> getComponent();
+        [[nodiscard]] const View::ReferenceCountedPointer getView() const;
+        [[nodiscard]] View::ReferenceCountedPointer getView();
 
         virtual void insertChild(std::unique_ptr<GuiItem> child, int index);
         virtual void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children);
         virtual void removeChild(GuiItem& childToRemove);
-        virtual juce::Array<GuiItem*> getChildren();
-        virtual juce::Array<const GuiItem*> getChildren() const;
-        virtual const GuiItem* getParent() const;
-        virtual GuiItem* getParent();
-        bool isTopLevel() const;
+        [[nodiscard]] virtual juce::Array<const GuiItem*> getChildren() const;
+        [[nodiscard]] virtual juce::Array<GuiItem*> getChildren();
+        [[nodiscard]] virtual const GuiItem* getParent() const;
+        [[nodiscard]] virtual GuiItem* getParent();
 
-        virtual bool isContainer() const;
-        virtual bool isContent() const;
+        [[nodiscard]] bool isTopLevel() const;
+        [[nodiscard]] virtual bool isContainer() const;
+        [[nodiscard]] virtual bool isContent() const;
 
         virtual void layOutChildren() {}
 
@@ -58,7 +67,7 @@ namespace jive
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
                 StyleSheet::ReferenceCountedPointer sheet,
 #endif
-                const juce::ValueTree& stateSource);
+                View::ReferenceCountedPointer sourceView);
 
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
 
@@ -70,6 +79,7 @@ namespace jive
         GuiItem* const parent;
         juce::OwnedArray<GuiItem> children;
         std::unique_ptr<Remover> remover;
+        View::ReferenceCountedPointer view;
 
         JUCE_DECLARE_WEAK_REFERENCEABLE(GuiItem)
         JUCE_LEAK_DETECTOR(GuiItem)

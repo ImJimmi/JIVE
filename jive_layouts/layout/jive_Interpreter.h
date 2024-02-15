@@ -16,8 +16,6 @@ namespace jive
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType);
 
-        [[nodiscard]] std::unique_ptr<GuiItem> interpret(View::ReferenceCountedPointer view,
-                                                         juce::AudioProcessor* pluginProcessor = nullptr) const;
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree,
                                                          juce::AudioProcessor* pluginProcessor = nullptr) const;
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::XmlElement& xml,
@@ -45,7 +43,7 @@ namespace jive
         void insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const;
         void setChildItems(GuiItem& item) const;
 
-        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) const;
+        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
         void setupItemsRecursive(GuiItem& item) const;
 
         ComponentFactory componentFactory;
