@@ -1,0 +1,56 @@
+name: Validate CMake Project Version
+
+on:
+    pull_request:
+        branches: [main]
+
+env:
+    GH_TOKEN: ${{ github.token }}
+
+jobs:
+    validate:
+        name: Validate CMake Project Version
+
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set Environment Variables
+              run: |
+                  cmake -B build || true
+                  VERSION_TXT="build/version.txt"
+                  if [ -f $VERSION_TXT ]; then
+                    VERSION=$(cat $VERSION_TXT)
+                  else
+                    VERSION="0.0.0"
+                  fi
+
+                  echo "Setting PROJECT_VERSION=${VERSION}"
+                  echo "PROJECT_VERSION=${VERSION}" >> $GITHUB_ENV
+
+                  echo "Setting EXPECTED_TAG=v${VERSION}"
+                  echo "EXPECTED_TAG=v${VERSION}" >> $GITHUB_ENV
+
+            - name: Validate Version
+              run: |
+                  RELEASE_INFO=$(echo $(gh release view ${{ env.EXPECTED_TAG }}))
+                  touch pr-comment.md
+
+                  if echo $RELEASE_INFO | grep -q "title"; then
+                      echo '# Duplicate Version Number' >> pr-comment.md
+                      echo 'JIVE ${{ env.EXPECTED_TAG }} have already been released!' >> pr-comment.md
+                      echo 'Please update the project version in `CMakeLists.txt` before merging this PR.' >> pr-comment.md
+                      echo 'Increment the Patch number if this PR includes small changes/fixes, or increment the Minor number if this PR introduces significant new/udpated features.' >> pr-comment.md
+
+                      gh pr review ${{ github.event.number }} --request-changes --body-file pr-comment.md
+
+                      exit 1
+                  else
+                    HAS_PREVIOUSLY_COMMENTED=$(gh pr view ${{ github.event.number }} --comments | grep "author:" | grep "github-actions")
+                    if [[ $HAS_PREVIOUSLY_COMMENTED ]]; then
+                        echo 'CMake project version is valid!' >> pr-comment.md
+                        gh pr review ${{ github.event.number }} --approve --body-file pr-comment.md
+                    fi
+                  fi
