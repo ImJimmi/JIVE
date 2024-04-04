@@ -1,5 +1,7 @@
 #pragma once
 
+#include <juce_events/juce_events.h>
+
 namespace jive
 {
 #if JIVE_UNIT_TESTS

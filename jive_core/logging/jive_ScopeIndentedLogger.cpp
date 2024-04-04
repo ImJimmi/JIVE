@@ -1,5 +1,7 @@
 #include "jive_ScopeIndentedLogger.h"
 
+#include <juce_events/juce_events.h>
+
 namespace jive
 {
     class ScopeIndentedLogger::Implementation

@@ -14,7 +14,6 @@
 #include "values/variant-converters/jive_AttributedStringVariantConverters.cpp"
 #include "values/variant-converters/jive_FlexVariantConverters.cpp"
 #include "values/variant-converters/jive_GridVariantConverters.cpp"
-#include "values/variant-converters/jive_MiscVariantConverters.cpp"
 #include "values/variant-converters/jive_VariantConvertion.cpp"
 
 #include "geometry/jive_BoxModel.cpp"

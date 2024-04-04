@@ -1,10 +1,12 @@
 #pragma once
 
+#include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace jive
 {
-    class PluginEditor
+    class PluginEditor final
         : public jive::GuiItemDecorator
         , public juce::AudioProcessorEditor
         , private juce::ComponentListener

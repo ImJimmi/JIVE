@@ -1,5 +1,7 @@
 #include "jive_ComponentFactory.h"
 
+#include <jive_components/jive_components.h>
+
 namespace jive
 {
     ComponentFactory::ComponentFactory()

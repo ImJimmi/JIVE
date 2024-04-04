@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_ProgressBar.h"
 
 namespace jive
 {
@@ -44,6 +44,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 class ProgressBarTest : public juce::UnitTest
 {
 public:

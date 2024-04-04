@@ -1,5 +1,7 @@
 #include "jive_Fill.h"
 
+#include <jive_core/values/variant-converters/jive_MiscVariantConverters.h>
+
 namespace jive
 {
     Fill::Fill()

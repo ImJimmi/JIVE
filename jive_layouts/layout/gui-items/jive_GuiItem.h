@@ -1,5 +1,13 @@
 #pragma once
 
+#include <jive_layouts/hooks/jive_View.h>
+
+#include <jive_core/jive_core.h>
+
+#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+    #include <jive_style_sheets/jive_style_sheets.h>
+#endif
+
 namespace jive
 {
     class GuiItem

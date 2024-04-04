@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_GridItem.h"
 
 namespace jive
 {
@@ -70,6 +70,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 static bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
 {
     return a.getName() == b.getName() && a.getNumber() == b.getNumber();

@@ -1,5 +1,7 @@
 #include "jive_Length.h"
 
+#include <jive_core/values/variant-converters/jive_VariantConvertion.h>
+
 namespace jive
 {
     [[nodiscard]] float Length::toPixels(const juce::Rectangle<float>& parentBounds) const
@@ -87,6 +89,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/jive_layouts.h>
+
 class LengthUnitTest : public juce::UnitTest
 {
 public:

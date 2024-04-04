@@ -1,4 +1,7 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_GuiItem.h"
+
+#include "jive_CommonGuiItem.h"
+#include "jive_GuiItemDecorator.h"
 
 namespace jive
 {
@@ -55,15 +58,14 @@ namespace jive
                      StyleSheet::ReferenceCountedPointer sheet,
 #endif
                      GuiItem* parentItem)
-        : GuiItem
-    {
-        std::shared_ptr<juce::Component>{ std::move(comp) },
+        : GuiItem{
+            std::shared_ptr<juce::Component>{ std::move(comp) },
             parentItem,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
             std::move(sheet),
 #endif
             getOrCreateView(sourceState),
-    }
+        }
     {
     }
 
@@ -73,28 +75,26 @@ namespace jive
                      StyleSheet::ReferenceCountedPointer sheet,
 #endif
                      GuiItem* parentItem)
-        : GuiItem
-    {
-        std::shared_ptr<juce::Component>{ std::move(comp) },
+        : GuiItem{
+            std::shared_ptr<juce::Component>{ std::move(comp) },
             parentItem,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
             std::move(sheet),
 #endif
             sourceView,
-    }
+        }
     {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
-        : GuiItem
-    {
-        other.component,
+        : GuiItem{
+            other.component,
             other.parent,
 #if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
             nullptr,
 #endif
             other.view,
-    }
+        }
     {
     }
 
@@ -235,6 +235,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 class GuiItemUnitTest : public juce::UnitTest
 {
 public:

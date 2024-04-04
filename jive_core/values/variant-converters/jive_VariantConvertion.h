@@ -1,11 +1,25 @@
 #pragma once
 
+#include "jive_AttributedStringVariantConverters.h"
+#include "jive_FlexVariantConverters.h"
+#include "jive_GridVariantConverters.h"
+#include "jive_MiscVariantConverters.h"
+
+#include <juce_data_structures/juce_data_structures.h>
+
 namespace jive
 {
     template <typename Value>
     [[nodiscard]] auto toVar(const Value& value)
     {
-        return juce::VariantConverter<Value>::toVar(value);
+        if constexpr (std::is_array<Value>())
+        {
+            return juce::var{ value };
+        }
+        else
+        {
+            return juce::VariantConverter<Value>::toVar(value);
+        }
     }
 
     template <typename... Values>

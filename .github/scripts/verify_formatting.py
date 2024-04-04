@@ -8,7 +8,11 @@ if __name__ == "__main__":
     num_errors = 0
 
     for filepath in chain(Path(".").rglob("*.h"), Path(".").rglob("*.cpp")):
-        if "build/" in str(filepath) or "runners/libraries/JUCE/" in str(filepath):
+        if (
+            "build/" in str(filepath)
+            or "runners/libraries/JUCE/" in str(filepath)
+            or "JuceLibraryCode/" in str(filepath)
+        ):
             continue
 
         system(

@@ -1,4 +1,5 @@
-#include "jive_PluginEditor.h"
+#if JIVE_IS_PLUGIN_PROJECT
+    #include "jive_PluginEditor.h"
 
 namespace jive
 {
@@ -43,3 +44,4 @@ namespace jive
             setSize(getComponent()->getWidth(), getComponent()->getHeight());
     }
 } // namespace jive
+#endif

@@ -1,4 +1,8 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_BlockContainer.h"
+
+#include "jive_BlockItem.h"
+
+#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {
@@ -27,6 +31,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 class BlockContainerTest : public juce::UnitTest
 {
 public:

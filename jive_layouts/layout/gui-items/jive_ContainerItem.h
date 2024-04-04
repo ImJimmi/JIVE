@@ -1,5 +1,9 @@
 #pragma once
 
+#include "jive_GuiItemDecorator.h"
+
+#include <jive_layouts/utilities/jive_LayoutStrategy.h>
+
 namespace jive
 {
     class ContainerItem
@@ -11,11 +15,11 @@ namespace jive
         {
         public:
             explicit Child(std::unique_ptr<GuiItem> itemToDecorate);
-            ~Child() override = default;
+            ~Child() override;
 
         protected:
-            template <typename FlexOrGridItem>
-            void applyConstraints(FlexOrGridItem& item,
+            void applyConstraints(std::variant<std::reference_wrapper<juce::FlexItem>,
+                                               std::reference_wrapper<juce::GridItem>> flexOrGridItem,
                                   juce::Rectangle<float> parentContentBounds,
                                   Orientation orientation,
                                   LayoutStrategy strategy) const;

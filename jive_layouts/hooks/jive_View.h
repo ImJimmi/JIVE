@@ -1,7 +1,11 @@
 #pragma once
 
+#include <juce_gui_basics/juce_gui_basics.h>
+
 namespace jive
 {
+    class GuiItem;
+
     class View : public juce::ReferenceCountedObject
     {
     public:

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <jive_core/geometry/jive_Orientation.h>
+
+#include <juce_graphics/juce_graphics.h>
+
 namespace jive
 {
     struct Gradient

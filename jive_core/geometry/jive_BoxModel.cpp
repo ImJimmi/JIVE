@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_BoxModel.h"
 
 namespace jive
 {
@@ -227,6 +227,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+
 class BoxModelUnitTest : public juce::UnitTest
 {
 public:

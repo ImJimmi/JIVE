@@ -1,4 +1,9 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_GridContainer.h"
+
+#include "jive_GridItem.h"
+
+#include <jive_layouts/layout/gui-items/content/jive_Text.h>
+#include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
 
 namespace jive
 {
@@ -206,6 +211,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 static bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {
     return (a.isAuto() == b.isAuto())

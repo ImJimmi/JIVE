@@ -1,8 +1,7 @@
-#include <jive_core/jive_core.h>
+#include "jive_Colours.h"
 
 namespace jive
 {
-
     [[nodiscard]] static auto getTokensBetweenParentheses(const juce::String& text)
     {
         static constexpr auto includeSubString = false;
@@ -86,6 +85,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+
 class ColourParsingUnitTest : public juce::UnitTest
 {
 public:

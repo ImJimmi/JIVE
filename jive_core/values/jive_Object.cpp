@@ -1,4 +1,6 @@
-#include <jive_core/jive_core.h>
+#include "jive_Object.h"
+
+#include <jive_core/logging/jive_StringStreams.h>
 
 namespace jive
 {

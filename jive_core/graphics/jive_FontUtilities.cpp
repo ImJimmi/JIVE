@@ -1,5 +1,7 @@
 #include "jive_FontUtilities.h"
 
+#include <juce_graphics/juce_graphics.h>
+
 namespace jive
 {
     int parseFontStyleFlags(const juce::String& styleString)

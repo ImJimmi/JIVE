@@ -78,6 +78,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+
 class TimerUnitTest : public juce::UnitTest
 {
 public:

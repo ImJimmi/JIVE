@@ -1,5 +1,9 @@
 #pragma once
 
+#include "jive_Gradient.h"
+
+#include <juce_graphics/juce_graphics.h>
+
 namespace jive
 {
     class Fill

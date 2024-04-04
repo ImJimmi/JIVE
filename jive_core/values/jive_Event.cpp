@@ -1,6 +1,8 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_Event.h"
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+
 class EventUnitTest : public juce::UnitTest
 {
 public:
