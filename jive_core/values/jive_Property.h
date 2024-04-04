@@ -1,6 +1,9 @@
 #pragma once
 
 #include "jive_Object.h"
+#include "variant-converters/jive_VariantConvertion.h"
+
+#include <jive_core/algorithms/jive_Visitor.h>
 
 namespace jive
 {
@@ -25,7 +28,6 @@ namespace jive
         , protected Object::Listener
     {
     public:
-        using VariantConverter = juce::VariantConverter<ValueType>;
         using Source = std::variant<juce::ValueTree, Object::ReferenceCountedPointer>;
 
         Property(Source propertySource,
@@ -88,14 +90,14 @@ namespace jive
 
         void set(const ValueType& newValue)
         {
-            set(source, VariantConverter::toVar(newValue));
+            set(source, toVar(newValue));
         }
 
         void set(std::function<ValueType()> function)
         {
             set(source, juce::var{
                             [function](const auto&) {
-                                return VariantConverter::toVar(function());
+                                return toVar(function());
                             },
                         });
         }
@@ -298,11 +300,11 @@ namespace jive
         [[nodiscard]] ValueType getFrom(const juce::ValueTree& root) const
         {
             if (!isValid(root))
-                return VariantConverter::fromVar(juce::var{});
+                return fromVar<ValueType>(juce::var{});
 
             if constexpr (accumulation == Accumulation::accumulate)
             {
-                auto result = VariantConverter::fromVar(getVar(root, id));
+                auto result = fromVar<ValueType>(getVar(root, id));
 
                 for (auto i = 0; i < getNumChildren(root); i++)
                     result += getFrom(getChild(root, i));
@@ -319,18 +321,18 @@ namespace jive
                     var = var.getNativeFunction()(args);
                 }
 
-                return VariantConverter::fromVar(var);
+                return fromVar<ValueType>(var);
             }
         }
 
         [[nodiscard]] ValueType getFrom(Object* root) const
         {
             if (!isValid(root))
-                return VariantConverter::fromVar(juce::var{});
+                return fromVar<ValueType>(juce::var{});
 
             if constexpr (accumulation == Accumulation::accumulate)
             {
-                auto result = VariantConverter::fromVar(getVar(root, id));
+                auto result = fromVar<ValueType>(getVar(root, id));
 
                 for (auto i = 0; i < getNumChildren(root); i++)
                     result += getFrom(getChild(root, i));
@@ -342,10 +344,10 @@ namespace jive
                 if (root->hasMethod(id))
                 {
                     juce::var::NativeFunctionArgs args{ juce::var{}, nullptr, 0 };
-                    return VariantConverter::fromVar(root->invokeMethod(id, args));
+                    return fromVar<ValueType>(root->invokeMethod(id, args));
                 }
 
-                return VariantConverter::fromVar(root->getProperty(id));
+                return fromVar<ValueType>(root->getProperty(id));
             }
         }
 

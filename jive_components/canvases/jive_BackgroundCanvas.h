@@ -1,5 +1,9 @@
 #pragma once
 
+#include <jive_components/accessibility/jive_IgnoredComponent.h>
+
+#include <jive_core/jive_core.h>
+
 namespace jive
 {
     class BackgroundCanvas : public IgnoredComponent

@@ -1,4 +1,4 @@
-#include <jive_core/jive_core.h>
+#include "jive_ComponentInteractionState.h"
 
 namespace jive
 {

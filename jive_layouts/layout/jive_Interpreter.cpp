@@ -1,4 +1,24 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_Interpreter.h"
+
+#include <jive_layouts/layout/gui-items/block/jive_BlockContainer.h>
+#include <jive_layouts/layout/gui-items/block/jive_BlockItem.h>
+#include <jive_layouts/layout/gui-items/content/jive_Image.h>
+#include <jive_layouts/layout/gui-items/content/jive_Text.h>
+#include <jive_layouts/layout/gui-items/flex/jive_FlexContainer.h>
+#include <jive_layouts/layout/gui-items/flex/jive_FlexItem.h>
+#include <jive_layouts/layout/gui-items/grid/jive_GridContainer.h>
+#include <jive_layouts/layout/gui-items/grid/jive_GridItem.h>
+#include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/layout/gui-items/top-level/jive_Window.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Button.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_ComboBox.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Hyperlink.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Knob.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Label.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_ProgressBar.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Slider.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Spinner.h>
+#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {

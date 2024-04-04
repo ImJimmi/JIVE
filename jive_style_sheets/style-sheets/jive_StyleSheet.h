@@ -1,5 +1,7 @@
 #pragma once
 
+#include <jive_components/jive_components.h>
+
 namespace jive
 {
     class StyleSheet

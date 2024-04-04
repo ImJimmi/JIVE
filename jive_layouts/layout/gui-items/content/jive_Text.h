@@ -1,5 +1,9 @@
 #pragma once
 
+#include <jive_components/jive_components.h>
+
+#include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+
 namespace jive
 {
     class Text

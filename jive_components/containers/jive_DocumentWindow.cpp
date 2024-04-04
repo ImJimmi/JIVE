@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_DocumentWindow.h"
 
 namespace jive
 {

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "jive_Length.h"
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
 namespace jive
 {
     class BoxModel

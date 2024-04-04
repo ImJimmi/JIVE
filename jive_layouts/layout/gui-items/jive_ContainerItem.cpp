@@ -1,4 +1,6 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_ContainerItem.h"
+
+#include "jive_CommonGuiItem.h"
 
 namespace jive
 {

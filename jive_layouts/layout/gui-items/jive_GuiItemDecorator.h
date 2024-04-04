@@ -1,5 +1,7 @@
 #pragma once
 
+#include "jive_GuiItem.h"
+
 namespace jive
 {
     class GuiItemDecorator : public GuiItem

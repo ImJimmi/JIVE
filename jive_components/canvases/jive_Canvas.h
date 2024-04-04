@@ -1,5 +1,7 @@
 #pragma once
 
+#include <juce_gui_basics/juce_gui_basics.h>
+
 namespace jive
 {
     class Canvas : public juce::Component

@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_Button.h"
 
 namespace jive
 {
@@ -132,6 +132,8 @@ namespace juce
 } // namespace juce
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 class ButtonTest : public juce::UnitTest
 {
 public:

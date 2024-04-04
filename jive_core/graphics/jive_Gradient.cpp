@@ -1,5 +1,7 @@
 #include "jive_Gradient.h"
 
+#include <jive_core/values/variant-converters/jive_VariantConvertion.h>
+
 namespace jive
 {
     bool Gradient::ColourStop::operator==(const ColourStop& other) const

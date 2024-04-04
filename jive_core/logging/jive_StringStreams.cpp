@@ -1,4 +1,4 @@
-#pragma once
+#include "jive_StringStreams.h"
 
 namespace juce
 {

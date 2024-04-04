@@ -1,5 +1,7 @@
 #include "jive_ContainerItem.h"
 
+#include "jive_CommonGuiItem.h"
+
 namespace jive
 {
     class ContainerItem::Child::Pimpl
@@ -166,15 +168,23 @@ namespace jive
     {
     }
 
-    template <typename FlexOrGridItem>
-    void ContainerItem::Child::applyConstraints(FlexOrGridItem& flexOrGridItem,
+    ContainerItem::Child::~Child() = default;
+
+    void ContainerItem::Child::applyConstraints(std::variant<std::reference_wrapper<juce::FlexItem>,
+                                                             std::reference_wrapper<juce::GridItem>> flexOrGridItem,
                                                 juce::Rectangle<float> parentContentBounds,
                                                 Orientation orientation,
                                                 LayoutStrategy strategy) const
     {
-        pimpl->applyConstraints(flexOrGridItem,
-                                parentContentBounds,
-                                orientation,
-                                strategy);
+        const auto visit = [this,
+                            parentContentBounds,
+                            orientation,
+                            strategy](auto&& gridOrFlexItem) {
+            pimpl->applyConstraints(gridOrFlexItem.get(),
+                                    parentContentBounds,
+                                    orientation,
+                                    strategy);
+        };
+        std::visit(visit, flexOrGridItem);
     }
 } // namespace jive

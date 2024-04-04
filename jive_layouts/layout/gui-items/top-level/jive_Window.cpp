@@ -1,4 +1,6 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_Window.h"
+
+#include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
 
 #ifndef JUCE_APPLICATION_NAME
     #define JUCE_APPLICATION_NAME ""
@@ -165,6 +167,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/jive_Interpreter.h>
+
 class WindowTest : public juce::UnitTest
 {
 public:

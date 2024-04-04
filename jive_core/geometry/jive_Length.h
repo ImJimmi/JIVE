@@ -1,5 +1,9 @@
 #pragma once
 
+#include <jive_core/values/jive_Property.h>
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
 namespace jive
 {
     class Length : public Property<juce::String>

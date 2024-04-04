@@ -1,6 +1,9 @@
-#include <jive_core/jive_core.h>
+#include "jive_VariantConvertion.h"
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/logging/jive_StringStreams.h>
+    #include <juce_gui_basics/juce_gui_basics.h>
+
 class VarConversionUnitTest : public juce::UnitTest
 {
 public:

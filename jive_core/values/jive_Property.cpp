@@ -1,4 +1,4 @@
-#include <jive_layouts/jive_layouts.h>
+#include "jive_Property.h"
 
 #if JIVE_UNIT_TESTS
 class PropertyUnitTest : public juce::UnitTest

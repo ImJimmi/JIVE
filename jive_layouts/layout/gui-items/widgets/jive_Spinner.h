@@ -1,5 +1,7 @@
 #pragma once
 
+#include "jive_Slider.h"
+
 namespace jive
 {
     class Spinner : public Slider
