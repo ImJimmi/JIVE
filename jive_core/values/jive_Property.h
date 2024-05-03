@@ -77,6 +77,7 @@ namespace jive
 
         ~Property() override
         {
+            observeTransition(nullptr);
             removeThisAsListener(source);
             removeThisAsListener(listenerTarget);
         }
@@ -191,13 +192,11 @@ namespace jive
 
         void setTransitionSourceProperty(const juce::Identifier& sourceID)
         {
-            if (auto* transition = getTransition())
-                transition->removeListener(*this);
-
+            observeTransition(nullptr);
             transitionSourceID = sourceID;
 
             if (auto* transition = getTransition())
-                transition->addListener(*this);
+                observeTransition(transition);
         }
 
         [[nodiscard]] Transitions::Transition* getTransition()
@@ -255,7 +254,7 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                       const juce::Identifier& property) override
         {
-            if (property != id)
+            if (property != id && property.toString() != "transition")
                 return;
             if (!treeWhosePropertyChanged.hasProperty(property))
                 return;
@@ -608,12 +607,7 @@ namespace jive
             }
 
             if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
-            {
                 updateTransition();
-
-                if (auto* transition = getTransition())
-                    transition->addListener(*this);
-            }
         }
 
         void transitionProgressed(const juce::String& propertyName,
@@ -654,10 +648,31 @@ namespace jive
                     transition->target = var;
                     transition->commencement = now();
                 }
+
+                observeTransition(transition);
             }
+            else
+            {
+                observeTransition(nullptr);
+            }
+        }
+
+        void observeTransition(Transitions::Transition* transition)
+        {
+            if (observedTransition == transition)
+                return;
+
+            if (observedTransition != nullptr)
+                observedTransition->removeListener(*this);
+
+            observedTransition = transition;
+
+            if (transition != nullptr)
+                transition->addListener(*this);
         }
 
         Source listenerTarget;
         juce::Identifier transitionSourceID;
+        Transitions::Transition* observedTransition = nullptr;
     };
 } // namespace jive

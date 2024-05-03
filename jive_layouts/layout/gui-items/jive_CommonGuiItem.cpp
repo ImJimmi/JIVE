@@ -123,9 +123,14 @@ namespace jive
         };
         getComponent()->setExplicitFocusOrder(focusOrder);
 
-        opacity.onValueChange = [this]() {
-            getComponent()->setAlpha(opacity);
+        const auto updateOpacity = [this] {
+            if (auto* transition = opacity.getTransition())
+                getComponent()->setAlpha(transition->calculateCurrent<float>());
+            else
+                getComponent()->setAlpha(opacity);
         };
+        opacity.onValueChange = updateOpacity;
+        opacity.onTransitionProgressed = updateOpacity;
         getComponent()->setAlpha(opacity);
 
         cursor.onValueChange = [this]() {
@@ -886,6 +891,12 @@ private:
 
             state.setProperty("opacity", 0.42f, nullptr);
             expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
+
+            state.setProperty("transition", "opacity 10s", nullptr);
+            state.setProperty("opacity", 0.92f, nullptr);
+            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(4.0));
+            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.62f, 1.f / 256.f);
         }
         {
             juce::ValueTree state{
