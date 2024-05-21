@@ -9,6 +9,7 @@
 #include <jive_layouts/layout/gui-items/grid/jive_GridContainer.h>
 #include <jive_layouts/layout/gui-items/grid/jive_GridItem.h>
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/layout/gui-items/top-level/jive_PluginEditor.h>
 #include <jive_layouts/layout/gui-items/top-level/jive_Window.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Button.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_ComboBox.h>

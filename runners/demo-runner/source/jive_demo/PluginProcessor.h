@@ -41,6 +41,8 @@ namespace jive_demo
 
         juce::AudioProcessorEditor* createEditor() final
         {
+            jassert(JIVE_IS_PLUGIN_PROJECT);
+
             if (auto view = interpreter.interpret(editorPresenter.present(), this))
             {
                 if (dynamic_cast<juce::AudioProcessorEditor*>(view.get()) != nullptr)

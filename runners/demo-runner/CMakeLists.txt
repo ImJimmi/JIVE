@@ -67,6 +67,11 @@ PRIVATE
     source/PluginFilter.cpp
 )
 
+target_compile_definitions(jive-demo-plugin
+PRIVATE
+    JIVE_IS_PLUGIN_PROJECT=1
+)
+
 target_link_libraries(jive-demo-plugin
 PRIVATE
     jive-demo
