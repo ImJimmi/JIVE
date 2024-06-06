@@ -29,6 +29,9 @@ namespace jive
 
     juce::Array<GuiItem*> GuiItemDecorator::getChildren()
     {
+        if (item == nullptr)
+            return {};
+
         return item->getChildren();
     }
 

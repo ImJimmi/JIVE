@@ -22,8 +22,6 @@ namespace jive
         Length width;
         Length height;
 
-        BoxModel& boxModel;
-
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BlockItem)
     };
 } // namespace jive

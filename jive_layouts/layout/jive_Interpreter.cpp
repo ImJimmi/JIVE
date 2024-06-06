@@ -295,6 +295,8 @@ namespace jive
 
         if (childItem != nullptr)
         {
+            setupItemsRecursive(*childItem);
+
             if (item.isContainer() || childItem->isContent())
                 item.insertChild(std::move(childItem), index);
         }

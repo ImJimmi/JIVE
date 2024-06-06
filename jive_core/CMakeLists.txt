@@ -54,6 +54,7 @@ PUBLIC
     values/jive_Object.h
     values/jive_Property.cpp
     values/jive_Property.h
+    values/jive_ReferenceCountedValueTreeWrapper.h
     values/jive_XmlParser.cpp
     values/jive_XmlParser.h
 

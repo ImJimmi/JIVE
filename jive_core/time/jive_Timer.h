@@ -54,6 +54,7 @@ namespace jive
 #else
         void timerCallback() final;
 #endif
+
         Callback callback;
         juce::RelativeTime interval;
         juce::Time timeLastCallbackInvoked;
