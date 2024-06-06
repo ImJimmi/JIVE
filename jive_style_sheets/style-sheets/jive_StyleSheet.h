@@ -1,5 +1,7 @@
 #pragma once
 
+#include "jive_StyleCache.h"
+
 #include <jive_components/jive_components.h>
 
 namespace jive
@@ -17,11 +19,11 @@ namespace jive
         StyleSheet(juce::Component& component, juce::ValueTree state);
         ~StyleSheet();
 
-        Fill getBackground() const;
-        Fill getForeground() const;
-        Fill getBorderFill() const;
-        BorderRadii<float> getBorderRadii() const;
-        juce::Font getFont() const;
+        [[nodiscard]] Fill getBackground() const;
+        [[nodiscard]] Fill getForeground() const;
+        [[nodiscard]] Fill getBorderFill() const;
+        [[nodiscard]] BorderRadii<float> getBorderRadii() const;
+        [[nodiscard]] juce::Font getFont() const;
 
     private:
         void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool wasMoved, bool wasResized) final;
@@ -29,10 +31,10 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
         void propertyChanged(Object& object, const juce::Identifier& name) final;
 
-        juce::var findStyleProperty(const juce::Identifier& propertyName) const;
-        juce::var findHierarchicalStyleProperty(const juce::Identifier& propertyName) const;
-        juce::ReferenceCountedObjectPtr<StyleSheet> findClosestAncestorStyleSheet();
-        juce::Array<ReferenceCountedPointer> collectChildSheets();
+        [[nodiscard]] juce::var findStyleProperty(const juce::Identifier& propertyName) const;
+        [[nodiscard]] juce::var findHierarchicalStyleProperty(const juce::Identifier& propertyName) const;
+        [[nodiscard]] StyleSheet* findClosestAncestorStyleSheet();
+        [[nodiscard]] juce::Array<StyleSheet*> collectChildSheets();
 
         void applyStyles();
 
@@ -47,6 +49,9 @@ namespace jive
         Property<float> borderWidth;
 
         const std::unique_ptr<Selectors> selectors;
+
+        friend class StyleCache;
+        StyleCache cache;
 
         JUCE_LEAK_DETECTOR(StyleSheet)
     };

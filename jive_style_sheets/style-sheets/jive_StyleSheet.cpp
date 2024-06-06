@@ -75,6 +75,7 @@ namespace jive
         , style{ state, "style" }
         , borderWidth{ state, "border-width" }
         , selectors{ std::make_unique<Selectors>(state) }
+        , cache{ *this }
     {
         jassert(component != nullptr);
         jassert(!component->getProperties().contains("style-sheet"));
@@ -83,6 +84,7 @@ namespace jive
         component->addAndMakeVisible(backgroundCanvas, 0);
         backgroundCanvas.setBounds(component->getLocalBounds());
 
+        cache.update();
         applyStyles();
 
         component->addComponentListener(this);
@@ -99,6 +101,7 @@ namespace jive
         }
 
         selectors->onChange = [this]() {
+            cache.update();
             applyStyles();
         };
     }
@@ -120,72 +123,27 @@ namespace jive
 
     Fill StyleSheet::getBackground() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
+        return cache.getBackground();
     }
 
     Fill StyleSheet::getForeground() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findHierarchicalStyleProperty("foreground"));
+        return cache.getForeground();
     }
 
     Fill StyleSheet::getBorderFill() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("border"));
+        return cache.getBorderFill();
     }
 
     BorderRadii<float> StyleSheet::getBorderRadii() const
     {
-        return juce::VariantConverter<BorderRadii<float>>::fromVar(findStyleProperty("border-radius"));
+        return cache.getBorderRadii();
     }
 
     juce::Font StyleSheet::getFont() const
     {
-        juce::Font font;
-
-        if (const auto fontFamily = findHierarchicalStyleProperty("font-family").toString();
-            fontFamily.isNotEmpty())
-        {
-            font.setTypefaceName(fontFamily);
-        }
-
-        if (const auto fontStyle = findHierarchicalStyleProperty("font-style").toString();
-            fontStyle.isNotEmpty())
-        {
-            font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
-        }
-
-        if (const auto weight = findHierarchicalStyleProperty("font-weight").toString();
-            weight.isNotEmpty())
-        {
-            font.setBold(weight.compareIgnoreCase("bold") == 0);
-        }
-
-        if (const auto size = findHierarchicalStyleProperty("font-size");
-            size != juce::var{})
-        {
-            font = font.withPointHeight(static_cast<float>(size));
-        }
-
-        if (const auto spacing = findHierarchicalStyleProperty("letter-spacing");
-            spacing != juce::var{})
-        {
-            const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
-            font.setExtraKerningFactor(extraKerning);
-        }
-
-        if (const auto decoration = findHierarchicalStyleProperty("text-decoration").toString();
-            decoration.isNotEmpty())
-        {
-            font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
-        }
-
-        if (const auto stretch = findHierarchicalStyleProperty("font-stretch");
-            stretch != juce::var{})
-        {
-            font.setHorizontalScale(static_cast<float>(stretch));
-        }
-
-        return font;
+        return cache.getFont();
     }
 
     void StyleSheet::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -199,11 +157,15 @@ namespace jive
     void StyleSheet::componentParentHierarchyChanged(juce::Component& childComponent)
     {
         jassertquiet(&childComponent == component);
+        cache.update();
         applyStyles();
     }
 
-    void StyleSheet::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
+    void StyleSheet::valueTreePropertyChanged(juce::ValueTree& root, const juce::Identifier& id)
     {
+        if (root != state)
+            return;
+
         if (id == juce::Identifier{ "style" })
         {
             if (auto object = style.get();
@@ -212,13 +174,15 @@ namespace jive
                 object->addListener(*this);
             }
 
+            cache.update();
             applyStyles();
         }
     }
 
-    void StyleSheet::propertyChanged(Object& object, const juce::Identifier&)
+    void StyleSheet::propertyChanged(Object& object, const juce::Identifier& id)
     {
         jassertquiet(&object == style.get().get());
+        cache.update(id);
         applyStyles();
     }
 
@@ -302,7 +266,7 @@ namespace jive
 
     juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
     {
-        for (juce::ReferenceCountedObjectPtr<StyleSheet> styleSheetToSearch{ const_cast<StyleSheet*>(this) };
+        for (auto* styleSheetToSearch = const_cast<StyleSheet*>(this);
              styleSheetToSearch != nullptr;
              styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
         {
@@ -318,7 +282,7 @@ namespace jive
         return {};
     }
 
-    juce::ReferenceCountedObjectPtr<StyleSheet> StyleSheet::findClosestAncestorStyleSheet()
+    StyleSheet* StyleSheet::findClosestAncestorStyleSheet()
     {
         for (auto* parent = component->getParentComponent();
              parent != nullptr;
@@ -334,9 +298,9 @@ namespace jive
         return nullptr;
     }
 
-    juce::Array<StyleSheet::ReferenceCountedPointer> StyleSheet::collectChildSheets()
+    juce::Array<StyleSheet*> StyleSheet::collectChildSheets()
     {
-        juce::Array<ReferenceCountedPointer> result;
+        juce::Array<StyleSheet*> result;
 
         for (auto* const child : component->getChildren())
         {
