@@ -1,3 +1,5 @@
+include(cmake/melatonin_inspector.cmake)
+
 add_library(jive-demo INTERFACE)
 
 juce_add_binary_data(jive-demo-resources
@@ -38,6 +40,8 @@ INTERFACE
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
+
+add_melatonin_inspector(jive-demo)
 
 juce_add_gui_app(jive-demo-app
     PRODUCT_NAME "JIVE Demo"
