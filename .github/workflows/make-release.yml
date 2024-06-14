@@ -9,6 +9,6 @@ jobs:
         steps:
             - run: echo "VERSION=$(echo "${{github.ref}}" | sed 's:.*/::')" >> $GITHUB_ENV
             - name: Release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                   name: "JIVE ${{ env.VERSION }}"
