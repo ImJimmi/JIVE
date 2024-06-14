@@ -1,6 +1,6 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <jive_core/jive_core.h>
 
 namespace jive
 {
@@ -45,26 +45,52 @@ namespace jive
     private:
         juce::ValueTree state;
 
+        friend class GuiItem;
         friend class Interpreter;
+        friend class ViewBuilder;
         JUCE_LEAK_DETECTOR(View)
+    };
+
+    class ViewBuilder
+    {
+    public:
+        template <typename ViewType, typename... Args>
+        [[nodiscard]] static auto makeView(Args&&... args)
+        {
+            const auto buildView = makeViewBuilder<ViewType, Args...>(std::forward<Args>(args)...);
+            const auto wrappedState = buildView({ juce::var{}, nullptr, 0 });
+            auto state = dynamic_cast<ReferenceCountedValueTreeWrapper*>(wrappedState.getObject())->state;
+            state.setProperty("make-view", buildView, nullptr);
+
+            return state;
+        }
+
+    private:
+        template <typename ViewType, typename... Args>
+        [[nodiscard]] static juce::var::NativeFunction makeViewBuilder(Args&&... args)
+        {
+            return [args = std::make_tuple(std::forward<Args>(args)...)](const auto&) {
+                static constexpr auto createRawView = [](auto&&... theArgs) {
+                    return new ViewType{ std::forward<Args>(theArgs)... };
+                };
+                const View::ReferenceCountedPointer view{ std::apply(createRawView, std::move(args)) };
+                auto state = view->initialise();
+                state.setProperty("view-object", view.get(), nullptr);
+
+                return juce::var{
+                    new ReferenceCountedValueTreeWrapper{ state },
+                };
+            };
+        }
     };
 
     /** Constructs the given ViewType as a ValueTree to be used either directly
         by jive::Interpreter, or to be added as a child to a ValueTree being
         interpreted.
-
-        CAUTION - this function creates a circular dependency between the View
-        object and the ValueTree that's returned as both hold a reference to
-        each other! Using this with jive::Interpreter is safe because the
-        circular dependency will be broken, however using this in any other way
-        will require you to manually remove the "view-object" property of the
-        returned tree before it goes out of scope.
     */
     template <typename ViewType, typename... Args>
     [[nodiscard]] auto makeView(Args&&... args)
     {
-        juce::ReferenceCountedObjectPtr<ViewType> view = new ViewType{ std::forward<Args>(args)... };
-        return view->getState()
-            .setProperty("view-object", view.get(), nullptr);
+        return ViewBuilder::makeView<ViewType, Args...>(std::forward<Args>(args)...);
     }
 } // namespace jive

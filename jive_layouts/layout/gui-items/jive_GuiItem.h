@@ -83,6 +83,8 @@ namespace jive
         const StyleSheet::ReferenceCountedPointer styleSheet;
 #endif
 
+        static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state);
+
         const std::shared_ptr<juce::Component> component;
         GuiItem* const parent;
         juce::OwnedArray<GuiItem> children;

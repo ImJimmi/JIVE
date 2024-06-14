@@ -23,13 +23,38 @@ namespace jive
         juce::ValueTree view;
     };
 
-    [[nodiscard]] static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state)
+    View::ReferenceCountedPointer GuiItem::getOrCreateView(juce::ValueTree state)
     {
-        if (!state.hasProperty("view-object"))
-            return new PassiveView{ state };
+        View::ReferenceCountedPointer view;
 
-        View::ReferenceCountedPointer view = dynamic_cast<View*>(state["view-object"].getObject());
+        if (state.hasProperty("view-object"))
+        {
+            view = dynamic_cast<View*>(state["view-object"].getObject());
+        }
+        else if (state.hasProperty("make-view"))
+        {
+            const auto buildView = state["make-view"].getNativeFunction();
+            const auto viewObjectProperty = buildView({ juce::var{}, nullptr, 0 });
+
+            if (auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
+            {
+                if (auto* viewObject = dynamic_cast<View*>(wrappedState->state["view-object"].getObject()))
+                    view = viewObject;
+                else
+                    jassertfalse;
+            }
+            else
+            {
+                jassertfalse;
+            }
+        }
+        else
+        {
+            view = new PassiveView{ state };
+        }
+
         state.removeProperty("view-object", nullptr);
+        view->state = state;
 
         return view;
     }
