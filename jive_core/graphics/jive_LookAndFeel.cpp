@@ -63,7 +63,11 @@ namespace jive
     juce::Font LookAndFeel::getTextButtonFont(juce::TextButton&,
                                               int /* buttonHeight */)
     {
+#if JUCE_MAJOR_VERSION < 8
         return {};
+#else
+        return juce::FontOptions{};
+#endif
     }
 
     int LookAndFeel::getTextButtonWidthToFitText(juce::TextButton&,
@@ -143,7 +147,11 @@ namespace jive
 
     juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox&)
     {
+#if JUCE_MAJOR_VERSION < 8
         return {};
+#else
+        return juce::FontOptions{};
+#endif
     }
 
     void LookAndFeel::positionComboBoxText(juce::ComboBox&,

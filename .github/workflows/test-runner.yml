@@ -7,6 +7,10 @@ on:
 env:
     BUILD_TYPE: Debug
 
+defaults:
+    run:
+        shell: bash
+
 jobs:
     test-windows:
         name: Test Windows
@@ -18,14 +22,13 @@ jobs:
                   submodules: "recursive"
 
             - name: Configure CMake
-              run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON
+              run: cmake -Bbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON
 
             - name: Build
-              run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+              run: cmake --build build --config ${{env.BUILD_TYPE}}
 
             - name: Test
-              working-directory: ${{github.workspace}}/build
-              run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
+              run: cd build && ctest -j14 -C Debug -T test --output-on-failure
 
     test-macos:
         name: Test macOS
@@ -37,15 +40,13 @@ jobs:
                   submodules: "recursive"
 
             - name: Configure CMake
-              run: cmake -B ${{github.workspace}}/build -G Xcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON -DJIVE_ENABLE_COVERAGE=ON -DJIVE_ENABLE_SANITISERS=ON
+              run: cmake -Bbuild -GXcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON -DJIVE_ENABLE_COVERAGE=ON -DJIVE_ENABLE_SANITISERS=ON
 
             - name: Build
-              run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+              run: cmake --build build --config ${{env.BUILD_TYPE}}
 
             - name: Test
-              working-directory: ${{github.workspace}}/build
-              run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
-
+              run: cd build && ctest -j14 -C Debug -T test --output-on-failure
 
     verify-formatting:
         name: Verify Formatting
@@ -58,4 +59,4 @@ jobs:
               run: brew install clang-format
 
             - name: Verify formatting
-              run: python3 ${{github.workspace}}/.github/scripts/verify_formatting.py
+              run: python3 .github/scripts/verify_formatting.py

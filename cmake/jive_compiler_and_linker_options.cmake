@@ -6,7 +6,6 @@ add_library(jive::compiler_and_linker_options ALIAS jive_compiler_and_linker_opt
 target_compile_definitions(jive_compiler_and_linker_options
 INTERFACE
     JUCE_DISABLE_JUCE_VERSION_PRINTING=1
-    JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
     JUCE_USE_CURL=0
     JUCE_WEB_BROWSER=0
