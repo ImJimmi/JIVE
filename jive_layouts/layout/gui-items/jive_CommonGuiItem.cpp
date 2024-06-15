@@ -124,10 +124,7 @@ namespace jive
         getComponent()->setExplicitFocusOrder(focusOrder);
 
         const auto updateOpacity = [this] {
-            if (auto* transition = opacity.getTransition())
-                getComponent()->setAlpha(transition->calculateCurrent<float>());
-            else
-                getComponent()->setAlpha(opacity);
+            getComponent()->setAlpha(opacity.calculateCurrent());
         };
         opacity.onValueChange = updateOpacity;
         opacity.onTransitionProgressed = updateOpacity;

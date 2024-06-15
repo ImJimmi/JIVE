@@ -26,30 +26,23 @@ namespace jive_demo
 
     namespace views
     {
-        class AnimatedGridItem : public jive::View
+        [[nodiscard]] inline auto animatedGridItem()
         {
-        public:
-
-        protected:
-            juce::ValueTree initialise() final
-            {
-                return juce::ValueTree{
-                    "Component",
+            return juce::ValueTree{
+                "Component",
+                {
+                    { "border-width", 2 },
                     {
-                        { "min-height", 20 },
-                        {
-                            "style",
-                            new jive::Object{
-                                { "background", jive::toVar(colours::blue600) },
-                                { "border-radius", 10 },
-                            },
+                        "style",
+                        new jive::Object{
+                            { "background", jive::toVar(colours::blue600) },
+                            { "border", jive::toVar(colours::blue400) },
+                            { "border-radius", 10 },
                         },
                     },
-                };
-            }
-
-        private:
-        };
+                },
+            };
+        }
 
         [[nodiscard]] inline auto gridAnimationsDemo()
         {
@@ -105,15 +98,15 @@ namespace jive_demo
                             },
                         },
                         {
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
-                            jive::makeView<AnimatedGridItem>(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
+                            animatedGridItem(),
                         },
                     },
                 },

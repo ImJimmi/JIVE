@@ -4,6 +4,11 @@
 
 namespace jive_demo
 {
+    [[nodiscard]] inline auto calculateRandomOpacity()
+    {
+        return 0.2f + juce::Random::getSystemRandom().nextFloat() * 0.8f;
+    }
+
     namespace views
     {
         [[nodiscard]] inline auto animatedBox()
@@ -22,7 +27,8 @@ namespace jive_demo
                         "height 200ms ease-in-out, "
                         "centre-x 350ms ease-in-out, "
                         "centre-y 350ms ease-in-out, "
-                        "border-width 250ms ease-in-out",
+                        "border-width 250ms ease-in-out, "
+                        "opacity 500ms ease-in-out",
                     },
                     { "border-width", 1.5 },
                     {
@@ -37,7 +43,7 @@ namespace jive_demo
             };
         }
 
-        [[nodiscard]] inline auto boxModelAnimationsDemo()
+        [[nodiscard]] inline auto componentAnimationsDemo()
         {
             return juce::ValueTree{
                 "Component",
@@ -72,6 +78,10 @@ namespace jive_demo
                                 .withText("Border")()
                                 .setProperty("id", "animate-border-button", nullptr)
                                 .setProperty("margin", "0 10 0 0", nullptr),
+                            DemoCallToAction{}
+                                .withText("Opacity")()
+                                .setProperty("id", "animate-opacity-button", nullptr)
+                                .setProperty("margin", "0 10 0 0", nullptr),
                         },
                     },
                     juce::ValueTree{
@@ -89,10 +99,10 @@ namespace jive_demo
         }
     } // namespace views
 
-    class BoxModelAnimationsPresenter
+    class ComponentAnimationsPresenter
     {
     public:
-        BoxModelAnimationsPresenter()
+        ComponentAnimationsPresenter()
             : onAnimatePositionButtonClicked{
                 jive::findElementWithID(view, "animate-position-button"),
                 "on-click",
@@ -105,25 +115,33 @@ namespace jive_demo
                 jive::findElementWithID(view, "animate-border-button"),
                 "on-click",
             }
+            , onAnimateOpacityButtonClicked{
+                jive::findElementWithID(view, "animate-opacity-button"),
+                "on-click",
+            }
         {
             onAnimatePositionButtonClicked.onTrigger = [this] {
                 auto box = jive::findElementWithID(view, "animated-box");
-                const auto cx = juce::Random::getSystemRandom().nextInt({ 15, 85 });
-                const auto cy = juce::Random::getSystemRandom().nextInt({ 15, 85 });
+                const auto cx = juce::Random::getSystemRandom().nextInt({ 20, 80 });
+                const auto cy = juce::Random::getSystemRandom().nextInt({ 20, 80 });
                 box.setProperty("centre-x", juce::String{ cx } + "%", nullptr);
                 box.setProperty("centre-y", juce::String{ cy } + "%", nullptr);
             };
             onAnimateSizeButtonClicked.onTrigger = [this] {
                 auto box = jive::findElementWithID(view, "animated-box");
-                const auto width = juce::Random::getSystemRandom().nextInt({ 30, 100 });
+                const auto width = juce::Random::getSystemRandom().nextInt({ 30, 120 });
                 box.setProperty("width", width, nullptr);
-                const auto height = juce::Random::getSystemRandom().nextInt({ 30, 100 });
+                const auto height = juce::Random::getSystemRandom().nextInt({ 30, 120 });
                 box.setProperty("height", height, nullptr);
             };
             onAnimateBorderButtonClicked.onTrigger = [this] {
                 auto box = jive::findElementWithID(view, "animated-box");
-                const auto thickness = juce::Random::getSystemRandom().nextFloat() * 10.0f;
+                const auto thickness = 1.0f + juce::Random::getSystemRandom().nextFloat() * 14.0f;
                 box.setProperty("border-width", thickness, nullptr);
+            };
+            onAnimateOpacityButtonClicked.onTrigger = [this] {
+                auto box = jive::findElementWithID(view, "animated-box");
+                box.setProperty("opacity", calculateRandomOpacity(), nullptr);
             };
         }
 
@@ -133,10 +151,11 @@ namespace jive_demo
         }
 
     private:
-        juce::ValueTree view{ views::boxModelAnimationsDemo() };
+        juce::ValueTree view{ views::componentAnimationsDemo() };
 
         jive::Event onAnimatePositionButtonClicked;
         jive::Event onAnimateSizeButtonClicked;
         jive::Event onAnimateBorderButtonClicked;
+        jive::Event onAnimateOpacityButtonClicked;
     };
 } // namespace jive_demo

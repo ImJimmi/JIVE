@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoxModelAnimations.h"
+#include "ComponentAnimations.h"
 #include "FlexBoxAnimations.h"
 #include "GridAnimations.h"
 
@@ -81,7 +81,7 @@ namespace jive_demo
                     { "gap", 5 },
                 },
                 {
-                    navButton("Box Model", "nav-box-model"),
+                    navButton("Component", "nav-component"),
                     navButton("Flex Box", "nav-flex"),
                     navButton("Grid", "nav-grid"),
                 },
@@ -131,8 +131,8 @@ namespace jive_demo
                 windowState,
                 Page::animations,
             }
-            , onBoxModelButtonClicked{
-                jive::findElementWithID(view, "nav-box-model"),
+            , onComponentButtonClicked{
+                jive::findElementWithID(view, "nav-component"),
                 "on-click",
             }
             , onFlexBoxButtonClicked{
@@ -144,8 +144,8 @@ namespace jive_demo
                 "on-click",
             }
         {
-            onBoxModelButtonClicked.onTrigger = [this] {
-                setContent(boxModelTab.present());
+            onComponentButtonClicked.onTrigger = [this] {
+                setContent(componentTab.present());
             };
             onFlexBoxButtonClicked.onTrigger = [this] {
                 setContent(flexBoxTab.present());
@@ -172,11 +172,11 @@ namespace jive_demo
 
         juce::ValueTree view{ views::animationsPage() };
 
-        jive::Event onBoxModelButtonClicked;
+        jive::Event onComponentButtonClicked;
         jive::Event onFlexBoxButtonClicked;
         jive::Event onGridButtonClicked;
 
-        BoxModelAnimationsPresenter boxModelTab;
+        ComponentAnimationsPresenter componentTab;
         FlexBoxAnimationsPresenter flexBoxTab;
         GridAnimationsPresenter gridTab;
     };
