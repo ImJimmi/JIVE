@@ -2,11 +2,11 @@
 
 #include "WindowState.h"
 
-#include <jive_demo/gui/pages/AnimationsPage.h>
 #include <jive_demo/gui/pages/DevelopmentPage.h>
 #include <jive_demo/gui/pages/HomePage.h>
 #include <jive_demo/gui/pages/LayoutsPage.h>
 #include <jive_demo/gui/pages/StyleSheetsPage.h>
+#include <jive_demo/gui/pages/animations/AnimationsPage.h>
 #include <jive_demo/gui/tokens/Colours.h>
 
 #include <jive_layouts/jive_layouts.h>

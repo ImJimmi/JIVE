@@ -71,7 +71,7 @@ namespace jive
         {
             return [args = std::make_tuple(std::forward<Args>(args)...)](const auto&) {
                 static constexpr auto createRawView = [](auto&&... theArgs) {
-                    return new ViewType{ std::forward<Args>(theArgs)... };
+                    return new ViewType{ theArgs... };
                 };
                 const View::ReferenceCountedPointer view{ std::apply(createRawView, std::move(args)) };
                 auto state = view->initialise();

@@ -125,7 +125,7 @@ namespace jive
     {
         jassertquiet(&comp == &getButton());
 
-        if (radioGroup.get() != 0 && !toggled.get())
+        if (radioGroup.get() != 0)
         {
             if (auto* parentComponent = getButton().getParentComponent())
                 toggled = findFirstChildButton(*parentComponent) == &getButton();

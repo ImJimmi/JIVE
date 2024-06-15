@@ -43,8 +43,11 @@ namespace jive
         };
         order.onValueChange = updateParentLayout;
         flexGrow.onValueChange = updateParentLayout;
+        flexGrow.onTransitionProgressed = updateParentLayout;
         flexShrink.onValueChange = updateParentLayout;
+        flexShrink.onTransitionProgressed = updateParentLayout;
         flexBasis.onValueChange = updateParentLayout;
+        flexBasis.onTransitionProgressed = updateParentLayout;
         alignSelf.onValueChange = updateParentLayout;
     }
 
@@ -53,12 +56,19 @@ namespace jive
     {
         juce::FlexItem flexItem{ *layoutDummy };
 
-        flexItem.flexShrink = flexShrink;
-        flexItem.flexBasis = flexBasis;
+        static constexpr auto calculateCurrent = [](auto& property) {
+            if (auto* transition = property.getTransition())
+                return transition->template calculateCurrent<float>();
+
+            return property.get();
+        };
+
+        flexItem.flexShrink = calculateCurrent(flexShrink);
 
         if (strategy == LayoutStrategy::real)
         {
-            flexItem.flexGrow = flexGrow;
+            flexItem.flexGrow = calculateCurrent(flexGrow);
+            flexItem.flexBasis = calculateCurrent(flexBasis);
             flexItem.alignSelf = alignSelf;
         }
 
