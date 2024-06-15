@@ -39,7 +39,7 @@ namespace jive
             flexShrink = juce::FlexItem{}.flexShrink;
 
         const auto updateParentLayout = [this]() {
-            getParent()->layOutChildren();
+            getParent()->callLayoutChildrenWithRecursionLock();
         };
         order.onValueChange = updateParentLayout;
         flexGrow.onValueChange = updateParentLayout;
@@ -56,19 +56,12 @@ namespace jive
     {
         juce::FlexItem flexItem{ *layoutDummy };
 
-        static constexpr auto calculateCurrent = [](auto& property) {
-            if (auto* transition = property.getTransition())
-                return transition->template calculateCurrent<float>();
-
-            return property.get();
-        };
-
-        flexItem.flexShrink = calculateCurrent(flexShrink);
+        flexItem.flexShrink = flexShrink.calculateCurrent();
 
         if (strategy == LayoutStrategy::real)
         {
-            flexItem.flexGrow = calculateCurrent(flexGrow);
-            flexItem.flexBasis = calculateCurrent(flexBasis);
+            flexItem.flexGrow = flexGrow.calculateCurrent();
+            flexItem.flexBasis = flexBasis.calculateCurrent();
             flexItem.alignSelf = alignSelf;
         }
 

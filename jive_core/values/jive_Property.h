@@ -109,6 +109,9 @@ namespace jive
 
         [[nodiscard]] auto calculateCurrent() const
         {
+            if (auto* transition = getTransition())
+                return transition->template calculateCurrent<ValueType>();
+
             return get();
         }
 
@@ -201,16 +204,26 @@ namespace jive
 
         [[nodiscard]] Transitions::Transition* getTransition()
         {
-            using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
-                                                 Inheritance::doNotInherit,
-                                                 Accumulation::doNotAccumulate,
-                                                 true,
-                                                 Responsiveness::ignoreChanges>;
+            if (currentTransition == nullptr)
+            {
+                using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
+                                                     Inheritance::doNotInherit,
+                                                     Accumulation::doNotAccumulate,
+                                                     true,
+                                                     Responsiveness::ignoreChanges>;
 
-            if (const TransitionsProperty transitions{ source, "transition" }; transitions.exists())
-                return (*transitions.get())[transitionSourceID.toString()];
+                if (const TransitionsProperty transitions{ source, "transition" }; transitions.exists())
+                    currentTransition = (*transitions.get())[transitionSourceID.toString()];
+            }
 
-            return nullptr;
+            if (currentTransition != nullptr && currentTransition->source.isVoid())
+            {
+                currentTransition->source = getVar(source, id);
+                currentTransition->target = currentTransition->source;
+                currentTransition->commencement = now();
+            }
+
+            return currentTransition;
         }
 
         [[nodiscard]] const Transitions::Transition* getTransition() const
@@ -254,8 +267,13 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                       const juce::Identifier& property) override
         {
-            if (property != id && property.toString() != "transition")
+            if (property != id)
+            {
+                if (property.toString() == "transition")
+                    currentTransition = getTransition();
+
                 return;
+            }
             if (!treeWhosePropertyChanged.hasProperty(property))
                 return;
             if (!respondToPropertyChanges(treeWhosePropertyChanged))
@@ -673,6 +691,7 @@ namespace jive
 
         Source listenerTarget;
         juce::Identifier transitionSourceID;
+        Transitions::Transition* currentTransition = nullptr;
         Transitions::Transition* observedTransition = nullptr;
     };
 } // namespace jive

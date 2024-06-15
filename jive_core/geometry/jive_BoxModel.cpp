@@ -227,6 +227,12 @@ namespace jive
         const_cast<juce::ListenerList<Listener>*>(&listeners)->remove(&listener);
     }
 
+    void BoxModel::invalidate()
+    {
+        isValid = true;
+        isValid = false;
+    }
+
     juce::Rectangle<float> BoxModel::getParentBounds() const
     {
         if (state.getParent().isValid())

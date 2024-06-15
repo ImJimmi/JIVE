@@ -146,6 +146,7 @@ namespace jive_demo
             return juce::ValueTree{
                 "Component",
                 {
+                    { "id", "main-nav" },
                     { "display", "grid" },
                     { "grid-template-rows", "1fr 1fr" },
                     { "grid-template-columns", "1fr 1fr" },

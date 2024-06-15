@@ -267,12 +267,12 @@ namespace jive
         getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
                                 juce::roundToInt(boxModel.getHeight()));
         getComponent()->addComponentListener(this);
-        getTopLevelDecorator().layOutChildren();
+        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 
     void CommonGuiItem::childrenChanged()
     {
-        getTopLevelDecorator().layOutChildren();
+        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 

@@ -2,6 +2,7 @@
 
 #include "BoxModelAnimations.h"
 #include "FlexBoxAnimations.h"
+#include "GridAnimations.h"
 
 #include <jive_demo/gui/pages/CodeExamplePage.h>
 #include <jive_demo/gui/pages/PageWithNavigation.h>
@@ -82,6 +83,7 @@ namespace jive_demo
                 {
                     navButton("Box Model", "nav-box-model"),
                     navButton("Flex Box", "nav-flex"),
+                    navButton("Grid", "nav-grid"),
                 },
             };
         }
@@ -137,12 +139,19 @@ namespace jive_demo
                 jive::findElementWithID(view, "nav-flex"),
                 "on-click",
             }
+            , onGridButtonClicked{
+                jive::findElementWithID(view, "nav-grid"),
+                "on-click",
+            }
         {
             onBoxModelButtonClicked.onTrigger = [this] {
                 setContent(boxModelTab.present());
             };
             onFlexBoxButtonClicked.onTrigger = [this] {
                 setContent(flexBoxTab.present());
+            };
+            onGridButtonClicked.onTrigger = [this] {
+                setContent(gridTab.present());
             };
 
             setView(view);
@@ -165,8 +174,10 @@ namespace jive_demo
 
         jive::Event onBoxModelButtonClicked;
         jive::Event onFlexBoxButtonClicked;
+        jive::Event onGridButtonClicked;
 
         BoxModelAnimationsPresenter boxModelTab;
         FlexBoxAnimationsPresenter flexBoxTab;
+        GridAnimationsPresenter gridTab;
     };
 } // namespace jive_demo

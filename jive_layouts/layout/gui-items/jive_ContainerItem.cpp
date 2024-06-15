@@ -6,16 +6,16 @@ namespace jive
 {
     ContainerItem::ContainerItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
+        , box{ boxModel(*this) }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
-        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
-        boxModel.addListener(*this);
+        box.addListener(*this);
     }
 
     ContainerItem::~ContainerItem()
     {
-        boxModel.removeListener(*this);
+        box.removeListener(*this);
     }
 
     void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
@@ -30,7 +30,7 @@ namespace jive
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
     {
         {
-            BoxModel::ScopedCallbackLock boxModelLock(boxModel);
+            const BoxModel::ScopedCallbackLock boxModelLock{ box };
             GuiItemDecorator::setChildren(std::move(newChildren));
         }
 
@@ -38,7 +38,7 @@ namespace jive
             layoutChanged();
     }
 
-    void ContainerItem::boxModelInvalidated(BoxModel& box)
+    void ContainerItem::boxModelInvalidated(BoxModel&)
     {
         const auto newIdealSize = calculateIdealSize(box.getContentBounds());
         const auto idealWidthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
@@ -50,7 +50,7 @@ namespace jive
         const auto idealSizeChanged = idealWidthChanged || idealHeightChanged;
 
         if (!idealSizeChanged || isTopLevel())
-            layOutChildren();
+            callLayoutChildrenWithRecursionLock();
     }
 
     void ContainerItem::layoutChanged()
@@ -59,8 +59,24 @@ namespace jive
             static_cast<float>(std::numeric_limits<juce::uint16>::max()),
             static_cast<float>(std::numeric_limits<juce::uint16>::max()),
         });
-        idealWidth = newIdealSize.getWidth();
-        idealHeight = newIdealSize.getHeight();
+
+        const auto widthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
+        const auto heightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
+        std::unique_ptr<BoxModel::ScopedCallbackLock> boxModelLock;
+
+        if (widthChanged && heightChanged)
+            boxModelLock = std::make_unique<BoxModel::ScopedCallbackLock>(box);
+
+        if (widthChanged)
+            idealWidth = newIdealSize.getWidth();
+
+        boxModelLock = nullptr;
+
+        if (heightChanged)
+            idealHeight = newIdealSize.getHeight();
+
+        if (!widthChanged && !heightChanged)
+            callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 

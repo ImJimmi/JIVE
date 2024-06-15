@@ -4,10 +4,13 @@
 
 namespace jive
 {
-    class GridContainer : public ContainerItem
+    class GridContainer
+        : public ContainerItem
+        , private juce::ValueTree::Listener
     {
     public:
         explicit GridContainer(std::unique_ptr<GuiItem> itemToDecorate);
+        ~GridContainer() override;
 
         void layOutChildren() override;
 
@@ -17,6 +20,8 @@ namespace jive
         juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;
 
     private:
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
+
         juce::Grid buildGrid(juce::Rectangle<int> bounds,
                              LayoutStrategy strategy);
 
@@ -34,8 +39,6 @@ namespace jive
 
         bool layoutRecursionLock = false;
         bool changesDuringLayout = false;
-
-        const BoxModel& boxModel;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GridContainer)
     };

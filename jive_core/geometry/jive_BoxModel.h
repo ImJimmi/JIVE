@@ -69,6 +69,8 @@ namespace jive
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
+        void invalidate();
+
         juce::ValueTree state;
 
     private:

@@ -43,9 +43,8 @@ namespace jive
         void layoutChanged();
 
     private:
+        BoxModel& box;
         Property<float> idealWidth;
         Property<float> idealHeight;
-
-        BoxModel& boxModel;
     };
 } // namespace jive

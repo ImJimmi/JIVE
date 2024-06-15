@@ -10,7 +10,7 @@ namespace jive
         return std::regex_match(str.toRawUTF8(), timeDataTypeRegex);
     }
 
-    [[nodiscard]] static std::optional<juce::RelativeTime> parseTime(const juce::String& timeString)
+    [[nodiscard, maybe_unused]] static std::optional<juce::RelativeTime> parseTime(const juce::String& timeString)
     {
         if (!isValidTimeString(timeString))
             return std::nullopt;
@@ -23,7 +23,4 @@ namespace jive
 
         return std::nullopt;
     }
-
-    static const auto foo = parseTime("");
-    static const auto foo2 = isValidTimeString("");
 } // namespace jive
