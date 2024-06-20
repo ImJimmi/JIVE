@@ -3,8 +3,8 @@ add_library(jive::jive_style_sheets ALIAS jive_style_sheets)
 
 target_sources(jive_style_sheets
 PUBLIC
-    style-sheets/jive_StyleCache.cpp
-    style-sheets/jive_StyleCache.h
+    style-sheets/jive_StyleIdentifier.h
+    style-sheets/jive_StyleSelectors.h
     style-sheets/jive_StyleSheet.cpp
     style-sheets/jive_StyleSheet.h
 

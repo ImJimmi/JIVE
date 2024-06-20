@@ -80,7 +80,7 @@ protected:
             },
         };
 
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
+        juce::ignoreUnused(jive::StyleSheet::create(component, state));
     }
 };
 
@@ -156,7 +156,7 @@ public:
             },
         };
 
-        styleSheet = new jive::StyleSheet{ component, state };
+        styleSheet = jive::StyleSheet::create(component, state);
     }
 
 protected:

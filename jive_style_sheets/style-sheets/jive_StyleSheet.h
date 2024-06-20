@@ -1,22 +1,21 @@
 #pragma once
 
-#include "jive_StyleCache.h"
+#include "jive_StyleSelectors.h"
 
 #include <jive_components/jive_components.h>
 
 namespace jive
 {
+    template <typename Value>
+    using Styles = std::unordered_map<StyleIdentifier, Property<Value, Inheritance::doNotInherit, Accumulation::doNotAccumulate, false>>;
+
     class StyleSheet
         : public juce::ReferenceCountedObject
         , private juce::ComponentListener
-        , private juce::ValueTree::Listener
-        , private Object::Listener
     {
     public:
-        struct Selectors;
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<StyleSheet>;
 
-        StyleSheet(juce::Component& component, juce::ValueTree state);
         ~StyleSheet();
 
         [[nodiscard]] Fill getBackground() const;
@@ -25,33 +24,55 @@ namespace jive
         [[nodiscard]] BorderRadii<float> getBorderRadii() const;
         [[nodiscard]] juce::Font getFont() const;
 
+        [[nodiscard]] static ReferenceCountedPointer create(juce::Component& component, juce::ValueTree state);
+
     private:
-        void componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool wasMoved, bool wasResized) final;
-        void componentParentHierarchyChanged(juce::Component& childComponent) final;
-        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
-        void propertyChanged(Object& object, const juce::Identifier& name) final;
+        StyleSheet(juce::Component& component, juce::ValueTree state);
 
-        [[nodiscard]] juce::var findStyleProperty(const juce::Identifier& propertyName) const;
-        [[nodiscard]] juce::var findHierarchicalStyleProperty(const juce::Identifier& propertyName) const;
-        [[nodiscard]] StyleSheet* findClosestAncestorStyleSheet();
-        [[nodiscard]] juce::Array<StyleSheet*> collectChildSheets();
+        void componentParentHierarchyChanged(juce::Component&) final;
+        void componentMovedOrResized(juce::Component&, bool, bool) final;
 
+        [[nodiscard]] juce::String getFontFamily() const;
+        [[nodiscard]] float getFontSize() const;
+        [[nodiscard]] float getFontStretch() const;
+        [[nodiscard]] juce::String getFontStyle() const;
+        [[nodiscard]] juce::String getFontWeight() const;
+        [[nodiscard]] float getLetterSpacing() const;
+        [[nodiscard]] juce::String getTextDecoration() const;
+
+        void updateClosestAncestor();
+        void updateStyles(jive::Object& state, StyleIdentifier);
+        void updateStyles();
         void applyStyles();
-
-        juce::Component::SafePointer<juce::Component> component;
-        juce::ValueTree state;
-        juce::ValueTree stateRoot;
-        ComponentInteractionState interactionState;
 
         BackgroundCanvas backgroundCanvas;
 
-        Property<Object::ReferenceCountedPointer> style;
+        juce::Component::SafePointer<juce::Component> component;
+        juce::ValueTree state;
+        Property<Object::ReferenceCountedPointer,
+                 Inheritance::doNotInherit,
+                 Accumulation::doNotAccumulate,
+                 false>
+            style;
+        ReferenceCountedPointer closestAncestor;
+        StyleSelectors selectors;
+        juce::Array<StyleSheet*> dependants;
+#if !JIVE_UNIT_TESTS
+        const ComponentInteractionState interactionState;
+#endif
+
         Property<float> borderWidth;
-
-        const std::unique_ptr<Selectors> selectors;
-
-        friend class StyleCache;
-        StyleCache cache;
+        Styles<Fill> backgroundStyles;
+        Styles<Fill> foregroundStyles;
+        Styles<Fill> borderFillStyles;
+        Styles<BorderRadii<float>> borderRadiiStyles;
+        Styles<juce::String> fontFamilyStyles;
+        Styles<float> fontSizeStyles;
+        Styles<float> fontStretchStyles;
+        Styles<juce::String> fontStyleStyles;
+        Styles<juce::String> fontWeightStyles;
+        Styles<float> letterSpacingStyles;
+        Styles<juce::String> textDecorationStyles;
 
         JUCE_LEAK_DETECTOR(StyleSheet)
     };
