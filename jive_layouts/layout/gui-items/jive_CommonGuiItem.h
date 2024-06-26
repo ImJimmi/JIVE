@@ -27,6 +27,9 @@ namespace jive
         void childrenChanged() override;
 
     private:
+#if !JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
+        ComponentInteractionState interactionState;
+#endif
         Property<juce::String> name;
         Property<juce::String> title;
         Property<juce::Identifier> id;

@@ -1,5 +1,6 @@
 #include "jive_Gradient.h"
 
+#include <jive_core/logging/jive_StringStreams.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 namespace jive
@@ -182,5 +183,45 @@ namespace juce
         }
 
         return gradient;
+    }
+
+    String& operator<<(String& str, const jive::Gradient::ColourStop& stop)
+    {
+        return str << "jive::Gradient::ColourStop{ "
+                   << juce::String{ stop.proportion } << ", "
+                   << stop.colour
+                   << " }";
+    }
+
+    String& operator<<(String& str, const jive::Gradient& gradient)
+    {
+        str << "jive::Gradient{ ";
+        str << gradient.stops << ", ";
+
+        switch (gradient.variant)
+        {
+        case jive::Gradient::Variant::linear:
+            str << "linear, ";
+            break;
+        case jive::Gradient::Variant::radial:
+            str << "radial, ";
+            break;
+        }
+
+        if (gradient.orientation.hasValue())
+        {
+            switch (*gradient.orientation)
+            {
+            case jive::Orientation::horizontal:
+                str << "horizontal, ";
+            case jive::Orientation::vertical:
+                str << "vertical, ";
+            }
+        }
+        if (gradient.startEndPoints.hasValue())
+            str << *gradient.startEndPoints;
+
+        str << " }";
+        return str;
     }
 } // namespace juce

@@ -24,19 +24,26 @@ namespace jive
         void resized() override;
 
         void setDirection(juce::AttributedString::ReadingDirection direction);
-        juce::Font getFont() const;
+
+        [[nodiscard]] juce::Font getFont() const;
         void setFont(const juce::Font& font);
+
         void setJustification(juce::Justification justification);
+
         void setLineSpacing(float spacing);
-        const juce::String& getText() const;
+
+        [[nodiscard]] const juce::String& getText() const;
         void setText(const juce::String& text);
+
+        [[nodiscard]] juce::Colour getTextColour() const;
         void setTextColour(juce::Colour newColour);
+
         void setWordWrap(juce::AttributedString::WordWrap wrap);
 
         void clearAttributes();
         void append(const juce::AttributedString& attributedStringToAppend);
 
-        juce::AttributedString getAttributedString() const;
+        [[nodiscard]] juce::AttributedString getAttributedString() const;
 
         void addListener(Listener&) const;
         void removeListener(Listener&) const;

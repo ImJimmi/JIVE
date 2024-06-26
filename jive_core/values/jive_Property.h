@@ -1,28 +1,28 @@
 #pragma once
 
 #include "jive_Object.h"
+#include "jive_PropertyBehaviours.h"
 #include "variant-converters/jive_VariantConvertion.h"
 
 #include <jive_core/algorithms/jive_Visitor.h>
 
 namespace jive
 {
-    enum class Inheritance
+    template <typename T>
+    struct isReferenceCountedObjectPointer : std::false_type
     {
-        inheritFromParent,
-        inheritFromAncestors,
-        doNotInherit,
     };
 
-    enum class Accumulation
+    template <typename T>
+    struct isReferenceCountedObjectPointer<juce::ReferenceCountedObjectPtr<T>> : std::true_type
     {
-        accumulate,
-        doNotAccumulate,
     };
 
     template <typename ValueType,
               Inheritance inheritance = Inheritance::doNotInherit,
-              Accumulation accumulation = Accumulation::doNotAccumulate>
+              Accumulation accumulation = Accumulation::doNotAccumulate,
+              bool autoParseStrings = isReferenceCountedObjectPointer<ValueType>::value,
+              Responsiveness responsiveness = Responsiveness::respondToChanges>
     class Property
         : protected juce::ValueTree::Listener
         , protected Object::Listener
@@ -35,27 +35,42 @@ namespace jive
             : id{ propertyID }
             , source{ propertySource }
         {
-            listenerTarget = findListenerTarget(propertySource);
-
-            if (!isValid(listenerTarget))
-                listenerTarget = source;
-
-            addThisAsListener(listenerTarget);
-
-            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
-            {
-                if (auto value = getVar(source, id); value.isString())
-                {
-                    if (auto json = parseJSON(value.toString()); json != juce::var{})
-                        set(source, json);
-                }
-            }
+            initialise();
         }
 
-        Property(const Property& other) = delete;
-        Property(Property&& other) = delete;
-        Property& operator=(const Property& other) = delete;
-        Property& operator=(Property&& other) = delete;
+        Property(const Property& other)
+            : id{ other.id }
+        {
+            *this = other;
+        }
+
+        Property(Property&& other)
+            : id{ std::move(other.id) }
+        {
+            *this = std::move(other);
+        }
+
+        Property& operator=(const Property& other)
+        {
+            jassert(id == other.id);
+            source = other.source;
+            onValueChange = other.onValueChange;
+
+            initialise();
+
+            return *this;
+        }
+
+        Property& operator=(Property&& other)
+        {
+            jassert(id == other.id);
+            source = std::move(other.source);
+            onValueChange = std::move(other.onValueChange);
+
+            initialise();
+
+            return *this;
+        }
 
         ~Property() override
         {
@@ -88,6 +103,11 @@ namespace jive
             return valueIfNoneSpecified;
         }
 
+        [[nodiscard]] auto calculateCurrent() const
+        {
+            return get();
+        }
+
         void set(const ValueType& newValue)
         {
             set(source, toVar(newValue));
@@ -113,8 +133,9 @@ namespace jive
                            [this](juce::ValueTree& sourceTree) {
                                sourceTree.removeProperty(id, nullptr);
                            },
-                           [this](Object::ReferenceCountedPointer sourceObject) {
-                               sourceObject->removeProperty(id);
+                           [this](const Object::ReferenceCountedPointer& sourceObject) {
+                               if (sourceObject != nullptr)
+                                   sourceObject->removeProperty(id);
                            },
                        },
                        source);
@@ -139,8 +160,11 @@ namespace jive
                                   [this](const juce::ValueTree& sourceTree) {
                                       return sourceTree[id].isMethod();
                                   },
-                                  [this](Object::ReferenceCountedPointer sourceObject) {
-                                      return sourceObject->getProperty(id).isMethod();
+                                  [this](const Object::ReferenceCountedPointer& sourceObject) {
+                                      if (sourceObject != nullptr)
+                                          return sourceObject->getProperty(id).isMethod();
+
+                                      return false;
                                   },
                               },
                               source);
@@ -155,7 +179,7 @@ namespace jive
                                   [this](const juce::ValueTree& sourceTree) {
                                       return sourceTree[id].toString();
                                   },
-                                  [this](Object::ReferenceCountedPointer sourceObject) {
+                                  [this](const Object::ReferenceCountedPointer& sourceObject) {
                                       return sourceObject->getProperty(id).toString();
                                   },
                               },
@@ -186,7 +210,7 @@ namespace jive
         }
 
         const juce::Identifier id;
-        std::function<void(void)> onValueChange = nullptr;
+        mutable std::function<void(void)> onValueChange = nullptr;
 
     protected:
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
@@ -215,10 +239,6 @@ namespace jive
                 onValueChange();
         }
 
-        Source source;
-        Source listenerTarget;
-
-        // private:
         [[nodiscard]] auto respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
         {
             if (treeWhosePropertyChanged == std::get<juce::ValueTree>(source))
@@ -357,7 +377,7 @@ namespace jive
                                   [this](const juce::ValueTree& sourceTree) {
                                       return getFrom(sourceTree);
                                   },
-                                  [this](Object::ReferenceCountedPointer sourceObject) {
+                                  [this](const Object::ReferenceCountedPointer& sourceObject) {
                                       return getFrom(sourceObject.get());
                                   },
                               },
@@ -370,7 +390,7 @@ namespace jive
                                   [](const juce::ValueTree& sourceTree) {
                                       return sourceTree.isValid();
                                   },
-                                  [](Object::ReferenceCountedPointer sourceObject) {
+                                  [](const Object::ReferenceCountedPointer& sourceObject) {
                                       return sourceObject != nullptr;
                                   },
                               },
@@ -383,8 +403,11 @@ namespace jive
                                   [name](const juce::ValueTree& sourceTree) {
                                       return sourceTree[name];
                                   },
-                                  [name](Object::ReferenceCountedPointer sourceObject) {
-                                      return sourceObject->getProperty(name);
+                                  [name](const Object::ReferenceCountedPointer& sourceObject) {
+                                      if (sourceObject != nullptr)
+                                          return sourceObject->getProperty(name);
+
+                                      return juce::var{};
                                   },
                               },
                               src);
@@ -396,7 +419,7 @@ namespace jive
                                   [](const juce::ValueTree& sourceTree) -> Source {
                                       return sourceTree.getParent();
                                   },
-                                  [](Object::ReferenceCountedPointer sourceObject) -> Source {
+                                  [](const Object::ReferenceCountedPointer& sourceObject) -> Source {
                                       return sourceObject->getParent();
                                   },
                               },
@@ -409,7 +432,10 @@ namespace jive
                                   [](const juce::ValueTree& sourceTree) {
                                       return sourceTree.getNumChildren();
                                   },
-                                  [](Object::ReferenceCountedPointer sourceObject) {
+                                  [](const Object::ReferenceCountedPointer& sourceObject) {
+                                      if (sourceObject == nullptr)
+                                          return 0;
+
                                       return static_cast<int>(std::count_if(std::begin(sourceObject->getProperties()),
                                                                             std::end(sourceObject->getProperties()),
                                                                             [](const auto& property) {
@@ -426,7 +452,10 @@ namespace jive
                                   [index](const juce::ValueTree& sourceTree) -> Source {
                                       return sourceTree.getChild(index);
                                   },
-                                  [index](Object::ReferenceCountedPointer sourceObject) -> Source {
+                                  [index](const Object::ReferenceCountedPointer& sourceObject) -> Source {
+                                      if (sourceObject == nullptr)
+                                          return nullptr;
+
                                       auto current = 0;
 
                                       for (const auto& [_, value] : sourceObject->getProperties())
@@ -466,7 +495,7 @@ namespace jive
                                   [](const juce::ValueTree& sourceTree) -> Source {
                                       return sourceTree.getRoot();
                                   },
-                                  [](Object::ReferenceCountedPointer sourceObject) -> Source {
+                                  [](const Object::ReferenceCountedPointer& sourceObject) -> Source {
                                       return sourceObject->getRoot();
                                   },
                               },
@@ -479,8 +508,9 @@ namespace jive
                            [this](juce::ValueTree& sourceTree) {
                                sourceTree.addListener(this);
                            },
-                           [this](Object::ReferenceCountedPointer sourceObject) {
-                               sourceObject->addListener(*this);
+                           [this](const Object::ReferenceCountedPointer& sourceObject) {
+                               if (sourceObject != nullptr)
+                                   sourceObject->addListener(*this);
                            },
                        },
                        src);
@@ -492,8 +522,9 @@ namespace jive
                            [this](juce::ValueTree& sourceTree) {
                                sourceTree.removeListener(this);
                            },
-                           [this](Object::ReferenceCountedPointer sourceObject) {
-                               sourceObject->removeListener(*this);
+                           [this](const Object::ReferenceCountedPointer& sourceObject) {
+                               if (sourceObject != nullptr)
+                                   sourceObject->removeListener(*this);
                            },
                        },
                        src);
@@ -511,5 +542,31 @@ namespace jive
                        },
                        src);
         }
+
+        Source source;
+
+    private:
+        void initialise()
+        {
+            listenerTarget = findListenerTarget(source);
+
+            if (!isValid(listenerTarget))
+                listenerTarget = source;
+
+            if constexpr (responsiveness == Responsiveness::respondToChanges)
+                addThisAsListener(listenerTarget);
+
+            if constexpr (autoParseStrings)
+            {
+                if (auto value = getVar(source, id); value.isString())
+                    set(get());
+            }
+        }
+
+        void valueChanged()
+        {
+        }
+
+        Source listenerTarget;
     };
 } // namespace jive
