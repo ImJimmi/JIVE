@@ -12,17 +12,27 @@ namespace jive
 
         void resized() final
         {
-            boxModel(item)
-                .setSize(static_cast<float>(getWidth()),
-                         static_cast<float>(getHeight()));
+            if (strategy == LayoutStrategy::real)
+            {
+                boxModel(item)
+                    .setSize(static_cast<float>(getWidth()),
+                             static_cast<float>(getHeight()));
+            }
         }
 
         void moved() final
         {
-            item.getComponent()->setTopLeftPosition(getPosition());
+            if (strategy == LayoutStrategy::real)
+                item.getComponent()->setTopLeftPosition(getPosition());
+        }
+
+        void setStrategy(LayoutStrategy layoutStrategy)
+        {
+            strategy = layoutStrategy;
         }
 
     private:
+        LayoutStrategy strategy;
         GuiItem& item;
     };
 
@@ -55,6 +65,7 @@ namespace jive
                                             LayoutStrategy strategy)
     {
         juce::FlexItem flexItem{ *layoutDummy };
+        dynamic_cast<FlexLayoutDummy&>(*layoutDummy).setStrategy(strategy);
 
         flexItem.flexShrink = flexShrink.calculateCurrent();
 
