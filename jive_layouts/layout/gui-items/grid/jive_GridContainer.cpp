@@ -78,8 +78,9 @@ namespace jive
 
         const auto bounds = boxModel(*this).getContentBounds().toNearestInt();
 
-        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
+        if (bounds.isEmpty())
             return;
+
         do
         {
             changesDuringLayout = false;
@@ -569,6 +570,12 @@ private:
                 { "width", 222 },
                 { "height", 333 },
                 { "display", "grid" },
+                { "grid-template-columns", "1fr" },
+            },
+            {
+                juce::ValueTree{ "Component" },
+                juce::ValueTree{ "Component" },
+                juce::ValueTree{ "Component" },
             },
         };
         jive::Interpreter interpreter;
@@ -597,16 +604,6 @@ private:
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
 
-        state.setProperty("grid-template-rows", "1 313 67", nullptr);
-        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                            .toType<jive::GridContainer>());
-        expect(compare(grid.templateRows,
-                       juce::Array<juce::Grid::TrackInfo>{
-                           juce::Grid::Px{ 1 },
-                           juce::Grid::Px{ 313 },
-                           juce::Grid::Px{ 67 },
-                       }));
-
         state.setProperty("grid-template-rows", "78px 3fr auto", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
@@ -616,6 +613,33 @@ private:
                            juce::Grid::Fr{ 3 },
                            juce::Grid::TrackInfo{},
                        }));
+
+        state.setProperty("grid-template-rows", "1 313 67", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expect(compare(grid.templateRows,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::Px{ 1 },
+                           juce::Grid::Px{ 313 },
+                           juce::Grid::Px{ 67 },
+                       }));
+        expectEquals(item->getComponent()->getChildComponent(0)->getHeight(), 1);
+        expectEquals(item->getComponent()->getChildComponent(1)->getHeight(), 313);
+        expectEquals(item->getComponent()->getChildComponent(2)->getHeight(), 67);
+
+        state.setProperty("grid-template-rows", "1fr 1fr 1fr", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expectEquals(item->getComponent()->getChildComponent(0)->getHeight(), 111);
+        expectEquals(item->getComponent()->getChildComponent(1)->getHeight(), 111);
+        expectEquals(item->getComponent()->getChildComponent(2)->getHeight(), 111);
+
+        state.setProperty("grid-template-rows", "3fr 2fr 1fr", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(0)->getHeight()), 166.5f, 0.5f);
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(1)->getHeight()), 111.0f, 0.5f);
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(2)->getHeight()), 55.5f, 0.5f);
     }
 
     void testTemplateAreas()

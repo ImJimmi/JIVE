@@ -62,21 +62,27 @@ namespace jive
 
         const auto widthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
         const auto heightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
-        std::unique_ptr<BoxModel::ScopedCallbackLock> boxModelLock;
 
         if (widthChanged && heightChanged)
-            boxModelLock = std::make_unique<BoxModel::ScopedCallbackLock>(box);
-
-        if (widthChanged)
-            idealWidth = newIdealSize.getWidth();
-
-        boxModelLock = nullptr;
-
-        if (heightChanged)
+        {
+            {
+                BoxModel::ScopedCallbackLock boxModelLock{ box };
+                idealWidth = newIdealSize.getWidth();
+            }
             idealHeight = newIdealSize.getHeight();
-
-        if (!widthChanged && !heightChanged)
+        }
+        else if (widthChanged)
+        {
+            idealWidth = newIdealSize.getWidth();
+        }
+        else if (heightChanged)
+        {
+            idealHeight = newIdealSize.getHeight();
+        }
+        else
+        {
             callLayoutChildrenWithRecursionLock();
+        }
     }
 } // namespace jive
 
