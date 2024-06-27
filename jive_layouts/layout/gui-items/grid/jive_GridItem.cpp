@@ -25,6 +25,7 @@ namespace jive
             gridArea = defaultGridItem.area;
 
         const auto invalidateParentBoxModel = [this]() {
+            cachedItems.clear();
             getParent()->state.setProperty("box-model-valid", false, nullptr);
         };
         order.onValueChange = invalidateParentBoxModel;
@@ -33,39 +34,58 @@ namespace jive
         gridColumn.onValueChange = invalidateParentBoxModel;
         gridRow.onValueChange = invalidateParentBoxModel;
         gridArea.onValueChange = invalidateParentBoxModel;
+
+        box.addListener(*this);
+    }
+
+    GridItem::~GridItem()
+    {
+        box.removeListener(*this);
     }
 
     juce::GridItem GridItem::toJuceGridItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
-        juce::GridItem gridItem{ *getComponent() };
+        const auto key = std::make_pair(parentContentBounds, strategy);
 
-        gridItem.column = gridColumn;
-        gridItem.row = gridRow;
-        gridItem.area = gridArea;
-
-        applyConstraints(gridItem,
-                         parentContentBounds,
-                         Orientation::vertical,
-                         strategy);
-
-        switch (strategy)
+        if (cachedItems.find(key) == std::end(cachedItems))
         {
-        case LayoutStrategy::real:
-            gridItem.justifySelf = justifySelf;
-            gridItem.alignSelf = alignSelf;
-            break;
-        case LayoutStrategy::dummy:
-            gridItem.justifySelf = juce::GridItem::JustifySelf::stretch;
-            gridItem.alignSelf = juce::GridItem::AlignSelf::stretch;
+            juce::GridItem gridItem{ *getComponent() };
 
-            if (gridItem.width < 0.0f && gridItem.minWidth > 0.0f)
-                gridItem.width = gridItem.minWidth;
-            if (gridItem.height < 0.0f && gridItem.minHeight > 0.0f)
-                gridItem.height = gridItem.minHeight;
+            gridItem.column = gridColumn;
+            gridItem.row = gridRow;
+            gridItem.area = gridArea;
+
+            applyConstraints(gridItem,
+                             parentContentBounds,
+                             Orientation::vertical,
+                             strategy);
+
+            switch (strategy)
+            {
+            case LayoutStrategy::real:
+                gridItem.justifySelf = justifySelf;
+                gridItem.alignSelf = alignSelf;
+                break;
+            case LayoutStrategy::dummy:
+                gridItem.justifySelf = juce::GridItem::JustifySelf::stretch;
+                gridItem.alignSelf = juce::GridItem::AlignSelf::stretch;
+
+                if (gridItem.width < 0.0f && gridItem.minWidth > 0.0f)
+                    gridItem.width = gridItem.minWidth;
+                if (gridItem.height < 0.0f && gridItem.minHeight > 0.0f)
+                    gridItem.height = gridItem.minHeight;
+            }
+
+            cachedItems[key] = gridItem;
         }
 
-        return gridItem;
+        return cachedItems.find(key)->second;
+    }
+
+    void GridItem::boxModelInvalidated(BoxModel&)
+    {
+        cachedItems.clear();
     }
 } // namespace jive
 

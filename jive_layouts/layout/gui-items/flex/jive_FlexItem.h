@@ -2,18 +2,6 @@
 
 #include <jive_layouts/layout/gui-items/jive_ContainerItem.h>
 
-namespace std
-{
-    template <>
-    struct hash<std::pair<juce::Rectangle<float>, jive::LayoutStrategy>>
-    {
-        [[nodiscard]] std::size_t operator()(const std::pair<juce::Rectangle<float>, jive::LayoutStrategy>& pair) const noexcept
-        {
-            return (pair.first.toString() + jive::toString(pair.second)).hash();
-        }
-    };
-} // namespace std
-
 namespace jive
 {
     class FlexItem
@@ -38,6 +26,6 @@ namespace jive
 
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;
-        std::unordered_map<std::pair<juce::Rectangle<float>, LayoutStrategy>, juce::FlexItem> cachedItems;
+        std::unordered_map<ItemCacheKey, juce::FlexItem> cachedItems;
     };
 } // namespace jive
