@@ -13,7 +13,6 @@ namespace jive
         , flexJustifyContent{ state, "justify-content" }
         , flexAlignItems{ state, "align-items" }
         , flexAlignContent{ state, "align-content" }
-        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
@@ -21,21 +20,14 @@ namespace jive
         if (!flexDirection.exists())
             flexDirection = juce::FlexBox::Direction::column;
 
-        flexDirection.onValueChange = [this]() {
+        const auto onPropertyChanged = [this] {
             layoutChanged();
         };
-        flexWrap.onValueChange = [this]() {
-            layoutChanged();
-        };
-        flexJustifyContent.onValueChange = [this]() {
-            layoutChanged();
-        };
-        flexAlignItems.onValueChange = [this]() {
-            layoutChanged();
-        };
-        flexAlignContent.onValueChange = [this]() {
-            layoutChanged();
-        };
+        flexDirection.onValueChange = onPropertyChanged;
+        flexWrap.onValueChange = onPropertyChanged;
+        flexJustifyContent.onValueChange = onPropertyChanged;
+        flexAlignItems.onValueChange = onPropertyChanged;
+        flexAlignContent.onValueChange = onPropertyChanged;
 
         state.addListener(this);
     }
@@ -54,9 +46,9 @@ namespace jive
 
         GuiItemDecorator::layOutChildren();
 
-        const auto bounds = boxModel.getContentBounds();
+        const auto bounds = boxModel(*this).getContentBounds();
 
-        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
+        if (bounds.isEmpty())
             return;
 
         do
@@ -70,7 +62,7 @@ namespace jive
 
     FlexContainer::operator juce::FlexBox()
     {
-        return buildFlexBox(boxModel.getContentBounds(), LayoutStrategy::real);
+        return buildFlexBox(boxModel(*this).getContentBounds(), LayoutStrategy::real);
     }
 
     juce::Rectangle<float> FlexContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
@@ -108,19 +100,21 @@ namespace jive
                 extremities.y = bottom;
         }
 
+        auto& currentBoxModel = boxModel(*this);
+
         return {
             extremities.x
-                + boxModel
+                + currentBoxModel
                       .getPadding()
                       .getLeftAndRight()
-                + boxModel
+                + currentBoxModel
                       .getBorder()
                       .getLeftAndRight(),
             extremities.y
-                + boxModel
+                + currentBoxModel
                       .getPadding()
                       .getTopAndBottom()
-                + boxModel
+                + currentBoxModel
                       .getBorder()
                       .getTopAndBottom(),
         };

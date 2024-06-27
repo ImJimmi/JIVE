@@ -33,8 +33,6 @@ namespace jive
         bool layoutRecursionLock = false;
         bool changesDuringLayout = false;
 
-        const BoxModel& boxModel;
-
         JUCE_LEAK_DETECTOR(FlexContainer)
     };
 } // namespace jive

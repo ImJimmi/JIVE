@@ -49,6 +49,7 @@ namespace jive
             flexShrink = juce::FlexItem{}.flexShrink;
 
         const auto updateParentLayout = [this]() {
+            cachedItems.clear();
             getParent()->callLayoutChildrenWithRecursionLock();
         };
         order.onValueChange = updateParentLayout;
@@ -59,41 +60,60 @@ namespace jive
         flexBasis.onValueChange = updateParentLayout;
         flexBasis.onTransitionProgressed = updateParentLayout;
         alignSelf.onValueChange = updateParentLayout;
+
+        box.addListener(*this);
+    }
+
+    FlexItem::~FlexItem()
+    {
+        box.removeListener(*this);
     }
 
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
-        juce::FlexItem flexItem{ *layoutDummy };
-        dynamic_cast<FlexLayoutDummy&>(*layoutDummy).setStrategy(strategy);
+        const auto key = std::make_pair(parentContentBounds, strategy);
 
-        flexItem.flexShrink = flexShrink.calculateCurrent();
-
-        if (strategy == LayoutStrategy::real)
+        if (cachedItems.find(key) == std::end(cachedItems))
         {
-            flexItem.flexGrow = flexGrow.calculateCurrent();
-            flexItem.flexBasis = flexBasis.calculateCurrent();
-            flexItem.alignSelf = alignSelf;
+            juce::FlexItem flexItem{ *layoutDummy };
+
+            flexItem.flexShrink = flexShrink.calculateCurrent();
+
+            if (strategy == LayoutStrategy::real)
+            {
+                flexItem.flexGrow = flexGrow.calculateCurrent();
+                flexItem.flexBasis = flexBasis.calculateCurrent();
+                flexItem.alignSelf = alignSelf;
+            }
+
+            const auto orientation = [this]() {
+                const Property<juce::FlexBox::Direction> parentDirection{
+                    state.getParent(),
+                    "flex-direction",
+                };
+                const auto direction = parentDirection.get();
+
+                if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
+                    return Orientation::horizontal;
+
+                return Orientation::vertical;
+            };
+            applyConstraints(flexItem,
+                             parentContentBounds,
+                             orientation(),
+                             strategy);
+
+            cachedItems[key] = flexItem;
         }
 
-        const auto orientation = [this]() {
-            const Property<juce::FlexBox::Direction> parentDirection{
-                state.getParent(),
-                "flex-direction",
-            };
-            const auto direction = parentDirection.get();
+        dynamic_cast<FlexLayoutDummy&>(*layoutDummy).setStrategy(strategy);
+        return cachedItems.find(key)->second;
+    }
 
-            if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
-                return Orientation::horizontal;
-
-            return Orientation::vertical;
-        };
-        applyConstraints(flexItem,
-                         parentContentBounds,
-                         orientation(),
-                         strategy);
-
-        return flexItem;
+    void FlexItem::boxModelInvalidated(BoxModel&)
+    {
+        cachedItems.clear();
     }
 } // namespace jive
 
