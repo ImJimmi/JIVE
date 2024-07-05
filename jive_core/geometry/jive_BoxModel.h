@@ -6,7 +6,7 @@
 
 namespace jive
 {
-    class BoxModel
+    class BoxModel : private juce::ValueTree::Listener
     {
     public:
         struct Listener
@@ -74,6 +74,8 @@ namespace jive
         juce::ValueTree state;
 
     private:
+        void valueTreeParentChanged(juce::ValueTree&) final;
+
         void lock();
         void unlock();
 

@@ -107,6 +107,8 @@ namespace jive
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
         margin.onTransitionProgressed = informBoxModelChanged;
+
+        state.addListener(this);
     }
 
     float BoxModel::getWidth() const
@@ -270,6 +272,14 @@ namespace jive
             parentIsValid = true;
             parentIsValid = false;
         }
+    }
+
+    void BoxModel::valueTreeParentChanged(juce::ValueTree&)
+    {
+        if (!width.isPixels())
+            componentWidth = calculateComponentWidth();
+        if (!height.isPixels())
+            componentHeight = calculateComponentHeight();
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
