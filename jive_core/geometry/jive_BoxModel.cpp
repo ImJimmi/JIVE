@@ -155,14 +155,20 @@ namespace jive
 
     void BoxModel::setSize(float newWidth, float newHeight)
     {
-        componentWidth = newWidth;
-        componentHeight = newHeight;
+        const auto widthChanged = !juce::approximatelyEqual(newWidth, componentWidth.get());
+        const auto heightChanged = !juce::approximatelyEqual(newHeight, componentHeight.get());
+        std::unique_ptr<ScopedCallbackLock> scopedLock;
 
-        if (!state.getParent().isValid())
-        {
-            width = juce::String{ juce::roundToInt(newWidth) };
-            height = juce::String{ juce::roundToInt(newHeight) };
-        }
+        if (widthChanged && heightChanged)
+            scopedLock = std::make_unique<ScopedCallbackLock>(*this);
+
+        if (widthChanged)
+            setWidth(newWidth);
+
+        scopedLock = nullptr;
+
+        if (heightChanged)
+            setHeight(newHeight);
     }
 
     juce::BorderSize<float> BoxModel::getPadding() const
