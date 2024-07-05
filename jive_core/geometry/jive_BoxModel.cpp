@@ -42,8 +42,8 @@ namespace jive
             informBoxModelChanged();
             invalidateParent();
         };
-        const auto handleOnValueChange = [this, onBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
-            const auto recalculateSize = [this, onBoxModelChanged, &property, updateWidth, updateHeight] {
+        const auto handleOnValueChange = [this, informBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
+            const auto recalculateSize = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
                 if (callbackLock.get())
                     return;
 
@@ -60,8 +60,13 @@ namespace jive
                 const auto isSameSize = juce::approximatelyEqual(componentWidth.get(), widthBefore)
                                      && juce::approximatelyEqual(componentHeight.get(), heightBefore);
 
-                if (isSameSize && property.getTransition() == nullptr)
-                    onBoxModelChanged();
+                if (!property.isTransitioning())
+                {
+                    informBoxModelChanged();
+
+                    if (!isSameSize)
+                        invalidateParent();
+                }
             };
 
             property.onValueChange = recalculateSize;
