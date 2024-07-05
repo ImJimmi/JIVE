@@ -165,9 +165,11 @@ namespace jive
 
         const auto componentBounds = getComponent()->getBounds().toFloat();
 
-        if (!width.isTransitioning())
+        if (!width.isTransitioning() && !height.isTransitioning())
+            boxModel.setSize(componentBounds.getWidth(), componentBounds.getHeight());
+        else if (!width.isTransitioning())
             boxModel.setWidth(componentBounds.getWidth());
-        if (!height.isTransitioning())
+        else if (!height.isTransitioning())
             boxModel.setHeight(componentBounds.getHeight());
     }
 
