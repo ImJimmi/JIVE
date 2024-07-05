@@ -64,6 +64,9 @@ struct ButtonWithNestedIconAndText : public juce::UnitTest
         beginTest("icon has x-position 0");
         expectEquals(icon.getX(), 0);
 
+        beginTest("icon has a width >0");
+        expectGreaterThan(icon.getWidth(), 0);
+
         auto& text = *button->getComponent()->getChildComponent(1);
         beginTest("text is 10px further right than icon");
         expectEquals(text.getX(), icon.getRight() + 10);
