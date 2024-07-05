@@ -16,7 +16,7 @@ namespace jive
                                                     LayoutStrategy strategy);
 
     private:
-        void boxModelInvalidated(BoxModel&) final;
+        void boxModelChanged(BoxModel&) final;
 
         Property<int> order;
         Property<juce::GridItem::JustifySelf> justifySelf;

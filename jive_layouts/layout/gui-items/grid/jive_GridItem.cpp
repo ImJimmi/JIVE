@@ -83,7 +83,7 @@ namespace jive
         return cachedItems.find(key)->second;
     }
 
-    void GridItem::boxModelInvalidated(BoxModel&)
+    void GridItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
     }

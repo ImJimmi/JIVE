@@ -111,7 +111,7 @@ namespace jive
         return cachedItems.find(key)->second;
     }
 
-    void FlexItem::boxModelInvalidated(BoxModel&)
+    void FlexItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
     }
@@ -325,8 +325,8 @@ private:
                        .toType<jive::FlexItem>()
                        ->toJuceFlexItem({}, jive::LayoutStrategy::real);
 
-        expect(flexItem.width == 50.f);
-        expect(flexItem.height == 175.f);
+        expectEquals(flexItem.width, 50.f);
+        expectEquals(flexItem.height, 175.f);
     }
 
     void testMargin()
