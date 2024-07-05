@@ -221,7 +221,7 @@ namespace jive
 
     void GuiItem::callLayoutChildrenWithRecursionLock()
     {
-        if (isLayingOutChildren())
+        if (isLayingOutChildren() || std::size(getChildren()) == 0)
             return;
 
         {
