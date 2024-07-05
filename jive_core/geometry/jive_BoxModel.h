@@ -6,7 +6,7 @@
 
 namespace jive
 {
-    class BoxModel : private juce::ValueTree::Listener
+    class BoxModel
     {
     public:
         struct Listener
@@ -74,14 +74,10 @@ namespace jive
         juce::ValueTree state;
 
     private:
-        void valueTreeParentChanged(juce::ValueTree&) final;
-
         void lock();
         void unlock();
 
         juce::Rectangle<float> getParentBounds() const;
-        float calculateComponentWidth() const;
-        float calculateComponentHeight() const;
         void invalidateParent();
 
         Length width;

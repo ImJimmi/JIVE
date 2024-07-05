@@ -26,10 +26,10 @@ namespace jive
             height.setAuto();
         if (!isValid.exists())
             isValid = true;
-        if (!componentWidth.exists())
-            componentWidth = calculateComponentWidth();
-        if (!componentHeight.exists())
-            componentHeight = calculateComponentHeight();
+        if (!width.isAuto())
+            componentWidth = width.toPixels(getParentBounds());
+        if (!height.isAuto())
+            componentHeight = height.toPixels(getParentBounds());
 
         const auto informBoxModelChanged = [this]() {
             listeners.call(&Listener::boxModelChanged, *this);
@@ -43,43 +43,42 @@ namespace jive
             invalidateParent();
         };
         const auto handleOnValueChange = [this, informBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
-            const auto recalculateSize = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
+            property.onValueChange = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
                 if (callbackLock.get())
                     return;
 
                 const auto widthBefore = componentWidth.get();
 
-                if (updateWidth)
-                    componentWidth = calculateComponentWidth();
+                if (updateWidth && !width.isAuto())
+                    componentWidth = width.toPixels(getParentBounds());
 
                 const auto heightBefore = componentHeight.get();
 
-                if (updateHeight)
-                    componentHeight = calculateComponentHeight();
+                if (updateHeight && !height.isAuto())
+                    componentHeight = height.toPixels(getParentBounds());
 
                 const auto isSameSize = juce::approximatelyEqual(componentWidth.get(), widthBefore)
                                      && juce::approximatelyEqual(componentHeight.get(), heightBefore);
 
                 if (!property.isTransitioning())
                 {
-                    informBoxModelChanged();
+                    if (!(updateWidth || updateHeight))
+                        informBoxModelChanged();
 
                     if (!isSameSize)
                         invalidateParent();
                 }
             };
-
-            property.onValueChange = recalculateSize;
         };
 
         handleOnValueChange(width, true, false);
         handleOnValueChange(height, false, true);
-        handleOnValueChange(padding, true, true);
-        handleOnValueChange(border, true, true);
-        handleOnValueChange(minWidth, true, false);
-        handleOnValueChange(minHeight, false, true);
-        handleOnValueChange(maxWidth, true, false);
-        handleOnValueChange(maxHeight, false, true);
+        handleOnValueChange(padding, false, false);
+        handleOnValueChange(border, false, false);
+        handleOnValueChange(minWidth, false, false);
+        handleOnValueChange(minHeight, false, false);
+        handleOnValueChange(maxWidth, false, false);
+        handleOnValueChange(maxHeight, false, false);
 
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
@@ -112,8 +111,6 @@ namespace jive
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
         margin.onTransitionProgressed = informBoxModelChanged;
-
-        state.addListener(this);
     }
 
     float BoxModel::getWidth() const
@@ -258,22 +255,6 @@ namespace jive
         return {};
     }
 
-    float BoxModel::calculateComponentWidth() const
-    {
-        if (hasAutoWidth())
-            return getPadding().getLeftAndRight() + getBorder().getLeftAndRight();
-
-        return width.toPixels(getParentBounds());
-    }
-
-    float BoxModel::calculateComponentHeight() const
-    {
-        if (hasAutoHeight())
-            return getPadding().getTopAndBottom() + getBorder().getTopAndBottom();
-
-        return height.toPixels(getParentBounds());
-    }
-
     void BoxModel::invalidateParent()
     {
         if (auto parent = state.getParent();
@@ -283,14 +264,6 @@ namespace jive
             parentIsValid = true;
             parentIsValid = false;
         }
-    }
-
-    void BoxModel::valueTreeParentChanged(juce::ValueTree&)
-    {
-        if (!width.isPixels())
-            componentWidth = calculateComponentWidth();
-        if (!height.isPixels())
-            componentHeight = calculateComponentHeight();
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
@@ -338,6 +311,16 @@ public:
     }
 
 private:
+    struct Listener : public jive::BoxModel::Listener
+    {
+        void boxModelChanged(jive::BoxModel&) final
+        {
+            ++callbackCount;
+        }
+
+        int callbackCount = 0;
+    };
+
     void testWidthAndHeight()
     {
         beginTest("width and height");
@@ -346,22 +329,22 @@ private:
         {
             juce::ValueTree state{ "Component" };
             jive::BoxModel boxModel{ state };
+            Listener listener;
+            boxModel.addListener(listener);
             expectEquals(boxModel.getWidth(), 0.0f);
             expectEquals(boxModel.getHeight(), 0.0f);
 
             state.setProperty("padding", "5 10 15 20", nullptr);
-            expectEquals(boxModel.getWidth(), 10.0f + 20.0f);
-            expectEquals(boxModel.getHeight(), 5.0f + 15.0f);
+            expectEquals(listener.callbackCount, 1);
 
             state.setProperty("border-width", "6, 12, 18, 24", nullptr);
-            expectEquals(boxModel.getWidth(), 10.0f + 20.0f + 12.0f + 24.0f);
-            expectEquals(boxModel.getHeight(), 5.0f + 15.0f + 6.0f + 18.0f);
+            expectEquals(listener.callbackCount, 2);
 
             state.setProperty("width", 123, nullptr);
-            expectEquals(boxModel.getWidth(), 123.0f);
+            expectEquals(listener.callbackCount, 3);
 
             state.setProperty("height", 987, nullptr);
-            expectEquals(boxModel.getHeight(), 987.0f);
+            expectEquals(listener.callbackCount, 4);
         }
 
         // Child component
@@ -466,16 +449,6 @@ private:
                          150.0f - 30.0f - 30.0f - 5.0f - 15.0f,
                      });
     }
-
-    struct Listener : public jive::BoxModel::Listener
-    {
-        void boxModelChanged(jive::BoxModel&) final
-        {
-            ++callbackCount;
-        }
-
-        int callbackCount = 0;
-    };
 
     void testTransitions()
     {
