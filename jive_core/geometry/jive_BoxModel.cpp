@@ -17,18 +17,21 @@ namespace jive
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
-        , isValid{ state, "box-model-valid" }
         , callbackLock{ state, "box-model-callback-lock" }
     {
         if (!width.exists())
             width.setAuto();
         if (!height.exists())
             height.setAuto();
-        if (!isValid.exists())
-            isValid = true;
-        if (!width.isAuto())
+
+        if (width.isAuto())
+            componentWidth.clear();
+        else
             componentWidth = width.toPixels(getParentBounds());
-        if (!height.isAuto())
+
+        if (height.isAuto())
+            componentHeight.clear();
+        else
             componentHeight = height.toPixels(getParentBounds());
 
         const auto informBoxModelChanged = [this]() {
@@ -38,35 +41,23 @@ namespace jive
             if (callbackLock.get())
                 return;
 
-            isValid = true;
             informBoxModelChanged();
-            invalidateParent();
         };
         const auto handleOnValueChange = [this, informBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
             property.onValueChange = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
                 if (callbackLock.get())
                     return;
 
-                const auto widthBefore = componentWidth.get();
-
                 if (updateWidth && !width.isAuto())
                     componentWidth = width.toPixels(getParentBounds());
 
-                const auto heightBefore = componentHeight.get();
-
                 if (updateHeight && !height.isAuto())
                     componentHeight = height.toPixels(getParentBounds());
-
-                const auto isSameSize = juce::approximatelyEqual(componentWidth.get(), widthBefore)
-                                     && juce::approximatelyEqual(componentHeight.get(), heightBefore);
 
                 if (!property.isTransitioning())
                 {
                     if (!(updateWidth || updateHeight))
                         informBoxModelChanged();
-
-                    if (!isSameSize)
-                        invalidateParent();
                 }
             };
         };
@@ -93,14 +84,6 @@ namespace jive
         margin.onValueChange = [this, onBoxModelChanged]() {
             if (!margin.isTransitioning())
                 onBoxModelChanged();
-        };
-
-        isValid.onValueChange = [this]() {
-            if (callbackLock.get())
-                return;
-
-            if (!isValid.get())
-                listeners.call(&Listener::boxModelInvalidated, *this);
         };
 
         componentWidth.setTransitionSourceProperty(width.id);
@@ -237,12 +220,6 @@ namespace jive
         const_cast<juce::ListenerList<Listener>*>(&listeners)->remove(&listener);
     }
 
-    void BoxModel::invalidate()
-    {
-        isValid = true;
-        isValid = false;
-    }
-
     juce::Rectangle<float> BoxModel::getParentBounds() const
     {
         if (state.getParent().isValid())
@@ -253,17 +230,6 @@ namespace jive
         }
 
         return {};
-    }
-
-    void BoxModel::invalidateParent()
-    {
-        if (auto parent = state.getParent();
-            parent.isValid())
-        {
-            Property<bool> parentIsValid{ parent, isValid.id };
-            parentIsValid = true;
-            parentIsValid = false;
-        }
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)

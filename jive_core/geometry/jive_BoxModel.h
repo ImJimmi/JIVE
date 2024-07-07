@@ -14,7 +14,6 @@ namespace jive
             virtual ~Listener() = default;
 
             virtual void boxModelChanged(BoxModel&) {}
-            virtual void boxModelInvalidated(BoxModel&) {}
         };
 
         /** Prevents any callbacks being invoked on the given BoxModel object
@@ -69,8 +68,6 @@ namespace jive
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
-        void invalidate();
-
         juce::ValueTree state;
 
     private:
@@ -78,7 +75,6 @@ namespace jive
         void unlock();
 
         juce::Rectangle<float> getParentBounds() const;
-        void invalidateParent();
 
         Length width;
         Length height;
@@ -93,7 +89,6 @@ namespace jive
         Property<juce::BorderSize<float>> padding;
         Property<juce::BorderSize<float>> border;
         Property<juce::BorderSize<float>> margin;
-        Property<bool> isValid;
         Property<bool> callbackLock;
 
         juce::ListenerList<Listener> listeners;

@@ -50,7 +50,9 @@ namespace jive
 
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
-            getParent()->callLayoutChildrenWithRecursionLock();
+
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
+                containerParent->updateIdealSizeUnrestrained();
         };
         order.onValueChange = updateParentLayout;
         flexGrow.onValueChange = updateParentLayout;

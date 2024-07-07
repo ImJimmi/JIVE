@@ -21,8 +21,8 @@ namespace jive_demo
             juce::ValueTree initialise() final
             {
                 const auto initialFlexGrow = property == "flex-grow" ? rng.nextInt({ 1, 9 }) : 1;
-                const auto initialFlexShrink = property == "flex-shrink" ? rng.nextInt({ 1, 9 }) : 0;
-                const auto initialFlexBasis = property == "flex-shrink" ? 200 : 0;
+                const auto initialFlexShrink = property == "flex-shrink" ? rng.nextInt({ 1, 9 }) : 1;
+                const auto initialFlexBasis = property == "flex-shrink" ? 150 : 0;
 
                 return juce::ValueTree{
                     "Button",

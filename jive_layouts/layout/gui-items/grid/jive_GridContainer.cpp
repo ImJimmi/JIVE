@@ -41,23 +41,48 @@ namespace jive
         if (!gridAutoColumns.exists())
             gridAutoColumns = defaultGrid.autoColumns;
 
-        const auto onPropertyChanged = [this] {
-            layoutChanged();
+        justifyItems.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
         };
-        justifyItems.onValueChange = onPropertyChanged;
-        alignItems.onValueChange = onPropertyChanged;
-        justifyContent.onValueChange = onPropertyChanged;
-        alignContent.onValueChange = onPropertyChanged;
-        gridAutoFlow.onValueChange = onPropertyChanged;
-        gridTemplateColumns.onValueChange = onPropertyChanged;
-        gridTemplateColumns.onTransitionProgressed = onPropertyChanged;
-        gridTemplateRows.onValueChange = onPropertyChanged;
-        gridTemplateRows.onTransitionProgressed = onPropertyChanged;
-        gridTemplateAreas.onValueChange = onPropertyChanged;
-        gridAutoRows.onValueChange = onPropertyChanged;
-        gridAutoColumns.onValueChange = onPropertyChanged;
-        gap.onValueChange = onPropertyChanged;
-        gap.onTransitionProgressed = onPropertyChanged;
+        alignItems.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
+        justifyContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
+        alignContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
+        gridAutoFlow.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridTemplateColumns.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridTemplateColumns.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridTemplateRows.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridTemplateRows.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridTemplateAreas.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridAutoRows.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gridAutoColumns.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gap.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gap.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
+        };
 
         state.addListener(this);
     }

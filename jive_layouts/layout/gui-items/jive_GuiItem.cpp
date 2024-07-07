@@ -224,14 +224,9 @@ namespace jive
         if (isLayingOutChildren() || std::size(getChildren()) == 0)
             return;
 
-        {
-            const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
-            layoutRecursionLock = true;
-            layOutChildren();
-        }
-
-        boxModel(*this).invalidate();
-        layoutRecursionLock = false;
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+        const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
+        layOutChildren();
     }
 
     bool GuiItem::isLayingOutChildren() const

@@ -24,16 +24,18 @@ namespace jive
         if (!gridArea.exists())
             gridArea = defaultGridItem.area;
 
-        const auto invalidateParentBoxModel = [this]() {
+        const auto updateParentLayout = [this]() {
             cachedItems.clear();
-            getParent()->state.setProperty("box-model-valid", false, nullptr);
+
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
+                containerParent->updateIdealSizeUnrestrained();
         };
-        order.onValueChange = invalidateParentBoxModel;
-        justifySelf.onValueChange = invalidateParentBoxModel;
-        alignSelf.onValueChange = invalidateParentBoxModel;
-        gridColumn.onValueChange = invalidateParentBoxModel;
-        gridRow.onValueChange = invalidateParentBoxModel;
-        gridArea.onValueChange = invalidateParentBoxModel;
+        order.onValueChange = updateParentLayout;
+        justifySelf.onValueChange = updateParentLayout;
+        alignSelf.onValueChange = updateParentLayout;
+        gridColumn.onValueChange = updateParentLayout;
+        gridRow.onValueChange = updateParentLayout;
+        gridArea.onValueChange = updateParentLayout;
 
         box.addListener(*this);
     }

@@ -20,14 +20,21 @@ namespace jive
         if (!flexDirection.exists())
             flexDirection = juce::FlexBox::Direction::column;
 
-        const auto onPropertyChanged = [this] {
-            layoutChanged();
+        flexDirection.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
-        flexDirection.onValueChange = onPropertyChanged;
-        flexWrap.onValueChange = onPropertyChanged;
-        flexJustifyContent.onValueChange = onPropertyChanged;
-        flexAlignItems.onValueChange = onPropertyChanged;
-        flexAlignContent.onValueChange = onPropertyChanged;
+        flexWrap.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        flexJustifyContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
+        flexAlignItems.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
+        flexAlignContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
+        };
 
         state.addListener(this);
     }
@@ -54,8 +61,8 @@ namespace jive
         do
         {
             changesDuringLayout = false;
-            buildFlexBox(bounds, LayoutStrategy::real)
-                .performLayout(bounds);
+            auto flexBox = buildFlexBox(bounds, LayoutStrategy::real);
+            flexBox.performLayout(bounds);
         }
         while (changesDuringLayout);
     }
@@ -204,6 +211,7 @@ public:
         testPadding();
         testAutoSize();
         testNestedWidgetWithText();
+        testItemsWithDifferentFlexShrink();
     }
 
 private:
@@ -514,8 +522,6 @@ private:
 
     void testNestedWidgetWithText()
     {
-        beginTest("nested widget with text");
-
         static constexpr auto containerPadding = 20;
 
         juce::ValueTree containerState{
@@ -539,6 +545,7 @@ private:
         };
         const jive::Interpreter interpreter;
 
+        beginTest("nested widget with text / blank slate");
         {
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
@@ -561,6 +568,7 @@ private:
         };
         containerState.appendChild(buttonState, nullptr);
 
+        beginTest("nested widget with text / fixed-size widget");
         {
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
@@ -590,6 +598,7 @@ private:
         };
         buttonState.appendChild(textState, nullptr);
 
+        beginTest("nested widget with text / short text added to widget");
         {
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
@@ -605,6 +614,7 @@ private:
         const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
         textState.setProperty("text", lorumIpsumSentence, nullptr);
 
+        beginTest("nested widget with text / much longer text added to widget");
         {
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
@@ -618,6 +628,117 @@ private:
             const auto& boxModel = jive::boxModel(container);
             expectEquals(boxModel.getWidth(), 150.0f);
             expectEquals(boxModel.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
+        }
+    }
+
+    void testItemsWithDifferentFlexShrink()
+    {
+        static constexpr auto containerWidth = 491.0;
+        static constexpr auto itemsFlexBasis = 151.0;
+        static constexpr auto item1Shrink = 1.0;
+        static constexpr auto item2Shrink = 9.0;
+        static constexpr auto item3Shrink = 3.0;
+        static constexpr auto item4Shrink = 4.0;
+
+        static constexpr auto overspill = itemsFlexBasis * 4.0 - containerWidth;
+        static constexpr auto totalShrink = item1Shrink + item2Shrink + item3Shrink + item4Shrink;
+        static constexpr auto item1ExpectedWidth = itemsFlexBasis - item1Shrink * (overspill / totalShrink);
+        static constexpr auto item2ExpectedWidth = itemsFlexBasis - item2Shrink * (overspill / totalShrink);
+        static constexpr auto item3ExpectedWidth = itemsFlexBasis - item3Shrink * (overspill / totalShrink);
+        static constexpr auto item4ExpectedWidth = itemsFlexBasis - item4Shrink * (overspill / totalShrink);
+
+        juce::ValueTree containerState{
+            "Component",
+            {
+                { "width", containerWidth },
+                { "height", 100 },
+                { "flex-direction", "row" },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "height", 100 },
+                        { "flex-basis", itemsFlexBasis },
+                        { "flex-shrink", item1Shrink },
+                    },
+                },
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "height", 100 },
+                        { "flex-basis", itemsFlexBasis },
+                        { "flex-shrink", item2Shrink },
+                    },
+                },
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "height", 100 },
+                        { "flex-basis", itemsFlexBasis },
+                        { "flex-shrink", item3Shrink },
+                    },
+                },
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "height", 100 },
+                        { "flex-basis", itemsFlexBasis },
+                        { "flex-shrink", item4Shrink },
+                    },
+                },
+            },
+        };
+        jive::Interpreter interpreter;
+
+        beginTest("items with different flex-shrink / fixed-width container");
+        {
+            const auto container = interpreter.interpret(containerState);
+
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[0]->getComponent()->getWidth()),
+                                      item1ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[1]->getComponent()->getWidth()),
+                                      item2ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[2]->getComponent()->getWidth()),
+                                      item3ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[3]->getComponent()->getWidth()),
+                                      item4ExpectedWidth,
+                                      1.0);
+        }
+
+        containerState.removeProperty("width", nullptr);
+
+        juce::ValueTree topLevelState{
+            "Component",
+            {
+                { "width", containerWidth },
+                { "height", 100 },
+            },
+            {},
+        };
+
+        beginTest("items with different flex-shrink / implicit-width container");
+        {
+            const auto item = interpreter.interpret(topLevelState);
+            interpreter.listenTo(*item);
+            topLevelState.appendChild(containerState, nullptr);
+            const auto* container = item->getChildren()[0];
+
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[0]->getComponent()->getWidth()),
+                                      item1ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[1]->getComponent()->getWidth()),
+                                      item2ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[2]->getComponent()->getWidth()),
+                                      item3ExpectedWidth,
+                                      1.0);
+            expectWithinAbsoluteError(static_cast<double>(container->getChildren()[3]->getComponent()->getWidth()),
+                                      item4ExpectedWidth,
+                                      1.0);
         }
     }
 };

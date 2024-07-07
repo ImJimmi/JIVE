@@ -23,7 +23,9 @@ namespace jive
         , private BoxModel::Listener
     {
     public:
-        class Child : public GuiItemDecorator
+        class Child
+            : public GuiItemDecorator
+            , private juce::ComponentListener
         {
         public:
             explicit Child(std::unique_ptr<GuiItem> itemToDecorate);
@@ -39,8 +41,13 @@ namespace jive
                                   LayoutStrategy strategy) const;
 
         private:
+            void componentMovedOrResized(juce::Component&, bool, bool) final;
+
             class Pimpl;
             const std::unique_ptr<Pimpl> pimpl;
+
+            Property<float> idealWidth;
+            Property<float> idealHeight;
         };
 
         explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
@@ -49,14 +56,15 @@ namespace jive
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
         void setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren) override;
 
-    protected:
-        void boxModelInvalidated(BoxModel& boxModel) override;
+        void updateIdealSizeUnrestrained();
+        void updateIdealSizeWithinConstraints();
 
+    protected:
         virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;
 
-        void layoutChanged();
-
     private:
+        void updateIdealSize(juce::Rectangle<float> constraints);
+
         BoxModel& box;
         Property<float> idealWidth;
         Property<float> idealHeight;
