@@ -21,6 +21,15 @@ namespace juce
                    << point.getY()
                    << " }";
     }
+    template <typename T>
+    String& operator<<(String& str, const Line<T>& line)
+    {
+        return str << "juce::Line<" << typeid(T).name() << "> { "
+                   << line.getStart()
+                   << ", "
+                   << line.getEnd()
+                   << " }";
+    }
 
     template <typename T>
     String& operator<<(String& str, const Rectangle<T>& rect)
@@ -31,6 +40,18 @@ namespace juce
                    << ", " << rect.getWidth()
                    << ", " << rect.getHeight()
                    << " }";
+    }
+
+    template <typename T>
+    String& operator<<(String& str, const Array<T>& array)
+    {
+        str << "juce::Array<" << typeid(T).name() << "> { ";
+
+        for (const auto& value : array)
+            str << value << ", ";
+
+        str << " }";
+        return str;
     }
 
     template <typename T>

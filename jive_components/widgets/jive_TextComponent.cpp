@@ -88,6 +88,11 @@ namespace jive
         }
     }
 
+    juce::Colour TextComponent::getTextColour() const
+    {
+        return textColour.value_or(juce::Colours::transparentBlack);
+    }
+
     void TextComponent::setTextColour(juce::Colour newColour)
     {
         if (newColour != textColour)

@@ -2,105 +2,47 @@
 
 namespace jive
 {
-    struct StyleSheet::Selectors
+    StyleSheet::ReferenceCountedPointer StyleSheet::create(juce::Component& sourceComponent,
+                                                           juce::ValueTree sourceState)
     {
-    public:
-        explicit Selectors(const juce::ValueTree& sourceState)
-            : state{ sourceState }
-            , id{ state, "id" }
-            , classes{ state, "class" }
-            , enabled{ state, "enabled" }
-            , mouse{ state, "mouse" }
-            , keyboard{ state, "keyboard" }
-        {
-            const auto informListeners = [this]() {
-                if (onChange != nullptr)
-                    onChange();
-            };
-            id.onValueChange = informListeners;
-            enabled.onValueChange = informListeners;
-            mouse.onValueChange = informListeners;
-            keyboard.onValueChange = informListeners;
-            classes.onValueChange = informListeners;
-        }
-
-        [[nodiscard]] auto getSelectorsInOrderOfSpecificity() const
-        {
-            juce::StringArray result;
-
-            if (id.exists())
-                result.add("#" + id.get());
-
-            for (auto className : classes.get())
-            {
-                className.trim();
-
-                if (className.isEmpty())
-                    continue;
-
-                result.addIfNotAlreadyThere("." + className);
-            }
-
-            result.add(state.getType().toString());
-
-            if (!enabled.get())
-                result.add("disabled");
-            if (keyboard == ComponentInteractionState::Keyboard::focus)
-                result.add("focus");
-            if (mouse == ComponentInteractionState::Mouse::active)
-                result.add("active");
-            if (mouse != ComponentInteractionState::Mouse::dissociate)
-                result.add("hover");
-
-            return result;
-        }
-
-        std::function<void()> onChange = nullptr;
-
-    private:
-        juce::ValueTree state;
-        Property<juce::String> id;
-        Property<juce::StringArray> classes;
-        Property<bool> enabled;
-        Property<ComponentInteractionState::Mouse> mouse;
-        Property<ComponentInteractionState::Keyboard> keyboard;
-    };
+        return new StyleSheet{ sourceComponent, sourceState };
+    }
 
     StyleSheet::StyleSheet(juce::Component& sourceComponent,
                            juce::ValueTree sourceState)
         : component{ &sourceComponent }
         , state{ sourceState }
-        , stateRoot{ state.getRoot() }
-        , interactionState{ sourceComponent, state }
         , style{ state, "style" }
+        , selectors{ state }
+#if !JIVE_UNIT_TESTS
+        , interactionState{ *component, state }
+#endif
         , borderWidth{ state, "border-width" }
-        , selectors{ std::make_unique<Selectors>(state) }
     {
         jassert(component != nullptr);
         jassert(!component->getProperties().contains("style-sheet"));
 
-        component->getProperties().set("style-sheet", juce::var{ this });
+        component->getProperties().set("style-sheet", this);
         component->addAndMakeVisible(backgroundCanvas, 0);
         backgroundCanvas.setBounds(component->getLocalBounds());
+        backgroundCanvas.setBorderWidth(borderWidth);
 
-        applyStyles();
+        updateClosestAncestor();
+        updateStyles();
 
-        component->addComponentListener(this);
-        stateRoot.addListener(this);
-
-        borderWidth.onValueChange = [this]() {
-            backgroundCanvas.setBorderWidth(borderWidth.get());
+        style.onValueChange = [this] {
+            updateStyles();
         };
-
-        if (auto object = style.get();
-            object != nullptr)
-        {
-            object->addListener(*this);
-        }
-
-        selectors->onChange = [this]() {
+        selectors.onChange = [this] {
             applyStyles();
         };
+
+        const auto updateBorderWidth = [this] {
+            backgroundCanvas.setBorderWidth(borderWidth.calculateCurrent());
+        };
+        borderWidth.onValueChange = updateBorderWidth;
+
+        component->addComponentListener(this);
     }
 
     StyleSheet::~StyleSheet()
@@ -111,216 +53,165 @@ namespace jive
             component->getProperties().remove("style-sheet");
         }
 
-        if (auto object = style.get();
-            object != nullptr)
-        {
-            object->removeListener(*this);
-        }
+        if (closestAncestor != nullptr)
+            closestAncestor->dependants.removeAllInstancesOf(this);
     }
 
     Fill StyleSheet::getBackground() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("background"));
+        if (auto* background = selectors.findStyle(backgroundStyles))
+            return background->calculateCurrent();
+
+        return {};
     }
 
     Fill StyleSheet::getForeground() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findHierarchicalStyleProperty("foreground"));
+        if (auto* foreground = selectors.findStyle(foregroundStyles))
+            return foreground->calculateCurrent();
+
+        if (closestAncestor != nullptr)
+            return closestAncestor->getForeground();
+
+        return {};
     }
 
     Fill StyleSheet::getBorderFill() const
     {
-        return juce::VariantConverter<Fill>::fromVar(findStyleProperty("border"));
+        if (auto* borderFill = selectors.findStyle(borderFillStyles))
+            return borderFill->calculateCurrent();
+
+        return {};
     }
 
     BorderRadii<float> StyleSheet::getBorderRadii() const
     {
-        return juce::VariantConverter<BorderRadii<float>>::fromVar(findStyleProperty("border-radius"));
+        if (auto* borderRadii = selectors.findStyle(borderRadiiStyles))
+            return borderRadii->calculateCurrent();
+
+        return {};
     }
 
     juce::Font StyleSheet::getFont() const
     {
-        juce::Font font;
+        juce::Font font{
+#if JUCE_MAJOR_VERSION >= 8
+            juce::FontOptions{},
+#endif
+        };
 
-        if (const auto fontFamily = findHierarchicalStyleProperty("font-family").toString();
-            fontFamily.isNotEmpty())
-        {
-            font.setTypefaceName(fontFamily);
-        }
-
-        if (const auto fontStyle = findHierarchicalStyleProperty("font-style").toString();
-            fontStyle.isNotEmpty())
-        {
-            font.setItalic(fontStyle.compareIgnoreCase("italic") == 0);
-        }
-
-        if (const auto weight = findHierarchicalStyleProperty("font-weight").toString();
-            weight.isNotEmpty())
-        {
-            font.setBold(weight.compareIgnoreCase("bold") == 0);
-        }
-
-        if (const auto size = findHierarchicalStyleProperty("font-size");
-            size != juce::var{})
-        {
-            font = font.withPointHeight(static_cast<float>(size));
-        }
-
-        if (const auto spacing = findHierarchicalStyleProperty("letter-spacing");
-            spacing != juce::var{})
-        {
-            const auto extraKerning = static_cast<float>(spacing) / font.getHeight();
-            font.setExtraKerningFactor(extraKerning);
-        }
-
-        if (const auto decoration = findHierarchicalStyleProperty("text-decoration").toString();
-            decoration.isNotEmpty())
-        {
-            font.setUnderline(decoration.compareIgnoreCase("underlined") == 0);
-        }
-
-        if (const auto stretch = findHierarchicalStyleProperty("font-stretch");
-            stretch != juce::var{})
-        {
-            font.setHorizontalScale(static_cast<float>(stretch));
-        }
+        font.setTypefaceName(getFontFamily());
+        font.setItalic(getFontStyle() == "italic");
+        font.setBold(getFontWeight() == "bold");
+        font = font.withPointHeight(getFontSize());
+        font.setExtraKerningFactor(getLetterSpacing() / font.getHeight());
+        font.setUnderline(getTextDecoration() == "underlined");
+        font.setHorizontalScale(getFontStretch());
 
         return font;
     }
 
-    void StyleSheet::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
-                                             bool /*wasMoved*/,
-                                             bool /*wasResized*/)
+    void StyleSheet::componentParentHierarchyChanged(juce::Component& comp)
     {
-        jassertquiet(&componentThatWasMovedOrResized == component);
+        jassertquiet(&comp == component.getComponent());
+        updateClosestAncestor();
+        applyStyles();
+    }
+
+    void StyleSheet::componentMovedOrResized(juce::Component& comp, bool, bool resized)
+    {
+        jassertquiet(&comp == component.getComponent());
+
+        if (!resized)
+            return;
+
         backgroundCanvas.setBounds(component->getLocalBounds());
     }
 
-    void StyleSheet::componentParentHierarchyChanged(juce::Component& childComponent)
+    juce::String StyleSheet::getFontFamily() const
     {
-        jassertquiet(&childComponent == component);
-        applyStyles();
+        if (auto* family = selectors.findStyle(fontFamilyStyles))
+            return family->toString();
+
+        if (closestAncestor != nullptr)
+            return closestAncestor->getFontFamily();
+
+#if JUCE_MAJOR_VERSION >= 8
+        return juce::Font::getSystemUIFontName();
+#else
+        return juce::Font::getDefaultSansSerifFontName();
+#endif
     }
 
-    void StyleSheet::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
+    float StyleSheet::getFontSize() const
     {
-        if (id == juce::Identifier{ "style" })
-        {
-            if (auto object = style.get();
-                object != nullptr)
-            {
-                object->addListener(*this);
-            }
+        if (auto* size = selectors.findStyle(fontSizeStyles))
+            return size->calculateCurrent();
 
-            applyStyles();
-        }
+        if (closestAncestor != nullptr)
+            return closestAncestor->getFontSize();
+
+        return 14.0f;
     }
 
-    void StyleSheet::propertyChanged(Object& object, const juce::Identifier&)
+    float StyleSheet::getFontStretch() const
     {
-        jassertquiet(&object == style.get().get());
-        applyStyles();
+        if (auto* stretch = selectors.findStyle(fontStretchStyles))
+            return stretch->calculateCurrent();
+
+        if (closestAncestor != nullptr)
+            return closestAncestor->getFontStretch();
+
+        return 1.0f;
     }
 
-    enum class StyleSearchStrategy
+    juce::String StyleSheet::getFontStyle() const
     {
-        explicitAndSelectors,
-        selectorsOnly,
-    };
+        if (auto* fontStyle = selectors.findStyle(fontStyleStyles))
+            return fontStyle->toString();
 
-    template <StyleSearchStrategy strategy>
-    juce::var findStyleProperty(const Object& object,
-                                const StyleSheet::Selectors& selectors,
-                                const juce::Identifier& propertyName)
-    {
-        for (const auto& selector : selectors.getSelectorsInOrderOfSpecificity())
-        {
-            if (object.hasProperty(selector))
-            {
-                const auto& nested = dynamic_cast<Object&>(*object
-                                                                .getProperty(selector)
-                                                                .getDynamicObject());
-                const auto value = findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(nested,
-                                                                                                selectors,
-                                                                                                propertyName);
+        if (closestAncestor != nullptr)
+            return closestAncestor->getFontStyle();
 
-                if (value != juce::var{})
-                    return value;
-            }
-        }
-
-        if constexpr (strategy == StyleSearchStrategy::explicitAndSelectors)
-            return object.getProperty(propertyName);
-        else
-            return juce::var{};
+        return "normal";
     }
 
-    template <StyleSearchStrategy strategy>
-    juce::var findStyleProperty(const juce::ValueTree& state,
-                                const StyleSheet::Selectors& selectors,
-                                const juce::Identifier& propertyName)
+    juce::String StyleSheet::getFontWeight() const
     {
-        jassert(state.isValid());
+        if (auto* weight = selectors.findStyle(fontWeightStyles))
+            return weight->toString();
 
-        if (auto object = Property<Object::ReferenceCountedPointer>{ state, "style" }.get())
-        {
-            return findStyleProperty<strategy>(*object.get(),
-                                               selectors,
-                                               propertyName);
-        }
+        if (closestAncestor != nullptr)
+            return closestAncestor->getFontWeight();
 
-        return juce::var{};
+        return "normal";
     }
 
-    juce::var StyleSheet::findStyleProperty(const juce::Identifier& propertyName) const
+    float StyleSheet::getLetterSpacing() const
     {
-        ReferenceCountedPointer styleSheetToSearch = const_cast<StyleSheet*>(this);
+        if (auto* spacing = selectors.findStyle(letterSpacingStyles))
+            return spacing->calculateCurrent();
 
-        if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(styleSheetToSearch->state,
-                                                                                              *selectors,
-                                                                                              propertyName);
-            value != juce::var{})
-        {
-            return value;
-        }
+        if (closestAncestor != nullptr)
+            return closestAncestor->getLetterSpacing();
 
-        for (styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet();
-             styleSheetToSearch != nullptr;
-             styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
-        {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::selectorsOnly>(styleSheetToSearch->state,
-                                                                                           *selectors,
-                                                                                           propertyName);
-                value != juce::var{})
-            {
-                return value;
-            }
-        }
-
-        return {};
+        return 0.0f;
     }
 
-    juce::var StyleSheet::findHierarchicalStyleProperty(const juce::Identifier& propertyName) const
+    juce::String StyleSheet::getTextDecoration() const
     {
-        for (juce::ReferenceCountedObjectPtr<StyleSheet> styleSheetToSearch{ const_cast<StyleSheet*>(this) };
-             styleSheetToSearch != nullptr;
-             styleSheetToSearch = styleSheetToSearch->findClosestAncestorStyleSheet())
-        {
-            if (auto value = ::jive::findStyleProperty<StyleSearchStrategy::explicitAndSelectors>(styleSheetToSearch->state,
-                                                                                                  *selectors,
-                                                                                                  propertyName);
-                value != juce::var{})
-            {
-                return value;
-            }
-        }
+        if (auto* decoration = selectors.findStyle(textDecorationStyles))
+            return decoration->toString();
 
-        return {};
+        if (closestAncestor != nullptr)
+            return closestAncestor->getTextDecoration();
+
+        return "normal";
     }
 
-    juce::ReferenceCountedObjectPtr<StyleSheet> StyleSheet::findClosestAncestorStyleSheet()
+    [[nodiscard]] static StyleSheet* findClosestAncestorStyleSheet(const juce::Component& rootComponent)
     {
-        for (auto* parent = component->getParentComponent();
+        for (auto* parent = rootComponent.getParentComponent();
              parent != nullptr;
              parent = parent->getParentComponent())
         {
@@ -334,26 +225,125 @@ namespace jive
         return nullptr;
     }
 
-    juce::Array<StyleSheet::ReferenceCountedPointer> StyleSheet::collectChildSheets()
+    void StyleSheet::updateClosestAncestor()
     {
-        juce::Array<ReferenceCountedPointer> result;
+        if (closestAncestor != nullptr)
+            closestAncestor->dependants.removeAllInstancesOf(this);
 
-        for (auto* const child : component->getChildren())
+        if (component == nullptr)
         {
-            auto& properties = child->getProperties();
-
-            if (properties.contains("style-sheet"))
-                result.add(dynamic_cast<StyleSheet*>(properties["style-sheet"].getObject()));
+            closestAncestor = nullptr;
+            return;
         }
 
-        return result;
+        closestAncestor = findClosestAncestorStyleSheet(*component);
+
+        if (closestAncestor != nullptr)
+            closestAncestor->dependants.add(this);
+    }
+
+    void StyleSheet::updateStyles(jive::Object& source, StyleIdentifier styleID)
+    {
+        const auto appendStyle = [&](const auto& styleProperty, auto& styles) {
+            using PropertyType = std::remove_reference_t<decltype(styles[styleID])>;
+
+            if (source.hasProperty(styleProperty) && styles.find(styleID) == std::end(styles))
+            {
+                styles.insert(std::make_pair(styleID, PropertyType{ &source, styleProperty }));
+                styles.at(styleID).onValueChange = [this] {
+                    applyStyles();
+                };
+            }
+        };
+        appendStyle("background", backgroundStyles);
+        appendStyle("foreground", foregroundStyles);
+        appendStyle("border", borderFillStyles);
+        appendStyle("border-radius", borderRadiiStyles);
+        appendStyle("font-family", fontFamilyStyles);
+        appendStyle("font-size", fontSizeStyles);
+        appendStyle("font-stretch", fontStretchStyles);
+        appendStyle("font-style", fontStyleStyles);
+        appendStyle("font-weight", fontWeightStyles);
+        appendStyle("letter-spacing", letterSpacingStyles);
+        appendStyle("text-decoration", textDecorationStyles);
+
+        const auto appendNestedStyles = [&](const auto& property, auto&& updateNewID) {
+            if (auto* child = dynamic_cast<jive::Object*>(source[property].getObject()))
+            {
+                auto newID = styleID;
+                updateNewID(newID);
+
+                updateStyles(*child, newID);
+            }
+        };
+
+        if (selectors.id.exists())
+        {
+            appendNestedStyles(selectors.id.toString(),
+                               [&](auto& newID) {
+                                   newID.id = selectors.id.get();
+                               });
+        }
+
+        for (const auto& className : selectors.classes.get())
+        {
+            appendNestedStyles(className,
+                               [&](auto& newID) {
+                                   newID.className = className;
+                               });
+        }
+
+        appendNestedStyles(selectors.state.getType().toString(),
+                           [&](auto& newID) {
+                               newID.type = selectors.state.getType().toString();
+                           });
+        appendNestedStyles("disabled",
+                           [&](auto& newID) {
+                               newID.enabled = false;
+                           });
+        appendNestedStyles("focus",
+                           [&](auto& newID) {
+                               newID.keyboard = ComponentInteractionState::Keyboard::focus;
+                           });
+        appendNestedStyles("active",
+                           [&](auto& newID) {
+                               newID.mouse = ComponentInteractionState::Mouse::active;
+                           });
+        appendNestedStyles("hover",
+                           [&](auto& newID) {
+                               newID.mouse = ComponentInteractionState::Mouse::hover;
+                           });
+        appendNestedStyles("checked",
+                           [&](auto& newID) {
+                               newID.toggled = true;
+                           });
+    }
+
+    void StyleSheet::updateStyles()
+    {
+        backgroundStyles.clear();
+        foregroundStyles.clear();
+        borderFillStyles.clear();
+        borderRadiiStyles.clear();
+        fontFamilyStyles.clear();
+        fontSizeStyles.clear();
+        fontStretchStyles.clear();
+        fontStyleStyles.clear();
+        fontWeightStyles.clear();
+        letterSpacingStyles.clear();
+        textDecorationStyles.clear();
+
+        if (auto styleState = style.get(); styleState != nullptr)
+            updateStyles(*styleState, StyleIdentifier{});
+
+        applyStyles();
     }
 
     void StyleSheet::applyStyles()
     {
         backgroundCanvas.setFill(getBackground());
         backgroundCanvas.setBorderFill(getBorderFill());
-        backgroundCanvas.setBorderWidth(borderWidth.get());
+        // backgroundCanvas.setBorderWidth(borderWidth.get());
         backgroundCanvas.setBorderRadii(getBorderRadii());
 
         const auto foreground = getForeground();
@@ -373,35 +363,13 @@ namespace jive
                               nullptr);
         }
 
-        for (auto child : collectChildSheets())
-            child->applyStyles();
+        for (auto* dependant : dependants)
+            dependant->applyStyles();
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/jive_layouts.h>
-
-static bool compare(const juce::Image& image, juce::Colour colour)
-{
-    for (auto y = 0; y < image.getHeight(); y++)
-    {
-        for (auto x = 0; x < image.getWidth(); x++)
-        {
-            if (image.getPixelAt(x, y) != colour)
-                return false;
-        }
-    }
-
-    return true;
-}
-
-static bool withinAbsoluteError(juce::Colour lhs, juce::Colour rhs, juce::uint8 tolerance)
-{
-    return std::abs(lhs.getAlpha() - rhs.getAlpha()) <= tolerance
-        && std::abs(lhs.getRed() - rhs.getRed()) <= tolerance
-        && std::abs(lhs.getGreen() - rhs.getGreen()) <= tolerance
-        && std::abs(lhs.getBlue() - rhs.getBlue()) <= tolerance;
-}
 
 class StyleSheetTest : public juce::UnitTest
 {
@@ -413,385 +381,323 @@ public:
 
     void runTest() final
     {
-        testInheritingProperties();
-
-    #if JUCE_MAC
-        // These tests were flakey on Windows so for now, only run on macOS
-        testBackgroundColour();
-        testLinearBackgroundGradient();
-        testTypeStyling();
-        testIdStyling();
-        testClassStyling();
-    #endif
-
-        testFont();
+        testFindingStylesInLocalStyleSheet();
+        testFindingStylesInParentStyleSheets();
+        testChangingStylesDuringRuntime();
     }
 
 private:
-    void testInheritingProperties()
+    [[nodiscard]] jive::BackgroundCanvas* findCanvas(const juce::Component& component)
     {
-        beginTest("inheriting properties");
+        for (auto* child : component.getChildren())
+        {
+            if (auto* canvas = dynamic_cast<jive::BackgroundCanvas*>(child))
+                return canvas;
+        }
 
-        juce::ValueTree state{
-            "Component",
-            {
+        return nullptr;
+    }
+
+    void testFindingStylesInLocalStyleSheet()
+    {
+        beginTest("finding styles locally / no style");
+        {
+            juce::Component component;
+            juce::ValueTree state{ "Component" };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            expectEquals(styleSheet->getBackground(),
+                         jive::Fill{});
+            expectEquals(findCanvas(component)->getFill(), jive::Fill{});
+        }
+
+        beginTest("finding styles locally / basic");
+        {
+            juce::Component component;
+            juce::ValueTree state{
+                "Component",
                 {
-                    "style",
-                    new jive::Object{
-                        { "background", "red" },
-                        {
-                            "Button",
-                            new jive::Object{
-                                { "background", "blue" },
+                    { "style", new jive::Object{ { "background", "#123456" } } },
+                },
+            };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            expectEquals(styleSheet->getBackground(),
+                         jive::Fill{ juce::Colour{ 0xFF123456 } });
+            expectEquals(findCanvas(component)->getFill(),
+                         jive::Fill{ juce::Colour{ 0xFF123456 } });
+        }
+
+        beginTest("finding styles locally / selectors");
+        {
+            juce::Component component;
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "mouse", "hover" },
+                    { "style", new jive::Object{ { "background", "#ABCDEF" } } },
+                },
+            };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            expectEquals(styleSheet->getBackground(),
+                         jive::Fill{ juce::Colour{ 0xFFABCDEF } });
+            expectEquals(findCanvas(component)->getFill(),
+                         jive::Fill{ juce::Colour{ 0xFFABCDEF } });
+
+            state.setProperty("style",
+                              new jive::Object{
+                                  { "background", "#ABCDEF" },
+                                  {
+                                      "hover",
+                                      new jive::Object{
+                                          { "background", "#FEDCBA" },
+                                      },
+                                  },
+                              },
+                              nullptr);
+            expectEquals(styleSheet->getBackground(),
+                         jive::Fill{ juce::Colour{ 0xFFFEDCBA } });
+            expectEquals(findCanvas(component)->getFill(),
+                         jive::Fill{ juce::Colour{ 0xFFFEDCBA } });
+
+            state.setProperty("style",
+                              new jive::Object{
+                                  { "background", "#ABCDEF" },
+                                  {
+                                      "hover",
+                                      new jive::Object{
+                                          { "background", "#FEDCBA" },
+                                      },
+                                  },
+                                  {
+                                      "disabled",
+                                      new jive::Object{
+                                          { "background", "#DEADED" },
+                                      },
+                                  },
+                              },
+                              nullptr);
+            state.setProperty("enabled", false, nullptr);
+            expectEquals(styleSheet->getBackground(),
+                         jive::Fill{ juce::Colour{ 0xFFDEADED } });
+            expectEquals(findCanvas(component)->getFill(),
+                         jive::Fill{ juce::Colour{ 0xFFDEADED } });
+
+            state.setProperty("style",
+                              new jive::Object{
+                                  { "background", "#ABCDEF" },
+                                  {
+                                      "hover",
+                                      new jive::Object{
+                                          { "background", "#FEDCBA" },
+                                          {
+                                              "disabled",
+                                              new jive::Object{
+                                                  { "background", "#666666" },
+                                              },
+                                          },
+                                      },
+                                  },
+                                  {
+                                      "disabled",
+                                      new jive::Object{
+                                          { "background", "#DEADED" },
+                                          {
+                                              "hover",
+                                              new jive::Object{
+                                                  { "background", "#333333" },
+                                              },
+                                          },
+                                      },
+                                  },
+                              },
+                              nullptr);
+            expect(styleSheet->getBackground() == jive::Fill{ juce::Colour{ 0xFF333333 } }
+                   || styleSheet->getBackground() == jive::Fill{ juce::Colour{ 0xFF666666 } });
+            expect(findCanvas(component)->getFill() == jive::Fill{ juce::Colour{ 0xFF333333 } }
+                   || findCanvas(component)->getFill() == jive::Fill{ juce::Colour{ 0xFF666666 } });
+        }
+    }
+
+    void testFindingStylesInParentStyleSheets()
+    {
+        beginTest("finding styles among parents / no style");
+        {
+            jive::TextComponent component;
+            juce::ValueTree state{ "Component" };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            expectEquals(styleSheet->getForeground(),
+                         jive::Fill{});
+            expectEquals(component.getTextColour(), juce::Colours::transparentBlack);
+        }
+
+        beginTest("finding styles among parents / basic");
+        {
+            juce::Component parent;
+            jive::TextComponent component;
+            parent.addChildComponent(component);
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "style", new jive::Object{ { "foreground", "#777444" } } },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            };
+            const auto parentStyleSheet = jive::StyleSheet::create(parent, parentState);
+            const auto styleSheet = jive::StyleSheet::create(component, parentState.getChild(0));
+
+            expectEquals(parentStyleSheet->getForeground(),
+                         jive::Fill{ juce::Colour{ 0xFF777444 } });
+            expectEquals(styleSheet->getForeground(),
+                         jive::Fill{ juce::Colour{ 0xFF777444 } });
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFF777444 });
+        }
+    }
+
+    void testChangingStylesDuringRuntime()
+    {
+        beginTest("changing styles / changing single property");
+        {
+            jive::TextComponent component;
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "font-family", "Helvetica" },
+                        },
+                    },
+                },
+            };
+            jive::Property<juce::String> fontFamily{
+                dynamic_cast<jive::Object*>(state["style"].getObject()),
+                "font-family",
+            };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            expectEquals<juce::String>(component.getFont().getTypefaceName(), "Helvetica");
+
+            fontFamily = "Comic Sans MS";
+            expectEquals<juce::String>(component.getFont().getTypefaceName(), "Comic Sans MS");
+        }
+
+        beginTest("changing styles / changing properties in selectors");
+        {
+            juce::Component component;
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "mouse", "hover" },
+                    {
+                        "style",
+                        new jive::Object{
+                            {
+                                "hover",
+                                new jive::Object{
+                                    { "background", "#FADDED" },
+                                },
                             },
                         },
-                        {
-                            "Text",
-                            new jive::Object{
-                                { "background", "green" },
+                    },
+                },
+            };
+            jive::Property<juce::String> background{
+                dynamic_cast<jive::Object*>(state["style"]["hover"].getObject()),
+                "background",
+            };
+            const auto styleSheet = jive::StyleSheet::create(component, state);
+            auto& canvas = dynamic_cast<jive::BackgroundCanvas&>(*component.getChildComponent(0));
+            expectEquals(canvas.getFill(), jive::Fill{ juce::Colour{ 0xFFFADDED } });
+
+            background = "#BED4ED";
+            expectEquals(canvas.getFill(), jive::Fill{ juce::Colour{ 0xFFBED4ED } });
+        }
+
+        beginTest("changing styles / changing inherited properties");
+        {
+            juce::Component parentComponent;
+            jive::TextComponent component;
+            parentComponent.addChildComponent(component);
+
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "foreground", "#DDDFFF" },
+                            {
+                                "hover",
+                                new jive::Object{
+                                    { "foreground", "#999111" },
+                                },
                             },
                         },
                     },
                 },
-            },
-            {
-                juce::ValueTree{
-                    "Button",
-                    {},
-                    {
-                        juce::ValueTree{ "Text" },
+                {
+                    juce::ValueTree{
+                        "Text",
                     },
                 },
-            },
-        };
-        juce::Component component;
-        juce::TextButton button;
-        component.addAndMakeVisible(button);
-        jive::TextComponent text;
-        button.addAndMakeVisible(text);
+            };
+            jive::Property<juce::String> foreground{
+                dynamic_cast<jive::Object*>(parentState["style"].getObject()),
+                "foreground",
+            };
+            const auto parentStyleSheet = jive::StyleSheet::create(parentComponent, parentState);
+            const auto styleSheet = jive::StyleSheet::create(component, parentState.getChild(0));
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFFDDDFFF });
 
-        jive::StyleSheet::ReferenceCountedPointer componentStyleSheet = new jive::StyleSheet{ component, state };
-        jive::StyleSheet::ReferenceCountedPointer buttonStyleSheet = new jive::StyleSheet{ button, state.getChild(0) };
-        jive::StyleSheet::ReferenceCountedPointer textStyleSheet = new jive::StyleSheet{ text, state.getChild(0).getChild(0) };
-        auto& componentCanvas = *jive::find<jive::BackgroundCanvas>(component);
-        auto& buttonCanvas = *jive::find<jive::BackgroundCanvas>(button);
-        auto& textCanvas = *jive::find<jive::BackgroundCanvas>(text);
+            foreground = "#808808";
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFF808808 });
 
-        expectEquals(*textCanvas.getFill().getColour(), juce::Colours::green);
-        expectEquals(*buttonCanvas.getFill().getColour(), juce::Colours::blue);
-        expectEquals(*componentCanvas.getFill().getColour(), juce::Colours::red);
-    }
+            parentState.setProperty("mouse", "hover", nullptr);
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFF999111 });
+        }
 
-    void testBackgroundColour()
-    {
-        beginTest("background colour");
+        beginTest("changing styles / changing inherited style sheets");
+        {
+            juce::Component parentComponent;
+            jive::TextComponent component;
+            parentComponent.addChildComponent(component);
 
-        juce::Component component;
-        juce::ValueTree state{ "Component" };
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
-        expectEquals(component.getNumChildComponents(), 1);
-        expect(jive::find<jive::BackgroundCanvas>(component) != nullptr);
-
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          R"(
-                              {
-                              },
-                          )",
-                          nullptr);
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
-
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": "0xFF00FF00",
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF00FF00 }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": "#BADD06",
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFBADD06 }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": 'rgb(201, 76, 76)',
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFC94C4C }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": 'rgba(201, 76, 76, 1.0)',
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFC94C4C }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": 'hsl(89, 43%, 51%)',
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF84B84C }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": 'hsla(89, 43%, 51%, 1.0)',
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF84B84C }));
-    }
-
-    void testLinearBackgroundGradient()
-    {
-        beginTest("linear background gradient");
-
-        juce::Component component;
-        juce::ValueTree state{ "Component" };
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": {
-                                      "gradient": "linear",
-                                      "stops": {
-                                          "0": "#111111",
-                                          "1": "#999999",
-                                      }
-                                  },
-                              },
-                          )",
-                          nullptr);
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expectEquals(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 });
-        expectEquals(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF161616 });
-        expectEquals(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF949494 });
-        expectEquals(snapshot.getPixelAt(9, 9), juce::Colour{ 0xFF949494 });
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "background": {
-                                      "gradient": "linear",
-                                      "orientation": "horizontal",
-                                      "stops": {
-                                          "0": "#111111",
-                                          "1": "#999999",
-                                      }
-                                  },
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(withinAbsoluteError(snapshot.getPixelAt(0, 0), juce::Colour{ 0xFF161616 }, 1));
-        expect(withinAbsoluteError(snapshot.getPixelAt(0, 9), juce::Colour{ 0xFF161616 }, 1));
-        expect(withinAbsoluteError(snapshot.getPixelAt(9, 0), juce::Colour{ 0xFF949494 }, 1));
-        expect(withinAbsoluteError(snapshot.getPixelAt(9, 9), juce::Colour{ 0xFF949494 }, 1));
-    }
-
-    void testTypeStyling()
-    {
-        beginTest("type styling");
-
-        juce::Component component;
-        juce::ValueTree state{ "CustomType" };
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ component, state };
-
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "MyWidget": {
-                                      "background": "#7F7F7F",
-                                  }
-                              },
-                          )",
-                          nullptr);
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
-
-        state.setProperty("style",
-                          R"(
-                              {
-                                  "CustomType": {
-                                      "background": "#7F7F7F",
-                                  }
-                              },
-                          )",
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFF7F7F7F }));
-    }
-
-    void testIdStyling()
-    {
-        beginTest("ID styling");
-
-        juce::Component component;
-        juce::ValueTree state{ "Component" };
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{
-            component,
-            state,
-        };
-
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          new jive::Object{
-                              {
-                                  "#my-widget",
-                                  new jive::Object{
-                                      { "background", "#FACADE" },
-                                  },
-                              },
-                          },
-                          nullptr);
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
-
-        state.setProperty("id", "my-widget", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFFACADE }));
-    }
-
-    void testClassStyling()
-    {
-        beginTest("class styling");
-
-        juce::Component component;
-        juce::ValueTree state{ "Component" };
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{
-            component,
-            state,
-        };
-
-        component.setBounds(0, 0, 10, 10);
-        state.setProperty("style",
-                          new jive::Object{
-                              {
-                                  ".baffled",
-                                  new jive::Object{
-                                      { "background", "#BAFF1E" },
-                                  },
-                              },
-                          },
-                          nullptr);
-        auto snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0x00000000 }));
-
-        state.setProperty("class", "baffled", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
-
-        state.setProperty("style",
-                          new jive::Object{
-                              {
-                                  ".baffled",
-                                  new jive::Object{
-                                      { "background", "#BAFF1E" },
-                                  },
-                              },
-                              {
-                                  ".feeble",
-                                  new jive::Object{
-                                      { "background", "#F33B1E" },
-                                  },
-                              },
-                          },
-                          nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
-
-        state.setProperty("class", "baffled,;feeble", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFBAFF1E }));
-
-        state.setProperty("class", "feeble||baffled", nullptr);
-        snapshot = component.createComponentSnapshot(component.getLocalBounds());
-        expect(compare(snapshot, juce::Colour{ 0xFFF33B1E }));
-    }
-
-    void testFont()
-    {
-        beginTest("font");
-
-        juce::ValueTree state{
-            "Component",
-            {
-                { "width", 100 },
-                { "height", 100 },
-            },
-            {
-                juce::ValueTree{
-                    "Text",
+            juce::ValueTree parentState{
+                "Component",
+                {
                     {
-                        {
-                            "style",
-                            R"({})",
+                        "style",
+                        new jive::Object{
+                            { "foreground", "#012345" },
                         },
                     },
                 },
-            },
-        };
-        jive::Interpreter interpreter;
-        auto item = interpreter.interpret(state);
-        auto& text = dynamic_cast<jive::TextComponent&>(*item->getChildren()[0]->getComponent());
-        expectEquals(text.getFont(), juce::Font{});
+                {
+                    juce::ValueTree{
+                        "Text",
+                    },
+                },
+            };
+            const auto parentStyleSheet = jive::StyleSheet::create(parentComponent, parentState);
+            const auto styleSheet = jive::StyleSheet::create(component, parentState.getChild(0));
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFF012345 });
 
-        jive::StyleSheet::ReferenceCountedPointer styleSheet = new jive::StyleSheet{ text, state.getChild(0) };
-        jive::Property<jive::Object::ReferenceCountedPointer> style{ state.getChild(0), "style" };
-        juce::Font expected;
-        expectEquals(text.getFont(), expected);
+            parentState.setProperty("style",
+                                    new jive::Object{
+                                        { "foreground", "#ABCDEF" },
+                                        {
+                                            "focus",
+                                            new jive::Object{
+                                                { "foreground", "#775647" },
+                                            },
+                                        },
+                                    },
+                                    nullptr);
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFFABCDEF });
 
-        style.get()->setProperty("font-family", "Helvetica");
-        expected.setTypefaceName("Helvetica");
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("font-style", "italic");
-        expected.setItalic(true);
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("font-weight", "bold");
-        expected.setBold(true);
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("font-size", 123.45f);
-        expected = expected.withPointHeight(123.45f);
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("letter-spacing", 5.3f);
-        expected.setExtraKerningFactor(5.3f / expected.getHeight());
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("text-decoration", "underlined");
-        expected.setUnderline(true);
-        expectEquals(text.getFont(), expected);
-
-        style.get()->setProperty("font-stretch", 0.381f);
-        expected.setHorizontalScale(0.381f);
-        expectEquals(text.getFont(), expected);
+            parentState.setProperty("keyboard", "focus", nullptr);
+            expectEquals(component.getTextColour(), juce::Colour{ 0xFF775647 });
+        }
     }
 };
 

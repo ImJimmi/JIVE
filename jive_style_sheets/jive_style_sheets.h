@@ -12,4 +12,5 @@ END_JUCE_MODULE_DECLARATION */
 
 #include <jive_components/jive_components.h>
 
+#include "style-sheets/jive_StyleIdentifier.h"
 #include "style-sheets/jive_StyleSheet.h"
