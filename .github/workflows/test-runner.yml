@@ -1,4 +1,4 @@
-name: Test Runner
+name: Test Runnerz
 
 on:
     pull_request:
@@ -45,7 +45,6 @@ jobs:
             - name: Test
               working-directory: ${{github.workspace}}/build
               run: ${{github.workspace}}/build/runners/test-runner/jive-test-runner_artefacts/${{env.BUILD_TYPE}}/jive-test-runner
-
 
     verify-formatting:
         name: Verify Formatting
