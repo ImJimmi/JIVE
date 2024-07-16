@@ -3,6 +3,7 @@
 #include "ComponentAnimations.h"
 #include "FlexBoxAnimations.h"
 #include "GridAnimations.h"
+#include "StyleSheetAnimations.h"
 
 #include <jive_demo/gui/pages/CodeExamplePage.h>
 #include <jive_demo/gui/pages/PageWithNavigation.h>
@@ -84,6 +85,7 @@ namespace jive_demo
                     navButton("Component", "nav-component"),
                     navButton("Flex Box", "nav-flex"),
                     navButton("Grid", "nav-grid"),
+                    navButton("Style Sheets", "nav-style-sheets"),
                 },
             };
         }
@@ -143,6 +145,10 @@ namespace jive_demo
                 jive::findElementWithID(view, "nav-grid"),
                 "on-click",
             }
+            , onStyleSheetsButtonClicked{
+                jive::findElementWithID(view, "nav-style-sheets"),
+                "on-click",
+            }
         {
             onComponentButtonClicked.onTrigger = [this] {
                 setContent(componentTab.present());
@@ -152,6 +158,9 @@ namespace jive_demo
             };
             onGridButtonClicked.onTrigger = [this] {
                 setContent(gridTab.present());
+            };
+            onStyleSheetsButtonClicked.onTrigger = [this] {
+                setContent(styleSheetsTab.present());
             };
 
             setView(view);
@@ -175,9 +184,11 @@ namespace jive_demo
         jive::Event onComponentButtonClicked;
         jive::Event onFlexBoxButtonClicked;
         jive::Event onGridButtonClicked;
+        jive::Event onStyleSheetsButtonClicked;
 
         ComponentAnimationsPresenter componentTab;
         FlexBoxAnimationsPresenter flexBoxTab;
         GridAnimationsPresenter gridTab;
+        StyleSheetAnimationsPresenter styleSheetsTab;
     };
 } // namespace jive_demo

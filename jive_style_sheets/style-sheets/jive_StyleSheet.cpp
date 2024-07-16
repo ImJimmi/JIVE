@@ -61,7 +61,15 @@ namespace jive
     Fill StyleSheet::getBackground() const
     {
         if (auto* background = selectors.findStyle(backgroundStyles))
+        {
+            if (calculatedBackground != nullptr)
+            {
+                *calculatedBackground = background->get();
+                return calculatedBackground->calculateCurrent();
+            }
+
             return background->calculateCurrent();
+        }
 
         return {};
     }
@@ -69,7 +77,15 @@ namespace jive
     Fill StyleSheet::getForeground() const
     {
         if (auto* foreground = selectors.findStyle(foregroundStyles))
+        {
+            if (calculatedForeground != nullptr)
+            {
+                *calculatedForeground = foreground->get();
+                return calculatedForeground->calculateCurrent();
+            }
+
             return foreground->calculateCurrent();
+        }
 
         if (closestAncestor != nullptr)
             return closestAncestor->getForeground();
@@ -80,7 +96,15 @@ namespace jive
     Fill StyleSheet::getBorderFill() const
     {
         if (auto* borderFill = selectors.findStyle(borderFillStyles))
+        {
+            if (calculatedBorderFill != nullptr)
+            {
+                *calculatedBorderFill = borderFill->get();
+                return calculatedBorderFill->calculateCurrent();
+            }
+
             return borderFill->calculateCurrent();
+        }
 
         return {};
     }
@@ -88,7 +112,15 @@ namespace jive
     BorderRadii<float> StyleSheet::getBorderRadii() const
     {
         if (auto* borderRadii = selectors.findStyle(borderRadiiStyles))
+        {
+            if (calculatedBorderRadii != nullptr)
+            {
+                *calculatedBorderRadii = borderRadii->get();
+                return calculatedBorderRadii->calculateCurrent();
+            }
+
             return borderRadii->calculateCurrent();
+        }
 
         return {};
     }
@@ -147,7 +179,15 @@ namespace jive
     float StyleSheet::getFontSize() const
     {
         if (auto* size = selectors.findStyle(fontSizeStyles))
+        {
+            if (calculatedFontSize != nullptr)
+            {
+                *calculatedFontSize = size->get();
+                return calculatedFontSize->calculateCurrent();
+            }
+
             return size->calculateCurrent();
+        }
 
         if (closestAncestor != nullptr)
             return closestAncestor->getFontSize();
@@ -158,7 +198,15 @@ namespace jive
     float StyleSheet::getFontStretch() const
     {
         if (auto* stretch = selectors.findStyle(fontStretchStyles))
+        {
+            if (calculatedFontStretch != nullptr)
+            {
+                *calculatedFontStretch = stretch->get();
+                return calculatedFontStretch->calculateCurrent();
+            }
+
             return stretch->calculateCurrent();
+        }
 
         if (closestAncestor != nullptr)
             return closestAncestor->getFontStretch();
@@ -191,7 +239,15 @@ namespace jive
     float StyleSheet::getLetterSpacing() const
     {
         if (auto* spacing = selectors.findStyle(letterSpacingStyles))
+        {
+            if (calculatedLetterSpacing != nullptr)
+            {
+                *calculatedLetterSpacing = spacing->get();
+                return calculatedLetterSpacing->calculateCurrent();
+            }
+
             return spacing->calculateCurrent();
+        }
 
         if (closestAncestor != nullptr)
             return closestAncestor->getLetterSpacing();
@@ -252,6 +308,9 @@ namespace jive
             {
                 styles.insert(std::make_pair(styleID, PropertyType{ &source, styleProperty }));
                 styles.at(styleID).onValueChange = [this] {
+                    applyStyles();
+                };
+                styles.at(styleID).onTransitionProgressed = [this] {
                     applyStyles();
                 };
             }
@@ -335,7 +394,41 @@ namespace jive
         textDecorationStyles.clear();
 
         if (auto styleState = style.get(); styleState != nullptr)
+        {
             updateStyles(*styleState, StyleIdentifier{});
+
+            const auto onTransitionProgressed = [this] {
+                applyStyles();
+            };
+
+            calculatedBackground = std::make_unique<Property<Fill>>(styleState, "calculated-background");
+            calculatedBackground->setTransitionSourceProperty("background");
+            calculatedBackground->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedForeground = std::make_unique<Property<Fill>>(styleState, "calculated-foreground");
+            calculatedForeground->setTransitionSourceProperty("foreground");
+            calculatedForeground->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedBorderFill = std::make_unique<Property<Fill>>(styleState, "calculated-border");
+            calculatedBorderFill->setTransitionSourceProperty("border");
+            calculatedBorderFill->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedBorderRadii = std::make_unique<Property<BorderRadii<float>>>(styleState, "calculated-border-radius");
+            calculatedBorderRadii->setTransitionSourceProperty("border-radius");
+            calculatedBorderRadii->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedFontSize = std::make_unique<Property<float>>(styleState, "calculated-font-size");
+            calculatedFontSize->setTransitionSourceProperty("font-size");
+            calculatedFontSize->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedFontStretch = std::make_unique<Property<float>>(styleState, "calculated-font-stretch");
+            calculatedFontStretch->setTransitionSourceProperty("font-stretch");
+            calculatedFontStretch->onTransitionProgressed = onTransitionProgressed;
+
+            calculatedLetterSpacing = std::make_unique<Property<float>>(styleState, "calculated-letter-spacing");
+            calculatedLetterSpacing->setTransitionSourceProperty("letter-spacing");
+            calculatedLetterSpacing->onTransitionProgressed = onTransitionProgressed;
+        }
 
         applyStyles();
     }

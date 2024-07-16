@@ -56,6 +56,7 @@ namespace jive
         Property& operator=(const Property& other)
         {
             jassert(id == other.id);
+            transitionSourceID = other.transitionSourceID;
             source = other.source;
             onValueChange = other.onValueChange;
 
@@ -67,6 +68,7 @@ namespace jive
         Property& operator=(Property&& other)
         {
             jassert(id == other.id);
+            transitionSourceID = std::move(other.transitionSourceID);
             source = std::move(other.source);
             onValueChange = std::move(other.onValueChange);
 

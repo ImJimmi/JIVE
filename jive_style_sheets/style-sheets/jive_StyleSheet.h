@@ -57,6 +57,7 @@ namespace jive
         ReferenceCountedPointer closestAncestor;
         StyleSelectors selectors;
         juce::Array<StyleSheet*> dependants;
+
 #if !JIVE_UNIT_TESTS
         const ComponentInteractionState interactionState;
 #endif
@@ -73,6 +74,14 @@ namespace jive
         Styles<juce::String> fontWeightStyles;
         Styles<float> letterSpacingStyles;
         Styles<juce::String> textDecorationStyles;
+
+        std::unique_ptr<Property<Fill>> calculatedBackground;
+        std::unique_ptr<Property<Fill>> calculatedForeground;
+        std::unique_ptr<Property<Fill>> calculatedBorderFill;
+        std::unique_ptr<Property<BorderRadii<float>>> calculatedBorderRadii;
+        std::unique_ptr<Property<float>> calculatedFontSize;
+        std::unique_ptr<Property<float>> calculatedFontStretch;
+        std::unique_ptr<Property<float>> calculatedLetterSpacing;
 
         JUCE_LEAK_DETECTOR(StyleSheet)
     };

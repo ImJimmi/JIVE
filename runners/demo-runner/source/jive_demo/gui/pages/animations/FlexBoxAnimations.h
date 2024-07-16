@@ -158,8 +158,8 @@ namespace jive_demo
                         {
                             { "display", "flex" },
                             { "flex-direction", "row" },
-                            { "flex-grow", 1 },
                             { "padding", "20 10 10 10" },
+                            { "margin", "0 0 20 0" },
                         },
                         {
                             jive::makeView<AnimatedFlexItem>("flex-grow", colours::blue600),
@@ -207,7 +207,6 @@ namespace jive_demo
                         {
                             { "display", "flex" },
                             { "flex-direction", "row" },
-                            { "flex-grow", 1 },
                             { "padding", "20 10 10 10" },
                         },
                         {
