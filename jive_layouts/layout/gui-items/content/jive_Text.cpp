@@ -111,6 +111,18 @@ namespace jive
         return layout;
     }
 
+    template <typename T>
+    [[nodiscard]] static auto nextWholeNumberAbove(T value)
+    {
+        static_assert(std::is_floating_point<T>());
+        const auto ceiled = std::ceil(value);
+
+        if (juce::approximatelyEqual(value, ceiled))
+            return ceiled + static_cast<T>(1);
+
+        return ceiled;
+    }
+
     void Text::updateTextComponent()
     {
         getTextComponent().setDirection(direction);
@@ -136,8 +148,8 @@ namespace jive
             }
         }
 
-        idealWidth = std::ceil(buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()))
-                                   .getWidth());
+        idealWidth = nextWholeNumberAbove(buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()))
+                                              .getWidth());
 
         if (auto* parentItem = getParent())
         {

@@ -580,7 +580,11 @@ private:
         buttonState.removeProperty("width", nullptr);
         buttonState.removeProperty("height", nullptr);
 
-        const juce::Font font;
+        const juce::Font font{
+    #if JUCE_MAJOR_VERSION >= 8
+            juce::FontOptions{},
+    #endif
+        };
 
         juce::ValueTree textState{
             "Text",

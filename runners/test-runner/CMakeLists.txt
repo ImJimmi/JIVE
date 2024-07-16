@@ -31,3 +31,5 @@ PRIVATE
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
+
+add_test(NAME "jive-test-runner" COMMAND $<TARGET_FILE:jive-test-runner>)
