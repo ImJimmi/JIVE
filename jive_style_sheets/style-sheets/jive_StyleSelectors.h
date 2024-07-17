@@ -72,8 +72,23 @@ namespace jive
             entries.erase(std::remove_if(std::begin(entries),
                                          std::end(entries),
                                          [this](auto&& entry) {
-                                             return entry->first.mouse != ComponentInteractionState::Mouse::dissociate
-                                                 && entry->first.mouse != mouse.get();
+                                             if (mouse.get() == ComponentInteractionState::Mouse::active)
+                                             {
+                                                 [[maybe_unused]] auto x = 12;
+                                             }
+
+                                             switch (entry->first.mouse)
+                                             {
+                                             case ComponentInteractionState::Mouse::dissociate:
+                                                 return false;
+                                             case ComponentInteractionState::Mouse::hover:
+                                                 return mouse.get() == ComponentInteractionState::Mouse::dissociate;
+                                             case ComponentInteractionState::Mouse::active:
+                                                 return mouse.get() != ComponentInteractionState::Mouse::active;
+                                             }
+
+                                             jassertfalse;
+                                             return false;
                                          }),
                           std::end(entries));
             entries.erase(std::remove_if(std::begin(entries),
@@ -122,8 +137,10 @@ namespace jive
         {
             std::size_t bit = 0;
 
-            return std::bitset<7>{}
+            return std::bitset<9>{}
                 .set(bit++, styleID.toggled == toggled.get())
+                .set(bit++, styleID.mouse == ComponentInteractionState::Mouse::hover)
+                .set(bit++, styleID.mouse == ComponentInteractionState::Mouse::active)
                 .set(bit++, styleID.mouse == mouse.get())
                 .set(bit++, styleID.keyboard == keyboard.get())
                 .set(bit++, !styleID.enabled && !enabled.getOr(true))
