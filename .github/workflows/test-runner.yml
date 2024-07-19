@@ -28,7 +28,7 @@ jobs:
               run: cmake --build build --config ${{env.BUILD_TYPE}}
 
             - name: Test
-              run: cd build && ctest -j14 -C Debug -T test --output-on-failure
+              run: cd build && ctest -j14 -C Debug -T test --output-on-failure --extra-verbose
 
     test-macos:
         name: Test macOS

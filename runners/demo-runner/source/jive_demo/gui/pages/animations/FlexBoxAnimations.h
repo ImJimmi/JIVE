@@ -94,7 +94,7 @@ namespace jive_demo
                         auto newValue = animatedProperty->get();
 
                         while (juce::approximatelyEqual(newValue, animatedProperty->get()))
-                            newValue = rng.nextInt({ 1, 9 });
+                            newValue = static_cast<float>(rng.nextInt({ 1, 9 }));
 
                         *animatedProperty = newValue;
                     }

@@ -134,6 +134,10 @@ namespace jive
         };
 
         font.setTypefaceName(getFontFamily());
+
+        if (juce::Font::getDefaultTypefaceForFont(font) == nullptr)
+            return font;
+
         font.setItalic(getFontStyle() == "italic");
         font.setBold(getFontWeight() == "bold");
         font = font.withPointHeight(getFontSize());
