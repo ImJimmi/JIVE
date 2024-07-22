@@ -5,49 +5,12 @@
 
 namespace jive
 {
-    std::optional<Transitions::Transition> Transitions::Transition::fromString(const juce::String& transitionString)
-    {
-        auto parts = juce::StringArray::fromTokens(transitionString, " ", "");
-        parts.removeEmptyStrings();
-
-        if (parts.size() < 2)
-            return std::nullopt;
-
-        Transition transition;
-
-        const auto duration = parseTime(parts.getReference(1));
-
-        if (!duration.has_value())
-            return std::nullopt;
-
-        transition.duration = *duration;
-
-        if (parts.size() > 2)
-        {
-            if (parts.size() == 3)
-            {
-                if (isValidTimeString(parts.getReference(2)))
-                    parts.insert(2, "linear");
-                else
-                    parts.add("0s");
-            }
-
-            jassert(parts.size() == 4);
-            transition.timingFunction = easing::fromString(parts.getReference(2))
-                                            .value_or(easing::linear);
-            transition.delay = parseTime(parts.getReference(3))
-                                   .value_or(juce::RelativeTime::seconds(0.0));
-        }
-
-        return transition;
-    }
-
     int Transitions::size() const
     {
         return static_cast<int>(std::size(transitions));
     }
 
-    Transitions::Transition* Transitions::operator[](const juce::String& propertyName)
+    Transition* Transitions::operator[](const juce::String& propertyName)
     {
         if (const auto keyValuePair = transitions.find(propertyName);
             keyValuePair != std::end(transitions))
@@ -119,15 +82,15 @@ private:
         beginTest("transition with 1 part");
         {
             {
-                const auto transition = jive::Transitions::Transition::fromString("foo");
+                const auto transition = jive::Transition::fromString("foo");
                 expect(!transition.has_value());
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("50ms");
+                const auto transition = jive::Transition::fromString("50ms");
                 expect(!transition.has_value());
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("ease");
+                const auto transition = jive::Transition::fromString("ease");
                 expect(!transition.has_value());
             }
         }
@@ -135,25 +98,25 @@ private:
         beginTest("transition with 2 parts");
         {
             {
-                const auto transition = jive::Transitions::Transition::fromString("margin-right 4s");
+                const auto transition = jive::Transition::fromString("margin-right 4s");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(4.0));
                 expectSameEasing(transition->timingFunction, jive::easing::linear);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(0.0));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("whatever 37ms");
+                const auto transition = jive::Transition::fromString("whatever 37ms");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(0.037));
                 expectSameEasing(transition->timingFunction, jive::easing::linear);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(0.0));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("foo bar");
+                const auto transition = jive::Transition::fromString("foo bar");
                 expect(!transition.has_value());
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("x ease-in");
+                const auto transition = jive::Transition::fromString("x ease-in");
                 expect(!transition.has_value());
             }
         }
@@ -161,28 +124,28 @@ private:
         beginTest("transition with 3 parts");
         {
             {
-                const auto transition = jive::Transitions::Transition::fromString("margin-right 4s 1s");
+                const auto transition = jive::Transition::fromString("margin-right 4s 1s");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(4.0));
                 expectSameEasing(transition->timingFunction, jive::easing::linear);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(1.0));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("width 3ms 96ms");
+                const auto transition = jive::Transition::fromString("width 3ms 96ms");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(0.003));
                 expectSameEasing(transition->timingFunction, jive::easing::linear);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(0.096));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("margin-right 4s ease-in-out");
+                const auto transition = jive::Transition::fromString("margin-right 4s ease-in-out");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(4.0));
                 expectSameEasing(transition->timingFunction, jive::easing::inOut);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(0.0));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("foo 84ms ease-out");
+                const auto transition = jive::Transition::fromString("foo 84ms ease-out");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(0.084));
                 expectSameEasing(transition->timingFunction, jive::easing::out);
@@ -193,14 +156,14 @@ private:
         beginTest("transition with 4 parts");
         {
             {
-                const auto transition = jive::Transitions::Transition::fromString("margin-right 4s ease-in-out 1s");
+                const auto transition = jive::Transition::fromString("margin-right 4s ease-in-out 1s");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(4.0));
                 expectSameEasing(transition->timingFunction, jive::easing::inOut);
                 expectEquals(transition->delay, juce::RelativeTime::seconds(1.0));
             }
             {
-                const auto transition = jive::Transitions::Transition::fromString("margin-right 3ms linear 99999ms");
+                const auto transition = jive::Transition::fromString("margin-right 3ms linear 99999ms");
                 expect(transition.has_value());
                 expectEquals(transition->duration, juce::RelativeTime::seconds(0.003));
                 expectSameEasing(transition->timingFunction, jive::easing::linear);
@@ -237,7 +200,7 @@ private:
     {
         beginTest("linear interpolation");
         {
-            const auto transition = jive::Transitions::Transition::fromString("width 3s");
+            const auto transition = jive::Transition::fromString("width 3s");
             const auto commencement = jive::now();
             expectEquals(transition->calculateCurrent(0.0f, 100.0f, commencement), 0.0f);
             jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.5));
@@ -250,7 +213,7 @@ private:
 
         beginTest("eased interpolation");
         {
-            const auto transition = jive::Transitions::Transition::fromString("height 420ms ease-in");
+            const auto transition = jive::Transition::fromString("height 420ms ease-in");
             const auto commencement = jive::now();
             expectEquals(transition->calculateCurrent(0.0f, 100.0f, commencement), 0.0f);
             jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.21));

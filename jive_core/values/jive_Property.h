@@ -27,7 +27,7 @@ namespace jive
     class Property
         : protected juce::ValueTree::Listener
         , protected Object::Listener
-        , private Transitions::Transition::Listener
+        , private Transition::Listener
     {
     public:
         using Source = std::variant<juce::ValueTree, Object::ReferenceCountedPointer>;
@@ -204,7 +204,7 @@ namespace jive
                 observeTransition(transition);
         }
 
-        [[nodiscard]] Transitions::Transition* getTransition()
+        [[nodiscard]] Transition* getTransition()
         {
             if (currentTransition == nullptr)
             {
@@ -228,7 +228,7 @@ namespace jive
             return currentTransition;
         }
 
-        [[nodiscard]] const Transitions::Transition* getTransition() const
+        [[nodiscard]] const Transition* getTransition() const
         {
             return const_cast<Property*>(this)->getTransition();
         }
@@ -631,7 +631,7 @@ namespace jive
         }
 
         void transitionProgressed(const juce::String& propertyName,
-                                  const Transitions::Transition&) final
+                                  const Transition&) final
         {
             jassertquiet(propertyName == transitionSourceID.toString());
 
@@ -677,7 +677,7 @@ namespace jive
             }
         }
 
-        void observeTransition(Transitions::Transition* transition)
+        void observeTransition(Transition* transition)
         {
             if (observedTransition == transition)
                 return;
@@ -693,7 +693,7 @@ namespace jive
 
         Source listenerTarget;
         juce::Identifier transitionSourceID;
-        Transitions::Transition* currentTransition = nullptr;
-        Transitions::Transition* observedTransition = nullptr;
+        Transition* currentTransition = nullptr;
+        Transition* observedTransition = nullptr;
     };
 } // namespace jive

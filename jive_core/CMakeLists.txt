@@ -32,6 +32,8 @@ PUBLIC
 
     kinetics/jive_Easing.cpp
     kinetics/jive_Easing.h
+    kinetics/jive_Transition.cpp
+    kinetics/jive_Transition.h
     kinetics/jive_Transitions.cpp
     kinetics/jive_Transitions.h
 

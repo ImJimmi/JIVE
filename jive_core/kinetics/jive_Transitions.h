@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jive_Easing.h"
+#include "jive_Transition.h"
 
 #include <jive_core/algorithms/jive_Interpolate.h>
 #include <jive_core/time/jive_Timer.h>
@@ -12,116 +13,6 @@ namespace jive
     {
     public:
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<Transitions>;
-
-        class Transition
-        {
-        public:
-            struct Listener
-            {
-                virtual ~Listener() = default;
-
-                virtual void transitionProgressed(const juce::String& propertyName,
-                                                  const Transition& transition) = 0;
-            };
-
-            Transition() = default;
-
-            Transition(const Transition& other)
-                : duration{ other.duration }
-                , timingFunction{ other.timingFunction }
-                , delay{ other.delay }
-                , commencement{ other.commencement }
-                , source{ other.source }
-                , target{ other.target }
-                , cachedProgress{ other.cachedProgress }
-            {
-            }
-
-            auto& operator=(const Transition& other)
-            {
-                duration = other.duration;
-                timingFunction = other.timingFunction;
-                delay = other.delay;
-                commencement = other.commencement;
-                source = other.source;
-                target = other.target;
-                cachedProgress = other.cachedProgress;
-
-                return *this;
-            }
-
-            [[nodiscard]] auto calculateProgress(juce::Time commencementTime) const
-            {
-                if (duration <= juce::RelativeTime::seconds(0.0))
-                    return 1.0;
-
-                const auto elapsed = now() - commencementTime - delay;
-                const auto progressLinear = elapsed.inSeconds() / duration.inSeconds();
-
-                if (progressLinear >= 0.0 && progressLinear <= 1.0)
-                    return timingFunction(progressLinear);
-
-                return progressLinear;
-            }
-
-            [[nodiscard]] auto calculateProgress() const
-            {
-                return calculateProgress(commencement);
-            }
-
-            template <typename Value>
-            [[nodiscard]] Value calculateCurrent(const Value& sourceValue,
-                                                 const Value& targetValue,
-                                                 juce::Time commencementTime) const
-            {
-                const auto progress = calculateProgress(commencementTime);
-
-                if (progress <= 0.0)
-                    return sourceValue;
-                if (progress >= 1.0)
-                    return targetValue;
-
-                return interpolate(sourceValue, targetValue, progress);
-            }
-
-            template <typename Value>
-            [[nodiscard]] Value calculateCurrent() const
-            {
-                jassert(!source.isVoid() && !target.isVoid());
-
-                using Converter = juce::VariantConverter<Value>;
-                return calculateCurrent(Converter::fromVar(source),
-                                        Converter::fromVar(target),
-                                        commencement);
-            }
-
-            void addListener(Listener& listener) const
-            {
-                listeners.add(&listener);
-            }
-
-            void removeListener(Listener& listener) const
-            {
-                listeners.remove(&listener);
-            }
-
-            [[nodiscard]] static std::optional<Transition> fromString(const juce::String& transitionString);
-
-            juce::RelativeTime duration;
-            Easing timingFunction = easing::linear;
-            juce::RelativeTime delay;
-
-        private:
-            template <typename ValueType, Inheritance, Accumulation, bool, Responsiveness>
-            friend class Property;
-            friend class Transitions;
-
-            juce::Time commencement;
-            juce::var source;
-            juce::var target;
-            double cachedProgress{ -1.0 };
-            mutable juce::ListenerList<Listener> listeners;
-        };
 
         [[nodiscard]] int size() const;
 
