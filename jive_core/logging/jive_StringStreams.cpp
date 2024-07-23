@@ -46,4 +46,14 @@ namespace juce
     {
         return str << juce::String{ relativeTime.inSeconds() } << "s";
     }
+
+    String& operator<<(String& str, juce::Grid::Px px)
+    {
+        return str << "juce::Grid::Px{ " << px.pixels << " }";
+    }
+
+    String& operator<<(String& str, juce::Grid::TrackInfo track)
+    {
+        return str << "juce::Grid::Track{ " << track.getSize() << " }";
+    }
 } // namespace juce

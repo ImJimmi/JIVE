@@ -5,6 +5,7 @@
 #include "logging/jive_StringStreams.cpp"
 
 #include "algorithms/jive_Find.cpp"
+#include "algorithms/jive_Interpolate.cpp"
 
 #include "values/jive_Colours.cpp"
 #include "values/jive_Event.cpp"

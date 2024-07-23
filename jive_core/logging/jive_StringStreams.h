@@ -11,6 +11,8 @@ namespace juce
     String& operator<<(String& str, const Time& time);
     String& operator<<(String& str, long double value);
     String& operator<<(String& str, RelativeTime relativeTime);
+    String& operator<<(String& str, juce::Grid::Px px);
+    String& operator<<(String& str, juce::Grid::TrackInfo track);
 
     template <typename T>
     String& operator<<(String& str, const Point<T>& point)

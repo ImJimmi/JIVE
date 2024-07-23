@@ -6,6 +6,7 @@ PUBLIC
     algorithms/jive_Bezier.h
     algorithms/jive_Find.cpp
     algorithms/jive_Find.h
+    algorithms/jive_Interpolate.cpp
     algorithms/jive_Interpolate.h
     algorithms/jive_TransferFunction.h
     algorithms/jive_Visitor.h

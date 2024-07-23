@@ -80,10 +80,10 @@ namespace jive
                                       const juce::Array<T>& end,
                                       double proportion) const
         {
-            juce::Array<T> result;
+            auto result = end;
 
             for (auto i = 0; i < std::min(start.size(), end.size()); i++)
-                result.add(interpolate(start.getUnchecked(i), end.getUnchecked(i), proportion));
+                result.set(i, interpolate(start.getUnchecked(i), end.getUnchecked(i), proportion));
 
             return result;
         }
@@ -147,7 +147,7 @@ namespace jive
                 };
             }
 
-            return Fill{};
+            return end;
         }
     };
 
