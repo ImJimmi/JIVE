@@ -23,6 +23,7 @@ jobs:
                     - platform: macos-latest
                       platform-name: macOS
                       package-manager: brew
+                      additional-cmake-options: -DJIVE_ENABLE_COVERAGE=ON
                     - platform: windows-latest
                       platform-name: Windows
                       platform-shell: cmd
@@ -49,7 +50,8 @@ jobs:
                     -G Ninja \
                     -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
                     -D JIVE_BUILD_TEST_RUNNER=ON \
-                    -D JIVE_BUILD_DEMO_RUNNER=ON
+                    -D JIVE_BUILD_DEMO_RUNNER=ON \
+                    ${{ matrix.additional-cmake-options }}
 
             - name: CMake Build
               run: |
@@ -67,6 +69,34 @@ jobs:
                     -C ${{ env.BUILD_TYPE }} \
                     -T test \
                     -O ctest.log
+
+            - name: Install lcov
+              if: runner.os == 'macOS'
+              working-directory: ${{github.workspace}}/build
+              run: brew install lcov
+
+            - name: Generate Coverage Report
+              if: runner.os == 'macOS'
+              working-directory: ${{github.workspace}}/build
+              run: |
+                  lcov \
+                    --directory . \
+                    --capture \
+                    --output-file coverage.info \
+                    --ignore-errors inconsistent \
+                    --ignore-errors gcov \
+                    --ignore-errors range \
+                    --ignore-errors source
+
+            - name: Upload Coverage Report
+              if: runner.os == 'macOS'
+              uses: codecov/codecov-action@v4
+              with:
+                  fail_ci_if_error: true
+                  files: ./build/coverage.info
+                  flags: unittests
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  verbose: true
 
             - name: Stage Artifacts
               uses: actions/upload-artifact@v4
