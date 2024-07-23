@@ -26,7 +26,5 @@ namespace jive
         };
 
         [[nodiscard]] std::optional<Easing> fromString(const juce::String& name);
-
-        static const auto foo = fromString("");
     } // namespace easing
 } // namespace jive
