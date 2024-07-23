@@ -57,5 +57,12 @@ namespace juce
     {
         return str << "juce::Grid::Track{ " << track.getSize() << " }";
     }
+
+    String& operator<<(String& str, const juce::ValueTree& tree)
+    {
+        return str << tree.toXmlString(juce::XmlElement::TextFormat{}
+                                           .withoutHeader()
+                                           .singleLine());
+    }
     // LCOV_EXCL_STOP
 } // namespace juce
