@@ -4,6 +4,7 @@
 
 namespace juce
 {
+    // LCOV_EXCL_START
     String& operator<<(String& str, const Colour& colour);
     String& operator<<(String& str, const Font& font);
     String& operator<<(String& str, const Image& image);
@@ -81,4 +82,5 @@ namespace juce
                    << border.getRight()
                    << " }";
     }
+    // LCOV_EXCL_STOP
 } // namespace juce

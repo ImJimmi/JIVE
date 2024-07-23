@@ -2,6 +2,7 @@
 
 namespace juce
 {
+    // LCOV_EXCL_START
     String& operator<<(String& str, const Colour& colour)
     {
         return str << "juce::Colour { 0x" << colour.toDisplayString(true) << " }";
@@ -56,4 +57,5 @@ namespace juce
     {
         return str << "juce::Grid::Track{ " << track.getSize() << " }";
     }
+    // LCOV_EXCL_STOP
 } // namespace juce
