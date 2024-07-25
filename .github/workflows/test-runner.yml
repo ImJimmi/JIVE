@@ -4,49 +4,108 @@ on:
     pull_request:
         branches: [main]
 
+run-name: "Test Runner - #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}"
+
 env:
     BUILD_TYPE: Debug
+    CMAKE_BUILD_DIRECTORY: build
 
 defaults:
     run:
         shell: bash
 
 jobs:
-    test-windows:
-        name: Test Windows
-        runs-on: windows-latest
+    run-tests:
+        strategy:
+            matrix:
+                platform: [macos-latest, windows-latest]
+                include:
+                    - platform: macos-latest
+                      platform-name: macOS
+                      package-manager: brew
+                      additional-cmake-options: -DJIVE_ENABLE_COVERAGE=ON
+                    - platform: windows-latest
+                      platform-name: Windows
+                      platform-shell: cmd
+                      package-manager: choco
+
+        name: Test ${{ matrix.platform-name }}
+        runs-on: ${{ matrix.platform }}
 
         steps:
             - uses: actions/checkout@v4
               with:
                   submodules: "recursive"
 
-            - name: Configure CMake
-              run: cmake -Bbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON
+            - name: Install Ninja
+              run: ${{ matrix.package-manager }} install ninja
+            - name: Setup devcmd
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1.13.0
 
-            - name: Build
-              run: cmake --build build --config ${{env.BUILD_TYPE}}
+            - name: CMake Generate
+              run: |
+                  cmake \
+                    -B ${{ env.CMAKE_BUILD_DIRECTORY }} \
+                    -G Ninja \
+                    -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                    -D JIVE_BUILD_TEST_RUNNER=ON \
+                    -D JIVE_BUILD_DEMO_RUNNER=ON \
+                    ${{ matrix.additional-cmake-options }}
 
-            - name: Test
-              run: cd build && ctest -j14 -C Debug -T test --output-on-failure
+            - name: CMake Build
+              run: |
+                  cmake \
+                    --build ${{ env.CMAKE_BUILD_DIRECTORY }} \
+                    --config ${{ env.BUILD_TYPE }}
 
-    test-macos:
-        name: Test macOS
-        runs-on: macos-latest
+            - name: Run CTest
+              run: |
+                  cd ${{ env.CMAKE_BUILD_DIRECTORY }}
+                  ctest \
+                    --output-on-failure \
+                    --extra-verbose \
+                    -j14 \
+                    -C ${{ env.BUILD_TYPE }} \
+                    -T test \
+                    -O ctest.log
 
-        steps:
-            - uses: actions/checkout@v4
+            - name: Install lcov
+              if: runner.os == 'macOS'
+              working-directory: ${{github.workspace}}/build
+              run: brew install lcov
+
+            - name: Generate Coverage Report
+              if: runner.os == 'macOS'
+              working-directory: ${{github.workspace}}/build
+              run: |
+                  lcov \
+                    --directory . \
+                    --capture \
+                    --output-file coverage.info \
+                    --ignore-errors inconsistent \
+                    --ignore-errors gcov \
+                    --ignore-errors range \
+                    --ignore-errors source
+
+            - name: Upload Coverage Report
+              if: runner.os == 'macOS'
+              uses: codecov/codecov-action@v4
               with:
-                  submodules: "recursive"
+                  fail_ci_if_error: true
+                  files: ./build/coverage.info
+                  flags: unittests
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  verbose: true
 
-            - name: Configure CMake
-              run: cmake -Bbuild -GXcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DJIVE_BUILD_TEST_RUNNER=ON -DJIVE_ENABLE_COVERAGE=ON -DJIVE_ENABLE_SANITISERS=ON
-
-            - name: Build
-              run: cmake --build build --config ${{env.BUILD_TYPE}}
-
-            - name: Test
-              run: cd build && ctest -j14 -C Debug -T test --output-on-failure
+            - name: Stage Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: "${{ matrix.platform-name }} #${{ github.event.pull_request.number }}"
+                  path: ${{ env.CMAKE_BUILD_DIRECTORY }}/ctest.log
+                  if-no-files-found: ignore
+                  retention-days: 7
+                  overwrite: true
 
     verify-formatting:
         name: Verify Formatting

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+#include <jive_layouts/layout/gui-items/jive_ContainerItem.h>
 
 namespace jive
 {
-    class BlockItem : public GuiItemDecorator
+    class BlockItem : public ContainerItem::Child
     {
     public:
         explicit BlockItem(std::unique_ptr<GuiItem> itemToDecorate);

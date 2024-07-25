@@ -19,14 +19,23 @@ namespace jive
 
     void BackgroundCanvas::paint(juce::Graphics& g)
     {
+        const auto bounds = getLocalBounds().toFloat();
+
         g.reduceClipRegion(shape);
 
-        const auto bounds = getLocalBounds().toFloat();
+        const auto backgroundScale = 1.0f - ((borderWidth / 2.0f) / getWidth());
         apply(background, g, bounds);
-        g.fillAll();
+        g.fillPath(shape,
+                   juce::AffineTransform::scale(backgroundScale,
+                                                backgroundScale,
+                                                bounds.getCentreX(),
+                                                bounds.getCentreY()));
 
         apply(borderFill, g, bounds);
-        g.strokePath(shape, juce::PathStrokeType{ borderWidth * 2.0f });
+        g.strokePath(shape,
+                     juce::PathStrokeType{
+                         borderWidth * 2.0f,
+                     });
     }
 
     void BackgroundCanvas::resized()

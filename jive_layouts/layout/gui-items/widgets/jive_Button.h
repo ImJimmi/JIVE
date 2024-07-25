@@ -7,6 +7,7 @@ namespace jive
     class Button
         : public GuiItemDecorator
         , private juce::Button::Listener
+        , private juce::ComponentListener
     {
     public:
         enum class TriggerEvent
@@ -23,6 +24,7 @@ namespace jive
 
     private:
         void buttonClicked(juce::Button* button) final;
+        void componentParentHierarchyChanged(juce::Component& component) final;
 
         void updateTriggerEvent();
 

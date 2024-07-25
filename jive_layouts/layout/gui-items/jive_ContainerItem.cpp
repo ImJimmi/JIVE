@@ -6,16 +6,16 @@ namespace jive
 {
     ContainerItem::ContainerItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
+        , box{ boxModel(*this) }
         , idealWidth{ state, "ideal-width" }
         , idealHeight{ state, "ideal-height" }
-        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
-        boxModel.addListener(*this);
+        box.addListener(*this);
     }
 
     ContainerItem::~ContainerItem()
     {
-        boxModel.removeListener(*this);
+        box.removeListener(*this);
     }
 
     void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
@@ -24,43 +24,65 @@ namespace jive
         GuiItemDecorator::insertChild(std::move(child), index);
 
         if (getChildren().size() != numChildrenBefore)
-            layoutChanged();
+            updateIdealSizeUnrestrained();
     }
 
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
     {
         {
-            BoxModel::ScopedCallbackLock boxModelLock(boxModel);
+            const BoxModel::ScopedCallbackLock boxModelLock{ box };
             GuiItemDecorator::setChildren(std::move(newChildren));
         }
 
         if (!getChildren().isEmpty())
-            layoutChanged();
+            updateIdealSizeUnrestrained();
     }
 
-    void ContainerItem::boxModelInvalidated(BoxModel& box)
+    void ContainerItem::updateIdealSizeUnrestrained()
     {
-        const auto newIdealSize = calculateIdealSize(box.getContentBounds());
-        const auto idealWidthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
-        const auto idealHeightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
-
-        idealWidth = newIdealSize.getWidth();
-        idealHeight = newIdealSize.getHeight();
-
-        const auto idealSizeChanged = idealWidthChanged || idealHeightChanged;
-
-        if (!idealSizeChanged || isTopLevel())
-            layOutChildren();
-    }
-
-    void ContainerItem::layoutChanged()
-    {
-        const auto newIdealSize = calculateIdealSize({
+        updateIdealSize({
             static_cast<float>(std::numeric_limits<juce::uint16>::max()),
             static_cast<float>(std::numeric_limits<juce::uint16>::max()),
         });
-        idealWidth = newIdealSize.getWidth();
-        idealHeight = newIdealSize.getHeight();
+    }
+
+    void ContainerItem::updateIdealSizeWithinConstraints()
+    {
+        updateIdealSize(box.getContentBounds());
+    }
+
+    void ContainerItem::updateIdealSize(juce::Rectangle<float> constraints)
+    {
+        const auto newIdealSize = calculateIdealSize(constraints);
+        const auto widthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
+        const auto heightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
+
+        if (widthChanged && heightChanged)
+        {
+            {
+                BoxModel::ScopedCallbackLock boxModelLock{ box };
+                idealWidth = newIdealSize.getWidth();
+            }
+            idealHeight = newIdealSize.getHeight();
+        }
+        else if (widthChanged)
+        {
+            idealWidth = newIdealSize.getWidth();
+        }
+        else if (heightChanged)
+        {
+            idealHeight = newIdealSize.getHeight();
+        }
+        else
+        {
+            callLayoutChildrenWithRecursionLock();
+        }
+
+        if ((widthChanged || heightChanged) && getParent() != nullptr)
+        {
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
+                containerParent->updateIdealSizeUnrestrained();
+        }
     }
 } // namespace jive
 
@@ -109,7 +131,7 @@ private:
         };
         auto commonItem = std::make_unique<jive::CommonGuiItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), state));
         SpyContainer container{ std::move(commonItem) };
-        state.setProperty("box-model-valid", false, nullptr);
+        container.updateIdealSizeWithinConstraints();
         expectEquals(container.givenConstraints, jive::boxModel(container).getContentBounds());
     }
 };

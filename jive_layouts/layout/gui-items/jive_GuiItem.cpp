@@ -219,6 +219,21 @@ namespace jive
         return false;
     }
 
+    void GuiItem::callLayoutChildrenWithRecursionLock()
+    {
+        if (isLayingOutChildren() || std::size(getChildren()) == 0)
+            return;
+
+        const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
+        const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
+        layOutChildren();
+    }
+
+    bool GuiItem::isLayingOutChildren() const
+    {
+        return layoutRecursionLock;
+    }
+
     GuiItem::Remover::Remover(GuiItem& guiItem)
         : item{ guiItem }
         , parent{ item.getParent() }

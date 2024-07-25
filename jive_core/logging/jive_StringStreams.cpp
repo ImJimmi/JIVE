@@ -2,6 +2,7 @@
 
 namespace juce
 {
+    // LCOV_EXCL_START
     String& operator<<(String& str, const Colour& colour)
     {
         return str << "juce::Colour { 0x" << colour.toDisplayString(true) << " }";
@@ -46,4 +47,22 @@ namespace juce
     {
         return str << juce::String{ relativeTime.inSeconds() } << "s";
     }
+
+    String& operator<<(String& str, juce::Grid::Px px)
+    {
+        return str << "juce::Grid::Px{ " << px.pixels << " }";
+    }
+
+    String& operator<<(String& str, juce::Grid::TrackInfo track)
+    {
+        return str << "juce::Grid::Track{ " << track.getSize() << " }";
+    }
+
+    String& operator<<(String& str, const juce::ValueTree& tree)
+    {
+        return str << tree.toXmlString(juce::XmlElement::TextFormat{}
+                                           .withoutHeader()
+                                           .singleLine());
+    }
+    // LCOV_EXCL_STOP
 } // namespace juce

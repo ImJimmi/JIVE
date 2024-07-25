@@ -5,6 +5,7 @@
 #include "variant-converters/jive_VariantConvertion.h"
 
 #include <jive_core/algorithms/jive_Visitor.h>
+#include <jive_core/kinetics/jive_Transitions.h>
 
 namespace jive
 {
@@ -26,6 +27,7 @@ namespace jive
     class Property
         : protected juce::ValueTree::Listener
         , protected Object::Listener
+        , private Transition::Listener
     {
     public:
         using Source = std::variant<juce::ValueTree, Object::ReferenceCountedPointer>;
@@ -34,6 +36,7 @@ namespace jive
                  const juce::Identifier& propertyID)
             : id{ propertyID }
             , source{ propertySource }
+            , transitionSourceID{ propertyID }
         {
             initialise();
         }
@@ -53,6 +56,7 @@ namespace jive
         Property& operator=(const Property& other)
         {
             jassert(id == other.id);
+            transitionSourceID = other.transitionSourceID;
             source = other.source;
             onValueChange = other.onValueChange;
 
@@ -64,6 +68,7 @@ namespace jive
         Property& operator=(Property&& other)
         {
             jassert(id == other.id);
+            transitionSourceID = std::move(other.transitionSourceID);
             source = std::move(other.source);
             onValueChange = std::move(other.onValueChange);
 
@@ -74,6 +79,7 @@ namespace jive
 
         ~Property() override
         {
+            observeTransition(nullptr);
             removeThisAsListener(source);
             removeThisAsListener(listenerTarget);
         }
@@ -105,6 +111,9 @@ namespace jive
 
         [[nodiscard]] auto calculateCurrent() const
         {
+            if (auto* transition = getTransition())
+                return transition->template calculateCurrent<ValueType>();
+
             return get();
         }
 
@@ -186,6 +195,49 @@ namespace jive
                               source);
         }
 
+        void setTransitionSourceProperty(const juce::Identifier& sourceID)
+        {
+            observeTransition(nullptr);
+            transitionSourceID = sourceID;
+
+            if (auto* transition = getTransition())
+                observeTransition(transition);
+        }
+
+        [[nodiscard]] Transition* getTransition()
+        {
+            if (currentTransition == nullptr)
+            {
+                using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
+                                                     Inheritance::doNotInherit,
+                                                     Accumulation::doNotAccumulate,
+                                                     true,
+                                                     Responsiveness::ignoreChanges>;
+
+                if (const TransitionsProperty transitions{ source, "transition" }; transitions.exists())
+                    currentTransition = (*transitions.get())[transitionSourceID.toString()];
+            }
+
+            if (currentTransition != nullptr && currentTransition->source.isVoid())
+            {
+                currentTransition->source = getVar(source, id);
+                currentTransition->target = currentTransition->source;
+                currentTransition->commencement = now();
+            }
+
+            return currentTransition;
+        }
+
+        [[nodiscard]] const Transition* getTransition() const
+        {
+            return const_cast<Property*>(this)->getTransition();
+        }
+
+        [[nodiscard]] auto isTransitioning() const
+        {
+            return getTransition() != nullptr;
+        }
+
         [[nodiscard]] operator ValueType() const
         {
             return get();
@@ -211,17 +263,25 @@ namespace jive
 
         const juce::Identifier id;
         mutable std::function<void(void)> onValueChange = nullptr;
+        mutable std::function<void(void)> onTransitionProgressed = nullptr;
 
     protected:
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                       const juce::Identifier& property) override
         {
             if (property != id)
+            {
+                if (property.toString() == "transition")
+                    currentTransition = getTransition();
+
                 return;
+            }
             if (!treeWhosePropertyChanged.hasProperty(property))
                 return;
             if (!respondToPropertyChanges(treeWhosePropertyChanged))
                 return;
+
+            valueChanged();
 
             if (onValueChange != nullptr)
                 onValueChange();
@@ -234,6 +294,8 @@ namespace jive
                 return;
             if (!objectWhosePropertyChanged.hasProperty(property))
                 return;
+
+            valueChanged();
 
             if (onValueChange != nullptr)
                 onValueChange();
@@ -397,7 +459,7 @@ namespace jive
                               src);
         }
 
-        [[nodiscard]] auto getVar(const Source& src, const juce::Identifier& name) const
+        [[nodiscard]] juce::var getVar(const Source& src, const juce::Identifier& name) const
         {
             return std::visit(Visitor{
                                   [name](const juce::ValueTree& sourceTree) {
@@ -543,6 +605,8 @@ namespace jive
                        src);
         }
 
+        virtual void transitionProgressed() {}
+
         Source source;
 
     private:
@@ -561,12 +625,75 @@ namespace jive
                 if (auto value = getVar(source, id); value.isString())
                     set(get());
             }
+
+            if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
+                updateTransition();
+        }
+
+        void transitionProgressed(const juce::String& propertyName,
+                                  const Transition&) final
+        {
+            jassertquiet(propertyName == transitionSourceID.toString());
+
+            transitionProgressed();
+
+            if (onTransitionProgressed != nullptr)
+                onTransitionProgressed();
         }
 
         void valueChanged()
         {
+            if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
+                updateTransition();
+        }
+
+        void updateTransition()
+        {
+            const auto var = getVar(source, id);
+
+            if (auto* transition = getTransition())
+            {
+                const auto isUninitialised = transition->source.isVoid();
+                const auto isAlreadyUpToDate = transition->target == var;
+
+                if (isUninitialised)
+                {
+                    transition->source = var;
+                    transition->target = var;
+                    transition->commencement = now();
+                }
+                else if (!isAlreadyUpToDate)
+                {
+                    transition->source = toVar(transition->template calculateCurrent<ValueType>());
+                    transition->target = var;
+                    transition->commencement = now();
+                }
+
+                observeTransition(transition);
+            }
+            else
+            {
+                observeTransition(nullptr);
+            }
+        }
+
+        void observeTransition(Transition* transition)
+        {
+            if (observedTransition == transition)
+                return;
+
+            if (observedTransition != nullptr)
+                observedTransition->removeListener(*this);
+
+            observedTransition = transition;
+
+            if (transition != nullptr)
+                transition->addListener(*this);
         }
 
         Source listenerTarget;
+        juce::Identifier transitionSourceID;
+        Transition* currentTransition = nullptr;
+        Transition* observedTransition = nullptr;
     };
 } // namespace jive

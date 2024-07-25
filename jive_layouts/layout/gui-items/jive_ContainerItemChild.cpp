@@ -165,10 +165,16 @@ namespace jive
     ContainerItem::Child::Child(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , pimpl{ std::make_unique<Pimpl>(*this) }
+        , idealWidth{ state, "ideal-width" }
+        , idealHeight{ state, "ideal-height" }
     {
+        getComponent()->addComponentListener(this);
     }
 
-    ContainerItem::Child::~Child() = default;
+    ContainerItem::Child::~Child()
+    {
+        getComponent()->removeComponentListener(this);
+    }
 
     void ContainerItem::Child::applyConstraints(std::variant<std::reference_wrapper<juce::FlexItem>,
                                                              std::reference_wrapper<juce::GridItem>> flexOrGridItem,
@@ -186,5 +192,17 @@ namespace jive
                                     strategy);
         };
         std::visit(visit, flexOrGridItem);
+    }
+
+    void ContainerItem::Child::componentMovedOrResized(juce::Component&, bool, bool resized)
+    {
+        if (!resized)
+            return;
+
+        if (auto* container = getTopLevelDecorator().toType<ContainerItem>())
+        {
+            if (getComponent()->getWidth() < idealWidth.get() || getComponent()->getHeight() < idealHeight.get())
+                container->updateIdealSizeWithinConstraints();
+        }
     }
 } // namespace jive

@@ -18,6 +18,7 @@ public:
         testObservations();
         testFunctionalProperties();
         testDynamicObjectSource();
+        testTransitions();
     }
 
 private:
@@ -374,6 +375,74 @@ private:
                          static_cast<int>(state["object"]["value"])
                              + static_cast<int>(state["object"]["inner"]["value"])
                              + static_cast<int>(state["object"]["inner"]["leaf"]["value"]));
+        }
+    }
+
+    void testTransitions()
+    {
+        beginTest("transitions / initialised");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+            expectEquals(value.get(), 0.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 0.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.get(), 0.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 0.0);
+
+            value = 100.0;
+            expectEquals(value.get(), 100.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 0.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.get(), 100.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 50.0);
+
+            jive::Property<double> other{ state, "value" };
+            expectEquals(other.get(), 100.0);
+            expectEquals(other.getTransition()->calculateCurrent<double>(), 50.0);
+
+            value = 200.0;
+            expectEquals(other.get(), 200.0);
+            expectEquals(other.getTransition()->calculateCurrent<double>(), 50.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.get(), 200.0);
+            expectEquals(other.get(), 200.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 125.0);
+            expectEquals(other.getTransition()->calculateCurrent<double>(), 125.0);
+        }
+        beginTest("transitions / uninitialised");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+            expectEquals(value.get(), 0.0);
+            expect(value.getTransition() == nullptr);
+
+            value = 100.0;
+            expectEquals(value.get(), 100.0);
+            expect(value.getTransition() == nullptr);
+
+            state.setProperty("transition", "value 1s", nullptr);
+            value = 200;
+            expectEquals(value.get(), 200.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 100.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.get(), 200.0);
+            expectEquals(value.getTransition()->calculateCurrent<double>(), 200.0);
         }
     }
 };

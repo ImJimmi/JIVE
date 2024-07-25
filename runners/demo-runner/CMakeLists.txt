@@ -10,6 +10,7 @@ SOURCES
     resources/icons/build-large.svg
     resources/icons/code-large.svg
     resources/icons/layout-large.svg
+    resources/icons/motion-blur-large.svg
     resources/icons/next-small.svg
     resources/icons/palette-large.svg
     resources/rubik-mono-one.ttf
@@ -65,6 +66,11 @@ juce_add_plugin(jive-demo-plugin
 target_sources(jive-demo-plugin
 PRIVATE
     source/PluginFilter.cpp
+)
+
+target_compile_definitions(jive-demo-plugin
+PRIVATE
+    JIVE_IS_PLUGIN_PROJECT=1
 )
 
 target_link_libraries(jive-demo-plugin

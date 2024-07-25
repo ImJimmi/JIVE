@@ -4,6 +4,7 @@
 
 namespace juce
 {
+    // LCOV_EXCL_START
     String& operator<<(String& str, const Colour& colour);
     String& operator<<(String& str, const Font& font);
     String& operator<<(String& str, const Image& image);
@@ -11,6 +12,9 @@ namespace juce
     String& operator<<(String& str, const Time& time);
     String& operator<<(String& str, long double value);
     String& operator<<(String& str, RelativeTime relativeTime);
+    String& operator<<(String& str, juce::Grid::Px px);
+    String& operator<<(String& str, juce::Grid::TrackInfo track);
+    String& operator<<(String& str, const juce::ValueTree& tree);
 
     template <typename T>
     String& operator<<(String& str, const Point<T>& point)
@@ -66,4 +70,18 @@ namespace juce
 
         return str << " }";
     }
+
+    template <typename T>
+    String& operator<<(String& str, const juce::BorderSize<T>& border)
+    {
+        return str << "juce::BorderSize<"
+                   << typeid(T).name()
+                   << "> { "
+                   << border.getTop() << ", "
+                   << border.getLeft() << ", "
+                   << border.getBottom() << ", "
+                   << border.getRight()
+                   << " }";
+    }
+    // LCOV_EXCL_STOP
 } // namespace juce

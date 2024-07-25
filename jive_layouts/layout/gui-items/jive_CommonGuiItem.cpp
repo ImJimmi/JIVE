@@ -123,9 +123,11 @@ namespace jive
         };
         getComponent()->setExplicitFocusOrder(focusOrder);
 
-        opacity.onValueChange = [this]() {
-            getComponent()->setAlpha(opacity);
+        const auto updateOpacity = [this] {
+            getComponent()->setAlpha(opacity.calculateCurrent());
         };
+        opacity.onValueChange = updateOpacity;
+        opacity.onTransitionProgressed = updateOpacity;
         getComponent()->setAlpha(opacity);
 
         cursor.onValueChange = [this]() {
@@ -162,8 +164,13 @@ namespace jive
             return;
 
         const auto componentBounds = getComponent()->getBounds().toFloat();
-        boxModel.setSize(componentBounds.getWidth(),
-                         componentBounds.getHeight());
+
+        if (!width.isTransitioning() && !height.isTransitioning())
+            boxModel.setSize(componentBounds.getWidth(), componentBounds.getHeight());
+        else if (!width.isTransitioning())
+            boxModel.setWidth(componentBounds.getWidth());
+        else if (!height.isTransitioning())
+            boxModel.setHeight(componentBounds.getHeight());
     }
 
     void CommonGuiItem::componentVisibilityChanged(juce::Component& componentThatChangedVisiblity)
@@ -255,14 +262,16 @@ namespace jive
     {
         jassertquiet(&boxModelThatChanged == &boxModel);
 
+        getComponent()->removeComponentListener(this);
         getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
                                 juce::roundToInt(boxModel.getHeight()));
-        getTopLevelDecorator().layOutChildren();
+        getComponent()->addComponentListener(this);
+        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 
     void CommonGuiItem::childrenChanged()
     {
-        getTopLevelDecorator().layOutChildren();
+        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 
@@ -881,6 +890,12 @@ private:
 
             state.setProperty("opacity", 0.42f, nullptr);
             expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
+
+            state.setProperty("transition", "opacity 10s", nullptr);
+            state.setProperty("opacity", 0.92f, nullptr);
+            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(4.0));
+            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.62f, 1.f / 256.f);
         }
         {
             juce::ValueTree state{

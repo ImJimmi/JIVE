@@ -20,7 +20,6 @@ namespace jive
         , gridAutoRows{ state, "grid-auto-rows" }
         , gridAutoColumns{ state, "grid-auto-columns" }
         , gap{ state, "gap" }
-        , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
@@ -42,39 +41,55 @@ namespace jive
         if (!gridAutoColumns.exists())
             gridAutoColumns = defaultGrid.autoColumns;
 
-        justifyItems.onValueChange = [this]() {
-            layoutChanged();
+        justifyItems.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
         };
-        alignItems.onValueChange = [this]() {
-            layoutChanged();
+        alignItems.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
         };
-        justifyContent.onValueChange = [this]() {
-            layoutChanged();
+        justifyContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
         };
-        alignContent.onValueChange = [this]() {
-            layoutChanged();
+        alignContent.onValueChange = [this] {
+            callLayoutChildrenWithRecursionLock();
         };
-        gridAutoFlow.onValueChange = [this]() {
-            layoutChanged();
+        gridAutoFlow.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gridTemplateColumns.onValueChange = [this]() {
-            layoutChanged();
+        gridTemplateColumns.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gridTemplateRows.onValueChange = [this]() {
-            layoutChanged();
+        gridTemplateColumns.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gridTemplateAreas.onValueChange = [this]() {
-            layoutChanged();
+        gridTemplateRows.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gridAutoRows.onValueChange = [this]() {
-            layoutChanged();
+        gridTemplateRows.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gridAutoColumns.onValueChange = [this]() {
-            layoutChanged();
+        gridTemplateAreas.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
-        gap.onValueChange = [this]() {
-            layoutChanged();
+        gridAutoRows.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
         };
+        gridAutoColumns.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gap.onValueChange = [this] {
+            updateIdealSizeUnrestrained();
+        };
+        gap.onTransitionProgressed = [this] {
+            updateIdealSizeUnrestrained();
+        };
+
+        state.addListener(this);
+    }
+
+    GridContainer::~GridContainer()
+    {
+        state.removeListener(this);
     }
 
     void GridContainer::layOutChildren()
@@ -86,10 +101,11 @@ namespace jive
 
         GuiItemDecorator::layOutChildren();
 
-        const auto bounds = boxModel.getContentBounds().toNearestInt();
+        const auto bounds = boxModel(*this).getContentBounds().toNearestInt();
 
-        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
+        if (bounds.isEmpty())
             return;
+
         do
         {
             changesDuringLayout = false;
@@ -101,7 +117,7 @@ namespace jive
 
     GridContainer::operator juce::Grid()
     {
-        return buildGrid(boxModel.getContentBounds().toNearestInt(),
+        return buildGrid(boxModel(*this).getContentBounds().toNearestInt(),
                          LayoutStrategy::real);
     }
 
@@ -127,19 +143,21 @@ namespace jive
                 extremities.y = bottom;
         }
 
+        auto& currentBoxModel = boxModel(*this);
+
         return {
             extremities.x
-                + boxModel
+                + currentBoxModel
                       .getPadding()
                       .getLeftAndRight()
-                + boxModel
+                + currentBoxModel
                       .getBorder()
                       .getLeftAndRight(),
             extremities.y
-                + boxModel
+                + currentBoxModel
                       .getPadding()
                       .getTopAndBottom()
-                + boxModel
+                + currentBoxModel
                       .getBorder()
                       .getTopAndBottom(),
         };
@@ -160,19 +178,36 @@ namespace jive
         }
     }
 
+    void GridContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
+    {
+        if (tree != state && tree.getParent() != state)
+            return;
+
+        if (layoutRecursionLock)
+        {
+            static const juce::Array<juce::Identifier> propertiesForWhichChangesRequireAnotherLayOut{
+                "ideal-width",
+                "ideal-height",
+            };
+
+            if (propertiesForWhichChangesRequireAnotherLayOut.contains(id))
+                changesDuringLayout = true;
+        }
+    }
+
     juce::Grid GridContainer::buildGrid(juce::Rectangle<int> bounds,
                                         LayoutStrategy strategy)
     {
         juce::Grid grid;
 
         grid.autoFlow = gridAutoFlow;
-        grid.templateColumns = gridTemplateColumns;
-        grid.templateRows = gridTemplateRows;
+        grid.templateColumns = gridTemplateColumns.calculateCurrent();
+        grid.templateRows = gridTemplateRows.calculateCurrent();
         grid.templateAreas = gridTemplateAreas;
         grid.autoRows = gridAutoRows;
         grid.autoColumns = gridAutoColumns;
 
-        const auto gaps = gap.get();
+        const auto gaps = gap.calculateCurrent();
         grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
         grid.columnGap = gaps.size() > 1 ? gaps.getUnchecked(1) : grid.rowGap;
 
@@ -560,6 +595,12 @@ private:
                 { "width", 222 },
                 { "height", 333 },
                 { "display", "grid" },
+                { "grid-template-columns", "1fr" },
+            },
+            {
+                juce::ValueTree{ "Component" },
+                juce::ValueTree{ "Component" },
+                juce::ValueTree{ "Component" },
             },
         };
         jive::Interpreter interpreter;
@@ -588,16 +629,6 @@ private:
                                             .toType<jive::GridContainer>());
         expect(compare(grid.templateRows, juce::Array<juce::Grid::TrackInfo>{ juce::Grid::TrackInfo{} }));
 
-        state.setProperty("grid-template-rows", "1 313 67", nullptr);
-        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                            .toType<jive::GridContainer>());
-        expect(compare(grid.templateRows,
-                       juce::Array<juce::Grid::TrackInfo>{
-                           juce::Grid::Px{ 1 },
-                           juce::Grid::Px{ 313 },
-                           juce::Grid::Px{ 67 },
-                       }));
-
         state.setProperty("grid-template-rows", "78px 3fr auto", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
@@ -607,6 +638,33 @@ private:
                            juce::Grid::Fr{ 3 },
                            juce::Grid::TrackInfo{},
                        }));
+
+        state.setProperty("grid-template-rows", "1 313 67", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expect(compare(grid.templateRows,
+                       juce::Array<juce::Grid::TrackInfo>{
+                           juce::Grid::Px{ 1 },
+                           juce::Grid::Px{ 313 },
+                           juce::Grid::Px{ 67 },
+                       }));
+        expectEquals(item->getComponent()->getChildComponent(0)->getHeight(), 1);
+        expectEquals(item->getComponent()->getChildComponent(1)->getHeight(), 313);
+        expectEquals(item->getComponent()->getChildComponent(2)->getHeight(), 67);
+
+        state.setProperty("grid-template-rows", "1fr 1fr 1fr", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expectEquals(item->getComponent()->getChildComponent(0)->getHeight(), 111);
+        expectEquals(item->getComponent()->getChildComponent(1)->getHeight(), 111);
+        expectEquals(item->getComponent()->getChildComponent(2)->getHeight(), 111);
+
+        state.setProperty("grid-template-rows", "3fr 2fr 1fr", nullptr);
+        grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                            .toType<jive::GridContainer>());
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(0)->getHeight()), 166.5f, 0.5f);
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(1)->getHeight()), 111.0f, 0.5f);
+        expectWithinAbsoluteError(static_cast<float>(item->getComponent()->getChildComponent(2)->getHeight()), 55.5f, 0.5f);
     }
 
     void testTemplateAreas()

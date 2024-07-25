@@ -185,6 +185,7 @@ namespace juce
         return gradient;
     }
 
+    // LCOV_EXCL_START
     String& operator<<(String& str, const jive::Gradient::ColourStop& stop)
     {
         return str << "jive::Gradient::ColourStop{ "
@@ -224,4 +225,5 @@ namespace juce
         str << " }";
         return str;
     }
+    // LCOV_EXCL_STOP
 } // namespace juce

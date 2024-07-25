@@ -47,11 +47,13 @@ namespace jive
         [[nodiscard]] virtual bool isContainer() const;
         [[nodiscard]] virtual bool isContent() const;
 
-        virtual void layOutChildren() {}
+        void callLayoutChildrenWithRecursionLock();
+        [[nodiscard]] bool isLayingOutChildren() const;
 
         juce::ValueTree state;
 
     protected:
+        virtual void layOutChildren() {}
         virtual void childrenChanged() {}
 
     private:
@@ -90,6 +92,8 @@ namespace jive
         juce::OwnedArray<GuiItem> children;
         std::unique_ptr<Remover> remover;
         View::ReferenceCountedPointer view;
+
+        bool layoutRecursionLock = false;
 
         JUCE_DECLARE_WEAK_REFERENCEABLE(GuiItem)
         JUCE_LEAK_DETECTOR(GuiItem)

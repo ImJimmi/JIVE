@@ -13,6 +13,7 @@
         - [`font-weight`](#font-weight)
         - [`letter-spacing`](#letter-spacing)
         - [`text-decoration`](#text-decoration)
+        - [`transition`](#transition)
     - [Selectors](#selectors)
         - [Interaction States](#interaction-states)
             - [`hover`](#hover)
@@ -177,6 +178,10 @@ The amount of extra space to leave between characters, in pixels.
 ### `text-decoration`
 
 The decoration to use for the font, either `"normal"` or `"underlined"`.
+
+### `transition`
+
+Defines how properties change from one value to the next using interpolation. See [CSS Transitions](https://www.w3schools.com/css/css3_transitions.asp)
 
 ## Selectors
 

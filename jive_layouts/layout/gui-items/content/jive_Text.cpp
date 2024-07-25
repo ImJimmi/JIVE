@@ -1,6 +1,7 @@
 #include "jive_Text.h"
 
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/layout/gui-items/jive_ContainerItem.h>
 
 namespace jive
 {
@@ -155,8 +156,9 @@ namespace jive
         {
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
-            else
-                parentItem->state.setProperty("box-model-valid", false, nullptr);
+
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem).getTopLevelDecorator().toType<ContainerItem>())
+                containerParent->updateIdealSizeUnrestrained();
         }
     }
 
@@ -528,8 +530,10 @@ private:
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
             expectEquals(boxModel.getWidth(),
-                         std::ceil(std::max({ font.getStringWidthFloat("This one spans"),
-                                              font.getStringWidthFloat("multiple lines.") })));
+                         std::ceil(std::max({
+                             font.getStringWidthFloat("This one spans"),
+                             font.getStringWidthFloat("multiple lines."),
+                         })));
             expectEquals(boxModel.getHeight(),
                          std::ceil(font.getHeight()) * 2.0f);
 
