@@ -1,3 +1,0 @@
-[submodule "runners/libraries/JUCE"]
-	path = runners/libraries/JUCE
-	url = https://github.com/juce-framework/JUCE

@@ -8,9 +8,9 @@ include(cmake/jive_options.cmake)
 include(cmake/jive_code_coverage.cmake)
 include(cmake/jive_compiler_and_linker_options.cmake)
 
-if (JIVE_BUILD_TEST_RUNNER OR JIVE_BUILD_DEMO_RUNNER)
+if (JIVE_BUILD_BENCHMARKS OR JIVE_BUILD_DEMO_RUNNER OR JIVE_BUILD_TEST_RUNNER)
     include(CTest)
-    add_subdirectory(runners/libraries)
+    include(cmake/CPM.cmake)
 endif()
 
 add_subdirectory(jive_components)
