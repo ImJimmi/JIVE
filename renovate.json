@@ -5,5 +5,16 @@
   ],
   "git-submodules": {
     "enabled": true
-  }
+  },
+  "regexManagers": [
+    {
+      "fileMatch": ["(^|/)package-lock\\.cmake$"],
+      "matchStrings": [
+        "CPMDeclarePackage\\s*\\(\\s*\\w+\\s*.*VERSION\\s+\"?(?<currentValue>.*?)\"?\\s+GITHUB_REPOSITORY\\s+\"?(?<depName>.*?)\"?[\\s\\)]",
+        "CPMDeclarePackage\\s*\\(\\s*\\w+\\s*.*GITHUB_REPOSITORY\\s+\"?(?<depName>.*?)\"?\\s+VERSION\\s+\"?(?<currentValue>.*?)\"?[\\s\\)]"
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*?)$"
+    }
+  ]
 }

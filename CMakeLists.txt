@@ -16,6 +16,7 @@ if (JIVE_BUILD_BENCHMARKS
 )
     include(CTest)
     include(cmake/CPM.cmake)
+    CPMUsePackageLock(package-lock.cmake)
 endif ()
 
 add_subdirectory(jive_components)
