@@ -1,85 +1,78 @@
-add_library(jive_layouts INTERFACE EXCLUDE_FROM_ALL)
-add_library(jive::jive_layouts ALIAS jive_layouts)
+add_library(jive_layouts
+            INTERFACE
+            EXCLUDE_FROM_ALL
+)
+add_library(jive::jive_layouts
+            ALIAS
+            jive_layouts
+)
 
 target_sources(jive_layouts
-PUBLIC
-    hooks/jive_View.cpp
-    hooks/jive_View.h
-
-    layout/gui-items/block/jive_BlockContainer.cpp
-    layout/gui-items/block/jive_BlockContainer.h
-    layout/gui-items/block/jive_BlockItem.cpp
-    layout/gui-items/block/jive_BlockItem.h
-
-    layout/gui-items/content/jive_Image.cpp
-    layout/gui-items/content/jive_Image.h
-    layout/gui-items/content/jive_Text.cpp
-    layout/gui-items/content/jive_Text.h
-
-    layout/gui-items/flex/jive_FlexContainer.cpp
-    layout/gui-items/flex/jive_FlexContainer.h
-    layout/gui-items/flex/jive_FlexItem.cpp
-    layout/gui-items/flex/jive_FlexItem.h
-
-    layout/gui-items/grid/jive_GridContainer.cpp
-    layout/gui-items/grid/jive_GridContainer.h
-    layout/gui-items/grid/jive_GridItem.cpp
-    layout/gui-items/grid/jive_GridItem.h
-
-    layout/gui-items/top-level/jive_PluginEditor.cpp
-    layout/gui-items/top-level/jive_PluginEditor.h
-    layout/gui-items/top-level/jive_Window.cpp
-    layout/gui-items/top-level/jive_Window.h
-
-    layout/gui-items/widgets/jive_Button.cpp
-    layout/gui-items/widgets/jive_Button.h
-    layout/gui-items/widgets/jive_ComboBox.cpp
-    layout/gui-items/widgets/jive_ComboBox.h
-    layout/gui-items/widgets/jive_Hyperlink.cpp
-    layout/gui-items/widgets/jive_Hyperlink.h
-    layout/gui-items/widgets/jive_Knob.cpp
-    layout/gui-items/widgets/jive_Knob.h
-    layout/gui-items/widgets/jive_Label.cpp
-    layout/gui-items/widgets/jive_Label.h
-    layout/gui-items/widgets/jive_ProgressBar.cpp
-    layout/gui-items/widgets/jive_ProgressBar.h
-    layout/gui-items/widgets/jive_Slider.cpp
-    layout/gui-items/widgets/jive_Slider.h
-    layout/gui-items/widgets/jive_Spinner.cpp
-    layout/gui-items/widgets/jive_Spinner.h
-
-    layout/gui-items/jive_CommonGuiItem.cpp
-    layout/gui-items/jive_CommonGuiItem.h
-    layout/gui-items/jive_ContainerItem.cpp
-    layout/gui-items/jive_ContainerItem.h
-    layout/gui-items/jive_ContainerItemChild.cpp
-    layout/gui-items/jive_GuiItem.cpp
-    layout/gui-items/jive_GuiItem.h
-    layout/gui-items/jive_GuiItemDecorator.cpp
-    layout/gui-items/jive_GuiItemDecorator.h
-
-    layout/jive_Interpreter.cpp
-    layout/jive_Interpreter.h
-
-    utilities/jive_ComponentFactory.cpp
-    utilities/jive_ComponentFactory.h
-    utilities/jive_Display.cpp
-    utilities/jive_Display.h
-    utilities/jive_Drawable.cpp
-    utilities/jive_Drawable.h
-    utilities/jive_LayoutStrategy.h
-    utilities/jive_Overflow.cpp
-    utilities/jive_Overflow.h
-
-    jive_layouts.h
+               PUBLIC hooks/jive_View.cpp
+                      hooks/jive_View.h
+                      layout/gui-items/block/jive_BlockContainer.cpp
+                      layout/gui-items/block/jive_BlockContainer.h
+                      layout/gui-items/block/jive_BlockItem.cpp
+                      layout/gui-items/block/jive_BlockItem.h
+                      layout/gui-items/content/jive_Image.cpp
+                      layout/gui-items/content/jive_Image.h
+                      layout/gui-items/content/jive_Text.cpp
+                      layout/gui-items/content/jive_Text.h
+                      layout/gui-items/flex/jive_FlexContainer.cpp
+                      layout/gui-items/flex/jive_FlexContainer.h
+                      layout/gui-items/flex/jive_FlexItem.cpp
+                      layout/gui-items/flex/jive_FlexItem.h
+                      layout/gui-items/grid/jive_GridContainer.cpp
+                      layout/gui-items/grid/jive_GridContainer.h
+                      layout/gui-items/grid/jive_GridItem.cpp
+                      layout/gui-items/grid/jive_GridItem.h
+                      layout/gui-items/top-level/jive_PluginEditor.cpp
+                      layout/gui-items/top-level/jive_PluginEditor.h
+                      layout/gui-items/top-level/jive_Window.cpp
+                      layout/gui-items/top-level/jive_Window.h
+                      layout/gui-items/widgets/jive_Button.cpp
+                      layout/gui-items/widgets/jive_Button.h
+                      layout/gui-items/widgets/jive_ComboBox.cpp
+                      layout/gui-items/widgets/jive_ComboBox.h
+                      layout/gui-items/widgets/jive_Hyperlink.cpp
+                      layout/gui-items/widgets/jive_Hyperlink.h
+                      layout/gui-items/widgets/jive_Knob.cpp
+                      layout/gui-items/widgets/jive_Knob.h
+                      layout/gui-items/widgets/jive_Label.cpp
+                      layout/gui-items/widgets/jive_Label.h
+                      layout/gui-items/widgets/jive_ProgressBar.cpp
+                      layout/gui-items/widgets/jive_ProgressBar.h
+                      layout/gui-items/widgets/jive_Slider.cpp
+                      layout/gui-items/widgets/jive_Slider.h
+                      layout/gui-items/widgets/jive_Spinner.cpp
+                      layout/gui-items/widgets/jive_Spinner.h
+                      layout/gui-items/jive_CommonGuiItem.cpp
+                      layout/gui-items/jive_CommonGuiItem.h
+                      layout/gui-items/jive_ContainerItem.cpp
+                      layout/gui-items/jive_ContainerItem.h
+                      layout/gui-items/jive_ContainerItemChild.cpp
+                      layout/gui-items/jive_GuiItem.cpp
+                      layout/gui-items/jive_GuiItem.h
+                      layout/gui-items/jive_GuiItemDecorator.cpp
+                      layout/gui-items/jive_GuiItemDecorator.h
+                      layout/jive_Interpreter.cpp
+                      layout/jive_Interpreter.h
+                      utilities/jive_ComponentFactory.cpp
+                      utilities/jive_ComponentFactory.h
+                      utilities/jive_Display.cpp
+                      utilities/jive_Display.h
+                      utilities/jive_Drawable.cpp
+                      utilities/jive_Drawable.h
+                      utilities/jive_LayoutStrategy.h
+                      utilities/jive_Overflow.cpp
+                      utilities/jive_Overflow.h
+                      jive_layouts.h
 )
 
 target_include_directories(jive_layouts
-INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
+                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
 
 target_link_libraries(jive_layouts
-INTERFACE
-    jive::jive_components
+                      INTERFACE jive::jive_components
 )
