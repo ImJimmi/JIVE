@@ -59,6 +59,7 @@ namespace jive
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
 
         juce::WeakReference<GuiItem> observedItem = nullptr;
+        juce::ValueTree observedState;
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };

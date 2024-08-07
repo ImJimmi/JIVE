@@ -73,11 +73,9 @@ namespace jive
 
     void Interpreter::listenTo(GuiItem& item)
     {
-        if (observedItem != nullptr)
-            observedItem->state.removeListener(this);
-
         observedItem = &item;
-        observedItem->state.addListener(this);
+        observedState = observedItem->state;
+        observedState.addListener(this);
     }
 
     [[nodiscard]] static GuiItem* findItem(GuiItem& root, const juce::ValueTree& state)
