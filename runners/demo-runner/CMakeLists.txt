@@ -1,4 +1,5 @@
 include(cmake/melatonin_inspector.cmake)
+include(cmake/pluginval.cmake)
 
 add_library(jive-demo
             INTERFACE
@@ -78,3 +79,5 @@ target_link_libraries(jive-demo-plugin
                               juce::juce_audio_utils
                               juce::juce_audio_devices
 )
+
+add_pluginval_tests(jive-demo-plugin)

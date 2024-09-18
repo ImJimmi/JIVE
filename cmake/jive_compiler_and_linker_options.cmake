@@ -27,13 +27,11 @@ if (APPLE)
 
     if (JIVE_ENABLE_SANITISERS)
         target_compile_options(jive_compiler_and_linker_options
-                               INTERFACE -fsanitize=address
-                                         -fsanitize=undefined
+                               INTERFACE -fsanitize=undefined
         )
 
         target_link_options(jive_compiler_and_linker_options
                             INTERFACE
-                            -fsanitize=address
                             -fsanitize=undefined
         )
     endif ()
