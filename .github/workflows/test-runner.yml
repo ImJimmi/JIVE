@@ -23,7 +23,8 @@ jobs:
           - platform: macos-latest
             platform-name: macOS
             package-manager: brew
-            additional-cmake-options: -DJIVE_ENABLE_COVERAGE=ON
+            additional-cmake-options: -DJIVE_ENABLE_COVERAGE=ON -DJIVE_ENABLE_SANITISERS=ON
+
           - platform: windows-latest
             platform-name: Windows
             platform-shell: cmd
