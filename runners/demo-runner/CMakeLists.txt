@@ -30,6 +30,7 @@ target_compile_definitions(jive-demo
                                      JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-demo,JUCE_PRODUCT_NAME>"
                                      JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo,JUCE_VERSION>"
                                      JUCE_VST3_CAN_REPLACE_VST2=0
+                                     JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>
 )
 
 target_link_libraries(jive-demo
@@ -42,7 +43,9 @@ target_link_libraries(jive-demo
                                 juce::juce_recommended_warning_flags
 )
 
-add_melatonin_inspector(jive-demo)
+if (JIVE_ENABLE_MELATONIN_INSPECTOR)
+    add_melatonin_inspector(jive-demo)
+endif ()
 
 juce_add_gui_app(jive-demo-app
                  PRODUCT_NAME

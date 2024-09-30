@@ -1,6 +1,6 @@
 #include "jive_FontUtilities.h"
 
-#include <juce_graphics/juce_graphics.h>
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
 
 namespace jive
 {
@@ -17,5 +17,14 @@ namespace jive
             flags += juce::Font::underlined;
 
         return flags;
+    }
+
+    float calculateStringWidth(const juce::String& text, const juce::Font& font)
+    {
+#if JUCE_VERSION > JIVE_JUCE_VERSION(8, 0, 1)
+        return juce::GlyphArrangement::getStringWidth(font, text);
+#else
+        return font.getStringWidthFloat(text);
+#endif
     }
 } // namespace jive
