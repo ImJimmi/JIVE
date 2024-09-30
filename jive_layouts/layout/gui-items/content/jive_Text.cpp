@@ -180,6 +180,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/graphics/jive_FontUtilities.h>
     #include <jive_layouts/layout/jive_Interpreter.h>
 
 class TextTest : public juce::UnitTest
@@ -525,14 +526,14 @@ private:
 
             const auto& boxModel = jive::boxModel(item);
             expectEquals(boxModel.getWidth(),
-                         std::ceil(font.getStringWidthFloat("This side up.")));
+                         std::ceil(jive::calculateStringWidth("This side up.", font)));
             expectEquals(boxModel.getHeight(), std::ceil(font.getHeight()));
 
             textTree.setProperty("text", "This one spans\nmultiple lines.", nullptr);
             expectEquals(boxModel.getWidth(),
                          std::ceil(std::max({
-                             font.getStringWidthFloat("This one spans"),
-                             font.getStringWidthFloat("multiple lines."),
+                             jive::calculateStringWidth("This one spans", font),
+                             jive::calculateStringWidth("multiple lines.", font),
                          })));
             expectEquals(boxModel.getHeight(),
                          std::ceil(font.getHeight()) * 2.0f);

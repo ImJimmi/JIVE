@@ -15,6 +15,7 @@ target_sources(jive_core
                       algorithms/jive_Interpolate.h
                       algorithms/jive_TransferFunction.h
                       algorithms/jive_Visitor.h
+                      compile-time-helpers/jive_JuceVersion.h
                       geometry/jive_BorderRadii.h
                       geometry/jive_BoxModel.cpp
                       geometry/jive_BoxModel.h

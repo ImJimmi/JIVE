@@ -606,7 +606,7 @@ private:
             const auto& container = *window->getChildren()[0];
             const auto& boxModel = jive::boxModel(container);
             expectEquals(boxModel.getContentBounds().getWidth(),
-                         std::ceil(font.getStringWidthFloat(textState["text"])));
+                         std::ceil(jive::calculateStringWidth(textState["text"], font)));
             expectEquals(boxModel.getContentBounds().getHeight(),
                          font.getHeight());
         }

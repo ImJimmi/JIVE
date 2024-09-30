@@ -938,7 +938,7 @@ private:
                               ->getTextComponent()
                               .getFont();
 
-        const auto expectedWidth = std::ceil(font.getStringWidthFloat("hello")) + std::ceil(font.getStringWidthFloat("world"));
+        const auto expectedWidth = std::ceil(jive::calculateStringWidth("hello", font)) + std::ceil(jive::calculateStringWidth("world", font));
         expectEquals(boxModel.getContentBounds().getWidth(), expectedWidth);
 
         const auto expectedHeight = std::ceil(font.getHeight()) * 2.0f;

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
+#include <juce_graphics/juce_graphics.h>
 
 namespace jive
 {
-    int parseFontStyleFlags(const juce::String& styleString);
+    [[nodiscard]] int parseFontStyleFlags(const juce::String& styleString);
+    [[nodiscard]] float calculateStringWidth(const juce::String& text, const juce::Font& font);
 } // namespace jive

@@ -319,7 +319,7 @@ private:
             };
             state["object"].getDynamicObject()->setProperty("foo", 111);
             expect(!receivedCallback);
-            state["object"].getDynamicObject()->setProperty("value", 11358);
+            dynamic_cast<jive::Object*>(state["object"].getDynamicObject())->setProperty("value", 11358);
             expect(receivedCallback);
         }
 
@@ -342,10 +342,10 @@ private:
             value.onValueChange = [&receivedCallback]() {
                 receivedCallback = true;
             };
-            state["object"]["inner"].getDynamicObject()->setProperty("value", 11358);
+            dynamic_cast<jive::Object*>(state["object"]["inner"].getDynamicObject())->setProperty("value", 11358);
             expect(receivedCallback);
             receivedCallback = false;
-            state["object"].getDynamicObject()->setProperty("value", 34544);
+            dynamic_cast<jive::Object*>(state["object"].getDynamicObject())->setProperty("value", 34544);
             expect(receivedCallback);
         }
 

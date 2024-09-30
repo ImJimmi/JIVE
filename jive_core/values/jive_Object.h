@@ -1,5 +1,7 @@
 #pragma once
 
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
+
 #include <juce_data_structures/juce_data_structures.h>
 
 namespace jive
@@ -23,8 +25,13 @@ namespace jive
         Object(Object&& other);
         Object(const juce::DynamicObject& other);
 
+#if JUCE_VERSION > JIVE_JUCE_VERSION(8, 0, 1)
+        void setProperty(const juce::Identifier& propertyName,
+                         const juce::var& newValue);
+#else
         void setProperty(const juce::Identifier& propertyName,
                          const juce::var& newValue) override;
+#endif
         const juce::NamedValueSet& getProperties() const;
 
         Object* getParent() noexcept;
