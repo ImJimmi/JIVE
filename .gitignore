@@ -4,6 +4,7 @@
 build/
 Builds/
 JuceLibraryCode/
+vale-styles/
 
 # Prerequisites
 *.d
