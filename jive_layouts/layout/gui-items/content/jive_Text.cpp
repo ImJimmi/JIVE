@@ -78,6 +78,26 @@ namespace jive
         return true;
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void Text::attachToParameter(juce::RangedAudioParameter* newParameter, juce::UndoManager* undoManager)
+    {
+        parameter = newParameter;
+
+        if (parameter != nullptr)
+        {
+            const auto onChange = [this](float) {
+                text = parameter->getCurrentValueAsText();
+            };
+            parameterAttachment = std::make_unique<juce::ParameterAttachment>(*parameter, onChange, undoManager);
+            text = parameter->getCurrentValueAsText();
+        }
+        else
+        {
+            parameterAttachment = nullptr;
+        }
+    }
+#endif
+
     TextComponent& Text::getTextComponent()
     {
         return dynamic_cast<TextComponent&>(*getComponent());

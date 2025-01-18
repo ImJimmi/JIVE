@@ -20,6 +20,10 @@ namespace jive
         bool isContainer() const override;
         bool isContent() const override;
 
+#if JIVE_IS_PLUGIN_PROJECT
+        void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager*) override;
+#endif
+
         TextComponent& getTextComponent();
         const TextComponent& getTextComponent() const;
 
@@ -37,6 +41,11 @@ namespace jive
         Property<juce::AttributedString::ReadingDirection> direction;
         Property<float> idealWidth;
         Property<float> idealHeight;
+
+#if JIVE_IS_PLUGIN_PROJECT
+        juce::RangedAudioParameter* parameter;
+        std::unique_ptr<juce::ParameterAttachment> parameterAttachment;
+#endif
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };

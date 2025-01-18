@@ -55,6 +55,13 @@ namespace jive
         return item->isContent();
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void GuiItemDecorator::attachToParameter(juce::RangedAudioParameter* parameter, juce::UndoManager* undoManager)
+    {
+        item->attachToParameter(parameter, undoManager);
+    }
+#endif
+
     GuiItem* GuiItemDecorator::getParent()
     {
         if (auto* parentItem = item->getParent())

@@ -115,6 +115,16 @@ namespace jive
         return false;
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void ComboBox::attachToParameter(juce::RangedAudioParameter* parameter, juce::UndoManager* undoManager)
+    {
+        if (parameter != nullptr)
+            parameterAttachment = std::make_unique<juce::ComboBoxParameterAttachment>(*parameter, getComboBox(), undoManager);
+        else
+            parameterAttachment = nullptr;
+    }
+#endif
+
     juce::ComboBox& ComboBox::getComboBox()
     {
         return *dynamic_cast<juce::ComboBox*>(getComponent().get());
