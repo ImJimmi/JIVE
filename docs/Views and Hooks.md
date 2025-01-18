@@ -177,49 +177,6 @@ const jive::View::ReferenceCountedPointer xyPadView = topLevelItem
                                                           ->getView();
 ```
 
-### Example - Widget attachments in a plugin project
-
-```cpp
-class EditorView : public jive::View
-{
-public:
-    explicit EditorView(juce::AudioProcessorValueTreeState& processorState)
-        : apvts{ processorState }
-    {
-    }
-
-protected:
-    // Construct an Editor type with a Slider element.
-    juce::ValueTree initialise() final
-    {
-        return juce::ValueTree{
-            "Editor",
-            {
-                { "width", 400 },
-                { "height", 250 },
-            },
-            {
-                juce::ValueTree { "Slider" },
-            },
-        };
-    }
-
-    // Attach the APVTS to the slider
-    void setup(jive::GuiItem& item) final
-    {
-        if (auto* slider = dynamic_cast<juce::Slider*>(item.getChildren()[0]->getComponent().get()))
-            attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "gain", *slider);
-    }
-
-private:
-    juce::AudioProcessorValueTreeState& apvts;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
-};
-
-jive::Interpreter interpreter;
-const auto editor = interpreter.interpret(jive::makeView<EditorView>(apvts), &pluginProcessor);
-```
-
 ## Conclusion
 
 As demonstrated, we can provide additional behaviour to a view by writing a custom `View` type and using the various hooks to access all the constituents of our UI.
