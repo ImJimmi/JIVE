@@ -24,4 +24,22 @@ add_subdirectory(jive_core)
 add_subdirectory(jive_layouts)
 add_subdirectory(jive_style_sheets)
 
+if (JIVE_BUILD_BENCHMARKS
+    OR JIVE_BUILD_DEMO_RUNNER
+    OR JIVE_BUILD_TEST_RUNNER
+    OR JIVE_BUILD_EXAMPLES
+)
+    CPMGetPackage(JUCE)
+endif ()
+
+set_directory_properties(PROPERTIES JUCE_COMPANY_NAME
+                                    "JIVE"
+                                    JUCE_COMPANY_WEBSITE
+                                    "https://github.com/ImJimmi/JIVE"
+)
+
 add_subdirectory(runners)
+
+if (JIVE_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
