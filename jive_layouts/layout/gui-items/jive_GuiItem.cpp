@@ -234,6 +234,15 @@ namespace jive
         return layoutRecursionLock;
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void GuiItem::attachToParameter(juce::RangedAudioParameter*, juce::UndoManager*)
+    {
+        // It doesn't make sense to call this on an item that isn't a widget!
+        // Did you mean to use jive::findItemWithID() to attach to a specific item?
+        jassertfalse;
+    }
+#endif
+
     GuiItem::Remover::Remover(GuiItem& guiItem)
         : item{ guiItem }
         , parent{ item.getParent() }
@@ -271,6 +280,20 @@ namespace jive
     const BoxModel& boxModel(const GuiItem& item)
     {
         return boxModel(*const_cast<GuiItem*>(&item));
+    }
+
+    GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id)
+    {
+        if (root.state["id"].toString() == id.toString())
+            return &root;
+
+        for (auto* child : root.getChildren())
+        {
+            if (auto* item = findItemWithID(*child, id))
+                return item;
+        }
+
+        return nullptr;
     }
 } // namespace jive
 

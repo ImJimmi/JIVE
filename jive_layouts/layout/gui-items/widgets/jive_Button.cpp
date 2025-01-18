@@ -103,6 +103,16 @@ namespace jive
         getButton().removeListener(this);
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void Button::attachToParameter(juce::RangedAudioParameter* parameter, juce::UndoManager* undoManager)
+    {
+        if (parameter != nullptr)
+            parameterAttachment = std::make_unique<juce::ButtonParameterAttachment>(*parameter, getButton(), undoManager);
+        else
+            parameterAttachment = nullptr;
+    }
+#endif
+
     juce::Button& Button::getButton()
     {
         return *dynamic_cast<juce::Button*>(getComponent().get());

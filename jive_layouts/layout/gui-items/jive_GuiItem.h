@@ -8,6 +8,10 @@
     #include <jive_style_sheets/jive_style_sheets.h>
 #endif
 
+#if JIVE_IS_PLUGIN_PROJECT
+    #include <juce_audio_processors/juce_audio_processors.h>
+#endif
+
 namespace jive
 {
     class GuiItem
@@ -49,6 +53,10 @@ namespace jive
 
         void callLayoutChildrenWithRecursionLock();
         [[nodiscard]] bool isLayingOutChildren() const;
+
+#if JIVE_IS_PLUGIN_PROJECT
+        virtual void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager* = nullptr);
+#endif
 
         juce::ValueTree state;
 
@@ -101,4 +109,6 @@ namespace jive
 
     [[nodiscard]] BoxModel& boxModel(GuiItem& decoratedItem);
     [[nodiscard]] const BoxModel& boxModel(const GuiItem& decoratedItem);
+
+    [[nodiscard]] GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id);
 } // namespace jive

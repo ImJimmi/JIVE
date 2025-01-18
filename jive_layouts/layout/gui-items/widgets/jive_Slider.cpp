@@ -113,6 +113,16 @@ namespace jive
         return false;
     }
 
+#if JIVE_IS_PLUGIN_PROJECT
+    void Slider::attachToParameter(juce::RangedAudioParameter* parameter, juce::UndoManager* undoManager)
+    {
+        if (parameter != nullptr)
+            parameterAttachment = std::make_unique<juce::SliderParameterAttachment>(*parameter, getSlider(), undoManager);
+        else
+            parameterAttachment = nullptr;
+    }
+#endif
+
     juce::Slider& Slider::getSlider()
     {
         return *dynamic_cast<juce::Slider*>(getComponent().get());

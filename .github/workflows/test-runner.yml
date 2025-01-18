@@ -56,6 +56,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -D JIVE_BUILD_TEST_RUNNER=ON \
             -D JIVE_BUILD_DEMO_RUNNER=ON \
+            -D JIVE_BUILD_EXAMPLES=ON \
             ${{ matrix.additional-cmake-options }}
 
       - name: CMake Build
