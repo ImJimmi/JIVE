@@ -73,6 +73,8 @@ jobs:
             -D CMAKE_C_COMPILER_LAUNCHER=sccache \
             -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
             -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
+            -D CMAKE_POLICY_DEFAULT_CMP0141=NEW \
+            -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \
             ${{ matrix.additional-cmake-options }}
 
       - name: Cache CPM dependencies
