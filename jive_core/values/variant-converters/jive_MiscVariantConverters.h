@@ -309,7 +309,7 @@ namespace juce
 
         static var toVar(const Image& image)
         {
-            return var{ image.getPixelData() };
+            return var{ image.getPixelData().get() };
         }
     };
 

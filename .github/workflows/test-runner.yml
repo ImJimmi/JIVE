@@ -1,14 +1,14 @@
 name: Test Runner
+run-name: "Test Runner `${{ github.ref_name || github.head_ref }}`"
 
-on:
-  pull_request:
-    branches: [main]
-
-run-name: "Test Runner - #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}"
+on: push
 
 env:
   BUILD_TYPE: Debug
   CMAKE_BUILD_DIRECTORY: build
+  CPM_CACHE_DIR: .cpm-cache
+  SCCACHE_CACHE_MULTIARCH: 1
+  SCCACHE_GHA_ENABLED: true
 
 defaults:
   run:
@@ -43,10 +43,23 @@ jobs:
         run: ${{ matrix.package-manager }} install ninja
       - name: Install pluginval
         run: ${{matrix.package-manager}} install pluginval
-
       - name: Setup devcmd
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1.13.0
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+
+      - name: Restore CPM dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CPM_CACHE_DIR }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
+          restore-keys: |
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+            cpm-${{ runner.os }}-main
+            cpm-${{ runner.os }}
 
       - name: CMake Generate
         run: |
@@ -57,7 +70,18 @@ jobs:
             -D JIVE_BUILD_TEST_RUNNER=ON \
             -D JIVE_BUILD_DEMO_RUNNER=ON \
             -D JIVE_BUILD_EXAMPLES=ON \
+            -D CMAKE_C_COMPILER_LAUNCHER=sccache \
+            -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
+            -D CMAKE_POLICY_DEFAULT_CMP0141=NEW \
+            -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \
             ${{ matrix.additional-cmake-options }}
+
+      - name: Cache CPM dependencies
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CPM_CACHE_DIR }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
 
       - name: CMake Build
         run: |
@@ -92,7 +116,8 @@ jobs:
             --ignore-errors inconsistent \
             --ignore-errors gcov \
             --ignore-errors range \
-            --ignore-errors source
+            --ignore-errors source \
+            --ignore-errors format
 
       - name: Upload Coverage Report
         if: runner.os == 'macOS'

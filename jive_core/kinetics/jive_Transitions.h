@@ -67,7 +67,7 @@ namespace juce
 
         static var toVar(jive::Transitions::ReferenceCountedPointer transitions)
         {
-            return var{ transitions };
+            return var{ transitions.get() };
         }
     };
 } // namespace juce
