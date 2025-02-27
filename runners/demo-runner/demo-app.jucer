@@ -13,6 +13,8 @@
         <FILE id="dLodsS" name="code-large.svg" compile="0" resource="1" file="resources/icons/code-large.svg"/>
         <FILE id="nZzQ90" name="layout-large.svg" compile="0" resource="1"
               file="resources/icons/layout-large.svg"/>
+        <FILE id="rXG2hu" name="motion-blur-large.svg" compile="0" resource="1"
+              file="resources/icons/motion-blur-large.svg"/>
         <FILE id="ubYwpi" name="next-small.svg" compile="0" resource="1" file="resources/icons/next-small.svg"/>
         <FILE id="V8HUP7" name="palette-large.svg" compile="0" resource="1"
               file="resources/icons/palette-large.svg"/>
@@ -91,10 +93,10 @@
     <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
 </JUCERPROJECT>

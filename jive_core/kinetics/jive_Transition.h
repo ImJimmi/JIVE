@@ -5,8 +5,6 @@
 #include <jive_core/algorithms/jive_Interpolate.h>
 #include <jive_core/values/jive_PropertyBehaviours.h>
 
-#include <juce_core/juce_core.h>
-
 namespace jive
 {
     class Transition
