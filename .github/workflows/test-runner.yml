@@ -92,7 +92,8 @@ jobs:
             --ignore-errors inconsistent \
             --ignore-errors gcov \
             --ignore-errors range \
-            --ignore-errors source
+            --ignore-errors source \
+            --ignore-errors format
 
       - name: Upload Coverage Report
         if: runner.os == 'macOS'
