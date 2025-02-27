@@ -54,8 +54,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CPM_CACHE_DIR }}
-          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
           restore-keys: |
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
             cpm-${{ runner.os }}-main
             cpm-${{ runner.os }}
 
@@ -77,7 +79,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ env.CPM_CACHE_DIR }}
-          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
 
       - name: CMake Build
         run: |
