@@ -13,6 +13,8 @@
         <FILE id="fZZvQs" name="code-large.svg" compile="0" resource="1" file="resources/icons/code-large.svg"/>
         <FILE id="kerb5r" name="layout-large.svg" compile="0" resource="1"
               file="resources/icons/layout-large.svg"/>
+        <FILE id="xIcpkF" name="motion-blur-large.svg" compile="0" resource="1"
+              file="resources/icons/motion-blur-large.svg"/>
         <FILE id="vnLRGU" name="next-small.svg" compile="0" resource="1" file="resources/icons/next-small.svg"/>
         <FILE id="rxVxbE" name="palette-large.svg" compile="0" resource="1"
               file="resources/icons/palette-large.svg"/>
@@ -95,20 +97,20 @@
     </XCODE_MAC>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
 </JUCERPROJECT>

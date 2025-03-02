@@ -89,10 +89,10 @@
     </XCODE_MAC>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
-    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

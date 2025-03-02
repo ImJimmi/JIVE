@@ -36,9 +36,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-
       - name: Install Ninja
         run: ${{ matrix.package-manager }} install ninja
       - name: Install pluginval
@@ -97,8 +94,7 @@ jobs:
             --extra-verbose \
             -j14 \
             -C ${{ env.BUILD_TYPE }} \
-            -T test \
-            -O ctest.log
+            -T test
 
       - name: Install lcov
         if: runner.os == 'macOS'
@@ -129,14 +125,37 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
 
-      - name: Stage Artifacts
-        uses: actions/upload-artifact@v4
+  projucer-build:
+    name: Projucer Build
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Projucer
+        uses: robinraju/release-downloader@v1.11
         with:
-          name: "${{ matrix.platform-name }} #${{ github.event.pull_request.number }}"
-          path: ${{ env.CMAKE_BUILD_DIRECTORY }}/ctest.log
-          if-no-files-found: ignore
-          retention-days: 7
-          overwrite: true
+          extract: true
+          fileName: "*-osx.zip"
+          latest: true
+          out-file-path: ${{ runner.temp }}
+          repository: juce-framework/JUCE
+
+      - name: Build projects
+        run: |
+          unzip -q ${{ runner.temp }}/juce*.zip -d ${{ runner.temp }}/JUCE
+          PROJUCER=${{ runner.temp }}/JUCE/Projucer.app/Contents/MacOS/Projucer
+          chmod +x ${PROJUCER}
+          $PROJUCER --set-global-search-path osx defaultJuceModulePath ${{ runner.temp }}/JUCE/modules
+          $PROJUCER --set-global-search-path osx defaultUserModulePath ${{ github.workspace }}
+
+          for JUCER_FILE in $(find "${{ github.workspace }}" -name "*.jucer"); do
+            $PROJUCER --resave $JUCER_FILE --fix-missing-dependencies
+          done
+
+          for XCODEPROJ in $(find "${{ github.workspace }}" -name "*.xcodeproj"); do
+            xcodebuild -project ${XCODEPROJ} -configuration Debug
+          done
 
   verify-formatting:
     name: Verify Formatting
