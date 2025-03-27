@@ -48,7 +48,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.13.0
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Restore CPM dependencies
         uses: actions/cache/restore@v4
