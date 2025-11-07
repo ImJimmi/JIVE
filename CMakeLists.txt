@@ -6,17 +6,17 @@ configure_file(version.txt.in
                version.txt
 )
 
+include(cmake/CPM.cmake)
 include(cmake/jive_options.cmake)
 include(cmake/jive_code_coverage.cmake)
 include(cmake/jive_compiler_and_linker_options.cmake)
 
+CPMUsePackageLock(package-lock.cmake)
 if (JIVE_BUILD_BENCHMARKS
     OR JIVE_BUILD_DEMO_RUNNER
     OR JIVE_BUILD_TEST_RUNNER
 )
     include(CTest)
-    include(cmake/CPM.cmake)
-    CPMUsePackageLock(package-lock.cmake)
 endif ()
 
 add_subdirectory(jive_components)
