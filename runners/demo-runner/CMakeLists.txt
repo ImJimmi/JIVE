@@ -26,7 +26,7 @@ target_include_directories(jive-demo
 )
 
 target_compile_definitions(jive-demo
-                           INTERFACE JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1
+                           INTERFACE JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=0
                                      JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-demo,JUCE_PRODUCT_NAME>"
                                      JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo,JUCE_VERSION>"
                                      JUCE_VST3_CAN_REPLACE_VST2=0
@@ -37,7 +37,6 @@ target_link_libraries(jive-demo
                       INTERFACE jive-demo-resources
                                 jive::compiler_and_linker_options
                                 jive::jive_layouts
-                                jive::jive_style_sheets
                                 juce::juce_recommended_config_flags
                                 juce::juce_recommended_lto_flags
                                 juce::juce_recommended_warning_flags

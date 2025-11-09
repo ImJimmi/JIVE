@@ -44,10 +44,10 @@ namespace jive
 
         Property<Drawable> source;
         Property<juce::RectanglePlacement> placement;
-        Length width;
-        Length height;
-        Length idealWidth;
-        Length idealHeight;
+        Property<Length> width;
+        Property<Length> height;
+        Property<Length> idealWidth;
+        Property<Length> idealHeight;
 
         const BoxModel& boxModel;
 

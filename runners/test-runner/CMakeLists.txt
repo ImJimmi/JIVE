@@ -23,7 +23,6 @@ target_link_libraries(jive-test-runner
                       PRIVATE jive::code_coverage
                               jive::compiler_and_linker_options
                               jive::jive_layouts
-                              jive::jive_style_sheets
                               juce::juce_recommended_config_flags
                               juce::juce_recommended_lto_flags
                               juce::juce_recommended_warning_flags

@@ -1,47 +1,120 @@
 #pragma once
 
-#include <jive_core/geometry/jive_Orientation.h>
+#include <jive_core/algorithms/jive_Interpolate.h>
+#include <jive_core/geometry/jive_Length.h>
 
 #include <juce_graphics/juce_graphics.h>
 
 namespace jive
 {
-    struct Gradient
+    enum class SideOrCorner
     {
-        struct ColourStop
-        {
-            double proportion;
-            juce::Colour colour;
+        topLeft,
+        top,
+        topRight,
+        right,
+        bottomRight,
+        bottom,
+        bottomLeft,
+        left,
+    };
 
-            bool operator==(const ColourStop& other) const;
-            bool operator!=(const ColourStop& other) const;
+    struct RadialPosition
+    {
+        struct Top
+        {
+            Length inset;
+        };
+        struct Right
+        {
+            Length inset;
+        };
+        struct Bottom
+        {
+            Length inset;
+        };
+        struct Left
+        {
+            Length inset;
+        };
+        struct Centre
+        {
         };
 
+        [[nodiscard]] juce::Point<float> toPoint(const juce::Rectangle<float>& bounds) const;
+
+        [[nodiscard]] bool operator==(const RadialPosition&) const;
+
+        [[nodiscard]] static std::optional<RadialPosition> fromArgs(juce::StringArray&);
+
+        std::variant<Centre, Left, Right> xAxis;
+        std::variant<Centre, Top, Bottom> yAxis;
+    };
+
+    struct Gradient
+    {
         enum class Variant
         {
             linear,
             radial,
         };
 
-        juce::ColourGradient toJuceGradient(const juce::Rectangle<float>& bounds) const;
+        struct ColourStop
+        {
+            [[nodiscard]] bool operator==(const ColourStop&) const;
 
-        bool operator==(const Gradient& other) const;
-        bool operator!=(const Gradient& other) const;
+            juce::Colour colour;
+            std::optional<Length> length;
+        };
 
-        juce::Array<ColourStop> stops;
-        Variant variant{ Variant::linear };
-        juce::Optional<Orientation> orientation;
-        juce::Optional<juce::Line<float>> startEndPoints;
+        [[nodiscard]] juce::ColourGradient toJuceColourGradient(const juce::Rectangle<float>& bounds = juce::Rectangle<float>{}) const;
+
+        [[nodiscard]] bool operator==(const Gradient&) const;
+
+        [[nodiscard]] static std::optional<Gradient> fromString(const juce::String& gradientString);
+
+        Variant variant;
+        std::vector<ColourStop> stops;
+
+        std::variant<float, SideOrCorner> linearAngle;
+
+        float radialSize{ 0.0f };
+        RadialPosition radialPosition;
+    };
+
+    template <>
+    struct Interpolate<Gradient>
+    {
+        [[nodiscard]] Gradient operator()(const Gradient&,
+                                          const Gradient& end,
+                                          double) const
+        {
+            return end;
+        }
     };
 } // namespace jive
 
 namespace juce
 {
     template <>
-    struct VariantConverter<Array<jive::Gradient::ColourStop>>
+    struct VariantConverter<jive::RadialPosition>
     {
-        static var toVar(const Array<jive::Gradient::ColourStop>& stops);
-        static Array<jive::Gradient::ColourStop> fromVar(const var& object);
+        static var toVar(const jive::RadialPosition& position);
+        static jive::RadialPosition fromVar(const var& object);
+    };
+
+    template <>
+    struct VariantConverter<std::variant<float, jive::SideOrCorner>>
+    {
+        static var toVar(const std::variant<float, jive::SideOrCorner>& linearAngle);
+        static std::variant<float, jive::SideOrCorner> fromVar(const var& object);
+    };
+
+    template <>
+    struct VariantConverter<std::vector<jive::Gradient::ColourStop>>
+    {
+        static var toVar(const std::vector<jive::Gradient::ColourStop>& stops);
+        static std::vector<jive::Gradient::ColourStop> fromVar(const var& object);
     };
 
     template <>
@@ -57,7 +130,4 @@ namespace juce
         static var toVar(const jive::Gradient& gradient);
         static jive::Gradient fromVar(const var& value);
     };
-
-    String& operator<<(String& str, const jive::Gradient::ColourStop& stop);
-    String& operator<<(String& str, const jive::Gradient& gradient);
 } // namespace juce

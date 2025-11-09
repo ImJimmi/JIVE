@@ -6,7 +6,7 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , boxModel{ state }
 #if !JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        , interactionState{ *getComponent(), state }
+        , interactionState{ *getComponent() }
 #endif
         , name{ state, "name" }
         , title{ state, "title" }
