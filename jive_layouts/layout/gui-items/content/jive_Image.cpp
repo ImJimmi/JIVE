@@ -86,8 +86,8 @@ namespace jive
         if (childComponent != nullptr)
             childComponent->setBounds(getComponent()->getLocalBounds());
 
-        idealWidth = juce::String{ calculateRequiredWidth() };
-        idealHeight = juce::String{ calculateRequiredHeight() };
+        idealWidth = calculateRequiredWidth();
+        idealHeight = calculateRequiredHeight();
     }
 
     void Image::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
@@ -219,8 +219,8 @@ namespace jive
         getComponent()->addAndMakeVisible(*childComponent);
         childComponent->setBounds(getComponent()->getLocalBounds());
 
-        idealWidth = juce::String{ calculateRequiredWidth() };
-        idealHeight = juce::String{ calculateRequiredHeight() };
+        idealWidth = juce::String{ calculateRequiredWidth() } + "px";
+        idealHeight = juce::String{ calculateRequiredHeight() } + "px";
 
         getComponent()->addComponentListener(this);
     }

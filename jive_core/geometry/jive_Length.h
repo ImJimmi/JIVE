@@ -1,29 +1,87 @@
 #pragma once
 
-#include <jive_core/values/jive_Property.h>
+#include <jive_core/algorithms/jive_Interpolate.h>
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_core/juce_core.h>
 
 namespace jive
 {
-    class Length : public Property<juce::String>
+    struct Length
     {
-    public:
-        using Property<juce::String>::Property;
-        using Property<juce::String>::operator=;
+        enum class Unit
+        {
+            absolute,
+            percentage,
+        };
 
-        [[nodiscard]] float toPixels(const juce::Rectangle<float>& parentBounds) const;
+        Length() = default;
+        Length(const Length&) = default;
+        Length& operator=(const Length&) = default;
+        Length(Length&&) = default;
+        Length& operator=(Length&&) = default;
+        ~Length() = default;
 
-        [[nodiscard]] bool isPixels() const;
-        [[nodiscard]] bool isPercent() const;
-        [[nodiscard]] bool isEm() const;
-        [[nodiscard]] bool isRem() const;
+        Length(float initialValue, Unit initialUnit)
+            : value{ initialValue }
+            , unit{ initialUnit }
+        {
+        }
 
-        static constexpr auto pixelValueWhenAuto = 0.0f;
+        template <typename Arithmetic>
+        Length(Arithmetic absoluteValue)
+            : value{ absoluteValue }
+            , unit{ Unit::absolute }
+        {
+        }
 
-    private:
-        [[nodiscard]] double getRelativeParentLength(const juce::Rectangle<double>& parentBounds) const;
-        [[nodiscard]] float getFontSize() const;
-        [[nodiscard]] float getRootFontSize() const;
+        Length(const juce::String& text)
+        {
+            *this = fromString(text);
+        }
+
+        Length(const char* text)
+            : Length{ juce::String{ text } }
+        {
+        }
+
+        [[nodiscard]] float toPixels(float percentageScale) const
+        {
+            return unit == Unit::percentage ? (percentageScale * value / 100.0f) : value;
+        }
+
+        [[nodiscard]] bool operator==(const Length&) const;
+
+        [[nodiscard]] juce::String toString() const;
+        [[nodiscard]] static Length fromString(const juce::String&);
+
+        float value{ 0.0f };
+        Unit unit = Unit::absolute;
+    };
+
+    template <>
+    struct Interpolate<Length>
+    {
+        [[nodiscard]] auto operator()(const Length& start,
+                                      const Length& end,
+                                      double proportion) const
+        {
+            // You can only interpolate between lengths that share the same units.
+            jassert(start.unit == end.unit);
+
+            return Length{
+                interpolate(start.value, end.value, proportion),
+                start.unit,
+            };
+        }
     };
 } // namespace jive
+
+namespace juce
+{
+    template <>
+    struct VariantConverter<jive::Length>
+    {
+        static var toVar(const jive::Length& length);
+        static jive::Length fromVar(const var& value);
+    };
+} // namespace juce

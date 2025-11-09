@@ -1,9 +1,13 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
+#include <jive_core/algorithms/jive_Interpolate.h>
+
+#include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive
 {
+    struct Styles;
+
     template <typename Arithmetic>
     struct BorderRadii
     {
@@ -76,6 +80,38 @@ namespace jive
         Arithmetic bottomRight{ 0 };
         Arithmetic bottomLeft{ 0 };
     };
+
+    template <typename T>
+    struct Interpolate<BorderRadii<T>>
+    {
+        [[nodiscard]] BorderRadii<T> operator()(BorderRadii<T> start, BorderRadii<T> end, double proportion) const
+        {
+            return BorderRadii<T>{
+                interpolate(start.topLeft, end.topLeft, proportion),
+                interpolate(start.topRight, end.topRight, proportion),
+                interpolate(start.bottomRight, end.bottomRight, proportion),
+                interpolate(start.bottomLeft, end.bottomLeft, proportion),
+            };
+        }
+    };
+
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::Component& component,
+                                                     const Styles& styles,
+                                                     BorderRadii<float> defaultRadius = BorderRadii{ 0.0f });
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::Button& component,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::PopupMenu& popup,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::PopupMenu::Item& item,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::ComboBox& comboBox,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::GroupComponent& group,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::Slider& slider,
+                                                     const Styles& styles);
+    [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::ProgressBar& bar,
+                                                     const Styles& styles);
 } // namespace jive
 
 namespace juce

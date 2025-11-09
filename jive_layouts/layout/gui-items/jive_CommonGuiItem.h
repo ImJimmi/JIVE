@@ -28,7 +28,7 @@ namespace jive
 
     private:
 #if !JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        ComponentInteractionState interactionState;
+        InteractionState interactionState;
 #endif
         Property<juce::String> name;
         Property<juce::String> title;
@@ -48,8 +48,8 @@ namespace jive
         Property<float> opacity;
         Property<juce::MouseCursor::StandardCursorType> cursor;
         Property<Display> display;
-        Length width;
-        Length height;
+        Property<Length> width;
+        Property<Length> height;
 
         JUCE_LEAK_DETECTOR(CommonGuiItem)
     };

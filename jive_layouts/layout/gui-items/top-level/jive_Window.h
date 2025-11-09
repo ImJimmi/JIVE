@@ -35,8 +35,8 @@ namespace jive
         Property<juce::String> name;
         Property<float> titleBarHeight;
         Property<juce::DocumentWindow::TitleBarButtons> titleBarButtons;
-        Length width;
-        Length height;
+        Property<Length> width;
+        Property<Length> height;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Window)
     };

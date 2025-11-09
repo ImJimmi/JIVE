@@ -105,9 +105,9 @@ namespace jive
         state.addListener(this);
 
         if (width.isAuto())
-            width = "50";
+            width = "50px";
         if (height.isAuto())
-            height = "20";
+            height = "20px";
     }
 
     bool ComboBox::isContainer() const
