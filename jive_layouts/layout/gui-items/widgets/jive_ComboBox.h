@@ -65,8 +65,8 @@ namespace jive
         Property<bool> editable;
         Property<juce::String> tooltip;
         Property<int> selected;
-        Length width;
-        Length height;
+        Property<Length> width;
+        Property<Length> height;
         Property<bool> focusable;
 
         Event onChange;

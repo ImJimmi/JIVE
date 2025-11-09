@@ -12,7 +12,7 @@ target_include_directories(jive-benchmarking
 )
 
 target_compile_definitions(jive-benchmarking
-                           PRIVATE JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1
+                           PRIVATE JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=0
                                    JIVE_UNIT_TESTS=0
                                    JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-benchmarking,JUCE_PRODUCT_NAME>"
                                    JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-benchmarking,JUCE_VERSION>"
@@ -21,7 +21,6 @@ target_compile_definitions(jive-benchmarking
 target_link_libraries(jive-benchmarking
                       PRIVATE jive::compiler_and_linker_options
                               jive::jive_layouts
-                              jive::jive_style_sheets
                               juce::juce_recommended_config_flags
                               juce::juce_recommended_lto_flags
                               juce::juce_recommended_warning_flags

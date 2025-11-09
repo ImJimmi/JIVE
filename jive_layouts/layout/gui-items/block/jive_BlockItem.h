@@ -15,12 +15,12 @@ namespace jive
         int calculateX() const;
         int calculateY() const;
 
-        Length x;
-        Length y;
-        Length centreX;
-        Length centreY;
-        Length width;
-        Length height;
+        Property<Length> x;
+        Property<Length> y;
+        Property<Length> centreX;
+        Property<Length> centreY;
+        Property<Length> width;
+        Property<Length> height;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BlockItem)
     };
