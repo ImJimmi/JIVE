@@ -61,7 +61,7 @@ namespace jive
         {
             if (!width.isAuto())
             {
-                item.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
             }
             else if (idealWidth.exists())
             {
@@ -73,7 +73,7 @@ namespace jive
 
             if (!height.isAuto())
             {
-                item.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
             }
             else if (idealHeight.exists())
             {
@@ -104,13 +104,13 @@ namespace jive
                                                       LayoutStrategy strategy) const
         {
             if (!width.isAuto())
-                item.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
             else if (idealWidth.exists())
                 item.width = idealWidth.get();
 
             if (!height.isAuto())
             {
-                item.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
             }
             else if (idealHeight.exists())
             {
@@ -155,8 +155,8 @@ namespace jive
 
         const juce::ValueTree state;
         const Property<int> order;
-        const Length width;
-        const Length height;
+        const Property<Length> width;
+        const Property<Length> height;
         const Property<float> idealWidth;
         const Property<float> idealHeight;
         const BoxModel& boxModel;
