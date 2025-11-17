@@ -2,11 +2,7 @@
 
 #include <jive_layouts/hooks/jive_View.h>
 
-#include <jive_core/jive_core.h>
-
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-    #include <jive_style_sheets/jive_style_sheets.h>
-#endif
+#include <jive_style_sheets/jive_style_sheets.h>
 
 #if JIVE_IS_PLUGIN_PROJECT
     #include <juce_audio_processors/juce_audio_processors.h>
@@ -19,16 +15,10 @@ namespace jive
     public:
         GuiItem(std::unique_ptr<juce::Component> component,
                 const juce::ValueTree& sourceState,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                StyleSheet::ReferenceCountedPointer styleSheet,
-#endif
                 GuiItem* parent = nullptr);
 
         GuiItem(std::unique_ptr<juce::Component> component,
                 View::ReferenceCountedPointer sourceView,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                StyleSheet::ReferenceCountedPointer styleSheet,
-#endif
                 GuiItem* parent = nullptr);
 
         GuiItem(const GuiItem& other);
@@ -53,6 +43,11 @@ namespace jive
 
         void callLayoutChildrenWithRecursionLock();
         [[nodiscard]] bool isLayingOutChildren() const;
+
+        void setStyleSheet(StyleSheet::ReferenceCountedPointer sheet)
+        {
+            styleSheet = sheet;
+        }
 
 #if JIVE_IS_PLUGIN_PROJECT
         virtual void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager* = nullptr);
@@ -82,16 +77,11 @@ namespace jive
 
         GuiItem(std::shared_ptr<juce::Component> component,
                 GuiItem* parent,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                StyleSheet::ReferenceCountedPointer sheet,
-#endif
                 View::ReferenceCountedPointer sourceView);
 
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
 
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        const StyleSheet::ReferenceCountedPointer styleSheet;
-#endif
+        StyleSheet::ReferenceCountedPointer styleSheet;
 
         static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state);
 

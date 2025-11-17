@@ -21,9 +21,11 @@ namespace jive_demo
                 {
                     Title{}
                         .withText("Welcome to JIVE!")
-                        .withColour(colours::blue400)(),
+                        .withColour(colours::blue400)()
+                        .setProperty("id", "title", nullptr),
                     Subtitle{}
-                        .withText("The ultimate JUCE extension for building GUIs")(),
+                        .withText("The ultimate JUCE extension for building GUIs")()
+                        .setProperty("id", "subtitle", nullptr),
                 },
             };
         }
@@ -72,16 +74,9 @@ namespace jive_demo
                     return new jive::Object{
                         {
                             "background",
-                            new jive::Object{
-                                {
-                                    "stops",
-                                    new jive::Object{
-                                        { "0.0", jive::toVar(colours::widgetStart) },
-                                        { "1.0", jive::toVar(colours::widgetEnd) },
-                                    },
-                                },
-                                { "gradient", "linear" },
-                            },
+                            juce::String{ "linear-gradient(#{start}, #{end})" }
+                                .replace("{start}", colours::widgetStart.toDisplayString(false))
+                                .replace("{end}", colours::widgetEnd.toDisplayString(false)),
                         },
                         { "border", "black" },
                         { "border-radius", 5 },
@@ -90,16 +85,9 @@ namespace jive_demo
                             new jive::Object{
                                 {
                                     "background",
-                                    new jive::Object{
-                                        {
-                                            "stops",
-                                            new jive::Object{
-                                                { "0.0", jive::toVar(colours::widgetStart.brighter(0.02f)) },
-                                                { "1.0", jive::toVar(colours::widgetStart.brighter(0.01f)) },
-                                            },
-                                        },
-                                        { "gradient", "linear" },
-                                    },
+                                    juce::String{ "linear-gradient(#{start}, #{end})" }
+                                        .replace("{start}", colours::widgetStart.brighter(0.02f).toDisplayString(false))
+                                        .replace("{end}", colours::widgetEnd.brighter(0.01f).toDisplayString(false)),
                                 },
                             },
                         },
@@ -116,21 +104,13 @@ namespace jive_demo
                         { "style", style() },
                     },
                     {
-                        juce::ValueTree{
-                            "Component",
-                            {
-                                { "margin", "0 0 10 0" },
-                                {
-                                    "style",
-                                    new jive::Object{
-                                        { "foreground", jive::toVar(colours::blue500) },
-                                    },
-                                },
-                            },
-                            {
-                                icon,
-                            },
-                        },
+                        icon
+                            .setProperty("margin", "0 0 15 0", nullptr)
+                            .setProperty("style",
+                                         new jive::Object{
+                                             { "fill", jive::toVar(colours::blue400) },
+                                         },
+                                         nullptr),
                         Subtitle{}
                             .withText(name)(),
                     },

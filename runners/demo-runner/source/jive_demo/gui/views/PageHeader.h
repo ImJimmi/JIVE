@@ -42,6 +42,7 @@ namespace jive_demo::views
                             { "end", "1.0, 1.0" },
                         },
                     },
+                    { "border-radius", 0 },
                 };
             };
 

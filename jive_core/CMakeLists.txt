@@ -17,6 +17,21 @@ target_sources(jive_core
                       algorithms/jive_TransferFunction.h
                       algorithms/jive_Visitor.h
                       compile-time-helpers/jive_JuceVersion.h
+                      components/accessibility/jive_IgnoredComponent.cpp
+                      components/accessibility/jive_IgnoredComponent.h
+                      components/canvases/jive_BackgroundCanvas.cpp
+                      components/canvases/jive_BackgroundCanvas.h
+                      components/canvases/jive_Canvas.cpp
+                      components/canvases/jive_Canvas.h
+                      components/containers/jive_DocumentWindow.cpp
+                      components/containers/jive_DocumentWindow.h
+                      components/utilities/jive_HierarchyTraversal.h
+                      components/widgets/jive_ImageComponent.cpp
+                      components/widgets/jive_ImageComponent.h
+                      components/widgets/jive_NormalisedProgressBar.cpp
+                      components/widgets/jive_NormalisedProgressBar.h
+                      components/widgets/jive_TextComponent.cpp
+                      components/widgets/jive_TextComponent.h
                       geometry/jive_BorderRadii.cpp
                       geometry/jive_BorderRadii.h
                       geometry/jive_BorderWidth.cpp
@@ -35,6 +50,8 @@ target_sources(jive_core
                       graphics/default-styles/jive_DefaultLabelStyles.h
                       graphics/default-styles/jive_DefaultProgressBarStyles.h
                       graphics/default-styles/jive_DefaultSliderStyles.h
+                      graphics/jive_ComponentTypePredicates.cpp
+                      graphics/jive_ComponentTypePredicates.h
                       graphics/jive_Fill.cpp
                       graphics/jive_Fill.h
                       graphics/jive_FontUtilities.cpp

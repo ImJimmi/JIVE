@@ -133,4 +133,18 @@ namespace jive
             return start.interpolatedWith(end, static_cast<float>(proportion));
         }
     };
+
+    template <typename T>
+    struct Interpolate<juce::Point<T>>
+    {
+        [[nodiscard]] juce::Point<T> operator()(juce::Point<T> start,
+                                                juce::Point<T> end,
+                                                double proportion) const
+        {
+            return juce::Point<T>{
+                interpolate(start.x, end.x, proportion),
+                interpolate(start.y, end.y, proportion),
+            };
+        }
+    };
 } // namespace jive

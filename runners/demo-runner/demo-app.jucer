@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="zMxPxd" name="demo-app" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../source/"
-              defines="JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1&#10;JUCE_APPLICATION_NAME=&quot;jive-demo&quot;&#10;JUCE_APPLICATION_VERSION=&quot;0.0.0&quot;"
+              defines="JUCE_APPLICATION_NAME=&quot;jive-demo&quot;&#10;JUCE_APPLICATION_VERSION=&quot;0.0.0&quot;"
               includeBinaryInJuceHeader="0" companyName="JIVE" companyWebsite="github.com/ImJimmi/JIVE"
               binaryDataNamespace="binary_data">
   <MAINGROUP id="ZWHZUu" name="demo-app">

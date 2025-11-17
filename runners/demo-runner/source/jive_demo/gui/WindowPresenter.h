@@ -23,12 +23,19 @@ namespace jive_demo
                     { "foreground", jive::toVar(colours::content) },
                     { "font-family", "Rubik" },
                     { "font-size", 14 },
+                    {
+                        "Button",
+                        new jive::Object{
+                            { "border", juce::var{} },
+                        },
+                    }
                 };
             };
 
             return juce::ValueTree{
                 windowType,
                 {
+                    { "id", "window" },
                     { "width", 800 },
                     { "height", 500 },
                     { "display", "grid" },

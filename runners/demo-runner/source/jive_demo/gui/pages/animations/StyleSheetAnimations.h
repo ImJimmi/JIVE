@@ -6,57 +6,16 @@
 
 namespace jive_demo
 {
-    [[nodiscard]] inline auto getRandomColourProperty()
-    {
-        static const std::array colours{
-            colours::blue500,
-            colours::green500,
-            colours::yellow500,
-            colours::orange500,
-            colours::red500,
-            colours::pink500,
-            colours::purple500,
-        };
-
-        static auto& rng = juce::Random::getSystemRandom();
-        return jive::toVar(colours.at(static_cast<std::size_t>(rng.nextInt(static_cast<int>(std::size(colours))))));
-    }
-
-    [[nodiscard]] inline auto getRandomBackgroundProperty()
-    {
-        static juce::var lastColour;
-        auto newColour = getRandomColourProperty();
-
-        while (newColour == lastColour)
-            newColour = getRandomColourProperty();
-
-        lastColour = newColour;
-        return newColour;
-    }
-
-    [[nodiscard]] inline auto getRandomForegroundProperty()
-    {
-        static juce::var lastColour;
-        auto newColour = getRandomColourProperty();
-
-        while (newColour == lastColour)
-            newColour = getRandomColourProperty();
-
-        lastColour = newColour;
-        return newColour;
-    }
-
-    [[nodiscard]] inline auto getRandomBorderProperty()
-    {
-        static juce::var lastColour;
-        auto newColour = getRandomColourProperty();
-
-        while (newColour == lastColour)
-            newColour = getRandomColourProperty();
-
-        lastColour = newColour;
-        return newColour;
-    }
+    static constexpr std::array backgroundColours{
+        "#7E0000",
+        "#3A4800",
+        "#004575",
+    };
+    static constexpr std::array foregroundColours{
+        "##F2902E",
+        "#00CAAF",
+        "#BB92FF",
+    };
 
     [[nodiscard]] inline auto getRandomBorderRadius()
     {
@@ -84,7 +43,9 @@ namespace jive_demo
 
     namespace views
     {
-        [[nodiscard]] inline auto styleSheetAnimationsDemo()
+        [[nodiscard]] inline auto styleSheetAnimationsDemo(std::size_t backgroundColourIndex,
+                                                           std::size_t foregroundColourIndex,
+                                                           std::size_t borderColourIndex)
         {
             return juce::ValueTree{
                 "Component",
@@ -151,9 +112,9 @@ namespace jive_demo
                                     {
                                         "style",
                                         new jive::Object{
-                                            { "background", getRandomBackgroundProperty() },
-                                            { "foreground", getRandomForegroundProperty() },
-                                            { "border", getRandomBorderProperty() },
+                                            { "background", jive::toVar(jive::parseColour(backgroundColours[backgroundColourIndex])) },
+                                            { "foreground", jive::toVar(jive::parseColour(foregroundColours[foregroundColourIndex])) },
+                                            { "border", jive::toVar(jive::parseColour(foregroundColours[borderColourIndex])) },
                                             { "border-radius", getRandomBorderRadius() },
                                             { "font-family", "Rubik Mono One" },
                                             { "font-size", getRandomFontSize() },
@@ -161,9 +122,9 @@ namespace jive_demo
                                             { "letter-spacing", 0.0f },
                                             {
                                                 "transition",
-                                                "background 650ms ease-in-out,"
-                                                "foreground 500ms ease-in-out,"
-                                                "border 650ms ease-in-out,"
+                                                "background 500ms ease-in-out,"
+                                                "foreground 400ms ease-in-out,"
+                                                "border 500ms ease-in-out,"
                                                 "border-radius 500ms ease-in-out,"
                                                 "font-size 500ms ease-in-out,"
                                                 "font-stretch 300ms ease-in-out,"
@@ -227,16 +188,22 @@ namespace jive_demo
             }
         {
             onAnimateBackgroundButtonClicked.onTrigger = [this] {
+                increment(backgroundColourIndex);
+
                 auto& style = dynamic_cast<jive::Object&>(*jive::findElementWithID(view, "styled-box")["style"].getDynamicObject());
-                style.setProperty("background", getRandomBackgroundProperty());
+                style.setProperty("background", jive::toVar(jive::parseColour(backgroundColours[backgroundColourIndex])));
             };
             onAnimateForegroundButtonClicked.onTrigger = [this] {
+                increment(foregroundColourIndex);
+
                 auto& style = dynamic_cast<jive::Object&>(*jive::findElementWithID(view, "styled-box")["style"].getDynamicObject());
-                style.setProperty("foreground", getRandomForegroundProperty());
+                style.setProperty("foreground", jive::toVar(jive::parseColour(foregroundColours[foregroundColourIndex])));
             };
             onAnimateBorderButtonClicked.onTrigger = [this] {
+                increment(borderColourIndex);
+
                 auto& style = dynamic_cast<jive::Object&>(*jive::findElementWithID(view, "styled-box")["style"].getDynamicObject());
-                style.setProperty("border", getRandomBorderProperty());
+                style.setProperty("border", jive::toVar(jive::parseColour(foregroundColours[borderColourIndex])));
             };
             onAnimateBorderRadiusButtonClicked.onTrigger = [this] {
                 auto& style = dynamic_cast<jive::Object&>(*jive::findElementWithID(view, "styled-box")["style"].getDynamicObject());
@@ -256,12 +223,22 @@ namespace jive_demo
         }
 
     private:
-        juce::ValueTree view{ views::styleSheetAnimationsDemo() };
+        void increment(std::size_t& colourIndex)
+        {
+            if (++colourIndex >= 3)
+                colourIndex = 0;
+        }
+
+        juce::ValueTree view{ views::styleSheetAnimationsDemo(0, 0, 0) };
 
         jive::Event onAnimateBackgroundButtonClicked;
         jive::Event onAnimateForegroundButtonClicked;
         jive::Event onAnimateBorderButtonClicked;
         jive::Event onAnimateBorderRadiusButtonClicked;
         jive::Event onAnimateFontButtonClicked;
+
+        std::size_t backgroundColourIndex = 0;
+        std::size_t foregroundColourIndex = 0;
+        std::size_t borderColourIndex = 0;
     };
 } // namespace jive_demo

@@ -1,26 +1,34 @@
 #include "jive_TextComponent.h"
 
+#include <jive_core/graphics/jive_FontUtilities.h>
+#include <jive_core/graphics/jive_LookAndFeel.h>
+
 namespace jive
 {
     TextComponent::TextComponent()
     {
-        canvas.onPaint = [this](juce::Graphics& g) {
-            if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
-                return;
-
-            getAttributedString()
-                .draw(g, getLocalBounds().toFloat());
-        };
-        canvas.setAlwaysOnTop(true);
-        canvas.setBufferedToImage(true);
-        addAndMakeVisible(canvas);
-
         setInterceptsMouseClicks(false, false);
     }
 
-    void TextComponent::resized()
+    void TextComponent::paint(juce::Graphics& g)
     {
-        canvas.setBounds(getLocalBounds());
+        updateCachedFont();
+
+        if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
+            return;
+
+        getAttributedString()
+            .draw(g, getLocalBounds().toFloat());
+    }
+
+    void TextComponent::lookAndFeelChanged()
+    {
+        updateCachedFont();
+    }
+
+    void TextComponent::parentHierarchyChanged()
+    {
+        updateCachedFont();
     }
 
     const juce::String& TextComponent::getText() const
@@ -33,49 +41,7 @@ namespace jive
         if (newText != text)
         {
             text = newText;
-            canvas.repaint();
-        }
-    }
-
-    juce::Font TextComponent::getFont() const
-    {
-        return font;
-    }
-
-    void TextComponent::setFont(const juce::Font& newFont)
-    {
-        if (newFont != font)
-        {
-            font = newFont;
-            listeners.call(&Listener::textFontChanged, *this);
-            canvas.repaint();
-        }
-    }
-
-    void TextComponent::setJustification(juce::Justification newJustification)
-    {
-        if (newJustification != justification)
-        {
-            justification = newJustification;
-            canvas.repaint();
-        }
-    }
-
-    void TextComponent::setWordWrap(juce::AttributedString::WordWrap newWordWrap)
-    {
-        if (newWordWrap != wordWrap)
-        {
-            wordWrap = newWordWrap;
-            canvas.repaint();
-        }
-    }
-
-    void TextComponent::setDirection(juce::AttributedString::ReadingDirection newDirection)
-    {
-        if (newDirection != direction)
-        {
-            direction = newDirection;
-            canvas.repaint();
+            repaint();
         }
     }
 
@@ -84,34 +50,30 @@ namespace jive
         if (!juce::approximatelyEqual(newLineSpacing, lineSpacing))
         {
             lineSpacing = newLineSpacing;
-            canvas.repaint();
+            repaint();
         }
+        updateCachedFont();
     }
 
-    juce::Colour TextComponent::getTextColour() const
+    void TextComponent::setWordWrap(juce::AttributedString::WordWrap newWordWrap)
     {
-        return textColour.value_or(juce::Colours::transparentBlack);
-    }
-
-    void TextComponent::setTextColour(juce::Colour newColour)
-    {
-        if (newColour != textColour)
+        if (newWordWrap != wordWrap)
         {
-            textColour = newColour;
-            canvas.repaint();
+            wordWrap = newWordWrap;
+            repaint();
         }
     }
 
     void TextComponent::clearAttributes()
     {
         appendices.clear();
-        canvas.repaint();
+        repaint();
     }
 
     void TextComponent::append(const juce::AttributedString& attributedStringToAppend)
     {
         appendices.add(attributedStringToAppend);
-        canvas.repaint();
+        repaint();
     }
 
     juce::AttributedString TextComponent::getAttributedString() const
@@ -119,20 +81,29 @@ namespace jive
         juce::AttributedString attributedString;
 
         attributedString.setText(text);
-
-        attributedString.setFont(font);
-        attributedString.setJustification(justification);
         attributedString.setLineSpacing(lineSpacing);
-        attributedString.setReadingDirection(direction);
         attributedString.setWordWrap(wordWrap);
 
         for (const auto& appendix : appendices)
             attributedString.append(appendix);
 
-        if (textColour.has_value())
-            attributedString.setColour(*textColour);
-        else if (appendices.size() == 0)
-            attributedString.setColour(juce::Colours::black);
+        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        {
+            const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+
+            attributedString.setReadingDirection(getReadingDirection(*this, styles));
+            attributedString.setJustification(getTextAlignment(*this, styles));
+
+            if (cachedFont.has_value())
+                attributedString.setFont(*cachedFont);
+
+            const auto foreground = getForegroundFill(*this, styles);
+
+            if (foreground.isColour())
+                attributedString.setColour(foreground.colour);
+            else if (foreground.isGradient())
+                attributedString.setColour(foreground.gradient->getColour(0));
+        }
 
         return attributedString;
     }
@@ -213,9 +184,21 @@ namespace jive
         TextComponent& textComponent;
     };
 
-    std::unique_ptr<juce::AccessibilityHandler>
-    TextComponent::createAccessibilityHandler()
+    std::unique_ptr<juce::AccessibilityHandler> TextComponent::createAccessibilityHandler()
     {
         return std::make_unique<AccessibilityHandler>(*this);
+    }
+
+    void TextComponent::updateCachedFont()
+    {
+        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        {
+            if (auto newFont = getFont(*this, lookAndFeel->findMostApplicableStyles(*this));
+                newFont != cachedFont)
+            {
+                cachedFont = newFont;
+                listeners.call(&Listener::textFontChanged, *this);
+            }
+        }
     }
 } // namespace jive

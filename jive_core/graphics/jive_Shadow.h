@@ -1,5 +1,6 @@
 #pragma once
 
+#include <jive_core/algorithms/jive_Interpolate.h>
 #include <jive_core/geometry/jive_BorderRadii.h>
 
 #include <juce_graphics/juce_graphics.h>
@@ -84,6 +85,7 @@ namespace jive
         void updateParent();
 
         juce::Component::SafePointer<juce::Component> component;
+        juce::Component::SafePointer<juce::Component> parent;
         Shadow shadow;
         BorderRadii<float> borderRadius;
     };
@@ -100,5 +102,23 @@ namespace jive
         }
 
         std::unique_ptr<ShadowComponent> shadow;
+    };
+
+    template <>
+    struct Interpolate<Shadow>
+    {
+        [[nodiscard]] auto operator()(const Shadow& start,
+                                      const Shadow& end,
+                                      double proportion) const
+        {
+            Shadow result;
+
+            result.setOffset(interpolate(start.getOffset(), end.getOffset(), proportion));
+            result.setColour(interpolate(start.getColour(), end.getColour(), proportion));
+            result.setBlurRadius(interpolate(start.getBlurRadius(), end.getBlurRadius(), proportion));
+            result.setSpreadRadius(interpolate(start.getSpreadRadius(), end.getSpreadRadius(), proportion));
+
+            return result;
+        }
     };
 } // namespace jive
