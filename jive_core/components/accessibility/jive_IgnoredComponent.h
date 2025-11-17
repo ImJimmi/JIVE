@@ -8,6 +8,8 @@ namespace jive
     {
     public:
         IgnoredComponent();
+
+        void paint(juce::Graphics& g) override;
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
     };
 } // namespace jive

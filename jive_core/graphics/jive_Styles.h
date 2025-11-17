@@ -4,6 +4,7 @@
 #include "jive_Shadow.h"
 
 #include <jive_core/geometry/jive_BorderRadii.h>
+#include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 #include <juce_graphics/juce_graphics.h>
 
@@ -16,11 +17,13 @@ namespace jive
     // sort of error handling in that case.
     struct Styles
     {
-        std::optional<Fill> accent;                         // "accent"
-        std::optional<Fill> background;                     // "background"
-        std::optional<Fill> borderFill;                     // "border-fill"
-        std::optional<BorderRadii<float>> borderRadius;     // "border-radius"
-        std::optional<juce::BorderSize<float>> borderWidth; // "border-width"
+        std::optional<Fill> accent;                                        // "accent"
+        std::optional<Fill> background;                                    // "background"
+        std::optional<Fill> borderFill;                                    // "border"
+        std::optional<BorderRadii<float>> borderRadius;                    // "border-radius"
+        std::optional<juce::BorderSize<float>> borderWidth;                // "border-width"
+        std::optional<juce::AttributedString::ReadingDirection> direction; // "direction"
+        std::optional<Fill> fill;                                          // "fill"
 #if JUCE_MAJOR_VERSION >= 8
         std::optional<float> fontAscentOverride;  // "font-ascent-override"
         std::optional<float> fontDescentOverride; // "font-descent-override"
@@ -32,8 +35,85 @@ namespace jive
         std::unordered_set<juce::Font::FontStyleFlags> fontStyleFlags; // "font-styles"
         std::optional<Fill> foreground;                                // "foreground"
         std::optional<Shadow> shadow;                                  // "shadow"
+        std::optional<Fill> stroke;                                    // "stroke"
+        std::optional<juce::Justification> textAlign;                  // "text-align"
         std::optional<Fill> thumb;                                     // "thumb"
         std::optional<Fill> track;                                     // "track"
+
+        static inline const std::unordered_set<juce::String> propertyNames{
+            "accent",
+            "background",
+            "border",
+            "border-radius",
+            "border-width",
+            "direction",
+            "fill",
+#if JUCE_MAJOR_VERSION >= 8
+            "font-ascent-override",
+            "font-descent-override",
+#endif
+            "font-kerning",
+            "font-family",
+            "font-scale",
+            "font-size",
+            "font-styles",
+            "foreground",
+            "shadow",
+            "stroke",
+            "text-align",
+            "thumb",
+            "track",
+        };
+
+        [[nodiscard]] Styles& with(const juce::Identifier& propertyName,
+                                   const juce::var& value)
+        {
+            if (propertyName == juce::Identifier{ "accent" })
+                return withAccent(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "background" })
+                return withBackground(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "border" })
+                return withBorderFill(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "border-radius" })
+                return withBorderRadius(fromVar<BorderRadii<float>>(value));
+            if (propertyName == juce::Identifier{ "border-width" })
+                return withBorderWidth(fromVar<juce::BorderSize<float>>(value));
+            if (propertyName == juce::Identifier{ "direction" })
+                return withReadingDirection(fromVar<juce::AttributedString::ReadingDirection>(value));
+            if (propertyName == juce::Identifier{ "fill" })
+                return withFill(fromVar<Fill>(value));
+#if JUCE_MAJOR_VERSION >= 8
+            if (propertyName == juce::Identifier{ "font-ascent-override" })
+                return withFontAscentOverride(fromVar<float>(value));
+            if (propertyName == juce::Identifier{ "font-descent-override" })
+                return withFontDescentOverride(fromVar<float>(value));
+#endif
+            if (propertyName == juce::Identifier{ "font-kerning" })
+                return withFontExtraKerningFactor(fromVar<float>(value));
+            if (propertyName == juce::Identifier{ "font-family" })
+                return withFontFamily(value.toString());
+            if (propertyName == juce::Identifier{ "font-scale" })
+                return withFontHorizontalScale(fromVar<float>(value));
+            if (propertyName == juce::Identifier{ "font-size" })
+                return withFontPointSize(fromVar<float>(value));
+            if (propertyName == juce::Identifier{ "font-styles" })
+                return withFontStyleFlags(fromVar<std::unordered_set<juce::Font::FontStyleFlags>>(value));
+            if (propertyName == juce::Identifier{ "foreground" })
+                return withForeground(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "shadow" })
+                return withShadow(fromVar<Shadow>(value));
+            if (propertyName == juce::Identifier{ "stroke" })
+                return withStroke(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "text-align" })
+                return withTextAlignment(fromVar<juce::Justification>(value));
+            if (propertyName == juce::Identifier{ "thumb" })
+                return withThumb(fromVar<Fill>(value));
+            if (propertyName == juce::Identifier{ "track" })
+                return withTrack(fromVar<Fill>(value));
+
+            jassertfalse;
+            return *this;
+        }
 
         [[nodiscard]] Styles& withAccent(const Fill& value)
         {
@@ -62,6 +142,18 @@ namespace jive
         [[nodiscard]] Styles& withBorderWidth(const juce::BorderSize<float>& value)
         {
             borderWidth = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withReadingDirection(juce::AttributedString::ReadingDirection value)
+        {
+            direction = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withFill(const Fill& value)
+        {
+            fill = value;
             return *this;
         }
 
@@ -121,6 +213,18 @@ namespace jive
             return *this;
         }
 
+        [[nodiscard]] Styles& withStroke(const Fill& value)
+        {
+            stroke = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withTextAlignment(juce::Justification value)
+        {
+            textAlign = value;
+            return *this;
+        }
+
         [[nodiscard]] Styles& withThumb(const Fill& value)
         {
             thumb = value;
@@ -148,10 +252,14 @@ namespace jive
                 return accent;
             if (styleName == "background")
                 return background;
-            if (styleName == "border-fill")
+            if (styleName == "border")
                 return borderFill;
+            if (styleName == "fill")
+                return fill;
             if (styleName == "foreground")
                 return foreground;
+            if (styleName == "stroke")
+                return stroke;
             if (styleName == "thumb")
                 return thumb;
             if (styleName == "track")
@@ -227,6 +335,26 @@ namespace jive
         {
             if (styleName == "shadow")
                 return shadow;
+
+            jassertfalse;
+            return std::nullopt;
+        }
+
+        template <>
+        [[nodiscard]] std::optional<juce::AttributedString::ReadingDirection> find(const juce::String& styleName) const
+        {
+            if (styleName == "direction")
+                return direction;
+
+            jassertfalse;
+            return std::nullopt;
+        }
+
+        template <>
+        [[nodiscard]] std::optional<juce::Justification> find(const juce::String& styleName) const
+        {
+            if (styleName == "text-align")
+                return textAlign;
 
             jassertfalse;
             return std::nullopt;

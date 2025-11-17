@@ -24,7 +24,7 @@ namespace jive
               Accumulation accumulation = Accumulation::doNotAccumulate,
               bool autoParseStrings = isReferenceCountedObjectPointer<ValueType>::value,
               Responsiveness responsiveness = Responsiveness::respondToChanges>
-    class Property
+    class Property final
         : protected juce::ValueTree::Listener
         , protected Object::Listener
         , private Transition::Listener
@@ -84,7 +84,7 @@ namespace jive
             removeThisAsListener(listenerTarget);
         }
 
-        [[nodiscard]] virtual ValueType get() const
+        [[nodiscard]] ValueType get() const
         {
             return getFrom(getRootOfInheritance());
         }
@@ -605,8 +605,6 @@ namespace jive
                        src);
         }
 
-        virtual void transitionProgressed() {}
-
         Source source;
 
     private:
@@ -634,8 +632,6 @@ namespace jive
                                   const Transition&) final
         {
             jassertquiet(propertyName == transitionSourceID.toString());
-
-            transitionProgressed();
 
             if (onTransitionProgressed != nullptr)
                 onTransitionProgressed();

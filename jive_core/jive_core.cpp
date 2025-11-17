@@ -9,6 +9,7 @@
 #include "geometry/jive_BoxModel.cpp"
 #include "geometry/jive_Length.cpp"
 #include "geometry/jive_Orientation.cpp"
+#include "graphics/jive_ComponentTypePredicates.cpp"
 #include "graphics/jive_Fill.cpp"
 #include "graphics/jive_FontUtilities.cpp"
 #include "graphics/jive_Gradient.cpp"

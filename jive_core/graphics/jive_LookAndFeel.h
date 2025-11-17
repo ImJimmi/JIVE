@@ -11,10 +11,11 @@ namespace jive
 {
     namespace painterPrecedence
     {
-        static constexpr auto tautologicalPredicate = 1000;
+        static constexpr auto componentPredicate = 1000;
         static constexpr auto componentID = 2000;
-        static constexpr auto componentType = 3000;
-        static constexpr auto componentPredicate = 4000;
+        static constexpr auto componentClass = 3000;
+        static constexpr auto componentType = 4000;
+        static constexpr auto tautologicalPredicate = 5000;
     } // namespace painterPrecedence
 
     class Caret;
@@ -102,18 +103,18 @@ namespace jive
         // precedence of 10 will be chosen over one with a precedence of 20. See
         // the painterPrecedence namespace for a list of default precedence
         // values.
-        void addPainter(const ComponentPredicate&,
-                        const ComponentPainter&,
-                        Precedence precedence = painterPrecedence::componentPredicate);
-        void addPainter(const ComponentPredicate&,
-                        const ProgressBarPainter&,
-                        Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addPainter(const ComponentPredicate&,
+                              const ComponentPainter&,
+                              Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addPainter(const ComponentPredicate&,
+                              const ProgressBarPainter&,
+                              Precedence precedence = painterPrecedence::componentPredicate);
 
         // Adds a painter that will be used to paint any component that has the
         // given ID.
         template <typename Painter>
-        void addPainter(const juce::String& componentID,
-                        const Painter& painter)
+        juce::Uuid addPainter(const juce::String& componentID,
+                              const Painter& painter)
         {
             addPainter([componentID](const juce::Component& component) {
                 return component.getComponentID() == componentID;
@@ -124,7 +125,7 @@ namespace jive
 
         // Adds a painter that will be used to paint any component
         template <typename Painter>
-        void addPainter(const Painter& painter)
+        juce::Uuid addPainter(const Painter& painter)
         {
             addPainter([](const auto&) {
                 return true;
@@ -136,24 +137,27 @@ namespace jive
         // Adds a painter that will be used to paint any component that has the
         // specified type.
         template <typename ComponentType, typename Painter>
-        void addPainter(const Painter& painter)
+        juce::Uuid addPainter(const Painter& painter)
         {
-            addPainter([](const juce::Component& component) {
+            return addPainter([](const juce::Component& component) {
                 return dynamic_cast<const ComponentType*>(&component) != nullptr;
             },
-                       painter,
-                       painterPrecedence::componentType);
+                              painter,
+                              painterPrecedence::componentType);
         }
 
         // Adds a painter that will be used to paint a popup menu
-        void addPainter(const PopupPredicate&,
-                        const PopupPainter&,
-                        Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addPainter(const PopupPredicate&,
+                              const PopupPainter&,
+                              Precedence precedence = painterPrecedence::componentPredicate);
 
         // Adds a painter that will be used to paint a popup menu item
-        void addPainter(const PopupItemPredicate&,
-                        const PopupItemPainter&,
-                        Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addPainter(const PopupItemPredicate&,
+                              const PopupItemPainter&,
+                              Precedence precedence = painterPrecedence::componentPredicate);
+
+        // Removes the specified painter
+        void removePainter(const juce::Uuid& uuid);
 
         // Removes all the custom painters from this object.
         void clearPainters();
@@ -165,44 +169,47 @@ namespace jive
         // precedence of 10 will be chosen over one with a precedence of 20. See
         // the painterPrecedence namespace for a list of default precedence
         // values.
-        void addStyles(ComponentPredicate,
-                       const Styles&,
-                       const InteractionState& = InteractionState{},
-                       Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addStyles(ComponentPredicate,
+                             const Styles&,
+                             const InteractionState& = InteractionState{},
+                             Precedence precedence = painterPrecedence::componentPredicate);
 
         // Adds a set of styles that will be used to style any component that
         // has the given ID.
-        void addStyles(const juce::String& componentID,
-                       const Styles&,
-                       const InteractionState& = InteractionState{});
+        juce::Uuid addStyles(const juce::String& componentID,
+                             const Styles&,
+                             const InteractionState& = InteractionState{});
 
         // Adds a set of styles that will be used to style any component
-        void addStyles(const Styles&,
-                       const InteractionState& = InteractionState{});
+        juce::Uuid addStyles(const Styles&,
+                             const InteractionState& = InteractionState{});
 
         // Adds a painter that will be used to paint any component that has the
         // specified type.
         template <typename ComponentType>
-        void addStyles(const Styles& styles,
-                       const InteractionState& interactionState = InteractionState{})
+        juce::Uuid addStyles(const Styles& styles,
+                             const InteractionState& interactionState = InteractionState{})
         {
-            addStyles([](const juce::Component& component) {
+            return addStyles([](const juce::Component& component) {
                 return dynamic_cast<const ComponentType*>(&component) != nullptr;
             },
-                      styles,
-                      interactionState,
-                      painterPrecedence::componentType);
+                             styles,
+                             interactionState,
+                             painterPrecedence::componentType);
         }
 
         // Adds a set of styles for a popup menu
-        void addStyles(PopupPredicate,
-                       const Styles&,
-                       Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addStyles(PopupPredicate,
+                             const Styles&,
+                             Precedence precedence = painterPrecedence::componentPredicate);
 
         // Adds a set of styles for a popup menu item
-        void addStyles(PopupItemPredicate,
-                       const Styles&,
-                       Precedence precedence = painterPrecedence::componentPredicate);
+        juce::Uuid addStyles(PopupItemPredicate,
+                             const Styles&,
+                             Precedence precedence = painterPrecedence::componentPredicate);
+
+        // Removes the specified styles
+        void removeStyles(const juce::Uuid& uuid);
 
         // Removes all the custom styles from this object.
         void clearStyles();
@@ -219,7 +226,6 @@ namespace jive
                 component.getProperties().remove(property);
                 component.getProperties().remove("jive::shadow-bounds");
                 component.getProperties().remove("jive::shadow-path");
-                component.repaint();
                 return;
             }
 
@@ -238,7 +244,6 @@ namespace jive
                                                                                    .getObject())
                                     ->shadow;
             shadowComp.setShadow(*styles.shadow);
-            shadowComp.repaint();
         }
 
         // Updates the shadow component (if any) associated with the given
@@ -362,13 +367,13 @@ namespace jive
         }
 
         juce::Component::SafePointer<juce::Component> attachedComponent;
-        std::vector<std::tuple<Precedence, ComponentPainter, ComponentPredicate>> painters;
-        std::vector<std::tuple<Precedence, Styles, InteractionState, ComponentPredicate>> stylers;
-        std::vector<std::tuple<Precedence, PopupPainter, PopupPredicate>> popupPainters;
-        std::vector<std::tuple<Precedence, Styles, PopupPredicate>> popupStylers;
-        std::vector<std::tuple<Precedence, PopupItemPainter, PopupItemPredicate>> popupItemPainters;
-        std::vector<std::tuple<Precedence, Styles, PopupItemPredicate>> popupItemStylers;
-        std::vector<std::tuple<Precedence, ProgressBarPainter, ComponentPredicate>> progressBarPainters;
+        std::vector<std::tuple<juce::Uuid, Precedence, ComponentPainter, ComponentPredicate>> painters;
+        std::vector<std::tuple<juce::Uuid, Precedence, Styles, InteractionState, ComponentPredicate>> stylers;
+        std::vector<std::tuple<juce::Uuid, Precedence, PopupPainter, PopupPredicate>> popupPainters;
+        std::vector<std::tuple<juce::Uuid, Precedence, Styles, PopupPredicate>> popupStylers;
+        std::vector<std::tuple<juce::Uuid, Precedence, PopupItemPainter, PopupItemPredicate>> popupItemPainters;
+        std::vector<std::tuple<juce::Uuid, Precedence, Styles, PopupItemPredicate>> popupItemStylers;
+        std::vector<std::tuple<juce::Uuid, Precedence, ProgressBarPainter, ComponentPredicate>> progressBarPainters;
     };
 
     // A custom Caret component which is drawn by its look-and-feel, rather

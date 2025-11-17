@@ -59,9 +59,18 @@ namespace jive
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
         if (centreX.exists())
-            return juce::roundToInt(centreX.get().toPixels(parentContentBounds.getWidth()) - boxModel(*this).getWidth() / 2.f);
+        {
+            return juce::roundToInt(
+                centreX
+                    .calculateCurrent()
+                    .toPixels(parentContentBounds.getWidth())
+                - boxModel(*this).getWidth() / 2.f);
+        }
 
-        return juce::roundToInt(x.get().toPixels(parentContentBounds.getWidth()));
+        return juce::roundToInt(
+            x
+                .calculateCurrent()
+                .toPixels(parentContentBounds.getWidth()));
     }
 
     int BlockItem::calculateY() const
@@ -69,9 +78,17 @@ namespace jive
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
         if (centreY.exists())
-            return juce::roundToInt(centreY.get().toPixels(parentContentBounds.getHeight()) - boxModel(*this).getHeight() / 2.f);
+        {
+            return juce::roundToInt(centreY
+                                        .calculateCurrent()
+                                        .toPixels(parentContentBounds.getHeight())
+                                    - boxModel(*this).getHeight() / 2.f);
+        }
 
-        return juce::roundToInt(y.get().toPixels(parentContentBounds.getHeight()));
+        return juce::roundToInt(
+            y
+                .calculateCurrent()
+                .toPixels(parentContentBounds.getHeight()));
     }
 
     juce::Rectangle<int> BlockItem::calculateBounds() const
@@ -81,9 +98,9 @@ namespace jive
         const auto parentBounds = parentBoxModel.getContentBounds();
 
         if (!width.isAuto())
-            bounds.setWidth(juce::roundToInt(width.get().toPixels(parentBounds.getWidth())));
+            bounds.setWidth(juce::roundToInt(width.calculateCurrent().toPixels(parentBounds.getWidth())));
         if (!height.isAuto())
-            bounds.setHeight(juce::roundToInt(height.get().toPixels(parentBounds.getHeight())));
+            bounds.setHeight(juce::roundToInt(height.calculateCurrent().toPixels(parentBounds.getHeight())));
 
         return bounds.withPosition(parentBoxModel
                                        .getContentBounds()

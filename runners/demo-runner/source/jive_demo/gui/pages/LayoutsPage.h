@@ -6,7 +6,6 @@
 #include <jive_demo/gui/views/DemoCallToAction.h>
 #include <jive_demo/gui/views/Icons.h>
 #include <jive_demo/gui/views/PageHeader.h>
-#include <jive_demo/gui/views/PageLink.h>
 #include <jive_demo/gui/views/Subtitle.h>
 #include <jive_demo/gui/views/Title.h>
 

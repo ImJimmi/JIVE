@@ -26,6 +26,9 @@ namespace jive_demo
                     {
                         "style",
                         new jive::Object{
+                            { "border-radius", 2.5 },
+                            { "background", juce::var{} },
+                            { "shadow", juce::var{} },
                             {
                                 "hover",
                                 new jive::Object{
@@ -44,7 +47,6 @@ namespace jive_demo
                                     { "background", "rgba(255.0, 255.0, 255.0, 0.2)" },
                                 },
                             },
-                            { "border-radius", 2.5 },
                         },
                     },
                     { "id", jive::toVar(id) },
@@ -75,6 +77,7 @@ namespace jive_demo
                         "style",
                         new jive::Object{
                             { "background", jive::toVar(colours::menu) },
+                            { "border-radius", 0 },
                         },
                     },
                     { "align-self", "stretch" },

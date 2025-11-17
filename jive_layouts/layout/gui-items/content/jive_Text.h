@@ -1,7 +1,5 @@
 #pragma once
 
-#include <jive_components/jive_components.h>
-
 #include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
 
 namespace jive
@@ -36,9 +34,7 @@ namespace jive
 
         Property<juce::String> text;
         Property<float, Inheritance::inheritFromAncestors> lineSpacing;
-        Property<juce::Justification> justification;
         Property<juce::AttributedString::WordWrap> wordWrap;
-        Property<juce::AttributedString::ReadingDirection> direction;
         Property<float> idealWidth;
         Property<float> idealHeight;
 

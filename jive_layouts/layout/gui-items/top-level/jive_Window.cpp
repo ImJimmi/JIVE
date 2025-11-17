@@ -147,7 +147,6 @@ namespace jive
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
         getWindow().setContentNonOwned(getComponent().get(), resizeWindowWhenComponentSizeChanges);
         getWindow().centreWithSize(windowWidth, windowHeight);
-        getWindow().setLookAndFeel(&lookAndFeel);
     }
 
     Window::~Window()

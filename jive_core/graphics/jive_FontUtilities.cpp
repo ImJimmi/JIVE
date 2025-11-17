@@ -255,4 +255,50 @@ namespace jive
                             .getLookAndFeel()
                             .getComboBoxFont(*const_cast<juce::ComboBox*>(&comboBox)));
     }
+
+    [[nodiscard]] juce::AttributedString::ReadingDirection getReadingDirection(const juce::Component& component,
+                                                                               const Styles& styles,
+                                                                               juce::AttributedString::ReadingDirection defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "direction");
+                property.has_value())
+            {
+                return fromVar<juce::AttributedString::ReadingDirection>(*property);
+            }
+        }
+
+        if (styles.direction.has_value())
+            return *styles.direction;
+
+        return defaultValue;
+    }
+
+    [[nodiscard]] juce::Justification getTextAlignment(const juce::Component& component,
+                                                       const Styles& styles,
+                                                       juce::Justification defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "text-align");
+                property.has_value())
+            {
+                return fromVar<juce::Justification>(*property);
+            }
+        }
+
+        if (styles.textAlign.has_value())
+            return *styles.textAlign;
+
+        return defaultValue;
+    }
 } // namespace jive
