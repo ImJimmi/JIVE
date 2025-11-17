@@ -564,18 +564,33 @@ namespace juce
 
     std::vector<jive::Gradient::ColourStop> VariantConverter<std::vector<jive::Gradient::ColourStop>>::fromVar(const var& value)
     {
-        jassert(value.isArray());
-
         std::vector<jive::Gradient::ColourStop> stops;
 
-        for (const auto& object : *value.getArray())
+        if (value.isArray())
         {
-            jive::Gradient::ColourStop stop;
-            stop.colour = VariantConverter<Colour>::fromVar(object["colour"]);
-            stop.length = object.hasProperty("length")
-                            ? std::make_optional(VariantConverter<jive::Length>::fromVar(object["length"]))
-                            : std::nullopt;
-            stops.push_back(stop);
+            for (const auto& object : *value.getArray())
+            {
+                jive::Gradient::ColourStop stop;
+                stop.colour = VariantConverter<Colour>::fromVar(object["colour"]);
+                stop.length = object.hasProperty("length")
+                                ? std::make_optional(VariantConverter<jive::Length>::fromVar(object["length"]))
+                                : std::nullopt;
+                stops.push_back(stop);
+            }
+        }
+        else if (value.isObject())
+        {
+            for (const auto& [length, colour] : value.getDynamicObject()->getProperties())
+            {
+                jive::Gradient::ColourStop stop;
+                stop.colour = VariantConverter<Colour>::fromVar(colour);
+                stop.length = std::make_optional(VariantConverter<jive::Length>::fromVar(juce::String{ length.toString().getFloatValue() * 100.0f } + "%"));
+                stops.push_back(stop);
+            }
+        }
+        else
+        {
+            jassertfalse;
         }
 
         return stops;
@@ -623,9 +638,15 @@ namespace juce
 
     jive::Gradient VariantConverter<jive::Gradient>::fromVar(const var& value)
     {
+        if (value.isString())
+        {
+            if (auto result = jive::Gradient::fromString(value.toString()); result.has_value())
+                return *result;
+        }
+
         jive::Gradient gradient;
 
-        gradient.variant = jive::fromVar<jive::Gradient::Variant>(value["variant"]);
+        gradient.variant = jive::fromVar<jive::Gradient::Variant>(value.hasProperty("variant") ? value["variant"] : value["gradient"]);
         gradient.stops = jive::fromVar<std::vector<jive::Gradient::ColourStop>>(value["stops"]);
         gradient.linearAngle = jive::fromVar<std::variant<float, jive::SideOrCorner>>(value["linear-angle"]);
         gradient.radialSize = static_cast<float>(value["radial-size"]);

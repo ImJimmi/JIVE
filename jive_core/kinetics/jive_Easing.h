@@ -12,6 +12,9 @@ namespace jive
         static constexpr auto linear = [](double x) {
             return x;
         };
+        static constexpr auto constant = [](double) {
+            return 1.0;
+        };
         static constexpr auto inOut = [](double x) {
             static const auto transferFunction = jive::cubicBezier({ 0.4f, 0.0f }, { 0.2f, 1.0f });
             return solveFor(transferFunction, x);

@@ -37,10 +37,12 @@ namespace jive
 #endif
         const juce::NamedValueSet& getProperties() const;
 
-        Object* getParent() noexcept;
-        const Object* getParent() const noexcept;
-        Object* getRoot() noexcept;
-        const Object* getRoot() const noexcept;
+        [[nodiscard]] Object* getParent() noexcept;
+        [[nodiscard]] const Object* getParent() const noexcept;
+        [[nodiscard]] Object* getRoot() noexcept;
+        [[nodiscard]] const Object* getRoot() const noexcept;
+
+        [[nodiscard]] juce::String findNameInParent() const;
 
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;

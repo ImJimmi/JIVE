@@ -936,7 +936,9 @@ private:
         const auto font = dynamic_cast<jive::GuiItemDecorator*>(container.getChildren()[0])
                               ->toType<jive::Text>()
                               ->getTextComponent()
-                              .getFont();
+                              .getAttributedString()
+                              .getAttribute(0)
+                              .font;
 
         const auto expectedWidth = std::ceil(jive::calculateStringWidth("hello", font)) + std::ceil(jive::calculateStringWidth("world", font));
         expectEquals(boxModel.getContentBounds().getWidth(), expectedWidth);
@@ -946,7 +948,7 @@ private:
 
         container.state.getChild(0).setProperty("text", "hello world lorum ipsum dolor etc...", nullptr);
         expectEquals(boxModel.getContentBounds().getWidth(), static_cast<float>(state["width"]));
-        expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), font.getHeight() * 2.0f);
+        expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), std::ceil(font.getHeight() * 2.0f));
     }
 };
 

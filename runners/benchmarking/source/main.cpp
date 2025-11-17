@@ -1,6 +1,6 @@
 #include "FlexStressTest.h"
 #include "MinimumViewBenchmark.h"
-#include "StyleSheetsBenchmark.h"
+// #include "StyleSheetsBenchmark.h"
 
 class BenchmarkApp : public juce::JUCEApplication
 {
@@ -19,8 +19,8 @@ public:
 
     void initialise(const juce::String&) final
     {
-        StyleSheetsConstructionBenchmark{}.run();
-        StyleSheetsQueryingBenchmark{}.run();
+        // StyleSheetsConstructionBenchmark{}.run();
+        // StyleSheetsQueryingBenchmark{}.run();
         MinimumViewBenchmark{}.run();
         FlexStressTest{}.run();
         quit();

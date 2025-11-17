@@ -4,7 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" companyName="JIVE"
               companyWebsite="github.com/ImJimmi/JIVE" pluginManufacturerCode="Jive"
               pluginCode="Demo" includeBinaryInJuceHeader="0" binaryDataNamespace="binary_data"
-              defines="JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1" headerPath="../../source/">
+              headerPath="../../source/">
   <MAINGROUP id="OjEzkk" name="demo-plugin">
     <GROUP id="{5B20D864-65AF-280B-B586-1623AE5EF81F}" name="resources">
       <GROUP id="{374DF238-3078-3475-2ED2-0B357D582099}" name="icons">

@@ -209,7 +209,7 @@ namespace jive
                                        const Styles& styles,
                                        int colourID)
     {
-        return findFill(component, "border-fill", styles, true, colourID);
+        return findFill(component, "border", styles, true, colourID);
     }
 
     static std::optional<Fill> findThumbFill(const juce::Component& component,
@@ -233,6 +233,20 @@ namespace jive
         return findFill(component, "accent", styles, true, colourID);
     }
 
+    std::optional<Fill> findFill(const juce::Component& component,
+                                 const Styles& styles,
+                                 int colourID)
+    {
+        return findFill(component, "fill", styles, true, colourID);
+    }
+
+    std::optional<Fill> findStroke(const juce::Component& component,
+                                   const Styles& styles,
+                                   int colourID)
+    {
+        return findFill(component, "stroke", styles, true, colourID);
+    }
+
     juce::FillType getBackgroundFill(const juce::Component& component,
                                      const Styles& styles,
                                      const Fill& defaultFill)
@@ -242,11 +256,38 @@ namespace jive
             .toJuceFillType(component.getLocalBounds().toFloat());
     }
 
+    juce::FillType getForegroundFill(const juce::Component& component,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findForegroundFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
     juce::FillType getBorderFill(const juce::Component& component,
                                  const Styles& styles,
                                  const Fill& defaultFill)
     {
         return jive::findBorderFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getFill(const juce::Component& component,
+                           const Styles& styles,
+                           const Fill& defaultFill)
+    {
+        return jive::findFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getStroke(const juce::Component& component,
+                             const Styles& styles,
+                             const Fill& defaultFill)
+    {
+        return jive::findStroke(component, styles)
             .value_or(defaultFill)
             .toJuceFillType(component.getLocalBounds().toFloat());
     }
@@ -496,7 +537,9 @@ namespace jive
                 .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
         }
 
-        return styles.background.value_or(defaultFill)
+        return styles
+            .find<Fill>("background")
+            .value_or(defaultFill)
             .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
     }
 
@@ -505,8 +548,8 @@ namespace jive
                                  const Styles& styles,
                                  const Fill& defaultFill)
     {
-        if (styles.borderFill.has_value())
-            return styles.borderFill->toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {
@@ -534,7 +577,7 @@ namespace jive
         }
 
         return styles
-            .background
+            .find<Fill>("background")
             .value_or(item.isTicked ? defaultSelectedFill : defaultFill)
             .toJuceFillType(bounds);
     }
@@ -545,8 +588,8 @@ namespace jive
                                  const juce::Rectangle<float>& bounds,
                                  const Fill& defaultFill)
     {
-        if (styles.borderFill.has_value())
-            return styles.borderFill->toJuceFillType(bounds);
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(bounds);
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {
@@ -565,8 +608,8 @@ namespace jive
                                      const Fill& defaultFill,
                                      const Fill& defaultSelectedFill)
     {
-        if (styles.foreground.has_value())
-            return styles.foreground->toJuceFillType(bounds);
+        if (auto fill = styles.find<Fill>("foreground"); fill.has_value())
+            return fill->toJuceFillType(bounds);
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {
@@ -696,7 +739,12 @@ namespace juce
     jive::Fill VariantConverter<jive::Fill>::fromVar(const var& v)
     {
         if (v.isString())
+        {
+            if (auto gradient = jive::Gradient::fromString(v.toString()))
+                return jive::Fill{ *gradient };
+
             return jive::Fill{ VariantConverter<Colour>::fromVar(v) };
+        }
 
         if (v.hasProperty("gradient"))
             return jive::Fill{ VariantConverter<jive::Gradient>::fromVar(v) };

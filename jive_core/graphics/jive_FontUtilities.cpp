@@ -192,12 +192,12 @@ namespace jive
 
         auto result = baseFont;
 
-        result.setTypefaceName(fontFamily.value_or(styles.fontFamily.value_or(result.getTypefaceName())));
-        result = result.withPointHeight(fontPointSize.value_or(styles.fontPointSize.value_or(result.getHeightInPoints())));
-        result.setHorizontalScale(fontHorizontalScale.value_or(styles.fontHorizontalScale.value_or(result.getHorizontalScale())));
-        result.setExtraKerningFactor(fontExtraKerningFactor.value_or(styles.fontExtraKerningFactor.value_or(result.getExtraKerningFactor())));
+        result.setTypefaceName(fontFamily.value_or(styles.fontFamily.getValueOr(result.getTypefaceName())));
+        result = result.withPointHeight(fontPointSize.value_or(styles.find<float>("font-size").value_or(result.getHeightInPoints())));
+        result.setHorizontalScale(fontHorizontalScale.value_or(styles.find<float>("font-scale").value_or(result.getHorizontalScale())));
+        result.setExtraKerningFactor(fontExtraKerningFactor.value_or(styles.find<float>("font-kerning").value_or(result.getExtraKerningFactor())));
 
-        for (const auto& flag : styles.fontStyleFlags)
+        for (const auto& flag : styles.fontStyleFlags.getValueOr({}))
             fontStyleFlags.emplace(flag);
         for (const auto& flag : fontStyleFlags)
             result.setStyleFlags(result.getStyleFlags() + flag);
@@ -205,12 +205,12 @@ namespace jive
 #if JUCE_MAJOR_VERSION >= 8
         if (const auto ascent = fontAscentOverride; ascent.has_value())
             result.setAscentOverride(ascent);
-        else if (const auto a = styles.fontAscentOverride; ascent.has_value())
+        else if (const auto a = styles.find<float>("font-ascent-override"); a.has_value())
             result.setAscentOverride(a);
 
         if (const auto descent = fontDescentOverride; descent.has_value())
             result.setDescentOverride(descent);
-        else if (const auto d = styles.fontDescentOverride; descent.has_value())
+        else if (const auto d = styles.find<float>("font-descent-override"); d.has_value())
             result.setDescentOverride(d);
 #endif
 
@@ -254,5 +254,51 @@ namespace jive
                         comboBox
                             .getLookAndFeel()
                             .getComboBoxFont(*const_cast<juce::ComboBox*>(&comboBox)));
+    }
+
+    [[nodiscard]] juce::AttributedString::ReadingDirection getReadingDirection(const juce::Component& component,
+                                                                               const Styles& styles,
+                                                                               juce::AttributedString::ReadingDirection defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "direction");
+                property.has_value())
+            {
+                return fromVar<juce::AttributedString::ReadingDirection>(*property);
+            }
+        }
+
+        if (styles.direction.hasValue())
+            return styles.direction.get();
+
+        return defaultValue;
+    }
+
+    [[nodiscard]] juce::Justification getTextAlignment(const juce::Component& component,
+                                                       const Styles& styles,
+                                                       juce::Justification defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "text-align");
+                property.has_value())
+            {
+                return fromVar<juce::Justification>(*property);
+            }
+        }
+
+        if (styles.textAlign.hasValue())
+            return styles.textAlign.get();
+
+        return defaultValue;
     }
 } // namespace jive

@@ -30,6 +30,7 @@ namespace jive_demo::views
             const auto style = [this] {
                 return new jive::Object{
                     { "foreground", "#000000" },
+                    { "border", juce::var{} },
                     { "border-radius", 5 },
                     {
                         "background",

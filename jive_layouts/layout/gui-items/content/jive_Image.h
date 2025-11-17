@@ -18,7 +18,9 @@ namespace jive
         bool isContainer() const override;
         bool isContent() const override;
 
-        Drawable getDrawable() const;
+        [[nodiscard]] Drawable getDrawable() const;
+        [[nodiscard]] ImageComponent& getImageComponent();
+        [[nodiscard]] const ImageComponent& getImageComponent() const;
 
     protected:
         void componentMovedOrResized(juce::Component&, bool, bool) override;
@@ -34,10 +36,7 @@ namespace jive
         float calculateRequiredHeight(const juce::Drawable& drawable) const;
         float calculateRequiredHeight() const;
 
-        std::unique_ptr<juce::ImageComponent> createImageComponent(const juce::Image& image) const;
-        std::unique_ptr<juce::Drawable> createSVG(const juce::String& svgString) const;
-        std::unique_ptr<juce::Component> createChildComponent() const;
-        void setChildComponent(std::unique_ptr<juce::Component> newComponent);
+        void updateImageComponentDrawable();
 
         std::unique_ptr<juce::Component> childComponent;
         bool changingChild = false;

@@ -278,6 +278,9 @@ namespace jive
 
     Shadow Shadow::fromString(const juce::String& shadowString)
     {
+        if (shadowString.isEmpty())
+            return Shadow{};
+
         std::vector<float> numbers;
         juce::Colour shadowColour;
 
@@ -340,7 +343,11 @@ namespace jive
                                  .toFloat());
         }
 
-        shape.applyTransform(juce::AffineTransform::translation(shadow.getOffset() - getPosition()));
+        const juce::Point blurRadiusOffset{
+            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
+            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
+        };
+        shape.applyTransform(juce::AffineTransform::translation(shadow.getOffset() - component->getPosition() + blurRadiusOffset));
         shadow.draw(g, shape);
     }
 
@@ -371,7 +378,7 @@ namespace jive
 
     void ShadowComponent::updateBounds()
     {
-        if (component == nullptr)
+        if (component == nullptr || parent == nullptr)
             return;
 
         const juce::Point blurRadiusOffset{
@@ -385,9 +392,21 @@ namespace jive
                                                                            component->getBounds().toString())
                                                            .toString());
 
+        auto position = component->getPosition();
+
+        for (auto* parentComp = component->getParentComponent();
+             parentComp != nullptr;
+             parentComp = parentComp->getParentComponent())
+        {
+            if (parentComp == parent)
+                break;
+
+            position += parentComp->getPosition();
+        }
+
         setBounds(bounds
                       .expanded(blurRadiusOffset.x, blurRadiusOffset.y)
-                      .withPosition(component->getPosition() - blurRadiusOffset + shadow.getOffset()));
+                      .withPosition(position - blurRadiusOffset + shadow.getOffset()));
     }
 
     void ShadowComponent::updateVisibility()
@@ -400,14 +419,31 @@ namespace jive
         if (component == nullptr)
             return;
 
-        if (auto* otherParent = component->getParentComponent())
+        auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
+
+        for (auto* otherParent = component->getParentComponent();
+             otherParent != nullptr;
+             otherParent = otherParent->getParentComponent())
         {
-            otherParent->addChildComponent(this, 0);
-            updateBounds();
+            juce::FillType background{ juce::Colours::black };
+
+            if (lookAndFeel != nullptr)
+            {
+                background = getBackgroundFill(*otherParent,
+                                               lookAndFeel->findMostApplicableStyles(*otherParent),
+                                               juce::Colours::transparentBlack);
+            }
+
+            if (!background.isInvisible())
+            {
+                parent = otherParent;
+                parent->addChildComponent(this, 0);
+                updateBounds();
+                return;
+            }
         }
-        else if (auto* thisParent = getParentComponent())
-        {
+
+        if (auto* thisParent = getParentComponent())
             thisParent->removeChildComponent(this);
-        }
     }
 } // namespace jive

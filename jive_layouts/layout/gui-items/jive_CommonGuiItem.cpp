@@ -5,9 +5,6 @@ namespace jive
     CommonGuiItem::CommonGuiItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , boxModel{ state }
-#if !JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        , interactionState{ *getComponent() }
-#endif
         , name{ state, "name" }
         , title{ state, "title" }
         , id{ state, "id" }
@@ -46,6 +43,7 @@ namespace jive
         if (!display.exists())
             display = Display::flex;
 
+        getComponent()->setPaintingIsUnclipped(true);
         getComponent()->addComponentListener(this);
 
         name.onValueChange = [this]() {
@@ -256,6 +254,8 @@ namespace jive
             else
                 getComponent()->setAccessible(accessible);
         }
+
+        setStyleSheet(StyleSheet::create(*getComponent(), state));
     }
 
     void CommonGuiItem::boxModelChanged(BoxModel& boxModelThatChanged)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <jive_components/accessibility/jive_IgnoredComponent.h>
-
-#include <jive_core/jive_core.h>
+#include <jive_core/components/accessibility/jive_IgnoredComponent.h>
+#include <jive_core/geometry/jive_BorderRadii.h>
+#include <jive_core/graphics/jive_Fill.h>
 
 namespace jive
 {

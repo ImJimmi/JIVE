@@ -22,4 +22,11 @@ namespace jive
                                      const Styles& styles);
     [[nodiscard]] juce::Font getFont(const juce::ComboBox& comboBox,
                                      const Styles& styles);
+
+    [[nodiscard]] juce::AttributedString::ReadingDirection getReadingDirection(const juce::Component& component,
+                                                                               const Styles& styles,
+                                                                               juce::AttributedString::ReadingDirection defaultValue = juce::AttributedString::ReadingDirection::natural);
+    [[nodiscard]] juce::Justification getTextAlignment(const juce::Component& component,
+                                                       const Styles& styles,
+                                                       juce::Justification defaultValue = juce::Justification::centredLeft);
 } // namespace jive

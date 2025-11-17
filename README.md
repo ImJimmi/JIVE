@@ -169,12 +169,6 @@ PRIVATE
     jive::jive_layouts
     jive::jive_style_sheets
 )
-
-# Recommended if using both jive_layouts and jive_style_sheets
-target_compile_definitions(my_juce_project
-PRIVATE
-    JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=1
-)
 ```
 
 ### Projucer

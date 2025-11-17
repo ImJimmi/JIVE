@@ -104,13 +104,28 @@ namespace jive
     [[nodiscard]] std::optional<Fill> findAccentFill(const juce::Component& component,
                                                      const Styles& styles,
                                                      int colourID = -1);
+    [[nodiscard]] std::optional<Fill> findFill(const juce::Component& component,
+                                               const Styles& styles,
+                                               int colourID = -1);
+    [[nodiscard]] std::optional<Fill> findStroke(const juce::Component& component,
+                                                 const Styles& styles,
+                                                 int colourID = -1);
 
     [[nodiscard]] juce::FillType getBackgroundFill(const juce::Component& component,
+                                                   const Styles& styles,
+                                                   const Fill& defaultFill = juce::Colours::transparentBlack);
+    [[nodiscard]] juce::FillType getForegroundFill(const juce::Component& component,
                                                    const Styles& styles,
                                                    const Fill& defaultFill = juce::Colours::transparentBlack);
     [[nodiscard]] juce::FillType getBorderFill(const juce::Component& component,
                                                const Styles& styles,
                                                const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::outline));
+    [[nodiscard]] juce::FillType getFill(const juce::Component& component,
+                                         const Styles& styles,
+                                         const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::defaultText));
+    [[nodiscard]] juce::FillType getStroke(const juce::Component& component,
+                                           const Styles& styles,
+                                           const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::defaultText));
 
     [[nodiscard]] juce::FillType getBackgroundFill(const juce::Label& label,
                                                    const Styles& styles,

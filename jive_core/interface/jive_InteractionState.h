@@ -15,7 +15,7 @@ namespace jive
             focus = 1 << 0,
             hover = 1 << 1,
             active = 1 << 2,
-            toggled = 1 << 3,
+            checked = 1 << 3,
             disabled = 1 << 4,
         };
 
@@ -34,7 +34,7 @@ namespace jive
             if (const auto* button = dynamic_cast<const juce::Button*>(&component);
                 button != nullptr && button->getToggleState())
             {
-                setToggled();
+                setChecked();
             }
         }
 
@@ -42,7 +42,7 @@ namespace jive
         // usually be called as an initializer-list for cleaner construction,
         // e.g.
         // ```
-        // state = {InteractionState::hover, InteractionState::toggled}; // target components that are toggled-on, and are being hovered by the mouse.
+        // state = {InteractionState::hover, InteractionState::checked}; // target components that are checked-on, and are being hovered by the mouse.
         // state = InteractionState::focus; // Implicit constructor straight from a single flag.
         // ```
         template <typename... Flags>
@@ -58,6 +58,23 @@ namespace jive
         InteractionState(InteractionState&&) = default;
         InteractionState& operator=(InteractionState&&) = default;
         ~InteractionState() = default;
+
+        InteractionState& set(const juce::String& propertyName)
+        {
+            if (propertyName == "hover")
+                return setHovered();
+            if (propertyName == "active")
+                return setActive();
+            if (propertyName == "disabled")
+                return setDisabled();
+            if (propertyName == "focus")
+                return setFocused();
+            if (propertyName == "checked")
+                return setChecked();
+
+            jassertfalse;
+            return *this;
+        }
 
         InteractionState& setHovered()
         {
@@ -103,15 +120,15 @@ namespace jive
             return flags.count(focus) > 0;
         }
 
-        InteractionState& setToggled()
+        InteractionState& setChecked()
         {
-            flags.emplace(toggled);
+            flags.emplace(checked);
             return *this;
         }
 
-        [[nodiscard]] auto isToggled() const
+        [[nodiscard]] auto ischecked() const
         {
-            return flags.count(toggled) > 0;
+            return flags.count(checked) > 0;
         }
 
         [[nodiscard]] auto asInt() const
@@ -124,14 +141,34 @@ namespace jive
             return value;
         }
 
+        [[nodiscard]] auto asDotSeparatedString() const
+        {
+            juce::StringArray parts;
+
+            for (const auto& flag : flags)
+                parts.add(names.at(flag));
+
+            return parts.joinIntoString(".");
+        }
+
+        [[nodiscard]] static InteractionState fromDotSeparatedString(const juce::String& string)
+        {
+            InteractionState state;
+
+            for (const auto& part : juce::StringArray::fromTokens(string, ".", ""))
+                state.set(part);
+
+            return state;
+        }
+
         // Returns true if this object represents the state of the given
         // component.
         [[nodiscard]] auto appliesTo(const juce::Component& component) const
         {
-            auto toggleApplies = !flags.count(toggled);
+            auto toggleApplies = !flags.count(checked);
 
             if (auto* button = dynamic_cast<const juce::Button*>(&component))
-                toggleApplies = (flags.count(toggled) > 0 && button->getToggleState()) || flags.count(toggled) == 0;
+                toggleApplies = (flags.count(checked) > 0 && button->getToggleState()) || flags.count(checked) == 0;
 
             return !((flags.count(hover) > 0 && !component.isMouseOverOrDragging(true))
                      || (flags.count(active) > 0 && !component.isMouseButtonDown(true))
@@ -176,7 +213,7 @@ namespace jive
                                       + static_cast<int>(Flag::disabled)
                                       + static_cast<int>(Flag::active)
                                       + static_cast<int>(Flag::hover)
-                                      + static_cast<int>(Flag::toggled);
+                                      + static_cast<int>(Flag::checked);
 
             for (auto bitset = sum; bitset >= 0; bitset--)
             {
@@ -200,6 +237,24 @@ namespace jive
             return std::nullopt;
         }
 
+        [[nodiscard]] auto operator==(const InteractionState& other) const
+        {
+            return flags == other.flags;
+        }
+
+        [[nodiscard]] auto operator!=(const InteractionState& other) const
+        {
+            return !(*this == other);
+        }
+
+        static inline const std::unordered_set<juce::String> propertyNames{
+            "hover",
+            "active",
+            "disabled",
+            "focus",
+            "checked",
+        };
+
     public:
         std::unordered_set<Flag> flags;
         static inline const std::unordered_map<Flag, juce::String> names{
@@ -207,7 +262,7 @@ namespace jive
             { Flag::active, "active" },
             { Flag::disabled, "disabled" },
             { Flag::focus, "focus" },
-            { Flag::toggled, "toggled" }
+            { Flag::checked, "checked" }
         };
     };
 } // namespace jive

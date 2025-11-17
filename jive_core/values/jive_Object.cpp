@@ -140,6 +140,21 @@ namespace jive
         return parent->getRoot();
     }
 
+    juce::String Object::findNameInParent() const
+    {
+        if (parent == nullptr)
+            return "";
+
+        for (const auto& [name, value] : parent->getProperties())
+        {
+            if (value.getObject() == this)
+                return name.toString();
+        }
+
+        jassertfalse;
+        return "";
+    }
+
     void Object::addListener(Listener& listener) const
     {
         listeners.add(&listener);

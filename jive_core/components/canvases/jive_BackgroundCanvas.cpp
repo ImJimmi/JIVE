@@ -1,5 +1,7 @@
 #include "jive_BackgroundCanvas.h"
 
+#include <jive_core/algorithms/jive_Bezier.h>
+
 namespace jive
 {
     BackgroundCanvas::BackgroundCanvas()

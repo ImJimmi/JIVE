@@ -1,5 +1,7 @@
 #pragma once
 
+#include <jive_core/components/canvases/jive_Canvas.h>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive

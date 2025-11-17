@@ -5,8 +5,7 @@ namespace jive
     DocumentWindow::DocumentWindow()
         : juce::DocumentWindow{
             "",
-            juce::LookAndFeel::getDefaultLookAndFeel()
-                .findColour(ResizableWindow::backgroundColourId),
+            juce::Colour{ 0xFF4A412A },
             DocumentWindow::allButtons,
         }
         , onCloseButtonPressed{
