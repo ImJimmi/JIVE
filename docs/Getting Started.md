@@ -266,10 +266,6 @@ The layout is much better but our app still looks a little dull. To do _graphica
 
 ### Style Sheets
 
-`jive_style_sheets` is a separate module from `jive_layouts` that deals only with _graphical_ styling. Neither module depends on the other so you could use one without the other - although they work best together.
-
-Add the `jive_style_sheets` module to your project (through CMake or the Projucer, as you did for `jive_layouts`) and set the `JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS` flag to `1`. This flag tells the `jive_layouts` module to automatically give `jive::GuiItem`s a `jive::StyleSheet` so you don't have to manage the style sheets separately alongside the items.
-
 ### Colors
 
 Now we can begin applying style sheets to our app. Let's start by changing the background and foreground colours:

@@ -462,4 +462,68 @@ namespace juce
             return url.toString(includeGetParameters);
         }
     };
+
+    template <typename T>
+    class VariantConverter<std::unordered_set<T>>
+    {
+    public:
+        static std::unordered_set<T> fromVar(const var& v)
+        {
+            if (!v.isArray())
+                return { VariantConverter<T>::fromVar(v) };
+
+            std::unordered_set<T> set;
+
+            for (const auto& value : *v.getArray())
+                set.emplace(VariantConverter<T>::fromVar(value));
+
+            return set;
+        }
+
+        static var toVar(const std::unordered_set<T>& set)
+        {
+            Array<var> values;
+
+            for (const auto& item : set)
+                values.add(VariantConverter<T>::toVar(item));
+
+            return values;
+        }
+    };
+
+    template <>
+    class VariantConverter<juce::Font::FontStyleFlags>
+    {
+    public:
+        static juce::Font::FontStyleFlags fromVar(const var& v)
+        {
+            int flags = 0;
+
+            if (v.toString().contains("italic"))
+                flags += juce::Font::italic;
+            if (v.toString().contains("bold"))
+                flags += juce::Font::bold;
+            if (v.toString().contains("underlined"))
+                flags += juce::Font::underlined;
+
+            return static_cast<juce::Font::FontStyleFlags>(flags);
+        }
+
+        static var toVar(const juce::Font::FontStyleFlags& flags)
+        {
+            juce::StringArray result;
+
+            if (flags & juce::Font::italic)
+                result.add("italic");
+            if (flags & juce::Font::bold)
+                result.add("bold");
+            if (flags & juce::Font::underlined)
+                result.add("underlined");
+
+            if (result.isEmpty())
+                return "normal";
+
+            return result.joinIntoString(" ");
+        }
+    };
 } // namespace juce

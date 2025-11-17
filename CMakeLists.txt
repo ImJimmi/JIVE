@@ -19,9 +19,9 @@ if (JIVE_BUILD_BENCHMARKS
     include(CTest)
 endif ()
 
-add_subdirectory(jive_components)
 add_subdirectory(jive_core)
 add_subdirectory(jive_layouts)
+add_subdirectory(jive_style_sheets)
 
 if (JIVE_BUILD_BENCHMARKS
     OR JIVE_BUILD_DEMO_RUNNER

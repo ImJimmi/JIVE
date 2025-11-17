@@ -12,8 +12,7 @@ target_include_directories(jive-benchmarking
 )
 
 target_compile_definitions(jive-benchmarking
-                           PRIVATE JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS=0
-                                   JIVE_UNIT_TESTS=0
+                           PRIVATE JIVE_UNIT_TESTS=0
                                    JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-benchmarking,JUCE_PRODUCT_NAME>"
                                    JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-benchmarking,JUCE_VERSION>"
 )

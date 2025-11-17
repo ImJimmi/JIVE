@@ -18,24 +18,15 @@ namespace jive
             return juce::VariantConverter<BorderRadii<float>>::fromVar(*property);
         }
 
-        return styles.borderRadius;
+        return styles.find<BorderRadii<float>>("border-radius");
     }
 
     BorderRadii<float> getBorderRadius(const juce::Component& component,
                                        const Styles& styles,
                                        BorderRadii<float> defaultRadius)
     {
-        static constexpr auto propertyName = "border-radius";
-        const InteractionState state{ component };
-
-        if (const auto property = state.findMostApplicable(component.getProperties(),
-                                                           propertyName);
-            property.has_value())
-        {
-            return juce::VariantConverter<BorderRadii<float>>::fromVar(*property);
-        }
-
-        return styles.borderRadius.value_or(defaultRadius);
+        return findBorderRadius(component, styles)
+            .value_or(defaultRadius);
     }
 
     BorderRadii<float> getBorderRadius(const juce::Button& button,
@@ -53,13 +44,17 @@ namespace jive
     BorderRadii<float> getBorderRadius(const juce::PopupMenu&,
                                        const Styles& styles)
     {
-        return styles.borderRadius.value_or(BorderRadii{ 0.0f });
+        return styles
+            .find<BorderRadii<float>>("border-radius")
+            .value_or(BorderRadii{ 0.0f });
     }
 
     BorderRadii<float> getBorderRadius(const juce::PopupMenu::Item&,
                                        const Styles& styles)
     {
-        return styles.borderRadius.value_or(BorderRadii{ 0.0f });
+        return styles
+            .find<BorderRadii<float>>("border-radius")
+            .value_or(BorderRadii{ 0.0f });
     }
 
     BorderRadii<float> getBorderRadius(const juce::ComboBox& comboBox,

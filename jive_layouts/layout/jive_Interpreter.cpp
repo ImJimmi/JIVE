@@ -282,9 +282,6 @@ namespace jive
         {
             return std::make_unique<GuiItem>(std::move(component),
                                              expandedTree,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                                             StyleSheet::create(*component, expandedTree),
-#endif
                                              parent);
         }
 

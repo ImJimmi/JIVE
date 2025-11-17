@@ -74,5 +74,5 @@ target_include_directories(jive_layouts
 )
 
 target_link_libraries(jive_layouts
-                      INTERFACE jive::jive_components
+                      INTERFACE jive::jive_style_sheets
 )

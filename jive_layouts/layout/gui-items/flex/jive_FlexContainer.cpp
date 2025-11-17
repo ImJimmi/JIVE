@@ -592,8 +592,13 @@ private:
             "Text",
             {
                 { "text", "Lorem ipsum" },
-                { "typeface-name", font.getTypefaceName() },
-                { "font-height", font.getHeightInPoints() },
+                {
+                    "style",
+                    new jive::Object{
+                        { "font-family", font.getTypefaceName() },
+                        { "font-size", font.getHeightInPoints() },
+                    },
+                },
             },
         };
         buttonState.appendChild(textState, nullptr);

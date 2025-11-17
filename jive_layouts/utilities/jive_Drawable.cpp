@@ -18,24 +18,12 @@ namespace jive
         return *this;
     }
 
-    Drawable::Drawable(Drawable&& other)
-    {
-        *this = std::move(other);
-    }
-
-    Drawable& Drawable::operator=(Drawable&& other)
-    {
-        drawable = std::move(other.drawable);
-        svgSource = std::move(other.svgSource);
-        return *this;
-    }
-
-    Drawable::Drawable(juce::Image image)
+    Drawable::Drawable(const juce::Image& image)
     {
         *this = image;
     }
 
-    Drawable& Drawable::operator=(juce::Image image)
+    Drawable& Drawable::operator=(const juce::Image& image)
     {
         svgSource.clear();
         drawable = std::make_unique<juce::DrawableImage>(image);

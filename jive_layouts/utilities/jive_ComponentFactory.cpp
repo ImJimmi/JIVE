@@ -1,6 +1,9 @@
 #include "jive_ComponentFactory.h"
 
-#include <jive_components/jive_components.h>
+#include <jive_core/components/accessibility/jive_IgnoredComponent.h>
+#include <jive_core/components/widgets/jive_ImageComponent.h>
+#include <jive_core/components/widgets/jive_NormalisedProgressBar.h>
+#include <jive_core/components/widgets/jive_TextComponent.h>
 
 namespace jive
 {
@@ -45,7 +48,7 @@ namespace jive
         creators.insert({
             "Image",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_unique<ImageComponent>();
             },
         });
         creators.insert({
@@ -81,7 +84,7 @@ namespace jive
         creators.insert({
             "svg",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_unique<ImageComponent>();
             },
         });
         creators.insert({

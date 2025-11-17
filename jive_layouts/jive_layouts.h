@@ -10,11 +10,7 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_LAYOUTS_H_INCLUDED
 
-#include <jive_components/jive_components.h>
-
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-    #include <jive_style_sheets/jive_style_sheets.h>
-#endif
+#include <jive_style_sheets/jive_style_sheets.h>
 
 #ifdef JucePlugin_Name
     #define JIVE_IS_PLUGIN_PROJECT 1

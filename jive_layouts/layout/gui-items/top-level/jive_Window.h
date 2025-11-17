@@ -2,8 +2,6 @@
 
 #include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
 
-#include <jive_components/jive_components.h>
-
 namespace jive
 {
     class Window : public GuiItemDecorator
@@ -19,7 +17,7 @@ namespace jive
         int getStyleFlags() const;
 
         DocumentWindow window;
-        LookAndFeel lookAndFeel;
+        LookAndFeel lookAndFeel{ *getComponent() };
 
         Property<bool> hasShadow;
         Property<bool> isNative;

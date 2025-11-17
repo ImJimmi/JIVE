@@ -8,13 +8,15 @@ namespace jive
     {
     public:
         Drawable() = default;
+        Drawable(Drawable&& other) = default;
+        Drawable& operator=(Drawable&& other) = default;
+        ~Drawable() = default;
+
         Drawable(const Drawable& other);
         Drawable& operator=(const Drawable& other);
-        Drawable(Drawable&& other);
-        Drawable& operator=(Drawable&& other);
 
-        explicit Drawable(juce::Image image);
-        Drawable& operator=(juce::Image image);
+        explicit Drawable(const juce::Image& image);
+        Drawable& operator=(const juce::Image& image);
         operator juce::Image() const;
         bool isImage() const;
 

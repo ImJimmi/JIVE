@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jive_core/geometry/jive_BorderRadii.h>
+#include <jive_core/geometry/jive_BorderWidth.h>
 #include <jive_core/geometry/jive_Geometry.h>
 
 namespace jive::default_styles
