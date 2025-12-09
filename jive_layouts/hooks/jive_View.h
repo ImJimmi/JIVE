@@ -69,11 +69,11 @@ namespace jive
         template <typename ViewType, typename... Args>
         [[nodiscard]] static juce::var::NativeFunction makeViewBuilder(Args&&... args)
         {
-            return [args = std::make_tuple(std::forward<Args>(args)...)](const auto&) {
+            return [arguments = std::make_tuple(std::forward<Args>(args)...)](const auto&) {
                 static constexpr auto createRawView = [](auto&&... theArgs) {
                     return new ViewType{ theArgs... };
                 };
-                const View::ReferenceCountedPointer view{ std::apply(createRawView, std::move(args)) };
+                const View::ReferenceCountedPointer view{ std::apply(createRawView, std::move(arguments)) };
                 auto state = view->initialise();
                 state.setProperty("view-object", view.get(), nullptr);
 
