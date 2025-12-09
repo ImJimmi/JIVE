@@ -81,6 +81,20 @@ namespace jive
     {
     }
 
+#if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 4)
+    void Object::didModifyProperty(const juce::Identifier& propertyName,
+                                   const std::optional<juce::var>& newValue)
+    {
+        if (auto* childObject = dynamic_cast<Object*>(newValue
+                                                          .value_or(juce::var{})
+                                                          .getDynamicObject()))
+        {
+            childObject->parent = this;
+        }
+
+        listeners.call(&Listener::propertyChanged, *this, propertyName);
+    }
+#else
     void Object::setProperty(const juce::Identifier& propertyName,
                              const juce::var& newValue)
     {
@@ -93,6 +107,7 @@ namespace jive
         if (propertyChanged)
             listeners.call(&Listener::propertyChanged, *this, propertyName);
     }
+#endif
 
     const juce::NamedValueSet& Object::getProperties() const
     {
