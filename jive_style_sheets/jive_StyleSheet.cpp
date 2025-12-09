@@ -115,14 +115,18 @@ namespace jive
     {
         const auto id = calculateStylesID(object);
         const auto addStyles = [this, id, &object, predicate, interationState, precedence]() {
+            std::optional<Styles> styles;
+
             if (uuids.count(id))
             {
+                styles = *lookAndFeel.findStyles(uuids[id]);
                 lookAndFeel.removeStyles(uuids[id]);
                 uuids.erase(id);
             }
 
             findAndAddStyleProperties(object,
                                       id,
+                                      styles,
                                       predicate,
                                       interationState,
                                       precedence);
@@ -167,11 +171,12 @@ namespace jive
 
     void StyleSheet::findAndAddStyleProperties(Object& object,
                                                const juce::String& id,
+                                               std::optional<Styles>& styles,
                                                LookAndFeel::ComponentPredicate predicate,
                                                InteractionState interationState,
                                                LookAndFeel::Precedence precedence)
     {
-        std::optional<Styles> styles;
+        auto newStylesAdded = false;
 
         for (const auto& propertyName : Styles::propertyNames)
         {
@@ -181,9 +186,27 @@ namespace jive
             styles = styles
                          .value_or(Styles{})
                          .with(propertyName, object.getProperty(propertyName));
+            newStylesAdded = true;
         }
 
-        if (styles.has_value())
+        if (&object == style.get().get() && object.hasProperty("transition"))
+        {
+            auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object["transition"]);
+
+            if (transitions != nullptr)
+            {
+                styles = styles
+                             .value_or(Styles{})
+                             .withTransitions(transitions);
+                newStylesAdded = true;
+
+                vBlank = std::make_unique<juce::VBlankAttachment>(&component, [this, transitions]() {
+                    component.repaint();
+                });
+            }
+        }
+
+        if (styles.has_value() && newStylesAdded)
         {
             uuids[id] = lookAndFeel.addStyles(
                 predicate,
@@ -289,6 +312,7 @@ public:
         testCreation();
         testStyleProperty();
         testIndividualStyleProperties();
+        testTransitions();
     }
 
 private:
@@ -404,6 +428,45 @@ private:
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(50, 12),
                          jive::parseColour(jive::themes::steel::raisinBlack));
+        }
+    }
+
+    void testTransitions()
+    {
+        juce::TextButton button;
+        button.setSize(100, 25);
+        juce::ValueTree state{
+            "Button",
+            {
+                {
+                    "style",
+                    new jive::Object{
+                        { "background", "red" },
+                        { "transition", "background 1s linear" },
+                    },
+                },
+            },
+        };
+        auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
+        jive::LookAndFeel lookAndFeel{ button };
+        auto sheet = jive::StyleSheet::create(button, state);
+
+        beginTest("transitions / background");
+        {
+            auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::red);
+
+            style.setProperty("background", "blue");
+            snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::red);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+            snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::red.interpolatedWith(juce::Colours::blue, 0.5f));
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+            snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::blue);
         }
     }
 };

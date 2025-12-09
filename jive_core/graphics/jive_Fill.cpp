@@ -537,7 +537,9 @@ namespace jive
                 .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
         }
 
-        return styles.background.value_or(defaultFill)
+        return styles
+            .find<Fill>("background")
+            .value_or(defaultFill)
             .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
     }
 
@@ -546,8 +548,8 @@ namespace jive
                                  const Styles& styles,
                                  const Fill& defaultFill)
     {
-        if (styles.borderFill.has_value())
-            return styles.borderFill->toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {
@@ -575,7 +577,7 @@ namespace jive
         }
 
         return styles
-            .background
+            .find<Fill>("background")
             .value_or(item.isTicked ? defaultSelectedFill : defaultFill)
             .toJuceFillType(bounds);
     }
@@ -586,8 +588,8 @@ namespace jive
                                  const juce::Rectangle<float>& bounds,
                                  const Fill& defaultFill)
     {
-        if (styles.borderFill.has_value())
-            return styles.borderFill->toJuceFillType(bounds);
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(bounds);
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {
@@ -606,8 +608,8 @@ namespace jive
                                      const Fill& defaultFill,
                                      const Fill& defaultSelectedFill)
     {
-        if (styles.foreground.has_value())
-            return styles.foreground->toJuceFillType(bounds);
+        if (auto fill = styles.find<Fill>("foreground"); fill.has_value())
+            return fill->toJuceFillType(bounds);
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {

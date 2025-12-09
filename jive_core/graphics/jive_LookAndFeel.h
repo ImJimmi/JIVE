@@ -208,6 +208,10 @@ namespace jive
                              const Styles&,
                              Precedence precedence = painterPrecedence::componentPredicate);
 
+        // Returns a pointer to any styles with the given ID
+        [[nodiscard]] Styles* findStyles(const juce::Uuid& uuid);
+        [[nodiscard]] const Styles* findStyles(const juce::Uuid& uuid) const;
+
         // Removes the specified styles
         void removeStyles(const juce::Uuid& uuid);
 
@@ -221,7 +225,7 @@ namespace jive
         {
             static constexpr auto property = "jive::attached-shadow-component";
 
-            if (!styles.shadow.has_value())
+            if (!styles.shadow.hasValue())
             {
                 component.getProperties().remove(property);
                 component.getProperties().remove("jive::shadow-bounds");
@@ -243,7 +247,7 @@ namespace jive
                                                                                    .getProperties()[property]
                                                                                    .getObject())
                                     ->shadow;
-            shadowComp.setShadow(*styles.shadow);
+            shadowComp.setShadow(styles.find<Shadow>("shadow").value());
         }
 
         // Updates the shadow component (if any) associated with the given
@@ -347,6 +351,33 @@ namespace jive
         // =============================================================================================================
 
     private:
+        template <class PaintFunction, class Predicate>
+        struct Painter
+        {
+            juce::Uuid id;
+            Precedence precedence;
+            PaintFunction paint;
+            Predicate appliesTo;
+        };
+
+        template <class Predicate>
+        struct Styler
+        {
+            juce::Uuid id;
+            Precedence precedence;
+            InteractionState interactionState;
+            Predicate appliesTo;
+            Styles styles;
+        };
+
+        struct ComponentStylesCache
+        {
+            juce::Component::SafePointer<juce::Component> component;
+            std::unordered_set<juce::Uuid> correspondingIDs;
+            Styles styles;
+            InteractionState interactionState;
+        };
+
         template <typename Component, typename DefaultStyleDrawer>
         void draw(juce::Graphics& g,
                   const Component& component,
@@ -367,13 +398,17 @@ namespace jive
         }
 
         juce::Component::SafePointer<juce::Component> attachedComponent;
-        std::vector<std::tuple<juce::Uuid, Precedence, ComponentPainter, ComponentPredicate>> painters;
-        std::vector<std::tuple<juce::Uuid, Precedence, Styles, InteractionState, ComponentPredicate>> stylers;
-        std::vector<std::tuple<juce::Uuid, Precedence, PopupPainter, PopupPredicate>> popupPainters;
-        std::vector<std::tuple<juce::Uuid, Precedence, Styles, PopupPredicate>> popupStylers;
-        std::vector<std::tuple<juce::Uuid, Precedence, PopupItemPainter, PopupItemPredicate>> popupItemPainters;
-        std::vector<std::tuple<juce::Uuid, Precedence, Styles, PopupItemPredicate>> popupItemStylers;
-        std::vector<std::tuple<juce::Uuid, Precedence, ProgressBarPainter, ComponentPredicate>> progressBarPainters;
+
+        std::vector<Painter<ComponentPainter, ComponentPredicate>> painters;
+        std::vector<Painter<PopupPainter, PopupPredicate>> popupPainters;
+        std::vector<Painter<PopupItemPainter, PopupItemPredicate>> popupItemPainters;
+        std::vector<Painter<ProgressBarPainter, ComponentPredicate>> progressBarPainters;
+
+        std::vector<Styler<ComponentPredicate>> stylers;
+        std::vector<Styler<PopupPredicate>> popupStylers;
+        std::vector<Styler<PopupItemPredicate>> popupItemStylers;
+
+        std::vector<ComponentStylesCache> stylesCache;
     };
 
     // A custom Caret component which is drawn by its look-and-feel, rather

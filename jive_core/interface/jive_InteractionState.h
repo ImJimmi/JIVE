@@ -151,6 +151,16 @@ namespace jive
             return parts.joinIntoString(".");
         }
 
+        [[nodiscard]] static InteractionState fromDotSeparatedString(const juce::String& string)
+        {
+            InteractionState state;
+
+            for (const auto& part : juce::StringArray::fromTokens(string, ".", ""))
+                state.set(part);
+
+            return state;
+        }
+
         // Returns true if this object represents the state of the given
         // component.
         [[nodiscard]] auto appliesTo(const juce::Component& component) const
@@ -225,6 +235,16 @@ namespace jive
             }
 
             return std::nullopt;
+        }
+
+        [[nodiscard]] bool operator==(const InteractionState& other) const
+        {
+            return flags == other.flags;
+        }
+
+        [[nodiscard]] bool operator!=(const InteractionState& other) const
+        {
+            return !(*this == other);
         }
 
         static inline const std::unordered_set<juce::String> propertyNames{

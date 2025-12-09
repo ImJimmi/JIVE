@@ -17,7 +17,7 @@ namespace jive
             return juce::VariantConverter<juce::BorderSize<float>>::fromVar(*property);
         }
 
-        return styles.borderWidth;
+        return styles.find<juce::BorderSize<float>>("border-width");
     }
 
     [[nodiscard]] static auto toFloat(const juce::BorderSize<int>& border)
@@ -64,19 +64,23 @@ namespace jive
     juce::BorderSize<float> getBorderWidth(const juce::PopupMenu&,
                                            const Styles& styles)
     {
-        return styles.borderWidth.value_or(juce::BorderSize{
+        return styles
+            .find<juce::BorderSize<float>>("border-width")
+            .value_or(juce::BorderSize{
 #if JUCE_MAC
-            0.0f,
+                0.0f,
 #else
-            1.0f,
+                1.0f,
 #endif
-        });
+            });
     }
 
     juce::BorderSize<float> getBorderWidth(const juce::PopupMenu::Item&,
                                            const Styles& styles)
     {
-        return styles.borderWidth.value_or(juce::BorderSize{ 0.0f });
+        return styles
+            .find<juce::BorderSize<float>>("border-width")
+            .value_or(juce::BorderSize{ 0.0f });
     }
 
     juce::BorderSize<float> getBorderWidth(const juce::ComboBox& comboBox,

@@ -15,6 +15,7 @@ namespace jive
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<Transitions>;
 
         [[nodiscard]] int size() const;
+        [[nodiscard]] bool anyInProgress() const;
 
         [[nodiscard]] Transition* operator[](const juce::String& propertyName);
 

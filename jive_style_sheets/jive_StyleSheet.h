@@ -34,6 +34,7 @@ namespace jive
 
         void findAndAddStyleProperties(Object& object,
                                        const juce::String& id,
+                                       std::optional<Styles>& styles,
                                        LookAndFeel::ComponentPredicate predicate,
                                        InteractionState interationState,
                                        LookAndFeel::Precedence precedence);
@@ -56,5 +57,6 @@ namespace jive
         Property<juce::BorderSize<float>> border;
         std::unordered_map<juce::String, juce::Uuid> uuids;
         std::unordered_map<juce::String, StyleProperty> observedObjects;
+        std::unique_ptr<juce::VBlankAttachment> vBlank;
     };
 } // namespace jive

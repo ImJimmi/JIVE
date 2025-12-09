@@ -3,7 +3,10 @@
 #include "jive_Fill.h"
 #include "jive_Shadow.h"
 
+#include <jive_core/algorithms/jive_Interpolate.h>
 #include <jive_core/geometry/jive_BorderRadii.h>
+#include <jive_core/kinetics/jive_Transitions.h>
+#include <jive_core/time/jive_Timer.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 #include <juce_graphics/juce_graphics.h>
@@ -17,28 +20,128 @@ namespace jive
     // sort of error handling in that case.
     struct Styles
     {
-        std::optional<Fill> accent;                                        // "accent"
-        std::optional<Fill> background;                                    // "background"
-        std::optional<Fill> borderFill;                                    // "border"
-        std::optional<BorderRadii<float>> borderRadius;                    // "border-radius"
-        std::optional<juce::BorderSize<float>> borderWidth;                // "border-width"
-        std::optional<juce::AttributedString::ReadingDirection> direction; // "direction"
-        std::optional<Fill> fill;                                          // "fill"
+        template <typename T>
+        class StyleProperty
+        {
+        public:
+            StyleProperty(const StyleProperty& other) = default;
+            StyleProperty(StyleProperty&&) = default;
+            StyleProperty& operator=(StyleProperty&&) = default;
+
+            StyleProperty& operator=(const StyleProperty& other)
+            {
+                *const_cast<juce::Identifier*>(&id) = other.id;
+                currentValue = other.currentValue;
+                previousValue = other.previousValue;
+                lastUpdated = other.lastUpdated;
+
+                return *this;
+            }
+
+            explicit StyleProperty(const juce::Identifier& propertyID)
+                : id{ propertyID }
+            {
+            }
+
+            StyleProperty(const juce::Identifier& propertyID, const T& value)
+                : id{ propertyID }
+                , currentValue{ value }
+                , previousValue{ value }
+            {
+            }
+
+            void set(const T& newValue)
+            {
+                if (currentValue.has_value())
+                    previousValue = currentValue;
+                else
+                    previousValue = newValue;
+
+                currentValue = newValue;
+                lastUpdated = now();
+            }
+
+            [[nodiscard]] const T& get() const
+            {
+                return currentValue.value();
+            }
+
+            [[nodiscard]] T& get()
+            {
+                return currentValue.value();
+            }
+
+            [[nodiscard]] T getValueOr(const T& fallback) const
+            {
+                return currentValue.value_or(fallback);
+            }
+
+            [[nodiscard]] T interpolated(double proportion) const
+            {
+                return interpolate(previousValue.value(), currentValue.value(), proportion);
+            }
+
+            [[nodiscard]] T interpolatedOr(double proportion, const T& fallback) const
+            {
+                if (currentValue.has_value() && previousValue.has_value())
+                    return interpolated(proportion);
+
+                return fallback;
+            }
+
+            [[nodiscard]] bool hasValue() const
+            {
+                return currentValue.has_value();
+            }
+
+            void overwriteLastUpdated(juce::Time lastUpdatedOverwrite)
+            {
+                lastUpdated = lastUpdatedOverwrite;
+            }
+
+            [[nodiscard]] juce::Time getLastUpdated() const
+            {
+                return lastUpdated;
+            }
+
+            StyleProperty& operator=(const T& other)
+            {
+                set(other);
+                return *this;
+            }
+
+            const juce::Identifier id;
+
+        private:
+            std::optional<T> currentValue;
+            std::optional<T> previousValue;
+            juce::Time lastUpdated = now();
+        };
+
+        StyleProperty<Fill> accent{ "accent" };
+        StyleProperty<Fill> background{ "background" };
+        StyleProperty<Fill> borderFill{ "border" };
+        StyleProperty<BorderRadii<float>> borderRadius{ "border-radius" };
+        StyleProperty<juce::BorderSize<float>> borderWidth{ "border-width" };
+        StyleProperty<juce::AttributedString::ReadingDirection> direction{ "direction" };
+        StyleProperty<Fill> fill{ "fill" };
 #if JUCE_MAJOR_VERSION >= 8
-        std::optional<float> fontAscentOverride;  // "font-ascent-override"
-        std::optional<float> fontDescentOverride; // "font-descent-override"
+        StyleProperty<float> fontAscentOverride{ "font-ascent-override" };
+        StyleProperty<float> fontDescentOverride{ "font-descent-override" };
 #endif
-        std::optional<float> fontExtraKerningFactor;                   // "font-kerning"
-        std::optional<juce::String> fontFamily;                        // "font-family"
-        std::optional<float> fontHorizontalScale;                      // "font-scale"
-        std::optional<float> fontPointSize;                            // "font-size"
-        std::unordered_set<juce::Font::FontStyleFlags> fontStyleFlags; // "font-styles"
-        std::optional<Fill> foreground;                                // "foreground"
-        std::optional<Shadow> shadow;                                  // "shadow"
-        std::optional<Fill> stroke;                                    // "stroke"
-        std::optional<juce::Justification> textAlign;                  // "text-align"
-        std::optional<Fill> thumb;                                     // "thumb"
-        std::optional<Fill> track;                                     // "track"
+        StyleProperty<float> fontExtraKerningFactor{ "font-kerning" };
+        StyleProperty<juce::String> fontFamily{ "font-family" };
+        StyleProperty<float> fontHorizontalScale{ "font-scale" };
+        StyleProperty<float> fontPointSize{ "font-size" };
+        StyleProperty<std::unordered_set<juce::Font::FontStyleFlags>> fontStyleFlags{ "font-styles" };
+        StyleProperty<Fill> foreground{ "foreground" };
+        StyleProperty<Shadow> shadow{ "shadow" };
+        StyleProperty<Fill> stroke{ "stroke" };
+        StyleProperty<juce::Justification> textAlign{ "text-align" };
+        StyleProperty<Fill> thumb{ "thumb" };
+        StyleProperty<Fill> track{ "track" };
+
+        Transitions::ReferenceCountedPointer transitions;
 
         static inline const std::unordered_set<juce::String> propertyNames{
             "accent",
@@ -68,47 +171,47 @@ namespace jive
         [[nodiscard]] Styles& with(const juce::Identifier& propertyName,
                                    const juce::var& value)
         {
-            if (propertyName == juce::Identifier{ "accent" })
+            if (propertyName == accent.id)
                 return withAccent(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "background" })
+            if (propertyName == background.id)
                 return withBackground(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "border" })
+            if (propertyName == borderFill.id)
                 return withBorderFill(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "border-radius" })
+            if (propertyName == borderRadius.id)
                 return withBorderRadius(fromVar<BorderRadii<float>>(value));
-            if (propertyName == juce::Identifier{ "border-width" })
+            if (propertyName == borderWidth.id)
                 return withBorderWidth(fromVar<juce::BorderSize<float>>(value));
-            if (propertyName == juce::Identifier{ "direction" })
+            if (propertyName == direction.id)
                 return withReadingDirection(fromVar<juce::AttributedString::ReadingDirection>(value));
-            if (propertyName == juce::Identifier{ "fill" })
+            if (propertyName == fill.id)
                 return withFill(fromVar<Fill>(value));
 #if JUCE_MAJOR_VERSION >= 8
-            if (propertyName == juce::Identifier{ "font-ascent-override" })
+            if (propertyName == fontAscentOverride.id)
                 return withFontAscentOverride(fromVar<float>(value));
-            if (propertyName == juce::Identifier{ "font-descent-override" })
+            if (propertyName == fontDescentOverride.id)
                 return withFontDescentOverride(fromVar<float>(value));
 #endif
-            if (propertyName == juce::Identifier{ "font-kerning" })
+            if (propertyName == fontExtraKerningFactor.id)
                 return withFontExtraKerningFactor(fromVar<float>(value));
-            if (propertyName == juce::Identifier{ "font-family" })
+            if (propertyName == fontFamily.id)
                 return withFontFamily(value.toString());
-            if (propertyName == juce::Identifier{ "font-scale" })
+            if (propertyName == fontHorizontalScale.id)
                 return withFontHorizontalScale(fromVar<float>(value));
-            if (propertyName == juce::Identifier{ "font-size" })
+            if (propertyName == fontPointSize.id)
                 return withFontPointSize(fromVar<float>(value));
-            if (propertyName == juce::Identifier{ "font-styles" })
+            if (propertyName == fontStyleFlags.id)
                 return withFontStyleFlags(fromVar<std::unordered_set<juce::Font::FontStyleFlags>>(value));
-            if (propertyName == juce::Identifier{ "foreground" })
+            if (propertyName == foreground.id)
                 return withForeground(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "shadow" })
+            if (propertyName == shadow.id)
                 return withShadow(fromVar<Shadow>(value));
-            if (propertyName == juce::Identifier{ "stroke" })
+            if (propertyName == stroke.id)
                 return withStroke(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "text-align" })
+            if (propertyName == textAlign.id)
                 return withTextAlignment(fromVar<juce::Justification>(value));
-            if (propertyName == juce::Identifier{ "thumb" })
+            if (propertyName == thumb.id)
                 return withThumb(fromVar<Fill>(value));
-            if (propertyName == juce::Identifier{ "track" })
+            if (propertyName == track.id)
                 return withTrack(fromVar<Fill>(value));
 
             jassertfalse;
@@ -237,6 +340,12 @@ namespace jive
             return *this;
         }
 
+        [[nodiscard]] Styles& withTransitions(Transitions::ReferenceCountedPointer value)
+        {
+            transitions = value;
+            return *this;
+        }
+
         // Returns a style in this object with the given name, or nullptr if no
         // style with that name exists. The comments next to the properties
         // indicate the name that should be passed to this function.
@@ -248,52 +357,70 @@ namespace jive
         template <>
         [[nodiscard]] std::optional<Fill> find(const juce::String& styleName) const
         {
-            if (styleName == "accent")
-                return accent;
-            if (styleName == "background")
-                return background;
-            if (styleName == "border")
-                return borderFill;
-            if (styleName == "fill")
-                return fill;
-            if (styleName == "foreground")
-                return foreground;
-            if (styleName == "stroke")
-                return stroke;
-            if (styleName == "thumb")
-                return thumb;
-            if (styleName == "track")
-                return track;
+            const StyleProperty<Fill>* property = nullptr;
 
-            jassertfalse;
-            return std::nullopt;
+            if (styleName == "accent")
+                property = &accent;
+            else if (styleName == "background")
+                property = &background;
+            else if (styleName == "border")
+                property = &borderFill;
+            else if (styleName == "fill")
+                property = &fill;
+            else if (styleName == "foreground")
+                property = &foreground;
+            else if (styleName == "stroke")
+                property = &stroke;
+            else if (styleName == "thumb")
+                property = &thumb;
+            else if (styleName == "track")
+                property = &track;
+
+            jassert(property != nullptr);
+
+            if (property == nullptr || !property->hasValue())
+                return std::nullopt;
+
+            return calculateCurrent(*property);
         }
 
         template <>
         [[nodiscard]] std::optional<juce::BorderSize<float>> find(const juce::String& styleName) const
         {
-            if (styleName == "border-width")
-                return borderWidth;
+            const StyleProperty<juce::BorderSize<float>>* property = nullptr;
 
-            jassertfalse;
-            return std::nullopt;
+            if (styleName == "border-width")
+                property = &borderWidth;
+
+            jassert(property != nullptr);
+
+            if (property == nullptr || !property->hasValue())
+                return std::nullopt;
+
+            return calculateCurrent(*property);
         }
 
         template <>
         [[nodiscard]] std::optional<BorderRadii<float>> find(const juce::String& styleName) const
         {
-            if (styleName == "border-radius")
-                return borderRadius;
+            const StyleProperty<BorderRadii<float>>* property = nullptr;
 
-            jassertfalse;
-            return std::nullopt;
+            if (styleName == "border-radius")
+                property = &borderRadius;
+
+            jassert(property != nullptr);
+
+            if (property == nullptr || !property->hasValue())
+                return std::nullopt;
+
+            return calculateCurrent(*property);
         }
 
         template <>
         [[nodiscard]] std::optional<juce::String> find(const juce::String& styleName) const
         {
-            if (styleName == "font-family")
-                return fontFamily;
+            if (styleName == "font-family" && fontFamily.hasValue())
+                return fontFamily.get();
 
             jassertfalse;
             return std::nullopt;
@@ -302,29 +429,34 @@ namespace jive
         template <>
         [[nodiscard]] std::optional<float> find(const juce::String& styleName) const
         {
-            if (styleName == "font-size")
-                return fontPointSize;
-            if (styleName == "font-scale")
-                return fontHorizontalScale;
-            if (styleName == "font-kerning")
-                return fontExtraKerningFactor;
+            const StyleProperty<float>* property = nullptr;
 
+            if (styleName == "font-size")
+                property = &fontPointSize;
+            else if (styleName == "font-scale")
+                property = &fontHorizontalScale;
+            else if (styleName == "font-kerning")
+                property = &fontExtraKerningFactor;
 #if JUCE_MAJOR_VERSION
-            if (styleName == "font-ascent-override")
-                return fontAscentOverride;
-            if (styleName == "font-descent-override")
-                return fontDescentOverride;
+            else if (styleName == "font-ascent-override")
+                property = &fontAscentOverride;
+            else if (styleName == "font-descent-override")
+                property = &fontDescentOverride;
 #endif
 
-            jassertfalse;
-            return std::nullopt;
+            jassert(property != nullptr);
+
+            if (property == nullptr || !property->hasValue())
+                return std::nullopt;
+
+            return calculateCurrent(*property);
         }
 
         template <>
         [[nodiscard]] std::optional<std::unordered_set<juce::Font::FontStyleFlags>> find(const juce::String& styleName) const
         {
-            if (styleName == "font-styles")
-                return fontStyleFlags;
+            if (styleName == "font-styles" && fontStyleFlags.hasValue())
+                return fontStyleFlags.get();
 
             jassertfalse;
             return std::nullopt;
@@ -333,18 +465,25 @@ namespace jive
         template <>
         [[nodiscard]] std::optional<Shadow> find(const juce::String& styleName) const
         {
-            if (styleName == "shadow")
-                return shadow;
+            const StyleProperty<Shadow>* property = nullptr;
 
-            jassertfalse;
-            return std::nullopt;
+            if (styleName == "shadow")
+                property = &shadow;
+
+            if (property == nullptr || !property->hasValue())
+            {
+                jassertfalse;
+                return std::nullopt;
+            }
+
+            return calculateCurrent(*property);
         }
 
         template <>
         [[nodiscard]] std::optional<juce::AttributedString::ReadingDirection> find(const juce::String& styleName) const
         {
-            if (styleName == "direction")
-                return direction;
+            if (styleName == "direction" && direction.hasValue())
+                return direction.get();
 
             jassertfalse;
             return std::nullopt;
@@ -353,11 +492,26 @@ namespace jive
         template <>
         [[nodiscard]] std::optional<juce::Justification> find(const juce::String& styleName) const
         {
-            if (styleName == "text-align")
-                return textAlign;
+            if (styleName == "text-align" && textAlign.hasValue())
+                return textAlign.get();
 
             jassertfalse;
             return std::nullopt;
+        }
+
+    private:
+        template <typename T>
+        [[nodiscard]] std::optional<T> calculateCurrent(const StyleProperty<T>& property) const
+        {
+            double proportion = 1.0;
+
+            if (transitions != nullptr)
+            {
+                if (auto* transition = (*transitions)[property.id.toString()])
+                    proportion = transition->calculateProgress(property.getLastUpdated());
+            }
+
+            return property.interpolated(proportion);
         }
     };
 } // namespace jive
