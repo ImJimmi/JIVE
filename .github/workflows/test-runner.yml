@@ -51,7 +51,7 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Restore CPM dependencies
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CPM_CACHE_DIR }}
           key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
@@ -78,7 +78,7 @@ jobs:
             ${{ matrix.additional-cmake-options }}
 
       - name: Cache CPM dependencies
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.CPM_CACHE_DIR }}
           key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
