@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(JIVE
-        VERSION 1.2.0
+        VERSION 2.0.0
 )
 configure_file(version.txt.in
                version.txt
