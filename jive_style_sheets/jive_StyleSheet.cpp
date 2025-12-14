@@ -55,7 +55,9 @@ namespace jive
         for (const auto& [id, property] : observedObjects)
         {
             juce::ignoreUnused(id);
-            property.get()->removeListener(*this);
+
+            if (auto object = property.get(); object != nullptr)
+                object->removeListener(*this);
         }
     }
 

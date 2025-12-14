@@ -128,7 +128,7 @@ namespace jive_demo
                                                 "border-radius 500ms ease-in-out,"
                                                 "font-size 500ms ease-in-out,"
                                                 "font-stretch 300ms ease-in-out,"
-                                                "letter-spacing 300ms ease-in-out",
+                                                "letter-spacing 300ms ease-in-out,",
                                             },
                                             {
                                                 "hover",

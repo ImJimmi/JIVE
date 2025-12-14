@@ -248,6 +248,7 @@ namespace jive
                                                                                    .getObject())
                                     ->shadow;
             shadowComp.setShadow(styles.find<Shadow>("shadow").value());
+            shadowComp.repaint();
         }
 
         // Updates the shadow component (if any) associated with the given
@@ -381,8 +382,6 @@ namespace jive
                   const Component& component,
                   DefaultStyleDrawer drawDefaultStyle) const
         {
-            updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component));
-
             const auto styles = findMostApplicableStyles(component);
 
             if (const auto painter = findMostApplicablePainter(component);
@@ -393,6 +392,7 @@ namespace jive
             }
 
             drawDefaultStyle(styles);
+            updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component));
         }
 
         juce::Component::SafePointer<juce::Component> attachedComponent;
