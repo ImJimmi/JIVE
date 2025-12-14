@@ -26,6 +26,7 @@ namespace jive
 
         // Draws the shadow to the given graphics context using the given path.
         void draw(juce::Graphics&,
+                  const juce::Rectangle<int>&,
                   const juce::Path&) const;
 
         Shadow& setOffset(const juce::Point<int>& newOffset);

@@ -136,16 +136,23 @@ namespace jive
         int stride{ 0 };
     };
 
-    [[nodiscard]] static auto renderNonBlurredShadow(const juce::Rectangle<int>& clipBounds, const juce::Path& shape, float spread)
+    [[nodiscard]] static auto renderNonBlurredShadow(const juce::Rectangle<int>& bounds, const juce::Path& shape, float spread, float imageScale)
     {
+        const auto imageSize = bounds
+                                   .toFloat()
+                                   .transformedBy(juce::AffineTransform::scale(imageScale))
+                                   .toNearestInt();
+
         juce::Image result{
             juce::Image::SingleChannel,
-            clipBounds.getWidth(),
-            clipBounds.getHeight(),
+            imageSize.getWidth(),
+            imageSize.getHeight(),
             true,
         };
 
         juce::Graphics g{ result };
+        g.addTransform(juce::AffineTransform::scale(imageSize.toFloat().getWidth() / bounds.toFloat().getWidth(),
+                                                    imageSize.toFloat().getHeight() / bounds.toFloat().getHeight()));
         g.setColour(juce::Colours::white);
         g.fillPath(shape);
         g.strokePath(shape, juce::PathStrokeType{ spread * 2.0f });
@@ -153,7 +160,7 @@ namespace jive
         return result;
     }
 
-    static void blurHorizontally(juce::Image& frameBuffer, const Shadow& shadow)
+    static void blurHorizontally(juce::Image& frameBuffer, const Shadow& shadow, float scale)
     {
         juce::Image::BitmapData bitmapData{
             frameBuffer,
@@ -161,7 +168,7 @@ namespace jive
         };
         const auto numRows = frameBuffer.getHeight();
 
-        StackBlur blur{ juce::roundToInt(shadow.getBlurRadius()) };
+        StackBlur blur{ juce::roundToInt(shadow.getBlurRadius() * scale) };
         blur.setNumPixels(bitmapData.width);
         blur.setStride(bitmapData.pixelStride);
 
@@ -186,7 +193,7 @@ namespace jive
         }
     }
 
-    static void blurVertically(juce::Image& frameBuffer, const Shadow& shadow)
+    static void blurVertically(juce::Image& frameBuffer, const Shadow& shadow, float scale)
     {
         juce::Image::BitmapData bitmapData{
             frameBuffer,
@@ -194,7 +201,7 @@ namespace jive
         };
         const auto numColumns = frameBuffer.getWidth();
 
-        StackBlur blur{ juce::roundToInt(shadow.getBlurRadius()) };
+        StackBlur blur{ juce::roundToInt(shadow.getBlurRadius() * scale) };
         blur.setNumPixels(bitmapData.height);
         blur.setStride(bitmapData.lineStride);
 
@@ -220,14 +227,16 @@ namespace jive
     }
 
     void Shadow::draw(juce::Graphics& g,
+                      const juce::Rectangle<int>& bounds,
                       const juce::Path& shape) const
     {
-        auto frameBuffer = renderNonBlurredShadow(g.getClipBounds(), shape, spreadRadius);
-        blurHorizontally(frameBuffer, *this);
-        blurVertically(frameBuffer, *this);
+        const auto scale = 0.333f;
+        auto frameBuffer = renderNonBlurredShadow(bounds, shape, spreadRadius, scale);
+        blurHorizontally(frameBuffer, *this, scale);
+        blurVertically(frameBuffer, *this, scale);
 
         g.setColour(colour);
-        g.drawImageAt(frameBuffer, 0, 0, true);
+        g.drawImage(frameBuffer, bounds.toFloat(), juce::RectanglePlacement::stretchToFit, true);
     }
 
     Shadow& Shadow::setOffset(const juce::Point<int>& newOffset)
@@ -310,6 +319,9 @@ namespace jive
         updateParent();
         updateVisibility();
 
+        setInterceptsMouseClicks(false, false);
+        setPaintingIsUnclipped(true);
+
         componentToAttachTo.addComponentListener(this);
     }
 
@@ -348,7 +360,7 @@ namespace jive
             static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
         };
         shape.applyTransform(juce::AffineTransform::translation(shadow.getOffset() - component->getPosition() + blurRadiusOffset));
-        shadow.draw(g, shape);
+        shadow.draw(g, getLocalBounds(), shape);
     }
 
     void ShadowComponent::setShadow(const Shadow& newShadow)
