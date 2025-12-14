@@ -20,12 +20,14 @@ namespace jive::default_styles
         if (backgroundFill.isInvisible() && borderFill.isInvisible())
             return;
 
-        const auto fillShape = getShape(borderRadius, bounds, juce::BorderSize{
-                                                                  borderWidth.getTop() * 0.5f,
-                                                                  borderWidth.getLeft() * 0.5f,
-                                                                  borderWidth.getBottom() * 0.5f,
-                                                                  borderWidth.getRight() * 0.5f,
-                                                              });
+        const auto fillShape = getShape(borderRadius,
+                                        bounds,
+                                        juce::BorderSize{
+                                            borderWidth.getTop() * 0.5f,
+                                            borderWidth.getLeft() * 0.5f,
+                                            borderWidth.getBottom() * 0.5f,
+                                            borderWidth.getRight() * 0.5f,
+                                        });
         g.setFillType(backgroundFill);
         g.fillPath(fillShape);
 
@@ -48,11 +50,20 @@ namespace jive::default_styles
                                const Component& component,
                                const Styles& styles)
     {
+        const auto bounds = component.getLocalBounds().toFloat();
+        const auto borderRadius = getBorderRadius(component, styles);
+
         drawRoundedRectangle(g,
-                             component.getLocalBounds().toFloat(),
-                             getBorderRadius(component, styles),
+                             bounds,
+                             borderRadius,
                              getBorderWidth(component, styles),
                              getBackgroundFill(component, styles),
                              getBorderFill(component, styles));
+
+        const auto shape = getShape(borderRadius, bounds);
+        const_cast<Component*>(&component)
+            ->getProperties()
+            .set("jive::shadow-path",
+                 shape.toString());
     }
 } // namespace jive::default_styles

@@ -707,8 +707,6 @@ namespace jive
                                       double progress,
                                       const juce::String& text)
     {
-        updateShadow<juce::ProgressBar>(progressBar);
-
         const auto styles = findMostApplicableStyles(progressBar);
 
         if (const auto painter = findMostApplicablePainter(progressBar);
@@ -719,6 +717,7 @@ namespace jive
         }
 
         default_styles::paintProgressBar(g, progressBar, progress, text, styles);
+        updateShadow<juce::ProgressBar>(progressBar);
     }
 
     std::optional<LookAndFeel::ComponentPainter> LookAndFeel::findMostApplicablePainter(const juce::Component& component) const
