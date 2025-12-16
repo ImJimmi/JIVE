@@ -24,6 +24,7 @@ namespace jive
         void propertyChanged(Object& object,
                              const juce::Identifier& propertyName) final;
 
+        void clear();
         void stylePropertyChanged();
         void addStylesFrom(Object& object,
                            InteractionState interationState = InteractionState{});
@@ -58,5 +59,8 @@ namespace jive
         std::unordered_map<juce::String, juce::Uuid> uuids;
         std::unordered_map<juce::String, StyleProperty> observedObjects;
         std::unique_ptr<juce::VBlankAttachment> vBlank;
+
+        std::unique_ptr<FileObserver> fileObserver;
+        Property<juce::String> rootDirectory;
     };
 } // namespace jive

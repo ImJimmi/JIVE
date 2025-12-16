@@ -22,28 +22,9 @@ namespace jive
         , focusOrder{ state, "focus-order" }
         , opacity{ state, "opacity" }
         , cursor{ state, "cursor" }
-        , display{ state, "display" }
         , width{ state, "width" }
         , height{ state, "height" }
     {
-        if (!enabled.exists())
-            enabled = true;
-        if (!accessible.exists())
-            accessible = true;
-        if (!visibility.exists())
-            visibility = true;
-        if (!clickingGrabsFocus.exists())
-            clickingGrabsFocus = true;
-        if (!focusOrder.exists())
-            focusOrder = state.getParent().indexOf(state) + 1;
-        if (!opacity.exists())
-            opacity = 1.0f;
-        if (!cursor.exists())
-            cursor = juce::MouseCursor::NormalCursor;
-        if (!display.exists())
-            display = Display::flex;
-
-        getComponent()->setPaintingIsUnclipped(true);
         getComponent()->addComponentListener(this);
 
         name.onValueChange = [this]() {
@@ -72,19 +53,19 @@ namespace jive
         getComponent()->setHelpText(tooltip);
 
         enabled.onValueChange = [this]() {
-            getComponent()->setEnabled(enabled);
+            getComponent()->setEnabled(enabled.getOr(true));
         };
-        getComponent()->setEnabled(enabled);
+        getComponent()->setEnabled(enabled.getOr(true));
 
         accessible.onValueChange = [this]() {
-            getComponent()->setAccessible(accessible);
+            getComponent()->setAccessible(accessible.getOr(true));
         };
-        getComponent()->setAccessible(accessible);
+        getComponent()->setAccessible(accessible.getOr(true));
 
         visibility.onValueChange = [this]() {
-            getComponent()->setVisible(visibility);
+            getComponent()->setVisible(visibility.getOr(true));
         };
-        getComponent()->setVisible(visibility);
+        getComponent()->setVisible(visibility.getOr(true));
 
         alwaysOnTop.onValueChange = [this]() {
             getComponent()->setAlwaysOnTop(alwaysOnTop);
@@ -112,26 +93,26 @@ namespace jive
         getComponent()->setHasFocusOutline(focusOutline);
 
         clickingGrabsFocus.onValueChange = [this]() {
-            getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
+            getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus.getOr(true));
         };
-        getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
+        getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus.getOr(true));
 
         focusOrder.onValueChange = [this]() {
-            getComponent()->setExplicitFocusOrder(focusOrder);
+            getComponent()->setExplicitFocusOrder(focusOrder.getOr(state.getParent().indexOf(state) + 1));
         };
-        getComponent()->setExplicitFocusOrder(focusOrder);
+        getComponent()->setExplicitFocusOrder(focusOrder.getOr(state.getParent().indexOf(state) + 1));
 
         const auto updateOpacity = [this] {
-            getComponent()->setAlpha(opacity.calculateCurrent());
+            getComponent()->setAlpha(opacity.exists() ? opacity.calculateCurrent() : 1.0f);
         };
         opacity.onValueChange = updateOpacity;
         opacity.onTransitionProgressed = updateOpacity;
-        getComponent()->setAlpha(opacity);
+        getComponent()->setAlpha(opacity.getOr(1.0f));
 
         cursor.onValueChange = [this]() {
-            getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
+            getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
         };
-        getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
+        getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
 
         if (isTopLevel())
         {
@@ -176,7 +157,8 @@ namespace jive
         if (&componentThatChangedVisiblity != getComponent().get())
             return;
 
-        visibility = getComponent()->isVisible();
+        if (getComponent()->isVisible() != visibility.getOr(true))
+            visibility = getComponent()->isVisible();
     }
 
     void CommonGuiItem::componentNameChanged(juce::Component& componentThatChangedName)
@@ -252,7 +234,7 @@ namespace jive
             if (hasWidgetRole(*parentComponent))
                 getComponent()->setAccessible(false);
             else
-                getComponent()->setAccessible(accessible);
+                getComponent()->setAccessible(accessible.getOr(true));
         }
 
         setStyleSheet(StyleSheet::create(*getComponent(), state));

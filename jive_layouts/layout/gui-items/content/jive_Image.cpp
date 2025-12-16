@@ -10,21 +10,18 @@ namespace jive
         , placement{ state, "placement" }
         , width{ state, "width" }
         , height{ state, "height" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , idealWidth{ state, "jive::ideal-width" }
+        , idealHeight{ state, "jive::ideal-height" }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
-
-        if (!placement.exists())
-            placement = juce::RectanglePlacement::centred;
 
         source.onValueChange = [this]() {
             updateImageComponentDrawable();
         };
         placement.onValueChange = [this]() {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-                image->setImagePlacement(placement);
+                image->setImagePlacement(placement.getOr(juce::RectanglePlacement::centred));
         };
 
         updateImageComponentDrawable();
@@ -100,7 +97,7 @@ namespace jive
             if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
             {
                 drawable->setTransformToFit(getComponent()->getLocalBounds().toFloat(),
-                                            placement.get());
+                                            placement.getOr(juce::RectanglePlacement::centred));
             }
         }
     }
@@ -130,7 +127,7 @@ namespace jive
                 if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
                 {
                     drawable->setTransformToFit(getComponent()->getLocalBounds().toFloat(),
-                                                placement.get());
+                                                placement.getOr(juce::RectanglePlacement::centred));
                 }
             }
         }

@@ -24,23 +24,6 @@ namespace jive
         jassert(state.hasProperty("display"));
         jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
 
-        static const juce::Grid defaultGrid;
-
-        if (!justifyItems.exists())
-            justifyItems = defaultGrid.justifyItems;
-        if (!alignItems.exists())
-            alignItems = defaultGrid.alignItems;
-        if (!justifyContent.exists())
-            justifyContent = defaultGrid.justifyContent;
-        if (!alignContent.exists())
-            alignContent = defaultGrid.alignContent;
-        if (!gridAutoFlow.exists())
-            gridAutoFlow = defaultGrid.autoFlow;
-        if (!gridAutoRows.exists())
-            gridAutoRows = defaultGrid.autoRows;
-        if (!gridAutoColumns.exists())
-            gridAutoColumns = defaultGrid.autoColumns;
-
         justifyItems.onValueChange = [this] {
             callLayoutChildrenWithRecursionLock();
         };
@@ -186,8 +169,8 @@ namespace jive
         if (layoutRecursionLock)
         {
             static const juce::Array<juce::Identifier> propertiesForWhichChangesRequireAnotherLayOut{
-                "ideal-width",
-                "ideal-height",
+                "jive::ideal-width",
+                "jive::ideal-height",
             };
 
             if (propertiesForWhichChangesRequireAnotherLayOut.contains(id))
@@ -200,14 +183,14 @@ namespace jive
     {
         juce::Grid grid;
 
-        grid.autoFlow = gridAutoFlow;
-        grid.templateColumns = gridTemplateColumns.calculateCurrent();
-        grid.templateRows = gridTemplateRows.calculateCurrent();
-        grid.templateAreas = gridTemplateAreas;
-        grid.autoRows = gridAutoRows;
-        grid.autoColumns = gridAutoColumns;
+        grid.autoFlow = gridAutoFlow.getOr(juce::Grid::AutoFlow::row);
+        grid.templateColumns = gridTemplateColumns.exists() ? gridTemplateColumns.calculateCurrent() : juce::Array<juce::Grid::TrackInfo>{};
+        grid.templateRows = gridTemplateRows.exists() ? gridTemplateRows.calculateCurrent() : juce::Array<juce::Grid::TrackInfo>{};
+        grid.templateAreas = gridTemplateAreas.getOr(juce::StringArray{});
+        grid.autoRows = gridAutoRows.getOr(juce::Grid::TrackInfo{});
+        grid.autoColumns = gridAutoColumns.getOr(juce::Grid::TrackInfo{});
 
-        const auto gaps = gap.calculateCurrent();
+        const auto gaps = gap.exists() ? gap.calculateCurrent() : juce::Array<juce::Grid::Px>{};
         grid.rowGap = gaps.size() > 0 ? gaps.getUnchecked(0) : juce::Grid::Px{ 0 };
         grid.columnGap = gaps.size() > 1 ? gaps.getUnchecked(1) : grid.rowGap;
 
@@ -216,10 +199,10 @@ namespace jive
         switch (strategy)
         {
         case LayoutStrategy::real:
-            grid.justifyItems = justifyItems;
-            grid.alignItems = alignItems;
-            grid.justifyContent = justifyContent;
-            grid.alignContent = alignContent;
+            grid.justifyItems = justifyItems.getOr(juce::Grid::JustifyItems::stretch);
+            grid.alignItems = alignItems.getOr(juce::Grid::AlignItems::stretch);
+            grid.justifyContent = justifyContent.getOr(juce::Grid::JustifyContent::stretch);
+            grid.alignContent = alignContent.getOr(juce::Grid::AlignContent::stretch);
             break;
         case LayoutStrategy::dummy:
             grid.justifyItems = juce::Grid::JustifyItems::start;

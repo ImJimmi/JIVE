@@ -1,0 +1,14 @@
+{
+  "font-family": "Trebuchet MS",
+  "background": "hsl(180, 10%, 10%)",
+
+  "#title": {
+    "font-size": 35,
+    "foreground": "hsl(0, 100%, 55%)"
+  },
+
+  "#subtitle": {
+    "font-size": 18,
+    "text-align": "centred"
+  }
+}

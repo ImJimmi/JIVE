@@ -14,11 +14,7 @@ namespace jive
         , flexAlignItems{ state, "align-items" }
         , flexAlignContent{ state, "align-content" }
     {
-        jassert(state.hasProperty("display"));
-        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
-
-        if (!flexDirection.exists())
-            flexDirection = juce::FlexBox::Direction::column;
+        jassert(state.getProperty("display", "flex") == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this] {
             updateIdealSizeUnrestrained();
@@ -76,7 +72,7 @@ namespace jive
     {
         constraints = constraints.withZeroOrigin();
 
-        switch (flexDirection.getOr(juce::FlexBox{}.flexDirection))
+        switch (flexDirection.getOr(juce::FlexBox::Direction::column))
         {
         case juce::FlexBox::Direction::column:
         case juce::FlexBox::Direction::columnReverse:
@@ -150,8 +146,8 @@ namespace jive
         if (layoutRecursionLock)
         {
             static const juce::Array<juce::Identifier> propertiesForWhichChangesRequireAnotherLayOut{
-                "ideal-width",
-                "ideal-height",
+                "jive::ideal-width",
+                "jive::ideal-height",
             };
 
             if (propertiesForWhichChangesRequireAnotherLayOut.contains(id))
@@ -164,17 +160,17 @@ namespace jive
     {
         juce::FlexBox flex;
 
-        flex.flexDirection = flexDirection;
-        flex.flexWrap = flexWrap;
+        flex.flexDirection = flexDirection.getOr(juce::FlexBox::Direction::column);
+        flex.flexWrap = flexWrap.getOr(juce::FlexBox::Wrap::noWrap);
 
         appendChildren(*this, flex, bounds, strategy);
 
         switch (strategy)
         {
         case LayoutStrategy::real:
-            flex.justifyContent = flexJustifyContent;
-            flex.alignItems = flexAlignItems;
-            flex.alignContent = flexAlignContent;
+            flex.justifyContent = flexJustifyContent.getOr(juce::FlexBox::JustifyContent::flexStart);
+            flex.alignItems = flexAlignItems.getOr(juce::FlexBox::AlignItems::flexStart);
+            flex.alignContent = flexAlignContent.getOr(juce::FlexBox::AlignContent::flexStart);
             break;
         case LayoutStrategy::dummy:
             flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;

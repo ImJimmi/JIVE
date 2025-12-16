@@ -1,4 +1,3 @@
-include(cmake/melatonin_inspector.cmake)
 include(cmake/pluginval.cmake)
 
 add_library(jive-demo
@@ -44,6 +43,7 @@ target_link_libraries(jive-demo
 
 if (JIVE_ENABLE_MELATONIN_INSPECTOR)
     add_melatonin_inspector(jive-demo)
+    target_link_libraries(jive-demo INTERFACE melatonin_inspector)
 endif ()
 
 juce_add_gui_app(jive-demo-app

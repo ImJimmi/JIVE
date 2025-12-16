@@ -1,0 +1,18 @@
+<Window style="styles.json" width="650" height="400" align-items="centre" justify-content="centre">
+    <Component align-items="centre" max-width="450">
+        <Component flex-direction="row" align-items="centre" margin="0 0 10 0">
+            <svg id="icon" width="25" margin="2 12 0 0"
+                xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50%" cy="50%" r="50%" fill="red" />
+            </svg>
+
+            <Text id="title">
+                Live Editing Demo
+            </Text>
+        </Component>
+
+        <Text id="subtitle">
+            Edit view.xml while this window is open to watch the changes happen live!
+        </Text>
+    </Component>
+</Window>

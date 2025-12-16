@@ -7,8 +7,8 @@ namespace jive
     ContainerItem::ContainerItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , box{ boxModel(*this) }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , idealWidth{ state, "jive::ideal-width" }
+        , idealHeight{ state, "jive::ideal-height" }
     {
         box.addListener(*this);
     }
@@ -80,8 +80,9 @@ namespace jive
 
         if ((widthChanged || heightChanged) && getParent() != nullptr)
         {
-            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+            if (auto* decorator = dynamic_cast<GuiItemDecorator*>(getParent()))
+                if (auto* containerParent = decorator->getTopLevelDecorator().toType<ContainerItem>())
+                    containerParent->updateIdealSizeUnrestrained();
         }
     }
 } // namespace jive

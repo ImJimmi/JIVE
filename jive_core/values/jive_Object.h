@@ -23,7 +23,7 @@ namespace jive
         Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties);
         Object(const Object& other);
         Object(Object&& other);
-        Object(const juce::DynamicObject& other);
+        Object(const juce::DynamicObject& other, Object* parent = nullptr);
 
 #if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 4)
         void didModifyProperty(const juce::Identifier& name,
@@ -34,8 +34,8 @@ namespace jive
 #else
         void setProperty(const juce::Identifier& propertyName,
                          const juce::var& newValue) override;
-#endif
         const juce::NamedValueSet& getProperties() const;
+#endif
 
         [[nodiscard]] Object* getParent() noexcept;
         [[nodiscard]] const Object* getParent() const noexcept;

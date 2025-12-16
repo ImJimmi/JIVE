@@ -11,19 +11,6 @@ namespace jive
         , gridRow{ state, "grid-row" }
         , gridArea{ state, "grid-area" }
     {
-        static const juce::GridItem defaultGridItem;
-
-        if (!justifySelf.exists())
-            justifySelf = defaultGridItem.justifySelf;
-        if (!alignSelf.exists())
-            alignSelf = defaultGridItem.alignSelf;
-        if (!gridColumn.exists())
-            gridColumn = defaultGridItem.column;
-        if (!gridRow.exists())
-            gridRow = defaultGridItem.row;
-        if (!gridArea.exists())
-            gridArea = defaultGridItem.area;
-
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
 
@@ -54,9 +41,15 @@ namespace jive
         {
             juce::GridItem gridItem{ *getComponent() };
 
-            gridItem.column = gridColumn;
-            gridItem.row = gridRow;
-            gridItem.area = gridArea;
+            gridItem.column = gridColumn.getOr({
+                juce::GridItem::Keyword::autoValue,
+                juce::GridItem::Keyword::autoValue,
+            });
+            gridItem.row = gridRow.getOr({
+                juce::GridItem::Keyword::autoValue,
+                juce::GridItem::Keyword::autoValue,
+            });
+            gridItem.area = gridArea.getOr("");
 
             applyConstraints(gridItem,
                              parentContentBounds,
@@ -66,8 +59,8 @@ namespace jive
             switch (strategy)
             {
             case LayoutStrategy::real:
-                gridItem.justifySelf = justifySelf;
-                gridItem.alignSelf = alignSelf;
+                gridItem.justifySelf = justifySelf.getOr(juce::GridItem::JustifySelf::autoValue);
+                gridItem.alignSelf = alignSelf.getOr(juce::GridItem::AlignSelf::autoValue);
                 break;
             case LayoutStrategy::dummy:
                 gridItem.justifySelf = juce::GridItem::JustifySelf::stretch;
