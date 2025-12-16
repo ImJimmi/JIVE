@@ -19,6 +19,7 @@ namespace jive
         , state{ source }
         , style{ state, "style" }
         , border{ state, "border-width" }
+        , rootDirectory{ state, "jive::root-directory" }
     {
         style.onValueChange = [this] {
             stylePropertyChanged();
@@ -71,19 +72,46 @@ namespace jive
         }
     }
 
+    void StyleSheet::clear()
+    {
+        for (const auto& [name, uuid] : uuids)
+            lookAndFeel.removeStyles(uuid);
+
+        uuids.clear();
+    }
+
     void StyleSheet::stylePropertyChanged()
     {
-        if (!style.exists() || style.get() == nullptr)
+        if (!style.exists())
         {
-            for (const auto& [name, uuid] : uuids)
-                lookAndFeel.removeStyles(uuid);
-
-            uuids.clear();
-
+            clear();
             return;
         }
 
-        addStylesFrom(*style.get());
+        if (style.get() != nullptr)
+        {
+            addStylesFrom(*style.get());
+            return;
+        }
+
+        if (auto file = juce::File{ rootDirectory.getOr(juce::File::getCurrentWorkingDirectory().getFullPathName()) }
+                            .getChildFile(style.toString());
+            file.existsAsFile())
+        {
+            const auto addStylesFromFile = [this, f = file]() {
+                auto fileContents = parseJSON(f.loadFileAsString());
+
+                if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
+                {
+                    clear();
+                    addStylesFrom(*object);
+                }
+            };
+
+            fileObserver = std::make_unique<FileObserver>(file);
+            fileObserver->onFileModified = addStylesFromFile;
+            addStylesFromFile();
+        }
     }
 
     [[nodiscard]] static juce::String calculateStylesID(Object& object)
@@ -150,7 +178,7 @@ namespace jive
 
         if (observedObjects.count(id) == 0 || observedObjects.at(id).get().get() != &object)
         {
-            StyleProperty* newProperty;
+            StyleProperty* newProperty = nullptr;
             observedObjects.erase(id);
 
             jassert(observedObjects.count(id) == 0);
@@ -165,13 +193,12 @@ namespace jive
                 const auto [entry, wasAdded] = observedObjects.emplace(id, StyleProperty{ state, "style" });
                 newProperty = &entry->second;
             }
-            else
-            {
-                jassertfalse;
-            }
 
-            newProperty->get()->addListener(*this);
-            newProperty->onValueChange = addStyles;
+            if (newProperty != nullptr)
+            {
+                newProperty->get()->addListener(*this);
+                newProperty->onValueChange = addStyles;
+            }
         }
 
         addStyles();

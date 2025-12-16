@@ -60,8 +60,8 @@ namespace jive
     Object::Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties)
         : internalListener{ std::make_unique<InternalListener>(*this) }
     {
-        for (auto& pair : initialProperties)
-            setProperty(pair.name, pair.value);
+        for (auto& [name, value] : initialProperties)
+            setProperty(name, value);
     }
 
     Object::Object(const Object& other)
@@ -76,8 +76,9 @@ namespace jive
     {
     }
 
-    Object::Object(const juce::DynamicObject& other)
+    Object::Object(const juce::DynamicObject& other, Object* par)
         : juce::DynamicObject{ other }
+        , parent{ par }
     {
     }
 
@@ -107,12 +108,14 @@ namespace jive
         if (propertyChanged)
             listeners.call(&Listener::propertyChanged, *this, propertyName);
     }
-#endif
 
+    #if JUCE_VERSION < JIVE_JUCE_VERSION(8, 0, 2)
     const juce::NamedValueSet& Object::getProperties() const
     {
         return dynamic_cast<juce::DynamicObject*>(const_cast<Object*>(this))->getProperties();
     }
+    #endif
+#endif
 
     Object* Object::getParent() noexcept
     {
@@ -170,14 +173,18 @@ namespace jive
         return getProperties()[name];
     }
 
-    static void replaceDynamicObjectsWithJiveObjects(juce::var& value)
+    static void replaceDynamicObjectsWithJiveObjects(juce::var& value, Object* parent = nullptr)
     {
         if (auto* dynamicObject = value.getDynamicObject())
         {
-            for (auto i = 0; i < dynamicObject->getProperties().size(); i++)
-                replaceDynamicObjectsWithJiveObjects(*dynamicObject->getProperties().getVarPointerAt(i));
+            Object::ReferenceCountedPointer object = new Object{
+                std::move(*dynamicObject),
+                parent,
+            };
 
-            Object::ReferenceCountedPointer object = new Object{ std::move(*dynamicObject) };
+            for (auto i = 0; i < object->getProperties().size(); i++)
+                replaceDynamicObjectsWithJiveObjects(*object->getProperties().getVarPointerAt(i), object.get());
+
             value = object.get();
         }
 

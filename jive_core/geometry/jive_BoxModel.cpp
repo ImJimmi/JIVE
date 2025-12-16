@@ -10,10 +10,10 @@ namespace jive
         , minHeight{ state, "min-height" }
         , maxWidth{ state, "max-width" }
         , maxHeight{ state, "max-height" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
-        , componentWidth{ state, "component-width" }
-        , componentHeight{ state, "component-height" }
+        , idealWidth{ state, "jive::ideal-width" }
+        , idealHeight{ state, "jive::ideal-height" }
+        , componentWidth{ state, "jive::component-width" }
+        , componentHeight{ state, "jive::component-height" }
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
@@ -171,7 +171,7 @@ namespace jive
         if (auto* transition = padding.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
-        return padding;
+        return padding.getOr(juce::BorderSize<float>{ 5.0f });
     }
 
     juce::BorderSize<float> BoxModel::getBorder() const

@@ -42,7 +42,6 @@ namespace jive::themes
                           .withBorderFill(juce::Colours::transparentBlack)
                           .withBorderRadius(steel::borderRadius)
                           .withBorderWidth(steel::borderWidth)
-                          .withFill(steel::azure)
                           .withFontFamily("Georgia")
                           .withFontPointSize(15.0f)
                           .withForeground(steel::azure));

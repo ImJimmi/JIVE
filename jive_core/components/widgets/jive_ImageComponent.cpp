@@ -47,8 +47,12 @@ namespace jive
 
         if (auto* shape = dynamic_cast<juce::DrawableShape*>(&drawable))
         {
-            shape->setFill(getFill(image, styles));
-            shape->setStrokeFill(getStroke(image, styles));
+            if (styles.fill.hasValue())
+                shape->setFill(getFill(image, styles));
+
+            if (styles.stroke.hasValue())
+                shape->setStrokeFill(getStroke(image, styles));
+
             return;
         }
 

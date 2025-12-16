@@ -23,6 +23,78 @@
 
 namespace jive
 {
+    class TopLevelWrapperItem : public GuiItem
+    {
+    public:
+        TopLevelWrapperItem(std::unique_ptr<GuiItem> initialItem)
+            : GuiItem{ *initialItem }
+            , item{ std::move(initialItem) }
+        {
+        }
+
+        void insertChild(std::unique_ptr<GuiItem> child, int index) final
+        {
+            item->insertChild(std::move(child), index);
+        }
+
+        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children) override
+        {
+            item->setChildren(std::move(children));
+        }
+
+        void removeChild(GuiItem& childToRemove) override
+        {
+            item->removeChild(childToRemove);
+        }
+
+        juce::Array<GuiItem*> getChildren() override
+        {
+            return item->getChildren();
+        }
+
+        juce::Array<const GuiItem*> getChildren() const override
+        {
+            return juce::Array<const GuiItem*>{
+                item->getChildren().getRawDataPointer(),
+                item->getChildren().size(),
+            };
+        }
+
+        const GuiItem* getParent() const override
+        {
+            return nullptr;
+        }
+
+        GuiItem* getParent() override
+        {
+            return nullptr;
+        }
+
+        bool isContent() const override
+        {
+            return false;
+        }
+
+        bool isContainer() const override
+        {
+            return true;
+        }
+
+        void replaceItem(std::unique_ptr<GuiItem> newItem)
+        {
+            item = nullptr;
+            state = juce::ValueTree{};
+
+            item = std::move(newItem);
+
+            if (item != nullptr)
+                state = item->state;
+        }
+
+    private:
+        std::unique_ptr<GuiItem> item;
+    };
+
     const ComponentFactory& Interpreter::getComponentFactory() const
     {
         return componentFactory;
@@ -71,6 +143,78 @@ namespace jive
         return interpret(parseXML(xmlStringData, xmlStringDataSize), pluginProcessor);
     }
 
+    [[nodiscard]] static auto hasIdenticalTypeAndProperties(const juce::ValueTree& first, const juce::ValueTree& second)
+    {
+        if (first.getType() != second.getType())
+            return false;
+
+        juce::StringArray properties;
+
+        for (auto i = 0; i < first.getNumProperties(); i++)
+            properties.add(first.getPropertyName(i).toString());
+        for (auto i = 0; i < second.getNumProperties(); i++)
+            properties.addIfNotAlreadyThere(second.getPropertyName(i).toString());
+
+        for (const auto& property : properties)
+        {
+            if (property.startsWith("jive::"))
+                continue;
+
+            if (!first.hasProperty(property) || !second.hasProperty(property))
+                return false;
+            if (first[property] != second[property])
+                return false;
+        }
+
+        return true;
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const juce::File& file,
+                                                    juce::AudioProcessor* pluginProcessor)
+    {
+        auto newTree = jive::parseXML(file.loadFileAsString());
+        newTree.setProperty("jive::root-directory",
+                            file.getParentDirectory().getFullPathName(),
+                            nullptr);
+
+        auto wrapper = std::make_unique<TopLevelWrapperItem>(interpret(newTree, pluginProcessor));
+        listenTo(*wrapper);
+
+        auto& observer = fileObservers.emplace_back(file);
+        observer.onFileModified = [this, pluginProcessor, path = file.getFullPathName()]() {
+            auto latestTree = jive::parseXML(juce::File{ path }.loadFileAsString());
+            latestTree.setProperty("jive::root-directory",
+                                   juce::File{ path }.getParentDirectory().getFullPathName(),
+                                   nullptr);
+
+            if (auto* wrap = dynamic_cast<TopLevelWrapperItem*>(observedItem.get()))
+            {
+                auto existingTree = wrap->state;
+
+                if (hasIdenticalTypeAndProperties(latestTree, existingTree))
+                {
+                    expandAlias(latestTree);
+
+                    existingTree.removeAllChildren(nullptr);
+
+                    for (const auto& child : latestTree)
+                        existingTree.addChild(child.createCopy(), -1, nullptr);
+                }
+                else
+                {
+                    auto component = wrap->getComponent();
+                    wrap->replaceItem(nullptr);
+                    wrap->replaceItem(interpret(latestTree,
+                                                nullptr,
+                                                pluginProcessor,
+                                                component));
+                }
+            }
+        };
+
+        return wrapper;
+    }
+
     void Interpreter::listenTo(GuiItem& item)
     {
         if (observedItem != nullptr)
@@ -107,11 +251,36 @@ namespace jive
         }
     }
 
+    void Interpreter::valueTreeChildRemoved(juce::ValueTree& parentTree,
+                                            juce::ValueTree& childWhichHasBeenRemoved,
+                                            int)
+    {
+        if (observedItem != nullptr)
+        {
+            if (auto* parentItem = findItem(*observedItem, parentTree))
+            {
+                GuiItem* childToRemove = nullptr;
+
+                for (auto* child : parentItem->getChildren())
+                {
+                    if (child->state == childWhichHasBeenRemoved)
+                    {
+                        childToRemove = child;
+                        break;
+                    }
+                }
+
+                if (childToRemove != nullptr)
+                    parentItem->removeChild(*childToRemove);
+            }
+        }
+    }
+
     static std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         Property<Display> display{ item->state, "display" };
 
-        switch (display.get())
+        switch (display.getOr(Display::flex))
         {
         case Display::flex:
             return std::make_unique<FlexContainer>(std::move(item));
@@ -133,7 +302,7 @@ namespace jive
 
         Property<Display> display{ item->state.getParent(), "display" };
 
-        switch (display.get())
+        switch (display.getOr(Display::flex))
         {
         case Display::flex:
             return std::make_unique<FlexItem>(std::move(item));
@@ -227,9 +396,10 @@ namespace jive
 
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree,
                                                     GuiItem* const parent,
-                                                    juce::AudioProcessor* pluginProcessor) const
+                                                    juce::AudioProcessor* pluginProcessor,
+                                                    std::shared_ptr<juce::Component> existingComponent) const
     {
-        auto item = createUndecoratedItem(tree, parent);
+        auto item = createUndecoratedItem(tree, parent, existingComponent);
 
         if (item != nullptr)
         {
@@ -272,20 +442,22 @@ namespace jive
         }
     }
 
-    std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree, GuiItem* const parent) const
+    std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree,
+                                                                GuiItem* const parent,
+                                                                std::shared_ptr<juce::Component> component) const
     {
-        // jassert(tree.getType().toString() != "svg");
         auto expandedTree = tree;
         expandAlias(expandedTree);
 
-        if (auto component = createComponent(expandedTree, parent))
-        {
-            return std::make_unique<GuiItem>(std::move(component),
-                                             expandedTree,
-                                             parent);
-        }
+        if (component == nullptr)
+            component = createComponent(expandedTree, parent);
 
-        return nullptr;
+        if (component == nullptr)
+            return nullptr;
+
+        return std::make_unique<GuiItem>(component,
+                                         expandedTree,
+                                         parent);
     }
 
     void Interpreter::insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const
@@ -318,7 +490,7 @@ namespace jive
         item.setChildren(std::move(children));
     }
 
-    std::unique_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
+    std::shared_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
     {
         if (auto* viewObject = dynamic_cast<jive::View*>(tree["view-object"].getObject()))
         {

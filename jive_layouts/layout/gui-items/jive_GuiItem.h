@@ -16,7 +16,9 @@ namespace jive
         GuiItem(std::unique_ptr<juce::Component> component,
                 const juce::ValueTree& sourceState,
                 GuiItem* parent = nullptr);
-
+        GuiItem(std::shared_ptr<juce::Component> component,
+                const juce::ValueTree& sourceState,
+                GuiItem* parent = nullptr);
         GuiItem(std::unique_ptr<juce::Component> component,
                 View::ReferenceCountedPointer sourceView,
                 GuiItem* parent = nullptr);

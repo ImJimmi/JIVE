@@ -32,6 +32,7 @@ target_sources(jive_core
                       components/widgets/jive_NormalisedProgressBar.h
                       components/widgets/jive_TextComponent.cpp
                       components/widgets/jive_TextComponent.h
+                      files/jive_FileObserver.h
                       geometry/jive_BorderRadii.cpp
                       geometry/jive_BorderRadii.h
                       geometry/jive_BorderWidth.cpp

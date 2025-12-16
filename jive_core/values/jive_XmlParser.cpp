@@ -9,7 +9,7 @@ namespace jive
         for (auto* child : xml.getChildIterator())
         {
             if (child->isTextElement())
-                result += child->getText();
+                result += child->getText().trim();
         }
 
         return result;

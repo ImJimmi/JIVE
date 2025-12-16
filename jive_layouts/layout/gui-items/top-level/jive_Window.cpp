@@ -29,85 +29,45 @@ namespace jive
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
-        if (!hasShadow.exists())
-            hasShadow = true;
-        if (!isNative.exists())
-#if JIVE_UNIT_TESTS
-            isNative = false;
-#else
-            isNative = true;
-#endif
-
-        if (!isResizable.exists())
-            isResizable = true;
-        if (!minWidth.exists())
-            minWidth = 1.0f;
-        if (!minHeight.exists())
-            minHeight = 1.0f;
-        if (!maxWidth.exists())
-            maxWidth = static_cast<float>(std::numeric_limits<juce::int16>::max());
-        if (!maxHeight.exists())
-            maxHeight = static_cast<float>(std::numeric_limits<juce::int16>::max());
-        if (!isDraggable.exists())
-            isDraggable = true;
-        if (!name.exists())
-            name = JUCE_APPLICATION_NAME;
-        if (!titleBarHeight.exists())
-            titleBarHeight = 26;
-        if (!titleBarButtons.exists())
-            titleBarButtons = juce::DocumentWindow::allButtons;
-
         hasShadow.onValueChange = [this]() {
-            getWindow().setDropShadowEnabled(hasShadow);
+            getWindow().setDropShadowEnabled(hasShadow.getOr(true));
         };
-        getWindow().setDropShadowEnabled(hasShadow);
+        getWindow().setDropShadowEnabled(hasShadow.getOr(true));
 
+#if JIVE_UNIT_TESTS
+        static constexpr auto nativeByDefault = false;
+#else
+        static constexpr auto nativeByDefault = true;
+#endif
         isNative.onValueChange = [this]() {
-            getWindow().setUsingNativeTitleBar(isNative);
+            getWindow().setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
         };
-        getWindow().setUsingNativeTitleBar(isNative);
+        getWindow().setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
 
         isResizable.onValueChange = [this]() {
-            getWindow().setResizable(isResizable, useCornerResizer);
+            getWindow().setResizable(isResizable.getOr(true), useCornerResizer.getOr(false));
         };
         useCornerResizer.onValueChange = [this]() {
-            getWindow().setResizable(isResizable, useCornerResizer);
+            getWindow().setResizable(isResizable.getOr(true), useCornerResizer.getOr(false));
         };
-        getWindow().setResizable(isResizable, useCornerResizer);
+        getWindow().setResizable(isResizable.getOr(true), useCornerResizer.getOr(false));
 
-        minWidth.onValueChange = [this]() {
-            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
-                                        static_cast<int>(std::ceil(minHeight)),
-                                        static_cast<int>(std::floor(maxWidth)),
-                                        static_cast<int>(std::floor(maxHeight)));
+        const auto updateResizeLimits = [this]() {
+            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f))),
+                                        static_cast<int>(std::ceil(minHeight.getOr(1.0f))),
+                                        static_cast<int>(std::floor(maxWidth.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))),
+                                        static_cast<int>(std::floor(maxHeight.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))));
         };
-        minHeight.onValueChange = [this]() {
-            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
-                                        static_cast<int>(std::ceil(minHeight)),
-                                        static_cast<int>(std::floor(maxWidth)),
-                                        static_cast<int>(std::floor(maxHeight)));
-        };
-        maxWidth.onValueChange = [this]() {
-            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
-                                        static_cast<int>(std::ceil(minHeight)),
-                                        static_cast<int>(std::floor(maxWidth)),
-                                        static_cast<int>(std::floor(maxHeight)));
-        };
-        maxHeight.onValueChange = [this]() {
-            getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
-                                        static_cast<int>(std::ceil(minHeight)),
-                                        static_cast<int>(std::floor(maxWidth)),
-                                        static_cast<int>(std::floor(maxHeight)));
-        };
-        getWindow().setResizeLimits(static_cast<int>(std::ceil(minWidth)),
-                                    static_cast<int>(std::ceil(minHeight)),
-                                    static_cast<int>(std::floor(maxWidth)),
-                                    static_cast<int>(std::floor(maxHeight)));
+        minWidth.onValueChange = updateResizeLimits;
+        minHeight.onValueChange = updateResizeLimits;
+        maxWidth.onValueChange = updateResizeLimits;
+        maxHeight.onValueChange = updateResizeLimits;
+        updateResizeLimits();
 
         isDraggable.onValueChange = [this]() {
-            getWindow().setDraggable(isDraggable);
+            getWindow().setDraggable(isDraggable.getOr(true));
         };
-        getWindow().setDraggable(isDraggable);
+        getWindow().setDraggable(isDraggable.getOr(true));
 
         isFullScreen.onValueChange = [this]() {
             getWindow().setFullScreen(isFullScreen);
@@ -120,14 +80,14 @@ namespace jive
         getWindow().setMinimised(isMinimised);
 
         name.onValueChange = [this]() {
-            getWindow().setName(name);
+            getWindow().setName(name.getOr(JUCE_APPLICATION_NAME));
         };
-        getWindow().setName(name);
+        getWindow().setName(name.getOr(JUCE_APPLICATION_NAME));
 
         titleBarHeight.onValueChange = [this]() {
-            getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.get()));
+            getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.getOr(26)));
         };
-        getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.get()));
+        getWindow().setTitleBarHeight(juce::roundToInt(titleBarHeight.getOr(26)));
 
 #if JUCE_MAC
         static constexpr auto leftAlignButtons = true;
@@ -136,9 +96,9 @@ namespace jive
 #endif
 
         titleBarButtons.onValueChange = [this]() {
-            getWindow().setTitleBarButtonsRequired(titleBarButtons, leftAlignButtons);
+            getWindow().setTitleBarButtonsRequired(titleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
         };
-        getWindow().setTitleBarButtonsRequired(titleBarButtons, leftAlignButtons);
+        getWindow().setTitleBarButtonsRequired(titleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
 
         const auto& boxModel = toType<CommonGuiItem>()->boxModel;
         const auto windowWidth = juce::roundToInt(boxModel.getWidth());

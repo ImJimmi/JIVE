@@ -10,13 +10,10 @@ namespace jive
         , text{ state, "text" }
         , lineSpacing{ state, "line-spacing" }
         , wordWrap{ state, "word-wrap" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , idealWidth{ state, "jive::ideal-width" }
+        , idealHeight{ state, "jive::ideal-height" }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
-
-        if (!wordWrap.exists())
-            wordWrap = juce::AttributedString::WordWrap::byWord;
 
         text.onValueChange = [this]() {
             updateTextComponent();
@@ -28,7 +25,7 @@ namespace jive
             updateTextComponent();
         };
 
-        state.setProperty("ideal-height",
+        state.setProperty("jive::ideal-height",
                           juce::var{ [this](const juce::var::NativeFunctionArgs& args) {
                               const auto layout = buildTextLayout(args.arguments[0]);
                               return std::ceil(layout.getHeight());
@@ -134,9 +131,9 @@ namespace jive
 
     void Text::updateTextComponent()
     {
-        getTextComponent().setText(text);
-        getTextComponent().setLineSpacing(lineSpacing);
-        getTextComponent().setWordWrap(wordWrap);
+        getTextComponent().setText(text.getOr(""));
+        getTextComponent().setLineSpacing(lineSpacing.getOr(0.0f));
+        getTextComponent().setWordWrap(wordWrap.getOr(juce::AttributedString::WordWrap::byWord));
         getTextComponent().clearAttributes();
 
         for (auto* child : getChildren())

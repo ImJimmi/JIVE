@@ -12,8 +12,8 @@ namespace jive
             , order{ state, "order" }
             , width{ state, "width" }
             , height{ state, "height" }
-            , idealWidth{ state, "ideal-width" }
-            , idealHeight{ state, "ideal-height" }
+            , idealWidth{ state, "jive::ideal-width" }
+            , idealHeight{ state, "jive::ideal-height" }
             , boxModel{ item.toType<CommonGuiItem>()->boxModel }
         {
         }
@@ -77,7 +77,7 @@ namespace jive
             }
             else if (idealHeight.exists())
             {
-                const auto property = state["ideal-height"];
+                const auto property = state["jive::ideal-height"];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
@@ -114,7 +114,7 @@ namespace jive
             }
             else if (idealHeight.exists())
             {
-                const auto property = state["ideal-height"];
+                const auto property = state["jive::ideal-height"];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
@@ -165,8 +165,8 @@ namespace jive
     ContainerItem::Child::Child(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , pimpl{ std::make_unique<Pimpl>(*this) }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , idealWidth{ state, "jive::ideal-width" }
+        , idealHeight{ state, "jive::ideal-height" }
     {
         getComponent()->addComponentListener(this);
     }

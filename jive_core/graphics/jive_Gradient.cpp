@@ -280,6 +280,37 @@ namespace jive
             && radialPosition == other.radialPosition;
     }
 
+    [[nodiscard]] static auto splitPreservingParentheses(const juce::String& str, const juce::String& breakChar)
+    {
+        juce::StringArray parts;
+
+        bool withinParentheses = false;
+        auto startIndex = 0;
+
+        for (auto i = 0; i < str.length(); i++)
+        {
+            if (i == str.length() - 1)
+            {
+                parts.add(str.substring(startIndex).trim());
+            }
+            else if (str[i] == '(')
+            {
+                withinParentheses = true;
+            }
+            else if (str[i] == ')')
+            {
+                withinParentheses = false;
+            }
+            else if (!withinParentheses && str.substring(i, i + 1) == breakChar)
+            {
+                parts.add(str.substring(startIndex, i).trim());
+                startIndex = i + 1;
+            }
+        }
+
+        return parts;
+    }
+
     [[nodiscard]] static auto parseColourStops(const juce::StringArray& stopStrings)
     {
         std::vector<Gradient::ColourStop> stops;
@@ -288,7 +319,7 @@ namespace jive
         {
             Gradient::ColourStop stop;
 
-            const auto parts = juce::StringArray::fromTokens(stopString.trim(), " ", "()");
+            const auto parts = splitPreservingParentheses(stopString.trim(), " ");
             stop.colour = parseColour(parts[0]);
 
             if (parts.size() > 1)
@@ -296,6 +327,8 @@ namespace jive
 
             stops.emplace_back(stop);
         }
+
+        jassert(std::size(stops) > 1);
 
         return stops;
     }
@@ -323,11 +356,10 @@ namespace jive
         Gradient gradient;
         gradient.variant = Gradient::Variant::linear;
 
-        auto args = juce::StringArray::fromTokens(gradientString
-                                                      .fromFirstOccurrenceOf("(", false, true)
-                                                      .upToLastOccurrenceOf(")", false, true),
-                                                  ",",
-                                                  "()");
+        auto args = splitPreservingParentheses(gradientString
+                                                   .fromFirstOccurrenceOf("(", false, true)
+                                                   .upToLastOccurrenceOf(")", false, true),
+                                               ",");
 
         if (args[0].contains("deg")
             || args[0].contains("rad")
@@ -337,27 +369,11 @@ namespace jive
             gradient.linearAngle = parseAngle(args[0].trim());
             args.remove(0);
         }
-        else if (args[0] == "to")
+        else if (args[0].startsWith("to"))
         {
-            args.remove(0);
-
-            juce::StringArray sides{ "top", "right", "bottom", "left" };
-            juce::StringArray nextArgs;
-
-            for (auto _ = 0; _ < 2; _++)
-            {
-                if (sides.contains(args[0]))
-                {
-                    nextArgs.add(args[0]);
-                    args.remove(0);
-                }
-                else
-                {
-                    break;
-                }
-            }
-
+            auto nextArgs = splitPreservingParentheses(args[0].fromFirstOccurrenceOf(" ", false, false), " ");
             nextArgs.sort(true);
+            args.remove(0);
 
             if (nextArgs == juce::StringArray{ "left", "top" })
                 gradient.linearAngle = SideOrCorner::topLeft;
@@ -389,11 +405,10 @@ namespace jive
         Gradient gradient;
         gradient.variant = Gradient::Variant::radial;
 
-        auto args = juce::StringArray::fromTokens(gradientString
-                                                      .fromFirstOccurrenceOf("(", false, true)
-                                                      .upToLastOccurrenceOf(")", false, true),
-                                                  ",",
-                                                  "()");
+        auto args = splitPreservingParentheses(gradientString
+                                                   .fromFirstOccurrenceOf("(", false, true)
+                                                   .upToLastOccurrenceOf(")", false, true),
+                                               ",");
 
         if (args[0].containsOnly("0123456789.px%"))
         {

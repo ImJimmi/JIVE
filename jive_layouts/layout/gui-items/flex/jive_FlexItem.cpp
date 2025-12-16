@@ -45,9 +45,6 @@ namespace jive
         , alignSelf{ state, "align-self" }
         , layoutDummy{ std::make_unique<FlexLayoutDummy>(*this) }
     {
-        if (!flexShrink.exists())
-            flexShrink = juce::FlexItem{}.flexShrink;
-
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
 
@@ -80,7 +77,7 @@ namespace jive
         {
             juce::FlexItem flexItem{ *layoutDummy };
 
-            flexItem.flexShrink = flexShrink.calculateCurrent();
+            flexItem.flexShrink = flexShrink.exists() ? flexShrink.calculateCurrent() : 1.0f;
 
             if (strategy == LayoutStrategy::real)
             {
@@ -94,7 +91,7 @@ namespace jive
                     state.getParent(),
                     "flex-direction",
                 };
-                const auto direction = parentDirection.get();
+                const auto direction = parentDirection.getOr(juce::FlexBox::Direction::column);
 
                 if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
                     return Orientation::horizontal;

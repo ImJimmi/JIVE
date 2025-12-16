@@ -10,9 +10,9 @@ namespace jive
     public:
         ImageComponent();
 
+        void paint(juce::Graphics& g) override;
         void setDrawable(std::unique_ptr<juce::Drawable>&& d);
 
-        void paint(juce::Graphics& g) override;
         void resized() override;
 
         [[nodiscard]] float getMinimumRequiredWidth() const;

@@ -20,11 +20,11 @@ namespace jive
     class ComponentFactory
     {
     public:
-        using ComponentCreator = std::function<std::unique_ptr<juce::Component>(void)>;
+        using ComponentCreator = std::function<std::shared_ptr<juce::Component>(void)>;
 
         ComponentFactory();
 
-        std::unique_ptr<juce::Component> create(juce::Identifier name) const;
+        std::shared_ptr<juce::Component> create(juce::Identifier name) const;
         void set(juce::Identifier name, ComponentCreator creator);
 
     private:

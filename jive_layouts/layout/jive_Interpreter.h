@@ -33,25 +33,32 @@ namespace jive
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const void* xmlStringData,
                                                          int xmlStringDataSize,
                                                          juce::AudioProcessor* pluginProcessor = nullptr) const;
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::File& file,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr);
 
         void listenTo(GuiItem& item);
 
     private:
         void valueTreeChildAdded(juce::ValueTree& parentTree,
                                  juce::ValueTree& childWhichHasBeenAdded) final;
+        void valueTreeChildRemoved(juce::ValueTree& parentTree,
+                                   juce::ValueTree& childWhichHasBeenRemoved,
+                                   int indexFromWhichChildWasRemoved) final;
 
         std::unique_ptr<GuiItem> interpret(const juce::ValueTree& tree,
                                            GuiItem* const parent,
-                                           juce::AudioProcessor* pluginProcessor) const;
+                                           juce::AudioProcessor* pluginProcessor,
+                                           std::shared_ptr<juce::Component> existingComponent = nullptr) const;
 
         void expandAlias(juce::ValueTree& tree) const;
 
         std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree,
-                                                       GuiItem* const parent) const;
+                                                       GuiItem* const parent,
+                                                       std::shared_ptr<juce::Component> existingComponent) const;
         void insertChild(GuiItem& item, int index, const juce::ValueTree& childState) const;
         void setChildItems(GuiItem& item) const;
 
-        std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
+        std::shared_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
         void setupItemsRecursive(GuiItem& item) const;
 
         ComponentFactory componentFactory;
@@ -59,6 +66,7 @@ namespace jive
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
 
         juce::WeakReference<GuiItem> observedItem = nullptr;
+        mutable std::vector<FileObserver> fileObservers;
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };
