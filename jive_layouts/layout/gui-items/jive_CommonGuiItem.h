@@ -44,7 +44,6 @@ namespace jive
         Property<int> focusOrder;
         Property<float> opacity;
         Property<juce::MouseCursor::StandardCursorType> cursor;
-        Property<Display> display;
         Property<Length> width;
         Property<Length> height;
 

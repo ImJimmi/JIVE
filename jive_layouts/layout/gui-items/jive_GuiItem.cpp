@@ -82,6 +82,17 @@ namespace jive
     {
     }
 
+    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
+                     const juce::ValueTree& sourceState,
+                     GuiItem* parentItem)
+        : GuiItem{
+            comp,
+            parentItem,
+            getOrCreateView(sourceState),
+        }
+    {
+    }
+
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
                      View::ReferenceCountedPointer sourceView,
                      GuiItem* parentItem)

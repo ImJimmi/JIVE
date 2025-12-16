@@ -735,8 +735,6 @@ namespace jive
 
     static void mergeLeft(Styles& destination, const Styles& source, bool onlyInheretableStyles = false)
     {
-        destination.fill = destination.fill.hasValue() ? destination.fill : source.fill;
-
 #if JUCE_MAJOR_VERSION >= 8
         destination.fontAscentOverride = destination.fontAscentOverride.hasValue() ? destination.fontAscentOverride : source.fontAscentOverride;
         destination.fontDescentOverride = destination.fontDescentOverride.hasValue() ? destination.fontDescentOverride : source.fontDescentOverride;
@@ -764,8 +762,11 @@ namespace jive
         destination.borderFill = destination.borderFill.hasValue() ? destination.borderFill : source.borderFill;
         destination.borderRadius = destination.borderRadius.hasValue() ? destination.borderRadius : source.borderRadius;
         destination.borderWidth = destination.borderWidth.hasValue() ? destination.borderWidth : source.borderWidth;
+        destination.direction = destination.direction.hasValue() ? destination.direction : source.direction;
+        destination.fill = destination.fill.hasValue() ? destination.fill : source.fill;
         destination.shadow = destination.shadow.hasValue() ? destination.shadow : source.shadow;
         destination.stroke = destination.stroke.hasValue() ? destination.stroke : source.stroke;
+        destination.textAlign = destination.textAlign.hasValue() ? destination.textAlign : source.textAlign;
         destination.thumb = destination.thumb.hasValue() ? destination.thumb : source.thumb;
         destination.track = destination.track.hasValue() ? destination.track : source.track;
     }

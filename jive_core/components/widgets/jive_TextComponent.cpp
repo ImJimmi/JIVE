@@ -17,8 +17,7 @@ namespace jive
         if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
             return;
 
-        getAttributedString()
-            .draw(g, getLocalBounds().toFloat());
+        getAttributedString().draw(g, getLocalBounds().toFloat());
     }
 
     void TextComponent::lookAndFeelChanged()

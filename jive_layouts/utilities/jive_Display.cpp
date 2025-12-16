@@ -10,6 +10,9 @@ namespace juce
 
     jive::Display VariantConverter<jive::Display>::fromVar(const var& v)
     {
+        if (v.isVoid())
+            return jive::Display::flex;
+
         jassert(options.contains(v));
         return static_cast<jive::Display>(options.indexOf(v));
     }

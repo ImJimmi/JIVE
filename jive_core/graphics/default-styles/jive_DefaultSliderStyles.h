@@ -51,8 +51,14 @@ namespace jive::default_styles
                                 .sliderBounds.toFloat();
         const auto style = slider.getSliderStyle();
         const auto progress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
-        const auto minProgress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getMinValue()));
-        const auto maxProgress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getMaxValue()));
+        const auto minProgress = static_cast<float>(slider.getNormalisableRange()
+                                                        .convertTo0to1(slider.isTwoValue() || slider.isThreeValue()
+                                                                           ? slider.getMinValue()
+                                                                           : 0.0));
+        const auto maxProgress = static_cast<float>(slider.getNormalisableRange()
+                                                        .convertTo0to1(slider.isTwoValue() || slider.isThreeValue()
+                                                                           ? slider.getMaxValue()
+                                                                           : 0.0));
         const auto isTwoVal = style == juce::Slider::SliderStyle::TwoValueVertical
                            || style == juce::Slider::SliderStyle::TwoValueHorizontal;
         const auto isThreeVal = style == juce::Slider::SliderStyle::ThreeValueVertical
