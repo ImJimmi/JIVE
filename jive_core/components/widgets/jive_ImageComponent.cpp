@@ -72,9 +72,9 @@ namespace jive
     {
         if (drawable != nullptr)
         {
-            if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+            if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
             {
-                const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+                const auto styles = laf->findMostApplicableStyles(*this);
                 setStyles(*drawable, *this, styles);
             }
         }

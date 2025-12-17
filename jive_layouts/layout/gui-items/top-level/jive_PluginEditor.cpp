@@ -15,7 +15,7 @@ namespace jive
             mainComponent->addComponentListener(this);
             addAndMakeVisible(*mainComponent);
             setSize(mainComponent->getWidth(), mainComponent->getHeight());
-            mainComponent->setLookAndFeel(&lookAndFeel);
+            mainComponent->setLookAndFeel(&jiveLookAndFeel);
         }
     }
 

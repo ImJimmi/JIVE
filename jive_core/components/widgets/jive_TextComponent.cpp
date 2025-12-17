@@ -86,9 +86,9 @@ namespace jive
         for (const auto& appendix : appendices)
             attributedString.append(appendix);
 
-        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
-            const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+            const auto styles = laf->findMostApplicableStyles(*this);
 
             attributedString.setReadingDirection(getReadingDirection(*this, styles));
             attributedString.setJustification(getTextAlignment(*this, styles));
@@ -190,9 +190,9 @@ namespace jive
 
     void TextComponent::updateCachedFont()
     {
-        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
-            if (auto newFont = getFont(*this, lookAndFeel->findMostApplicableStyles(*this));
+            if (auto newFont = getFont(*this, laf->findMostApplicableStyles(*this));
                 newFont != cachedFont)
             {
                 cachedFont = newFont;
