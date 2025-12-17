@@ -7,6 +7,7 @@ env:
   BUILD_TYPE: Debug
   CMAKE_BUILD_DIRECTORY: build
   CPM_CACHE_DIR: .cpm-cache
+  GH_TOKEN: ${{ github.token }}
   SCCACHE_CACHE_MULTIARCH: 1
   SCCACHE_GHA_ENABLED: true
 
@@ -70,6 +71,7 @@ jobs:
             -D JIVE_BUILD_TEST_RUNNER=ON \
             -D JIVE_BUILD_DEMO_RUNNER=ON \
             -D JIVE_BUILD_EXAMPLES=ON \
+            -D JIVE_ENABLE_PROJUCER_PROJECTS=ON \
             -D CMAKE_C_COMPILER_LAUNCHER=sccache \
             -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
             -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \

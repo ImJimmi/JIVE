@@ -35,7 +35,6 @@ target_link_libraries(jive-demo
                       INTERFACE jive-demo-resources
                                 jive::compiler_and_linker_options
                                 jive::jive_layouts
-                                jive::jive_style_sheets
                                 juce::juce_recommended_config_flags
                                 juce::juce_recommended_lto_flags
                                 juce::juce_recommended_warning_flags
@@ -83,3 +82,5 @@ target_link_libraries(jive-demo-plugin
 )
 
 add_pluginval_tests(jive-demo-plugin)
+
+add_projucer_target(${CMAKE_CURRENT_SOURCE_DIR}/demo-app.jucer)

@@ -81,7 +81,6 @@
         <MODULEPATH id="juce_events" path="../libraries/JUCE/modules"/>
         <MODULEPATH id="juce_graphics" path="../libraries/JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../libraries/JUCE/modules"/>
-        <MODULEPATH id="jive_components" path="../../../JIVE"/>
         <MODULEPATH id="jive_core" path="../../../JIVE"/>
         <MODULEPATH id="jive_layouts" path="../../../JIVE"/>
         <MODULEPATH id="jive_style_sheets" path="../../../JIVE"/>
@@ -89,7 +88,6 @@
     </XCODE_MAC>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="jive_components" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
