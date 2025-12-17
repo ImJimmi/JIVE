@@ -31,10 +31,10 @@ namespace jive
                                        Precedence precedence)
     {
         auto& newItem = painters.emplace_back(Painter<ComponentPainter, ComponentPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .paint = painter,
-            .appliesTo = predicate,
+            juce::Uuid{},
+            precedence,
+            painter,
+            predicate,
         });
         std::sort(std::begin(painters),
                   std::end(painters),
@@ -50,10 +50,10 @@ namespace jive
                                        Precedence precedence)
     {
         auto& newItem = progressBarPainters.emplace_back(Painter<ProgressBarPainter, ComponentPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .paint = painter,
-            .appliesTo = predicate,
+            juce::Uuid{},
+            precedence,
+            painter,
+            predicate,
         });
         std::sort(std::begin(progressBarPainters),
                   std::end(progressBarPainters),
@@ -69,10 +69,10 @@ namespace jive
                                        Precedence precedence)
     {
         auto& newItem = popupPainters.emplace_back(Painter<PopupPainter, PopupPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .paint = painter,
-            .appliesTo = predicate,
+            juce::Uuid{},
+            precedence,
+            painter,
+            predicate,
         });
         std::sort(std::begin(popupPainters),
                   std::end(popupPainters),
@@ -88,10 +88,10 @@ namespace jive
                                        Precedence precedence)
     {
         auto& newItem = popupItemPainters.emplace_back(Painter<PopupItemPainter, PopupItemPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .paint = painter,
-            .appliesTo = predicate,
+            juce::Uuid{},
+            precedence,
+            painter,
+            predicate,
         });
         std::sort(std::begin(popupItemPainters),
                   std::end(popupItemPainters),
@@ -133,11 +133,11 @@ namespace jive
                                       Precedence precedence)
     {
         auto& newItem = stylers.emplace_back(Styler<ComponentPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .interactionState = interactionState,
-            .appliesTo = predicate,
-            .styles = styles,
+            juce::Uuid{},
+            precedence,
+            interactionState,
+            predicate,
+            styles,
         });
         const auto result = newItem.id;
 
@@ -180,11 +180,11 @@ namespace jive
                                       Precedence precedence)
     {
         auto& newItem = popupStylers.emplace_back(Styler<PopupPredicate>{
-            .id = juce::Uuid{},
-            .precedence = precedence,
-            .interactionState = InteractionState{},
-            .appliesTo = predicate,
-            .styles = styles,
+            juce::Uuid{},
+            precedence,
+            InteractionState{},
+            predicate,
+            styles,
         });
         std::sort(std::begin(popupStylers),
                   std::end(popupStylers),
@@ -775,7 +775,7 @@ namespace jive
     [[nodiscard]] static auto collectApplicableStylersOrdered(const std::vector<Styler>& stylers,
                                                               const juce::Component& component)
     {
-        using GenerationOffset = uint;
+        using GenerationOffset = std::uint16_t;
 
         std::vector<
             std::tuple<
@@ -861,7 +861,8 @@ namespace jive
                           interactionState,
                           uuid] : collectApplicableStylersOrdered(stylers, component))
         {
-            juce::ignoreUnused(precedence, interactionState);
+            juce::ignoreUnused(precedence);
+            juce::ignoreUnused(interactionState);
             mergeLeft(result, styles, generationOffset > 0);
         }
 
