@@ -12,8 +12,8 @@ namespace jive
 
     void IgnoredComponent::paint(juce::Graphics& g)
     {
-        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
-            lookAndFeel->drawComponent(g, *this);
+        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+            laf->drawComponent(g, *this);
     }
 
     std::unique_ptr<juce::AccessibilityHandler> IgnoredComponent::createAccessibilityHandler()
