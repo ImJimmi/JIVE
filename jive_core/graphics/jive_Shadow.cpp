@@ -431,7 +431,7 @@ namespace jive
         if (component == nullptr)
             return;
 
-        auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
+        auto* laf = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
 
         for (auto* otherParent = component->getParentComponent();
              otherParent != nullptr;
@@ -439,10 +439,10 @@ namespace jive
         {
             juce::FillType background{ juce::Colours::black };
 
-            if (lookAndFeel != nullptr)
+            if (laf != nullptr)
             {
                 background = getBackgroundFill(*otherParent,
-                                               lookAndFeel->findMostApplicableStyles(*otherParent),
+                                               laf->findMostApplicableStyles(*otherParent),
                                                juce::Colours::transparentBlack);
             }
 

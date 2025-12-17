@@ -21,7 +21,7 @@ namespace jive
     private:
         void componentMovedOrResized(juce::Component&, bool, bool) final;
 
-        LookAndFeel lookAndFeel;
+        LookAndFeel jiveLookAndFeel;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
     };

@@ -37,9 +37,9 @@ namespace jive
             item->insertChild(std::move(child), index);
         }
 
-        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children) override
+        void setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren) override
         {
-            item->setChildren(std::move(children));
+            item->setChildren(std::move(newChildren));
         }
 
         void removeChild(GuiItem& childToRemove) override

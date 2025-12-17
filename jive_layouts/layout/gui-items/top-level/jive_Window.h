@@ -17,7 +17,7 @@ namespace jive
         int getStyleFlags() const;
 
         DocumentWindow window;
-        LookAndFeel lookAndFeel{ *getComponent() };
+        LookAndFeel jiveLookAndFeel{ *getComponent() };
 
         Property<bool> hasShadow;
         Property<bool> isNative;
