@@ -1,13 +1,6 @@
 #pragma once
 
-#include <jive_core/graphics/jive_LookAndFeel.h>
-
-namespace juce
-{
-    class AudioProcessorEditor
-    {
-    };
-} // namespace juce
+#include <jive_core/jive_core.h>
 
 namespace jive::themes
 {
@@ -50,7 +43,10 @@ namespace jive::themes
         laf.addStyles(
             [](const auto& component) {
                 return dynamic_cast<juce::TopLevelWindow*>(component.getParentComponent()) != nullptr
-                    || dynamic_cast<juce::AudioProcessorEditor*>(component.getParentComponent()) != nullptr;
+#if JIVE_IS_PLUGIN_PROJECT
+                    || dynamic_cast<juce::AudioProcessorEditor*>(component.getParentComponent()) != nullptr
+#endif
+                    ;
             },
             jive::Styles{}
                 .withBackground(steel::eerieBlack)

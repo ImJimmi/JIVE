@@ -10,6 +10,10 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_CORE_H_INCLUDED
 
+#if JIVE_IS_PLUGIN_PROJECT
+    #include <juce_audio_processors/juce_audio_processors.h>
+#endif
+
 #include "algorithms/jive_Bezier.h"
 #include "algorithms/jive_Find.h"
 #include "algorithms/jive_Interpolate.h"
