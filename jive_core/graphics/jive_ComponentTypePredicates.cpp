@@ -1,15 +1,6 @@
 #include "jive_ComponentTypePredicates.h"
 
-#if JIVE_IS_PLUGIN_PROJECT
-    #include <juce_audio_processors/juce_audio_processors.h>
-#else
-namespace juce
-{
-    class AudioProcessorEditor
-    {
-    };
-} // namespace juce
-#endif
+#include <jive_core/jive_core.h>
 
 namespace jive
 {
@@ -44,7 +35,9 @@ namespace jive
         addStandardComponent<juce::Button>(predicates, "Button");
         addStandardComponent<juce::ToggleButton>(predicates, "Checkbox");
         addStandardComponent<juce::ComboBox>(predicates, "ComboBox");
+#if JIVE_IS_PLUGIN_PROJECT
         addStandardComponent<juce::AudioProcessorEditor>(predicates, "Editor");
+#endif
         addStandardComponent<juce::HyperlinkButton>(predicates, "Hyperlink");
         addStandardComponent<juce::Label>(predicates, "Label");
         addStandardComponent<juce::ProgressBar>(predicates, "ProgressBar");

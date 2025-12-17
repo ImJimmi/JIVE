@@ -5,7 +5,7 @@
     vendor:             ImJimmi
     name:               JIVE Layouts
     license:            MIT
-    dependencies:       jive_components
+    dependencies:       jive_style_sheets
 END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_LAYOUTS_H_INCLUDED
