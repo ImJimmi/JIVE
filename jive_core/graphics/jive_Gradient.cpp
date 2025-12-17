@@ -533,6 +533,9 @@ namespace juce
                                   case jive::SideOrCorner::left:
                                       return juce::var{ "left" };
                                   }
+
+                                  jassertfalse;
+                                  return juce::var{ "top-left" };
                               },
                           },
                           linearAngle);
