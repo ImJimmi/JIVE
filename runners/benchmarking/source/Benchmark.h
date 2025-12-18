@@ -39,11 +39,36 @@ private:
         std::cout << "\r" << jive::buildProgressBar(progressNormalised, columnWidth) << std::flush;
     }
 
-    void printResult(int counter, juce::RelativeTime elapsed)
+    [[nodiscard]] static auto toString(const juce::RelativeTime& duration)
     {
-        std::cout << "\n\n"
-                  << "Completed:  " << counter << " iterations\n"
-                  << "Average:    " << static_cast<double>(elapsed.inMilliseconds()) / static_cast<double>(counter) << "ms\n\n";
+        if (duration.inSeconds() >= 60.0)
+            return juce::String{ duration.inSeconds() / 60.0 } + "m";
+        if (duration.inSeconds() >= 1.0)
+            return juce::String{ duration.inSeconds() } + "s";
+        if (duration.inSeconds() >= 0.001)
+            return juce::String{ duration.inSeconds() * 1000.0 } + "ms";
+
+        return juce::String{ duration.inSeconds() * 1000000.0 } + u8"μs";
+    }
+
+    void printResult(std::vector<juce::RelativeTime>& durations)
+    {
+        std::sort(std::begin(durations), std::end(durations));
+        const auto sum = std::accumulate(std::begin(durations),
+                                         std::end(durations),
+                                         0.0,
+                                         [](double total, const juce::RelativeTime& next) {
+                                             return total + next.inSeconds();
+                                         });
+        const juce::RelativeTime mean{ sum / static_cast<double>(std::size(durations)) };
+
+        std::cout
+            << "\n\n"
+            << "Completed: " << std::size(durations) << " iterations\n\n"
+            << "Min:       " << toString(durations.front()) << "\n"
+            << "Max:       " << toString(durations.back()) << "\n"
+            << "Median:    " << toString(durations.at(std::size(durations) / 2)) << "\n"
+            << "Mean:      " << toString(mean) << "\n\n";
     }
 
     void doTimeboxedRun()
@@ -51,20 +76,21 @@ private:
         std::cout << "Duration:   " << duration->getDescription() << "\n\n";
 
         jive::Interpreter interpreter;
-        auto counter = 0;
         const auto start = juce::Time::getCurrentTime();
+        std::vector<juce::RelativeTime> durations;
 
-        for (auto elapsed = juce::Time::getCurrentTime() - start;
-             elapsed <= duration.value();
-             elapsed = juce::Time::getCurrentTime() - start)
+        while (juce::Time::getCurrentTime() - start < duration)
         {
+            const auto iterationStart = juce::Time::getMillisecondCounterHiRes();
             doIteration(interpreter);
-            counter++;
-            printProgress(elapsed.inSeconds() / duration->inSeconds());
+            const auto iterationDurationMS = juce::Time::getMillisecondCounterHiRes() - iterationStart;
+            durations.emplace_back(juce::RelativeTime::seconds(iterationDurationMS / 1000.0));
+
+            printProgress(juce::jmin(1.0, (juce::Time::getCurrentTime() - start).inSeconds() / duration->inSeconds()));
         }
 
         printProgress(1.0);
-        printResult(counter, *duration);
+        printResult(durations);
     }
 
     void doIterativeRun()
@@ -72,17 +98,21 @@ private:
         std::cout << "Iterations: " << *iterations << "\n";
 
         jive::Interpreter interpreter;
-        const auto start = juce::Time::getCurrentTime();
+
+        std::vector<juce::RelativeTime> durations;
 
         for (auto i = 0; i < *iterations;)
         {
+            const auto iterationStart = juce::Time::getCurrentTime();
             doIteration(interpreter);
+            const auto iterationDuration = juce::Time::getCurrentTime() - iterationStart;
+            durations.emplace_back(iterationDuration);
+
             i++;
             printProgress(i / static_cast<double>(*iterations));
         }
 
-        const auto elapsed = juce::Time::getCurrentTime() - start;
-        printResult(*iterations, elapsed);
+        printResult(durations);
     }
 
     const juce::String description;

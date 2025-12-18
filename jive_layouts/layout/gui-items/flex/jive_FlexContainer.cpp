@@ -169,8 +169,8 @@ namespace jive
         {
         case LayoutStrategy::real:
             flex.justifyContent = flexJustifyContent.getOr(juce::FlexBox::JustifyContent::flexStart);
-            flex.alignItems = flexAlignItems.getOr(juce::FlexBox::AlignItems::flexStart);
-            flex.alignContent = flexAlignContent.getOr(juce::FlexBox::AlignContent::flexStart);
+            flex.alignItems = flexAlignItems.getOr(juce::FlexBox::AlignItems::stretch);
+            flex.alignContent = flexAlignContent.getOr(juce::FlexBox::AlignContent::stretch);
             break;
         case LayoutStrategy::dummy:
             flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
