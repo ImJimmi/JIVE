@@ -10,6 +10,7 @@ namespace jive
     {
     public:
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<Object>;
+        using WeakReference = juce::WeakReference<Object>;
 
         struct Listener
         {
@@ -57,6 +58,7 @@ namespace jive
         Object* parent = nullptr;
 
         JUCE_LEAK_DETECTOR(Object)
+        JUCE_DECLARE_WEAK_REFERENCEABLE(Object)
     };
 
     juce::var parseJSON(const juce::String& jsonString);

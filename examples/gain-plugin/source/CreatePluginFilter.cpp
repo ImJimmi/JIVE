@@ -1,6 +1,6 @@
 #include "Processor.h"
 
-[[nodiscard]] juce::AudioProcessor* createPluginFilter()
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new jive_example::GainPlugin;
 }

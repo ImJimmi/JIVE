@@ -70,7 +70,7 @@ namespace jive
         public:
             Queue(int radius, juce::uint8 initialValue)
                 : size{ static_cast<juce::uint64>(radius) * 2 + 1 }
-                , buffer(size + 1, initialValue)
+                , buffer(static_cast<std::size_t>(size) + 1, initialValue)
                 , inBuffer{ &buffer[static_cast<std::size_t>(radius) + 1], radius + 1 }
                 , outBuffer{ buffer.data(), radius + 1 }
             {
