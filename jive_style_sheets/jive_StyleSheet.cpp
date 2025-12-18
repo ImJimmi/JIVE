@@ -50,8 +50,11 @@ namespace jive
 
     StyleSheet::~StyleSheet()
     {
-        for (const auto& [name, uuid] : uuids)
-            lookAndFeel.removeStyles(uuid);
+        if (&component.getLookAndFeel() == &lookAndFeel)
+        {
+            for (const auto& [name, uuid] : uuids)
+                lookAndFeel.removeStyles(uuid);
+        }
 
         for (const auto& [id, property] : observedObjects)
         {
