@@ -61,7 +61,8 @@ protected:
             || message.contains("All tests completed successfully")
             || message.contains("FAILED!!")
             || message.trim().isEmpty()
-            || message.contains("Completed test"))
+            || message.contains("Completed test")
+            || message.contains("Random seed:"))
         {
             return;
         }

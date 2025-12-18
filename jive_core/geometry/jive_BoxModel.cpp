@@ -171,7 +171,7 @@ namespace jive
         if (auto* transition = padding.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
-        return padding.getOr(juce::BorderSize<float>{ 5.0f });
+        return padding.getOr(juce::BorderSize<float>{ 0.0f });
     }
 
     juce::BorderSize<float> BoxModel::getBorder() const
