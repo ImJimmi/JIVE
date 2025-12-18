@@ -71,6 +71,7 @@ jobs:
             -D JIVE_BUILD_TEST_RUNNER=ON \
             -D JIVE_BUILD_DEMO_RUNNER=ON \
             -D JIVE_BUILD_EXAMPLES=ON \
+            -D JIVE_ENABLE_PLUGINVAL=ON \
             -D JIVE_ENABLE_PROJUCER_PROJECTS=ON \
             -D CMAKE_C_COMPILER_LAUNCHER=sccache \
             -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
@@ -97,7 +98,6 @@ jobs:
           ctest \
             --output-on-failure \
             --extra-verbose \
-            -j14 \
             -C ${{ env.BUILD_TYPE }} \
             -T test \
             -O ctest.log
