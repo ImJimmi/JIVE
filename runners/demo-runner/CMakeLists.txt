@@ -1,5 +1,3 @@
-include(cmake/pluginval.cmake)
-
 add_library(jive-demo
             INTERFACE
 )
@@ -81,6 +79,10 @@ target_link_libraries(jive-demo-plugin
                               juce::juce_audio_devices
 )
 
-add_pluginval_tests(jive-demo-plugin)
+if (JIVE_ENABLE_PLUGINVAL)
+    add_pluginval_tests(jive-demo-plugin)
+endif()
 
-add_projucer_target(${CMAKE_CURRENT_SOURCE_DIR}/demo-app.jucer)
+if (JIVE_ENABLE_PROJUCER_BUILDS)
+    add_projucer_target(${CMAKE_CURRENT_SOURCE_DIR}/demo-app.jucer)
+endif()

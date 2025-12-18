@@ -15,6 +15,10 @@ if (JIVE_ENABLE_MELATONIN_INSPECTOR)
     include(cmake/melatonin_inspector.cmake)
 endif()
 
+if (JIVE_ENABLE_PLUGINVAL)
+    include(cmake/pluginval.cmake)
+endif()
+
 if (JIVE_ENABLE_PROJUCER_PROJECTS)
     include(cmake/projucer.cmake)
 endif()
