@@ -276,8 +276,6 @@ namespace jive
 
                 return;
             }
-            if (!treeWhosePropertyChanged.hasProperty(property))
-                return;
             if (!respondToPropertyChanges(treeWhosePropertyChanged))
                 return;
 
@@ -287,12 +285,10 @@ namespace jive
                 onValueChange();
         }
 
-        void propertyChanged(Object& objectWhosePropertyChanged,
+        void propertyChanged(Object&,
                              const juce::Identifier& property) override
         {
             if (property != id)
-                return;
-            if (!objectWhosePropertyChanged.hasProperty(property))
                 return;
 
             valueChanged();

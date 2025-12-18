@@ -21,25 +21,33 @@ namespace jive
         };
 
         x.onValueChange = [this, updateBounds] {
-            centreX.clear();
+            if (x.exists())
+                centreX.clear();
+
             updateBounds();
         };
         x.onTransitionProgressed = updateBounds;
 
         y.onValueChange = [this, updateBounds]() {
-            centreY.clear();
+            if (y.exists())
+                centreY.clear();
+
             updateBounds();
         };
         y.onTransitionProgressed = updateBounds;
 
         centreX.onValueChange = [this, updateBounds]() {
-            x.clear();
+            if (centreX.exists())
+                x.clear();
+
             updateBounds();
         };
         centreX.onTransitionProgressed = updateBounds;
 
         centreY.onValueChange = [this, updateBounds]() {
-            y.clear();
+            if (centreY.exists())
+                y.clear();
+
             updateBounds();
         };
         centreY.onTransitionProgressed = updateBounds;
