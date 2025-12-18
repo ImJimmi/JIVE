@@ -153,7 +153,7 @@ namespace jive
                                    LookAndFeel::Precedence precedence)
     {
         const auto id = calculateStylesID(object);
-        const auto addStyles = [this, id, &object, predicate, interationState, precedence]() {
+        const auto addStyles = [this, id, obj = Object::WeakReference{ &object }, predicate, interationState, precedence]() {
             std::optional<Styles> styles;
 
             if (uuids.count(id))
@@ -163,17 +163,20 @@ namespace jive
                 uuids.erase(id);
             }
 
-            findAndAddStyleProperties(object,
+            if (obj == nullptr)
+                return;
+
+            findAndAddStyleProperties(*obj,
                                       id,
                                       styles,
                                       predicate,
                                       interationState,
                                       precedence);
-            findAndAddStatefulStyles(object,
+            findAndAddStatefulStyles(*obj,
                                      predicate,
                                      interationState,
                                      precedence);
-            findAndAddOtherStyles(object);
+            findAndAddOtherStyles(*obj);
 
             component.lookAndFeelChanged();
             component.repaint();
@@ -409,7 +412,7 @@ private:
 
             beginTest("style property / the component should go back to the defaults when the style property is removed");
             {
-                state.setProperty("style", juce::var{}, nullptr);
+                state.removeProperty("style", nullptr);
                 const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
                 expectEquals(snapshot.getPixelAt(50, 12),
                              jive::parseColour(jive::themes::steel::raisinBlack));
