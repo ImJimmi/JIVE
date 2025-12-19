@@ -10,6 +10,8 @@ namespace juce
 
 namespace jive
 {
+    class TreeEditor;
+
     class Interpreter : private juce::ValueTree::Listener
     {
     public:
@@ -38,6 +40,9 @@ namespace jive
 
         void listenTo(GuiItem& item);
 
+        void addSourceDirectory(const juce::File& directory);
+        void removeSourceDirectory(const juce::File& directory);
+
     private:
         void valueTreeChildAdded(juce::ValueTree& parentTree,
                                  juce::ValueTree& childWhichHasBeenAdded) final;
@@ -51,6 +56,7 @@ namespace jive
                                            std::shared_ptr<juce::Component> existingComponent = nullptr) const;
 
         void expandAlias(juce::ValueTree& tree) const;
+        void loadExternalSources(juce::ValueTree& tree) const;
 
         std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree,
                                                        GuiItem* const parent,
@@ -66,7 +72,10 @@ namespace jive
         std::unordered_map<juce::Identifier, juce::ValueTree> aliases;
 
         juce::WeakReference<GuiItem> observedItem = nullptr;
-        mutable std::vector<FileObserver> fileObservers;
+        mutable juce::OwnedArray<FileObserver> fileObservers;
+        SourceDirectories::ReferenceCountedPointer sourceDirectories = new SourceDirectories{
+            juce::File::getCurrentWorkingDirectory(),
+        };
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };

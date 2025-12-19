@@ -4,7 +4,7 @@ juce_add_gui_app(jive-xml-views
 )
 
 target_sources(jive-xml-views
-               PRIVATE main.cpp
+               PRIVATE source/main.cpp
 )
 
 target_link_libraries(jive-xml-views
@@ -17,7 +17,7 @@ target_link_libraries(jive-xml-views
 )
 
 target_compile_definitions(jive-xml-views
-                           PRIVATE JIVE_XML_VIEWS_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+                           PRIVATE JIVE_XML_VIEWS_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/source"
                                    JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>)
 
 if (JIVE_ENABLE_MELATONIN_INSPECTOR)

@@ -65,6 +65,7 @@ namespace jive
         handleOnValueChange(width, true, false);
         handleOnValueChange(height, false, true);
         handleOnValueChange(padding, false, false);
+        handleOnValueChange(margin, false, false);
         handleOnValueChange(border, false, false);
         handleOnValueChange(minWidth, false, false);
         handleOnValueChange(minHeight, false, false);
@@ -79,10 +80,6 @@ namespace jive
         };
         componentHeight.onValueChange = [this, onBoxModelChanged]() {
             if (!componentHeight.isTransitioning())
-                onBoxModelChanged();
-        };
-        margin.onValueChange = [this, onBoxModelChanged]() {
-            if (!margin.isTransitioning())
                 onBoxModelChanged();
         };
 

@@ -29,6 +29,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "components/widgets/jive_NormalisedProgressBar.h"
 #include "components/widgets/jive_TextComponent.h"
 #include "files/jive_FileObserver.h"
+#include "files/jive_SourceDirectories.h"
 #include "geometry/jive_BorderRadii.h"
 #include "geometry/jive_BoxModel.h"
 #include "geometry/jive_Length.h"

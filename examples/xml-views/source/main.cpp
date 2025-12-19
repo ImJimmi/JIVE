@@ -21,9 +21,10 @@ namespace jive::xmlViews
 
         void initialise(const juce::String&) final
         {
-            const auto file = juce::File{ JIVE_XML_VIEWS_SOURCE_DIR }
-                                  .getChildFile("view.xml");
-            window = interpreter.interpret(file);
+            static const juce::File sourceDir{ JIVE_XML_VIEWS_SOURCE_DIR };
+
+            interpreter.addSourceDirectory(sourceDir.getChildFile("views"));
+            window = interpreter.interpret(sourceDir.getChildFile("main.xml"));
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
             inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
