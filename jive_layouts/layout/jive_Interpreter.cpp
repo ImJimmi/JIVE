@@ -169,23 +169,46 @@ namespace jive
         return true;
     }
 
+    [[nodiscard]] static juce::Array<juce::File> collateExternalSources(const SourceDirectories& directories, const juce::ValueTree& tree)
+    {
+        juce::Array<juce::File> result;
+
+        if (tree.hasProperty("source"))
+        {
+            if (auto file = directories.find(tree["source"].toString());
+                file.existsAsFile())
+            {
+                result.add(file);
+            }
+        }
+
+        for (const auto& child : tree)
+            result.addArray(collateExternalSources(directories, child));
+
+        return result;
+    }
+
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::File& file,
                                                     juce::AudioProcessor* pluginProcessor)
     {
         auto newTree = jive::parseXML(file.loadFileAsString());
-        newTree.setProperty("jive::root-directory",
-                            file.getParentDirectory().getFullPathName(),
-                            nullptr);
+        addSourceDirectory(file.getParentDirectory());
+        newTree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
 
         auto wrapper = std::make_unique<TopLevelWrapperItem>(interpret(newTree, pluginProcessor));
         listenTo(*wrapper);
 
-        auto& observer = fileObservers.emplace_back(file);
-        observer.onFileModified = [this, pluginProcessor, path = file.getFullPathName()]() {
+        auto* observer = fileObservers.add(std::make_unique<FileObserver>(file));
+        observer->onFileModified = [this, pluginProcessor, path = file.getFullPathName()]() {
             auto latestTree = jive::parseXML(juce::File{ path }.loadFileAsString());
-            latestTree.setProperty("jive::root-directory",
-                                   juce::File{ path }.getParentDirectory().getFullPathName(),
-                                   nullptr);
+            latestTree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
+            const auto externalSources = collateExternalSources(*sourceDirectories, latestTree);
+
+            for (auto i = fileObservers.size() - 1; i >= 0; i--)
+            {
+                if (externalSources.contains(fileObservers.getUnchecked(i)->file))
+                    fileObservers.remove(i);
+            }
 
             if (auto* wrap = dynamic_cast<TopLevelWrapperItem*>(observedItem.get()))
             {
@@ -222,6 +245,16 @@ namespace jive
 
         observedItem = &item;
         observedItem->state.addListener(this);
+    }
+
+    void Interpreter::addSourceDirectory(const juce::File& directory)
+    {
+        sourceDirectories->add(directory);
+    }
+
+    void Interpreter::removeSourceDirectory(const juce::File& directory)
+    {
+        sourceDirectories->remove(directory);
     }
 
     [[nodiscard]] static GuiItem* findItem(GuiItem& root, const juce::ValueTree& state)
@@ -442,12 +475,40 @@ namespace jive
         }
     }
 
+    void Interpreter::loadExternalSources(juce::ValueTree& tree) const
+    {
+        if (!tree.hasProperty("source"))
+            return;
+
+        if (auto file = sourceDirectories->find(tree["source"].toString());
+            file.existsAsFile())
+        {
+            auto replace = [tree, f = file]() mutable {
+                auto newTree = jive::parseXML(f.loadFileAsString());
+
+                for (auto i = 0; i < tree.getNumProperties(); i++)
+                {
+                    const auto name = tree.getPropertyName(i);
+                    newTree.setProperty(name, tree[name], nullptr);
+                }
+
+                newTree.removeProperty("source", nullptr);
+                tree.copyPropertiesAndChildrenFrom(newTree, nullptr);
+            };
+
+            auto* observer = fileObservers.add(std::make_unique<FileObserver>(file));
+            observer->onFileModified = replace;
+            replace();
+        }
+    }
+
     std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree,
                                                                 GuiItem* const parent,
                                                                 std::shared_ptr<juce::Component> component) const
     {
         auto expandedTree = tree;
         expandAlias(expandedTree);
+        loadExternalSources(expandedTree);
 
         if (component == nullptr)
             component = createComponent(expandedTree, parent);

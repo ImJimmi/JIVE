@@ -6,6 +6,20 @@
 
 namespace juce
 {
+    template <typename T>
+    struct VariantConverter<juce::ReferenceCountedObjectPtr<T>>
+    {
+        static juce::ReferenceCountedObjectPtr<T> fromVar(const var& value)
+        {
+            return dynamic_cast<T*>(value.getObject());
+        }
+
+        static var toVar(juce::ReferenceCountedObjectPtr<T> ptr)
+        {
+            return var{ ptr.get() };
+        }
+    };
+
     template <>
     struct VariantConverter<Justification>
     {

@@ -19,7 +19,7 @@ namespace jive
         , state{ source }
         , style{ state, "style" }
         , border{ state, "border-width" }
-        , rootDirectory{ state, "jive::root-directory" }
+        , sourceDirectories{ state, "jive::source-directories" }
     {
         style.onValueChange = [this] {
             stylePropertyChanged();
@@ -97,23 +97,25 @@ namespace jive
             return;
         }
 
-        if (auto file = juce::File{ rootDirectory.getOr(juce::File::getCurrentWorkingDirectory().getFullPathName()) }
-                            .getChildFile(style.toString());
-            file.existsAsFile())
+        if (sourceDirectories.get() != nullptr)
         {
-            const auto addStylesFromFile = [this, f = file]() {
-                auto fileContents = parseJSON(f.loadFileAsString());
+            if (auto file = sourceDirectories.get()->find(style.toString());
+                file.existsAsFile())
+            {
+                const auto addStylesFromFile = [this, f = file]() {
+                    auto fileContents = parseJSON(f.loadFileAsString());
 
-                if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
-                {
-                    clear();
-                    addStylesFrom(*object);
-                }
-            };
+                    if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
+                    {
+                        clear();
+                        addStylesFrom(*object);
+                    }
+                };
 
-            fileObserver = std::make_unique<FileObserver>(file);
-            fileObserver->onFileModified = addStylesFromFile;
-            addStylesFromFile();
+                fileObserver = std::make_unique<FileObserver>(file);
+                fileObserver->onFileModified = addStylesFromFile;
+                addStylesFromFile();
+            }
         }
     }
 

@@ -4,7 +4,7 @@
 
 namespace jive
 {
-    class FileObserver : private juce::Timer
+    class FileObserver : public juce::Timer
     {
     public:
         explicit FileObserver(const juce::File& f)
@@ -14,6 +14,7 @@ namespace jive
             startTimerHz(10);
         }
 
+        const juce::File file;
         std::function<void()> onFileModified = nullptr;
 
     private:
@@ -28,7 +29,6 @@ namespace jive
             }
         }
 
-        juce::File file;
         juce::Time lastModificationTime;
     };
 } // namespace jive

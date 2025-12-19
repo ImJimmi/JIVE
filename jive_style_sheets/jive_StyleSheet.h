@@ -61,6 +61,6 @@ namespace jive
         std::unique_ptr<juce::VBlankAttachment> vBlank;
 
         std::unique_ptr<FileObserver> fileObserver;
-        Property<juce::String> rootDirectory;
+        Property<SourceDirectories::ReferenceCountedPointer> sourceDirectories;
     };
 } // namespace jive
