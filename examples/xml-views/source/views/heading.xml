@@ -1,4 +1,4 @@
-<Component max-width="450">
+<Component id="heading" max-width="325">
     <Component flex-direction="row" align-items="centre" margin="0 0 10 0">
         <svg id="icon" width="25" height="25" margin="2 12 0 0"
             xmlns="http://www.w3.org/2000/svg">

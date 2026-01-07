@@ -59,14 +59,16 @@ namespace jive
                                                     juce::Rectangle<float> parentContentBounds,
                                                     LayoutStrategy strategy) const
         {
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+
             if (!width.isAuto())
             {
                 item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
             }
             else if (idealWidth.exists())
             {
-                if (idealWidth.get() < parentContentBounds.getWidth() || strategy == LayoutStrategy::dummy)
-                    item.minWidth = juce::jmax(item.minWidth, idealWidth.get());
+                if (idealWidth.get() < parentContentBounds.getWidth())
+                    item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
                 else
                     item.width = parentContentBounds.getWidth();
             }
@@ -83,9 +85,7 @@ namespace jive
                     calculateHeight != nullptr)
                 {
                     juce::var args[] = {
-                        strategy == LayoutStrategy::dummy
-                            ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
-                            : juce::jmax(item.width, item.minWidth),
+                        juce::jmax(item.width, item.minWidth),
                     };
                     item.minHeight = juce::jmax(item.minHeight,
                                                 static_cast<float>(calculateHeight({ property, args, 1 })));
@@ -103,10 +103,19 @@ namespace jive
                                                       juce::Rectangle<float> parentContentBounds,
                                                       LayoutStrategy strategy) const
         {
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+
             if (!width.isAuto())
+            {
                 item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
+            }
             else if (idealWidth.exists())
-                item.width = idealWidth.get();
+            {
+                if (idealWidth.get() < parentContentBounds.getWidth())
+                    item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
+                else
+                    item.width = parentContentBounds.getWidth();
+            }
 
             if (!height.isAuto())
             {
@@ -201,8 +210,12 @@ namespace jive
 
         if (auto* container = getTopLevelDecorator().toType<ContainerItem>())
         {
-            if (getComponent()->getWidth() < idealWidth.get() || getComponent()->getHeight() < idealHeight.get())
-                container->updateIdealSizeWithinConstraints();
+            if ((getComponent()->getWidth() < idealWidth.get()
+                 || getComponent()->getHeight() < idealHeight.get())
+                && !static_cast<bool>(state["jive::setup-in-progress"]))
+            {
+                container->updateIdealSize();
+            }
         }
     }
 } // namespace jive

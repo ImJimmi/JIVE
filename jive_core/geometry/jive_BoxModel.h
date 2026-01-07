@@ -64,6 +64,12 @@ namespace jive
          */
         [[nodiscard]] juce::Rectangle<float> getContentBounds() const;
 
+        /** Returns the maximum size this component could be with any explicit
+            constraints such as max-width/max-height and explicit width/height
+            taken into account.
+         */
+        [[nodiscard]] juce::Rectangle<float> getExplicitConstraints() const;
+
         [[nodiscard]] juce::Rectangle<float> getMinimumBounds() const;
         [[nodiscard]] juce::Rectangle<float> getMaximumBounds() const;
 

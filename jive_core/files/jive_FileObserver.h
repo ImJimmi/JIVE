@@ -11,7 +11,19 @@ namespace jive
             : file{ f }
             , lastModificationTime{ file.getLastModificationTime() }
         {
+            observers.add(this);
             startTimerHz(10);
+        }
+
+        ~FileObserver()
+        {
+            observers.removeAllInstancesOf(this);
+        }
+
+        static void triggerAllTimerCallbacks()
+        {
+            for (auto* observer : observers)
+                observer->timerCallback();
         }
 
         const juce::File file;
@@ -30,5 +42,6 @@ namespace jive
         }
 
         juce::Time lastModificationTime;
+        static inline juce::Array<FileObserver*> observers;
     };
 } // namespace jive

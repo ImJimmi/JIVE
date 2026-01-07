@@ -161,7 +161,7 @@ namespace juce
 } // namespace juce
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class ButtonTest : public juce::UnitTest
 {
@@ -182,11 +182,11 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Button> createButton(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Button>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getButton(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Button>()->getButton();
     }
 
     void testToggleable()
@@ -201,13 +201,14 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
 
-            expect(!item->getButton().isToggleable());
+            expect(!button.isToggleable());
 
             tree.setProperty("toggleable", true, nullptr);
 
-            expect(item->getButton().isToggleable());
+            expect(button.isToggleable());
         }
         {
             juce::ValueTree tree{
@@ -218,9 +219,10 @@ private:
                     { "toggleable", true },
                 },
             };
-            auto item = createButton(tree);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
 
-            expect(item->getButton().isToggleable());
+            expect(button.isToggleable());
         }
     }
 
@@ -236,13 +238,14 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
 
-            expect(!item->getButton().getToggleState());
+            expect(!button.getToggleState());
 
             tree.setProperty("toggled", true, nullptr);
 
-            expect(item->getButton().getToggleState());
+            expect(button.getToggleState());
         }
         {
             juce::ValueTree tree{
@@ -253,9 +256,10 @@ private:
                     { "toggled", true },
                 },
             };
-            auto item = createButton(tree);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
 
-            expect(item->getButton().getToggleState());
+            expect(button.getToggleState());
         }
     }
 
@@ -271,11 +275,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
-            expect(!item->getButton().getClickingTogglesState());
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expect(!button.getClickingTogglesState());
 
             tree.setProperty("toggle-on-click", true, nullptr);
-            expect(item->getButton().getClickingTogglesState());
+            expect(button.getClickingTogglesState());
         }
         {
             juce::ValueTree tree{
@@ -286,8 +291,9 @@ private:
                     { "toggle-on-click", true },
                 },
             };
-            auto item = createButton(tree);
-            expect(item->getButton().getClickingTogglesState());
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expect(button.getClickingTogglesState());
         }
     }
 
@@ -303,11 +309,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
-            expectEquals(item->getButton().getRadioGroupId(), 0);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expectEquals(button.getRadioGroupId(), 0);
 
             tree.setProperty("radio-group", 100, nullptr);
-            expectEquals(item->getButton().getRadioGroupId(), 100);
+            expectEquals(button.getRadioGroupId(), 100);
         }
         {
             juce::ValueTree tree{
@@ -318,8 +325,9 @@ private:
                     { "radio-group", 12 },
                 },
             };
-            auto item = createButton(tree);
-            expectEquals(item->getButton().getRadioGroupId(), 12);
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expectEquals(button.getRadioGroupId(), 12);
         }
     }
 
@@ -335,11 +343,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
-            expect(!item->getButton().getTriggeredOnMouseDown());
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expect(!button.getTriggeredOnMouseDown());
 
             tree.setProperty("trigger-event", "mouse-down", nullptr);
-            expect(item->getButton().getTriggeredOnMouseDown());
+            expect(button.getTriggeredOnMouseDown());
         }
         {
             juce::ValueTree tree{
@@ -350,11 +359,12 @@ private:
                     { "trigger-event", "mouse-down" },
                 },
             };
-            auto item = createButton(tree);
-            expect(item->getButton().getTriggeredOnMouseDown());
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expect(button.getTriggeredOnMouseDown());
 
             tree.setProperty("trigger-event", "mouse-up", nullptr);
-            expect(!item->getButton().getTriggeredOnMouseDown());
+            expect(!button.getTriggeredOnMouseDown());
         }
     }
 
@@ -370,11 +380,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createButton(tree);
-            expect(item->getButton().getTooltip().isEmpty());
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expect(button.getTooltip().isEmpty());
 
             tree.setProperty("tooltip", "Click me!", nullptr);
-            expectEquals(item->getButton().getTooltip(), juce::String{ "Click me!" });
+            expectEquals(button.getTooltip(), juce::String{ "Click me!" });
         }
         {
             juce::ValueTree tree{
@@ -385,8 +396,9 @@ private:
                     { "tooltip", "OneTwoThree" },
                 },
             };
-            auto item = createButton(tree);
-            expectEquals(item->getButton().getTooltip(), juce::String{ "OneTwoThree" });
+            auto item = interpreter.interpret(tree);
+            auto& button = getButton(*item);
+            expectEquals(button.getTooltip(), juce::String{ "OneTwoThree" });
         }
     }
 
@@ -406,7 +418,6 @@ private:
                 juce::ValueTree{ "Button" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& button = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                             .toType<jive::Button>();
@@ -429,7 +440,6 @@ private:
                 juce::ValueTree{ "Button" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& button = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                             .toType<jive::Button>();

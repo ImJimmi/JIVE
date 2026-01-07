@@ -78,6 +78,7 @@ target_sources(jive_core
                       logging/jive_ScopeIndentedLogger.h
                       logging/jive_StringStreams.cpp
                       logging/jive_StringStreams.h
+                      testing/jive_UnitTest.h
                       time/jive_TimeParser.h
                       time/jive_TimeParser.h
                       time/jive_Timer.cpp

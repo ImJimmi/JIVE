@@ -2,150 +2,181 @@
 
 namespace juce
 {
-    const Array<var> VariantConverter<FlexBox::AlignContent>::options = {
-        "stretch",
-        "flex-start",
-        "flex-end",
-        "centre",
-        "space-between",
-        "space-around"
+    const std::unordered_map<String, FlexBox::AlignContent> VariantConverter<FlexBox::AlignContent>::options{
+        { "stretch", FlexBox::AlignContent::stretch },
+        { "flex-start", FlexBox::AlignContent::flexStart },
+        { "start", FlexBox::AlignContent::flexStart },
+        { "flex-end", FlexBox::AlignContent::flexEnd },
+        { "end", FlexBox::AlignContent::flexEnd },
+        { "centre", FlexBox::AlignContent::center },
+        { "center", FlexBox::AlignContent::center },
+        { "space-between", FlexBox::AlignContent::spaceBetween },
+        { "space-around", FlexBox::AlignContent::spaceAround },
     };
 
     FlexBox::AlignContent VariantConverter<FlexBox::AlignContent>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexBox{}.alignContent;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexBox::AlignContent>(options.indexOf(v));
+        return FlexBox::AlignContent::stretch;
     }
 
-    var VariantConverter<FlexBox::AlignContent>::toVar(FlexBox::AlignContent justification)
+    var VariantConverter<FlexBox::AlignContent>::toVar(FlexBox::AlignContent alignContent)
     {
-        const auto index = static_cast<int>(justification);
+        for (const auto& [key, value] : options)
+        {
+            if (alignContent == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
-    const Array<var> VariantConverter<FlexBox::AlignItems>::options = {
-        "stretch",
-        "flex-start",
-        "flex-end",
-        "centre"
+    const std::unordered_map<String, FlexBox::AlignItems> VariantConverter<FlexBox::AlignItems>::options{
+        { "stretch", FlexBox::AlignItems::stretch },
+        { "flex-start", FlexBox::AlignItems::flexStart },
+        { "start", FlexBox::AlignItems::flexStart },
+        { "flex-end", FlexBox::AlignItems::flexEnd },
+        { "end", FlexBox::AlignItems::flexEnd },
+        { "centre", FlexBox::AlignItems::center },
+        { "center", FlexBox::AlignItems::center },
     };
 
     FlexBox::AlignItems VariantConverter<FlexBox::AlignItems>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexBox{}.alignItems;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexBox::AlignItems>(options.indexOf(v));
+        return FlexBox::AlignItems::stretch;
     }
 
-    var VariantConverter<FlexBox::AlignItems>::toVar(FlexBox::AlignItems alignment)
+    var VariantConverter<FlexBox::AlignItems>::toVar(FlexBox::AlignItems alignItems)
     {
-        const auto index = static_cast<int>(alignment);
+        for (const auto& [key, value] : options)
+        {
+            if (alignItems == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
-    const Array<var> VariantConverter<FlexBox::Direction>::options = {
-        "row",
-        "row-reverse",
-        "column",
-        "column-reverse"
+    const std::unordered_map<String, FlexBox::Direction> VariantConverter<FlexBox::Direction>::options{
+        { "row", FlexBox::Direction::row },
+        { "row-reverse", FlexBox::Direction::rowReverse },
+        { "column", FlexBox::Direction::column },
+        { "column-reverse", FlexBox::Direction::columnReverse },
     };
 
     FlexBox::Direction VariantConverter<FlexBox::Direction>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexBox{}.flexDirection;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexBox::Direction>(options.indexOf(v));
+        return FlexBox::Direction::column;
     }
 
     var VariantConverter<FlexBox::Direction>::toVar(FlexBox::Direction direction)
     {
-        const auto index = static_cast<int>(direction);
+        for (const auto& [key, value] : options)
+        {
+            if (direction == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "column";
     }
 
-    const Array<var> VariantConverter<FlexBox::JustifyContent>::options = {
-        "flex-start",
-        "flex-end",
-        "centre",
-        "space-between",
-        "space-around"
+    const std::unordered_map<String, FlexBox::JustifyContent> VariantConverter<FlexBox::JustifyContent>::options{
+        { "flex-start", FlexBox::JustifyContent::flexStart },
+        { "start", FlexBox::JustifyContent::flexStart },
+        { "flex-end", FlexBox::JustifyContent::flexEnd },
+        { "end", FlexBox::JustifyContent::flexEnd },
+        { "centre", FlexBox::JustifyContent::center },
+        { "center", FlexBox::JustifyContent::center },
+        { "space-between", FlexBox::JustifyContent::spaceBetween },
+        { "space-around", FlexBox::JustifyContent::spaceAround },
     };
 
     FlexBox::JustifyContent VariantConverter<FlexBox::JustifyContent>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexBox{}.justifyContent;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexBox::JustifyContent>(options.indexOf(v));
+        return FlexBox::JustifyContent::flexStart;
     }
 
-    var VariantConverter<FlexBox::JustifyContent>::toVar(FlexBox::JustifyContent justification)
+    var VariantConverter<FlexBox::JustifyContent>::toVar(FlexBox::JustifyContent justifyContent)
     {
-        const auto index = static_cast<int>(justification);
+        for (const auto& [key, value] : options)
+        {
+            if (justifyContent == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "flex-start";
     }
 
-    const Array<var> VariantConverter<FlexBox::Wrap>::options = {
-        "nowrap",
-        "wrap",
-        "wrap-reverse"
+    const std::unordered_map<String, FlexBox::Wrap> VariantConverter<FlexBox::Wrap>::options{
+        { "nowrap", FlexBox::Wrap::noWrap },
+        { "no-wrap", FlexBox::Wrap::noWrap },
+        { "wrap", FlexBox::Wrap::wrap },
+        { "wrap-reverse", FlexBox::Wrap::wrapReverse },
     };
 
     FlexBox::Wrap VariantConverter<FlexBox::Wrap>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexBox{}.flexWrap;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexBox::Wrap>(options.indexOf(v));
+        return FlexBox::Wrap::noWrap;
     }
 
     var VariantConverter<FlexBox::Wrap>::toVar(FlexBox::Wrap wrap)
     {
-        const auto index = static_cast<int>(wrap);
+        for (const auto& [key, value] : options)
+        {
+            if (wrap == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "nowrap";
     }
 
-    const Array<var> VariantConverter<FlexItem::AlignSelf>::options = {
-        "auto",
-        "flex-start",
-        "flex-end",
-        "centre",
-        "stretch"
+    const std::unordered_map<String, FlexItem::AlignSelf> VariantConverter<FlexItem::AlignSelf>::options{
+        { "auto", FlexItem::AlignSelf::autoAlign },
+        { "flex-start", FlexItem::AlignSelf::flexStart },
+        { "start", FlexItem::AlignSelf::flexStart },
+        { "flex-end", FlexItem::AlignSelf::flexEnd },
+        { "end", FlexItem::AlignSelf::flexEnd },
+        { "centre", FlexItem::AlignSelf::center },
+        { "center", FlexItem::AlignSelf::center },
+        { "stretch", FlexItem::AlignSelf::stretch },
     };
 
     FlexItem::AlignSelf VariantConverter<FlexItem::AlignSelf>::fromVar(const var& v)
     {
-        if (v.isVoid())
-            return FlexItem{}.alignSelf;
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
 
-        jassert(options.contains(v));
-        return static_cast<FlexItem::AlignSelf>(options.indexOf(v));
+        return FlexItem::AlignSelf::autoAlign;
     }
 
     var VariantConverter<FlexItem::AlignSelf>::toVar(FlexItem::AlignSelf alignSelf)
     {
-        const auto index = static_cast<int>(alignSelf);
+        for (const auto& [key, value] : options)
+        {
+            if (alignSelf == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "auto";
     }
 } // namespace juce

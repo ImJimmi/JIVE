@@ -15,7 +15,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class KnobTest : public juce::UnitTest
 {
@@ -32,11 +32,11 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Knob> createKnob(juce::ValueTree tree) const
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Knob>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getKnob(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Knob>()->getSlider();
     }
 
     void testOrientation()
@@ -51,11 +51,12 @@ private:
                 { "orientation", "horizontal" },
             },
         };
-        auto item = createKnob(tree);
-        expectEquals(item->getSlider().getSliderStyle(), juce::Slider::RotaryVerticalDrag);
+        auto item = interpreter.interpret(tree);
+        auto& knob = getKnob(*item);
+        expectEquals(knob.getSliderStyle(), juce::Slider::RotaryVerticalDrag);
 
         tree.setProperty("orientation", "vertical", nullptr);
-        expectEquals(item->getSlider().getSliderStyle(), juce::Slider::RotaryVerticalDrag);
+        expectEquals(knob.getSliderStyle(), juce::Slider::RotaryVerticalDrag);
     }
 
     void testAutoSize()
@@ -72,7 +73,6 @@ private:
                 juce::ValueTree{ "Knob" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
         const auto& boxModel = jive::boxModel(item);

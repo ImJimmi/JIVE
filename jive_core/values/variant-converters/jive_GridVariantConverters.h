@@ -11,7 +11,7 @@ namespace juce
         static var toVar(GridItem::JustifySelf justification);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, GridItem::JustifySelf> options;
     };
 
     template <>
@@ -21,7 +21,7 @@ namespace juce
         static var toVar(GridItem::AlignSelf alignment);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, GridItem::AlignSelf> options;
     };
 
     template <>
@@ -52,7 +52,7 @@ namespace juce
         static var toVar(Grid::JustifyItems justification);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, Grid::JustifyItems> options;
     };
 
     template <>
@@ -62,7 +62,7 @@ namespace juce
         static var toVar(Grid::AlignItems alignment);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, Grid::AlignItems> options;
     };
 
     template <>
@@ -72,7 +72,7 @@ namespace juce
         static var toVar(Grid::JustifyContent alignment);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, Grid::JustifyContent> options;
     };
 
     template <>
@@ -82,7 +82,7 @@ namespace juce
         static var toVar(Grid::AlignContent alignment);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, Grid::AlignContent> options;
     };
 
     template <>
@@ -92,7 +92,7 @@ namespace juce
         static var toVar(Grid::AutoFlow flow);
 
     private:
-        static const Array<var> options;
+        static const std::unordered_map<String, Grid::AutoFlow> options;
     };
 
     template <>

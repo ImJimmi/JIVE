@@ -15,7 +15,7 @@ namespace jive
             cachedItems.clear();
 
             if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+                containerParent->updateIdealSize();
         };
         order.onValueChange = updateParentLayout;
         justifySelf.onValueChange = updateParentLayout;
@@ -85,7 +85,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 static bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
 {
@@ -686,7 +686,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxWidth, static_cast<float>(juce::GridItem::notAssigned));
+            expectEquals(gridItem.maxWidth, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
 
             state.getChild(0).setProperty("max-width", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -858,7 +858,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxHeight, static_cast<float>(juce::GridItem::notAssigned));
+            expectEquals(gridItem.maxHeight, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
 
             state.getChild(0).setProperty("max-height", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)

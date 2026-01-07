@@ -17,6 +17,9 @@ namespace jive
         if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
             return;
 
+        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+            laf->drawComponent(g, *this);
+
         getAttributedString().draw(g, getLocalBounds().toFloat());
     }
 

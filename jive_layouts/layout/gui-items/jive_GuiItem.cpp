@@ -65,7 +65,6 @@ namespace jive
         : state{ sourceView->getState() }
         , component{ comp }
         , parent{ parentItem }
-        , remover{ std::make_unique<Remover>(*this) }
         , view{ sourceView }
     {
         jassert(component != nullptr);
@@ -233,28 +232,6 @@ namespace jive
     }
 #endif
 
-    GuiItem::Remover::Remover(GuiItem& guiItem)
-        : item{ guiItem }
-        , parent{ item.getParent() }
-    {
-        if (parent != nullptr)
-            parent->state.addListener(this);
-    }
-
-    GuiItem::Remover::~Remover()
-    {
-        if (parent != nullptr)
-            parent->state.removeListener(this);
-    }
-
-    void GuiItem::Remover::valueTreeChildRemoved(juce::ValueTree&,
-                                                 juce::ValueTree& childWhichHasBeenRemoved,
-                                                 int)
-    {
-        if (childWhichHasBeenRemoved == item.state && parent != nullptr)
-            parent->removeChild(item);
-    }
-
     BoxModel& boxModel(GuiItem& item)
     {
         // This is a convenience function that only works if the given GUI item
@@ -288,7 +265,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class GuiItemUnitTest : public juce::UnitTest
 {
@@ -321,22 +298,19 @@ private:
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
         expectEquals(item->state.getNumChildren(), 0);
 
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(0),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
         expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
 
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(1),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(2),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
         expectEquals(item->getChildren().size(), 3);
@@ -346,14 +320,6 @@ private:
         expect(child0 != nullptr);
         item->removeChild(*child0);
         expectEquals(item->getChildren().size(), 2);
-        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
-
-        item->state.removeChild(0, nullptr);
-        expectEquals(item->getChildren().size(), 2);
-        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
-
-        item->state.removeChild(0, nullptr);
-        expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
     }
 

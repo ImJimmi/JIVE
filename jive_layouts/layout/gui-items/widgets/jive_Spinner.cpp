@@ -21,7 +21,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class SpinnerTest : public juce::UnitTest
 {
@@ -38,11 +38,11 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Spinner> createSpinner(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Spinner>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getSpinner(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Spinner>()->getSlider();
     }
 
     void testOrientation()
@@ -57,11 +57,12 @@ private:
                 { "orientation", "horizontal" },
             },
         };
-        auto item = createSpinner(tree);
-        expectEquals(item->getSlider().getSliderStyle(), juce::Slider::IncDecButtons);
+        auto item = interpreter.interpret(tree);
+        auto& spinner = getSpinner(*item);
+        expectEquals(spinner.getSliderStyle(), juce::Slider::IncDecButtons);
 
         tree.setProperty("orientation", "vertical", nullptr);
-        expectEquals(item->getSlider().getSliderStyle(), juce::Slider::IncDecButtons);
+        expectEquals(spinner.getSliderStyle(), juce::Slider::IncDecButtons);
     }
 
     void testAutoSize()
@@ -78,7 +79,6 @@ private:
                 juce::ValueTree{ "Spinner" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
         const auto& boxModel = jive::boxModel(item);

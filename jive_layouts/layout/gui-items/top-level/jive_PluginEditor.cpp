@@ -5,7 +5,7 @@ namespace jive
 {
     PluginEditor::PluginEditor(std::unique_ptr<GuiItem> itemToDecorate,
                                juce::AudioProcessor* pluginProcessor)
-        : GuiItemDecorator{ std::move(itemToDecorate) }
+        : TopLevelGuiItem{ std::move(itemToDecorate) }
         , juce::AudioProcessorEditor{ *pluginProcessor }
     {
         jassert(pluginProcessor != nullptr);
@@ -26,6 +26,12 @@ namespace jive
             comp->setLookAndFeel(nullptr);
             comp->removeComponentListener(this);
         }
+    }
+
+    void PluginEditor::replaceDecoratedItem(std::unique_ptr<GuiItem> newItem)
+    {
+        item = std::move(newItem);
+        state = item->state;
     }
 
     void PluginEditor::resized()

@@ -2,48 +2,62 @@
 
 namespace juce
 {
-    const Array<var> VariantConverter<GridItem::JustifySelf>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
-        "auto"
+    const std::unordered_map<String, GridItem::JustifySelf> VariantConverter<GridItem::JustifySelf>::options = {
+        { "start", GridItem::JustifySelf::start },
+        { "end", GridItem::JustifySelf::end },
+        { "centre", GridItem::JustifySelf::center },
+        { "center", GridItem::JustifySelf::center },
+        { "stretch", GridItem::JustifySelf::stretch },
+        { "auto", GridItem::JustifySelf::autoValue },
     };
 
     GridItem::JustifySelf VariantConverter<GridItem::JustifySelf>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<GridItem::JustifySelf>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return GridItem::JustifySelf::stretch;
     }
 
-    var VariantConverter<GridItem::JustifySelf>::toVar(GridItem::JustifySelf justification)
+    var VariantConverter<GridItem::JustifySelf>::toVar(GridItem::JustifySelf justifySelf)
     {
-        const auto index = static_cast<int>(justification);
+        for (const auto& [key, value] : options)
+        {
+            if (justifySelf == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
-    const Array<var> VariantConverter<GridItem::AlignSelf>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
-        "auto"
+    const std::unordered_map<String, GridItem::AlignSelf> VariantConverter<GridItem::AlignSelf>::options = {
+        { "start", GridItem::AlignSelf::start },
+        { "end", GridItem::AlignSelf::end },
+        { "centre", GridItem::AlignSelf::center },
+        { "center", GridItem::AlignSelf::center },
+        { "stretch", GridItem::AlignSelf::stretch },
+        { "auto", GridItem::AlignSelf::autoValue },
     };
 
     GridItem::AlignSelf VariantConverter<GridItem::AlignSelf>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<GridItem::AlignSelf>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return GridItem::AlignSelf::stretch;
     }
 
-    var VariantConverter<GridItem::AlignSelf>::toVar(GridItem::AlignSelf alignment)
+    var VariantConverter<GridItem::AlignSelf>::toVar(GridItem::AlignSelf alignSelf)
     {
-        const auto index = static_cast<int>(alignment);
+        for (const auto& [key, value] : options)
+        {
+            if (alignSelf == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
     GridItem::Span VariantConverter<GridItem::Span>::fromVar(const var& v)
@@ -125,115 +139,151 @@ namespace juce
         return tokens.joinIntoString(" / ");
     }
 
-    const Array<var> VariantConverter<Grid::JustifyItems>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
+    const std::unordered_map<String, Grid::JustifyItems> VariantConverter<Grid::JustifyItems>::options = {
+        { "start", Grid::JustifyItems::start },
+        { "end", Grid::JustifyItems::end },
+        { "centre", Grid::JustifyItems::center },
+        { "center", Grid::JustifyItems::center },
+        { "stretch", Grid::JustifyItems::stretch },
     };
 
     Grid::JustifyItems VariantConverter<Grid::JustifyItems>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<Grid::JustifyItems>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return Grid::JustifyItems::stretch;
     }
 
-    var VariantConverter<Grid::JustifyItems>::toVar(Grid::JustifyItems justification)
+    var VariantConverter<Grid::JustifyItems>::toVar(Grid::JustifyItems justifyItems)
     {
-        const auto index = static_cast<int>(justification);
+        for (const auto& [key, value] : options)
+        {
+            if (justifyItems == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
-    const Array<var> VariantConverter<Grid::AlignItems>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
+    const std::unordered_map<String, Grid::AlignItems> VariantConverter<Grid::AlignItems>::options = {
+        { "start", Grid::AlignItems::start },
+        { "end", Grid::AlignItems::end },
+        { "centre", Grid::AlignItems::center },
+        { "center", Grid::AlignItems::center },
+        { "stretch", Grid::AlignItems::stretch },
     };
 
     Grid::AlignItems VariantConverter<Grid::AlignItems>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<Grid::AlignItems>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return Grid::AlignItems::stretch;
     }
 
-    var VariantConverter<Grid::AlignItems>::toVar(Grid::AlignItems alignment)
+    var VariantConverter<Grid::AlignItems>::toVar(Grid::AlignItems alignItems)
     {
-        const auto index = static_cast<int>(alignment);
+        for (const auto& [key, value] : options)
+        {
+            if (alignItems == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "stretch";
     }
 
-    const Array<var> VariantConverter<Grid::JustifyContent>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
-        "space-around",
-        "space-between",
-        "space-evenly",
+    const std::unordered_map<String, Grid::JustifyContent> VariantConverter<Grid::JustifyContent>::options = {
+        { "start", Grid::JustifyContent::start },
+        { "end", Grid::JustifyContent::end },
+        { "centre", Grid::JustifyContent::center },
+        { "center", Grid::JustifyContent::center },
+        { "stretch", Grid::JustifyContent::stretch },
+        { "space-around", Grid::JustifyContent::spaceAround },
+        { "space-between", Grid::JustifyContent::spaceBetween },
+        { "space-evenly", Grid::JustifyContent::spaceEvenly },
     };
 
     Grid::JustifyContent VariantConverter<Grid::JustifyContent>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<Grid::JustifyContent>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return Grid::JustifyContent::start;
     }
 
-    var VariantConverter<Grid::JustifyContent>::toVar(Grid::JustifyContent justification)
+    var VariantConverter<Grid::JustifyContent>::toVar(Grid::JustifyContent justifyContent)
     {
-        const auto index = static_cast<int>(justification);
+        for (const auto& [key, value] : options)
+        {
+            if (justifyContent == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "start";
     }
 
-    const Array<var> VariantConverter<Grid::AlignContent>::options = {
-        "start",
-        "end",
-        "centre",
-        "stretch",
-        "space-around",
-        "space-between",
-        "space-evenly",
+    const std::unordered_map<String, Grid::AlignContent> VariantConverter<Grid::AlignContent>::options = {
+        { "start", Grid::AlignContent::start },
+        { "end", Grid::AlignContent::end },
+        { "centre", Grid::AlignContent::center },
+        { "center", Grid::AlignContent::center },
+        { "stretch", Grid::AlignContent::stretch },
+        { "space-around", Grid::AlignContent::spaceAround },
+        { "space-between", Grid::AlignContent::spaceBetween },
+        { "space-evenly", Grid::AlignContent::spaceEvenly },
     };
 
     Grid::AlignContent VariantConverter<Grid::AlignContent>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<Grid::AlignContent>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return Grid::AlignContent::start;
     }
 
-    var VariantConverter<Grid::AlignContent>::toVar(Grid::AlignContent alignment)
+    var VariantConverter<Grid::AlignContent>::toVar(Grid::AlignContent alignContent)
     {
-        const auto index = static_cast<int>(alignment);
+        for (const auto& [key, value] : options)
+        {
+            if (alignContent == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "start";
     }
 
-    const Array<var> VariantConverter<Grid::AutoFlow>::options = {
-        "row",
-        "column",
-        "row dense",
-        "column dense",
+    const std::unordered_map<String, Grid::AutoFlow> VariantConverter<Grid::AutoFlow>::options = {
+        { "row", Grid::AutoFlow::row },
+        { "column", Grid::AutoFlow::column },
+        { "row dense", Grid::AutoFlow::rowDense },
+        { "row-dense", Grid::AutoFlow::rowDense },
+        { "column dense", Grid::AutoFlow::columnDense },
+        { "column-dense", Grid::AutoFlow::columnDense },
     };
 
     Grid::AutoFlow VariantConverter<Grid::AutoFlow>::fromVar(const var& v)
     {
-        jassert(options.contains(v));
-        return static_cast<Grid::AutoFlow>(options.indexOf(v));
+        if (options.count(v.toString()) >= 1)
+            return options.at(v.toString());
+
+        return Grid::AutoFlow::row;
     }
 
-    var VariantConverter<Grid::AutoFlow>::toVar(Grid::AutoFlow flow)
+    var VariantConverter<Grid::AutoFlow>::toVar(Grid::AutoFlow autoFlow)
     {
-        const auto index = static_cast<int>(flow);
+        for (const auto& [key, value] : options)
+        {
+            if (autoFlow == value)
+                return key;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        jassertfalse;
+        return "start";
     }
 
     Grid::TrackInfo VariantConverter<Grid::TrackInfo>::fromVar(const var& v)

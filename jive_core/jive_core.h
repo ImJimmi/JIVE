@@ -10,6 +10,8 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_CORE_H_INCLUDED
 
+#include <juce_gui_basics/juce_gui_basics.h>
+
 #if JIVE_IS_PLUGIN_PROJECT
     #include <juce_audio_processors/juce_audio_processors.h>
 #endif
@@ -46,6 +48,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "logging/jive_ConsoleProgressBar.h"
 #include "logging/jive_ScopeIndentedLogger.h"
 #include "logging/jive_StringStreams.h"
+#include "testing/jive_UnitTest.h"
 #include "time/jive_TimeParser.h"
 #include "time/jive_Timer.h"
 #include "values/jive_Colours.h"

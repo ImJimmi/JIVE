@@ -17,10 +17,10 @@ namespace jive
         jassert(state.getProperty("display", "flex") == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         flexWrap.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         flexJustifyContent.onValueChange = [this] {
             callLayoutChildrenWithRecursionLock();
@@ -71,20 +71,6 @@ namespace jive
     juce::Rectangle<float> FlexContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
     {
         constraints = constraints.withZeroOrigin();
-
-        switch (flexDirection.getOr(juce::FlexBox::Direction::column))
-        {
-        case juce::FlexBox::Direction::column:
-        case juce::FlexBox::Direction::columnReverse:
-            constraints.setHeight(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
-            break;
-        case juce::FlexBox::Direction::row:
-        case juce::FlexBox::Direction::rowReverse:
-            constraints.setWidth(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
-            break;
-        default:
-            jassertfalse;
-        }
 
         auto flex = const_cast<FlexContainer&>(*this)
                         .buildFlexBox(constraints, LayoutStrategy::dummy);
@@ -186,7 +172,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class FlexContainerUnitTest : public juce::UnitTest
 {
@@ -539,7 +525,7 @@ private:
                 containerState,
             },
         };
-        const jive::Interpreter interpreter;
+        jive::Interpreter interpreter;
 
         beginTest("nested widget with text / blank slate");
         {
@@ -612,23 +598,25 @@ private:
                          font.getHeight());
         }
 
-        const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-        textState.setProperty("text", lorumIpsumSentence, nullptr);
-
         beginTest("nested widget with text / much longer text added to widget");
         {
+            const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+            textState.setProperty("text", lorumIpsumSentence, nullptr);
+
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
+            const auto& button = *container.getChildren()[0];
+            const auto& text = *button.getChildren()[0];
+            const auto& textComponent = *text.getComponent();
 
             const juce::AttributedString attributedString{ lorumIpsumSentence };
             juce::TextLayout layout;
-            layout.createLayout(attributedString, jive::boxModel(container).getContentBounds().getWidth());
+            layout.createLayout(attributedString, textComponent.getWidth());
 
-            const auto& boxModel = jive::boxModel(container);
-            expectEquals(boxModel.getWidth(), 150.0f);
-            expectEquals(boxModel.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
+            expectLessOrEqual(static_cast<int>(std::ceil(layout.getWidth())), textComponent.getWidth());
+            expectEquals(textComponent.getHeight(), static_cast<int>(std::ceil(layout.getHeight())));
         }
     }
 
