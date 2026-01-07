@@ -8,7 +8,8 @@ add_library(jive::jive_layouts
 )
 
 target_sources(jive_layouts
-               PUBLIC hooks/jive_View.cpp
+               INTERFACE
+                      hooks/jive_View.cpp
                       hooks/jive_View.h
                       layout/gui-items/block/jive_BlockContainer.cpp
                       layout/gui-items/block/jive_BlockContainer.h
@@ -28,6 +29,7 @@ target_sources(jive_layouts
                       layout/gui-items/grid/jive_GridItem.h
                       layout/gui-items/top-level/jive_PluginEditor.cpp
                       layout/gui-items/top-level/jive_PluginEditor.h
+                      layout/gui-items/top-level/jive_TopLevelGuiItem.h
                       layout/gui-items/top-level/jive_Window.cpp
                       layout/gui-items/top-level/jive_Window.h
                       layout/gui-items/widgets/jive_Button.cpp
@@ -51,12 +53,13 @@ target_sources(jive_layouts
                       layout/gui-items/jive_ContainerItem.cpp
                       layout/gui-items/jive_ContainerItem.h
                       layout/gui-items/jive_ContainerItemChild.cpp
+                      layout/gui-items/jive_ExternalSourceGuiItem.h
                       layout/gui-items/jive_GuiItem.cpp
                       layout/gui-items/jive_GuiItem.h
                       layout/gui-items/jive_GuiItemDecorator.cpp
                       layout/gui-items/jive_GuiItemDecorator.h
-                      layout/jive_Interpreter.cpp
-                      layout/jive_Interpreter.h
+                      layout/interpreter/jive_Interpreter.cpp
+                      layout/interpreter/jive_Interpreter.h
                       utilities/jive_ComponentFactory.cpp
                       utilities/jive_ComponentFactory.h
                       utilities/jive_Display.cpp
@@ -69,6 +72,13 @@ target_sources(jive_layouts
                       jive_layouts.h
 )
 
+if (JIVE_BUILD_TEST_RUNNER)
+    target_sources(jive_layouts
+    INTERFACE
+        layout/interpreter/jive_Interpreter.tests.cpp
+    )
+endif()
+
 target_include_directories(jive_layouts
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
@@ -76,3 +86,6 @@ target_include_directories(jive_layouts
 target_link_libraries(jive_layouts
                       INTERFACE jive::jive_style_sheets
 )
+
+target_compile_definitions(jive_layouts
+                           INTERFACE JIVE_TREE_EDITOR_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tree-editor")

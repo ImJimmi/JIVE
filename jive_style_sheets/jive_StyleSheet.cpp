@@ -309,9 +309,8 @@ namespace jive
                 addStylesFrom(
                     *child,
                     [safeComponent = juce::Component::SafePointer<juce::Component>{ &component },
-                     uiState = state,
                      className = name.toString().fromFirstOccurrenceOf(".", false, false)](const juce::Component& comp) {
-                        const auto classes = fromVar<juce::StringArray>(uiState["class"]);
+                        const auto classes = fromVar<juce::StringArray>(comp.getProperties().getWithDefault("class", ""));
 
                         return classes.contains(className)
                             && safeComponent != nullptr

@@ -10,4 +10,6 @@ END_JUCE_MODULE_DECLARATION */
 
 #define JIVE_STYLE_SHEETS_H_INCLUDED
 
+#include <jive_core/jive_core.h>
+
 #include "jive_StyleSheet.h"

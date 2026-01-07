@@ -44,7 +44,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class ProgressBarTest : public juce::UnitTest
 {
@@ -61,11 +61,11 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::ProgressBar> createProgressBar(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::ProgressBar>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getProgressBar(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::ProgressBar>()->getProgressBar();
     }
 
     void testValue()
@@ -80,17 +80,18 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createProgressBar(tree);
-            expectEquals(item->getProgressBar().getValue(), 0.0);
+            auto item = interpreter.interpret(tree);
+            auto& bar = getProgressBar(*item);
+            expectEquals(bar.getValue(), 0.0);
 
             tree.setProperty("value", 0.7481, nullptr);
-            expectEquals(item->getProgressBar().getValue(), 0.7481);
+            expectEquals(bar.getValue(), 0.7481);
 
             tree.setProperty("value", -123.456, nullptr);
-            expectEquals(item->getProgressBar().getValue(), 0.0);
+            expectEquals(bar.getValue(), 0.0);
 
             tree.setProperty("value", 9876.54321, nullptr);
-            expectEquals(item->getProgressBar().getValue(), 1.0);
+            expectEquals(bar.getValue(), 1.0);
         }
         {
             juce::ValueTree tree{
@@ -101,8 +102,9 @@ private:
                     { "value", 0.463 },
                 },
             };
-            auto item = createProgressBar(tree);
-            expectEquals(item->getProgressBar().getValue(), 0.463);
+            auto item = interpreter.interpret(tree);
+            auto& bar = getProgressBar(*item);
+            expectEquals(bar.getValue(), 0.463);
         }
     }
 
@@ -120,7 +122,6 @@ private:
                 juce::ValueTree{ "ProgressBar" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& progressBar = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                                  .toType<jive::ProgressBar>();

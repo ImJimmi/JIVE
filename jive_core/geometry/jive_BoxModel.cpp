@@ -201,6 +201,15 @@ namespace jive
                                juce::jmax(0.0f, bounds.getHeight()));
     }
 
+    juce::Rectangle<float> BoxModel::getExplicitConstraints() const
+    {
+        return getMaximumBounds()
+            .getIntersection(juce::Rectangle<float>{
+                hasAutoWidth() ? std::numeric_limits<juce::uint16>::max() : getWidth(),
+                hasAutoHeight() ? std::numeric_limits<juce::uint16>::max() : getHeight(),
+            });
+    }
+
     juce::Rectangle<float> BoxModel::getMinimumBounds() const
     {
         return juce::Rectangle<float>{
@@ -212,8 +221,12 @@ namespace jive
     juce::Rectangle<float> BoxModel::getMaximumBounds() const
     {
         return {
-            maxWidth.exists() ? maxWidth.get().toPixels(getParentBounds().getWidth()) : -1.0f,
-            maxHeight.exists() ? maxHeight.get().toPixels(getParentBounds().getHeight()) : -1.0f,
+            maxWidth.exists()
+                ? maxWidth.get().toPixels(getParentBounds().getWidth())
+                : std::numeric_limits<juce::uint16>::max(),
+            maxHeight.exists()
+                ? maxHeight.get().toPixels(getParentBounds().getHeight())
+                : std::numeric_limits<juce::uint16>::max(),
         };
     }
 

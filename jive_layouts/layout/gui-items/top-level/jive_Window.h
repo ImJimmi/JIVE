@@ -1,38 +1,39 @@
 #pragma once
 
-#include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+#include "jive_TopLevelGuiItem.h"
 
 namespace jive
 {
-    class Window : public GuiItemDecorator
+    class Window
+        : public TopLevelGuiItem
+        , public DocumentWindow
     {
     public:
         explicit Window(std::unique_ptr<GuiItem> itemToDecorate);
-        ~Window();
+        ~Window() override;
 
-        juce::DocumentWindow& getWindow();
-        const juce::DocumentWindow& getWindow() const;
+        void replaceDecoratedItem(std::unique_ptr<GuiItem> newItem) override;
 
     private:
         int getStyleFlags() const;
 
-        DocumentWindow window;
         LookAndFeel jiveLookAndFeel{ *getComponent() };
 
         Property<bool> hasShadow;
         Property<bool> isNative;
-        Property<bool> isResizable;
+        Property<bool> canBeResized;
         Property<bool> useCornerResizer;
         Property<float> minWidth;
         Property<float> minHeight;
         Property<float> maxWidth;
         Property<float> maxHeight;
-        Property<bool> isDraggable;
-        Property<bool> isFullScreen;
-        Property<bool> isMinimised;
+        Property<bool> draggable;
+        Property<bool> fullScreen;
+        Property<bool> minimised;
+        Property<bool> visibility;
         Property<juce::String> name;
-        Property<float> titleBarHeight;
-        Property<juce::DocumentWindow::TitleBarButtons> titleBarButtons;
+        Property<float> windowTitleBarHeight;
+        Property<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
         Property<Length> width;
         Property<Length> height;
 

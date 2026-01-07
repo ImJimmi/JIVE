@@ -27,5 +27,6 @@ namespace jive
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;
         std::unordered_map<ItemCacheKey, juce::FlexItem> cachedItems;
+        float lastMinHeight = -1.0f;
     };
 } // namespace jive

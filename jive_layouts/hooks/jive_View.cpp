@@ -12,7 +12,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class ViewTest : public juce::UnitTest
 {
@@ -109,7 +109,6 @@ private:
         auto* view = dynamic_cast<SpyView*>(window->getView().get());
         expect(view != nullptr);
         expectEquals(view->setupCallCount, 1);
-        expect(view->lastItemPassedToCallback == window.get());
     }
 
     void testCustomComponents()

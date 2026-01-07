@@ -160,8 +160,13 @@ namespace jive
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
 
-            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem)
+                                            .getTopLevelDecorator()
+                                            .toType<ContainerItem>();
+                containerParent != nullptr)
+            {
+                containerParent->updateIdealSize();
+            }
         }
     }
 
@@ -184,7 +189,7 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/graphics/jive_FontUtilities.h>
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class TextTest : public juce::UnitTest
 {

@@ -37,34 +37,34 @@ namespace jive
             callLayoutChildrenWithRecursionLock();
         };
         gridAutoFlow.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridTemplateColumns.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridTemplateColumns.onTransitionProgressed = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridTemplateRows.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridTemplateRows.onTransitionProgressed = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridTemplateAreas.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridAutoRows.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gridAutoColumns.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gap.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         gap.onTransitionProgressed = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
 
         state.addListener(this);
@@ -229,7 +229,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 static bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {

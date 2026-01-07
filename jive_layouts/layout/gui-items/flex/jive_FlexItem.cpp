@@ -49,7 +49,7 @@ namespace jive
             cachedItems.clear();
 
             if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+                containerParent->updateIdealSize();
         };
         order.onValueChange = updateParentLayout;
         flexGrow.onValueChange = updateParentLayout;
@@ -107,6 +107,7 @@ namespace jive
         }
 
         dynamic_cast<FlexLayoutDummy&>(*layoutDummy).setStrategy(strategy);
+        lastMinHeight = cachedItems.find(key)->second.minHeight;
         return cachedItems.find(key)->second;
     }
 
@@ -117,7 +118,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class FlexItemUnitTest : public juce::UnitTest
 {

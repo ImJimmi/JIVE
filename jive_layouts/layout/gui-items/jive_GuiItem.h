@@ -61,21 +61,10 @@ namespace jive
         virtual void layOutChildren() {}
         virtual void childrenChanged() {}
 
+        std::shared_ptr<juce::Component> component;
+
     private:
         friend class GuiItemDecorator;
-
-        class Remover : private juce::ValueTree::Listener
-        {
-        public:
-            explicit Remover(GuiItem& guiItem);
-            ~Remover();
-
-        private:
-            void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int) final;
-
-            GuiItem& item;
-            GuiItem* parent;
-        };
 
         GuiItem(std::shared_ptr<juce::Component> component,
                 GuiItem* parent,
@@ -87,10 +76,8 @@ namespace jive
 
         static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state);
 
-        const std::shared_ptr<juce::Component> component;
         GuiItem* const parent;
         juce::OwnedArray<GuiItem> children;
-        std::unique_ptr<Remover> remover;
         View::ReferenceCountedPointer view;
 
         bool layoutRecursionLock = false;

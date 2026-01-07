@@ -61,25 +61,33 @@ namespace jive
         };
     }
 
+    static void replaceAliasFontFamilies(juce::String& fontFamily)
+    {
+        static const std::unordered_map<juce::String, juce::String> genericFontNames{
+            { "serif", juce::Font::getDefaultSerifFontName() },
+            { "sans-serif", juce::Font::getDefaultSansSerifFontName() },
+#if JUCE_MAJOR_VERSION >= 8
+            { "system-ui", juce::Font::getSystemUIFontName() },
+#endif
+            { "monospace", juce::Font::getDefaultMonospacedFontName() },
+        };
+
+        if (const auto name = genericFontNames.find(fontFamily);
+            name != std::end(genericFontNames))
+        {
+            fontFamily = name->second;
+        }
+    }
+
     juce::Font parseFont(const juce::String& text)
     {
         if (text.isEmpty())
             return getDefaultFont();
 
         static const auto getFontFamily = [](const juce::String& id) {
-            static const std::unordered_map<juce::String, juce::String> genericFontNames{
-                { "serif", juce::Font::getDefaultSerifFontName() },
-                { "sans-serif", juce::Font::getDefaultSansSerifFontName() },
-#if JUCE_MAJOR_VERSION >= 8
-                { "system-ui", juce::Font::getSystemUIFontName() },
-#endif
-                { "monospace", juce::Font::getDefaultMonospacedFontName() },
-            };
-
-            if (const auto name = genericFontNames.find(id); name != std::end(genericFontNames))
-                return name->second;
-
-            return id;
+            auto copy = id;
+            replaceAliasFontFamilies(copy);
+            return copy;
         };
 
         const auto tokens = juce::StringArray::fromTokens(text, " ", "");
@@ -192,7 +200,10 @@ namespace jive
 
         auto result = baseFont;
 
-        result.setTypefaceName(fontFamily.value_or(styles.fontFamily.getValueOr(result.getTypefaceName())));
+        auto finalFontFamily = fontFamily.value_or(styles.fontFamily.getValueOr(result.getTypefaceName()));
+        replaceAliasFontFamilies(finalFontFamily);
+
+        result.setTypefaceName(finalFontFamily);
         result = result.withPointHeight(fontPointSize.value_or(styles.find<float>("font-size").value_or(result.getHeightInPoints())));
         result.setHorizontalScale(fontHorizontalScale.value_or(styles.find<float>("font-scale").value_or(result.getHorizontalScale())));
         result.setExtraKerningFactor(fontExtraKerningFactor.value_or(styles.find<float>("font-kerning").value_or(result.getExtraKerningFactor())));

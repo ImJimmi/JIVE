@@ -24,6 +24,8 @@ namespace jive
         void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager*) override;
 #endif
 
+        void layOutChildren() override;
+
         GuiItemDecorator& getTopLevelDecorator();
         const GuiItemDecorator& getTopLevelDecorator() const;
 
@@ -44,13 +46,20 @@ namespace jive
             return const_cast<GuiItemDecorator*>(this)->toType<ItemType>();
         }
 
-        void layOutChildren() override;
+        // Calling this will leave this item in an invalid state. Make sure you
+        // delete this decorator immediately after taking ownership of the
+        // underlying item returned by this method.
+        [[nodiscard]] std::unique_ptr<GuiItem> stripAllDecorators();
 
-        const std::unique_ptr<GuiItem> item;
+    protected:
+        std::unique_ptr<GuiItem> item;
 
     private:
         GuiItemDecorator* owner = nullptr;
 
         JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
+
+    [[nodiscard]] std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
+                                                    const std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>>& customDecorators);
 } // namespace jive

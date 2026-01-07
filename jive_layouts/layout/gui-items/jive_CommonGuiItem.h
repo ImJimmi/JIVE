@@ -43,6 +43,7 @@ namespace jive
         Property<bool> focusOutline;
         Property<int> focusOrder;
         Property<float> opacity;
+        Property<juce::String> classes;
         Property<juce::MouseCursor::StandardCursorType> cursor;
         Property<Length> width;
         Property<Length> height;

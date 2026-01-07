@@ -21,6 +21,7 @@ namespace jive
         , focusOutline{ state, "focus-outline" }
         , focusOrder{ state, "focus-order" }
         , opacity{ state, "opacity" }
+        , classes{ state, "class" }
         , cursor{ state, "cursor" }
         , width{ state, "width" }
         , height{ state, "height" }
@@ -108,6 +109,11 @@ namespace jive
         opacity.onValueChange = updateOpacity;
         opacity.onTransitionProgressed = updateOpacity;
         getComponent()->setAlpha(opacity.getOr(1.0f));
+
+        classes.onValueChange = [this]() {
+            getComponent()->getProperties().set("class", classes.get());
+        };
+        getComponent()->getProperties().set("class", classes.get());
 
         cursor.onValueChange = [this]() {
             getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
@@ -244,21 +250,25 @@ namespace jive
     {
         jassertquiet(&boxModelThatChanged == &boxModel);
 
-        getComponent()->removeComponentListener(this);
-        getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
-                                juce::roundToInt(boxModel.getHeight()));
-        getComponent()->addComponentListener(this);
-        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        if (!static_cast<bool>(state["jive::setup-in-progress"]))
+        {
+            getComponent()->removeComponentListener(this);
+            getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
+                                    juce::roundToInt(boxModel.getHeight()));
+            getComponent()->addComponentListener(this);
+            getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        }
     }
 
     void CommonGuiItem::childrenChanged()
     {
-        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        if (!static_cast<bool>(state["jive::setup-in-progress"]))
+            getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class CommonGuiItemUnitTest : public juce::UnitTest
 {

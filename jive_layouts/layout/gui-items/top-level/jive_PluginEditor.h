@@ -1,22 +1,23 @@
 #pragma once
 
-#include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+#include "jive_TopLevelGuiItem.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace jive
 {
     class PluginEditor final
-        : public jive::GuiItemDecorator
+        : public jive::TopLevelGuiItem
         , public juce::AudioProcessorEditor
         , private juce::ComponentListener
     {
     public:
         PluginEditor(std::unique_ptr<GuiItem> itemToDecorate,
                      juce::AudioProcessor* pluginProcessor = nullptr);
-        ~PluginEditor() final;
+        ~PluginEditor() override;
 
-        void resized() final;
+        void replaceDecoratedItem(std::unique_ptr<GuiItem> newItem) override;
+        void resized() override;
 
     private:
         void componentMovedOrResized(juce::Component&, bool, bool) final;

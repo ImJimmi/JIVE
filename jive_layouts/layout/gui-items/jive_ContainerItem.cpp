@@ -23,8 +23,8 @@ namespace jive
         const auto numChildrenBefore = getChildren().size();
         GuiItemDecorator::insertChild(std::move(child), index);
 
-        if (getChildren().size() != numChildrenBefore)
-            updateIdealSizeUnrestrained();
+        if (getChildren().size() != numChildrenBefore && !static_cast<bool>(state["jive::setup-in-progress"]))
+            updateIdealSize();
     }
 
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
@@ -34,28 +34,44 @@ namespace jive
             GuiItemDecorator::setChildren(std::move(newChildren));
         }
 
-        if (!getChildren().isEmpty())
-            updateIdealSizeUnrestrained();
+        if (!getChildren().isEmpty() && !static_cast<bool>(state["jive::setup-in-progress"]))
+            updateIdealSize();
     }
 
-    void ContainerItem::updateIdealSizeUnrestrained()
+    juce::Rectangle<float> ContainerItem::getContentConstraints() const
     {
-        updateIdealSize({
-            static_cast<float>(std::numeric_limits<juce::uint16>::max()),
-            static_cast<float>(std::numeric_limits<juce::uint16>::max()),
-        });
+        auto constraints = box.getExplicitConstraints();
+
+        if (auto* thisParent = dynamic_cast<const GuiItemDecorator*>(getParent()))
+        {
+            if (auto* parentContainer = thisParent->getTopLevelDecorator().toType<ContainerItem>())
+                constraints = constraints.getIntersection(parentContainer->getContentConstraints());
+        }
+
+        return box
+            .getPadding()
+            .subtractedFrom(box.getBorder()
+                                .subtractedFrom(constraints));
     }
 
-    void ContainerItem::updateIdealSizeWithinConstraints()
+    void ContainerItem::updateIdealSize(bool informParentOfChanges)
     {
-        updateIdealSize(box.getContentBounds());
-    }
+        for (auto* child : getChildren())
+        {
+            if (auto* decorator = dynamic_cast<GuiItemDecorator*>(child))
+                if (auto* container = decorator->getTopLevelDecorator().toType<ContainerItem>())
+                    container->updateIdealSize(false);
+        }
 
-    void ContainerItem::updateIdealSize(juce::Rectangle<float> constraints)
-    {
-        const auto newIdealSize = calculateIdealSize(constraints);
+        const auto newIdealSize = calculateIdealSize(getContentConstraints());
         const auto widthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
         const auto heightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
+
+        if (!(widthChanged || heightChanged))
+        {
+            callLayoutChildrenWithRecursionLock();
+            return;
+        }
 
         if (widthChanged && heightChanged)
         {
@@ -73,17 +89,17 @@ namespace jive
         {
             idealHeight = newIdealSize.getHeight();
         }
-        else
-        {
-            callLayoutChildrenWithRecursionLock();
-        }
 
-        if ((widthChanged || heightChanged) && getParent() != nullptr)
+        if (informParentOfChanges && getParent() != nullptr && !static_cast<bool>(state["jive::setup-in-progress"]))
         {
             if (auto* decorator = dynamic_cast<GuiItemDecorator*>(getParent()))
+            {
                 if (auto* containerParent = decorator->getTopLevelDecorator().toType<ContainerItem>())
-                    containerParent->updateIdealSizeUnrestrained();
+                    containerParent->updateIdealSize();
+            }
         }
+
+        callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 
@@ -132,7 +148,7 @@ private:
         };
         auto commonItem = std::make_unique<jive::CommonGuiItem>(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(), state));
         SpyContainer container{ std::move(commonItem) };
-        container.updateIdealSizeWithinConstraints();
+        container.updateIdealSize();
         expectEquals(container.givenConstraints, jive::boxModel(container).getContentBounds());
     }
 };
