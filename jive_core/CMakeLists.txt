@@ -64,6 +64,8 @@ target_sources(jive_core
                       graphics/jive_Shadow.cpp
                       graphics/jive_Shadow.h
                       graphics/jive_Styles.h
+                      graphics/jive_StyleSelector.cpp
+                      graphics/jive_StyleSelector.h
                       interface/jive_InteractionState.h
                       jive_core.h
                       kinetics/jive_Easing.cpp

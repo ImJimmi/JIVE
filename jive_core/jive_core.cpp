@@ -22,6 +22,7 @@
 #include "graphics/jive_Gradient.cpp"
 #include "graphics/jive_LookAndFeel.cpp"
 #include "graphics/jive_Shadow.cpp"
+#include "graphics/jive_StyleSelector.cpp"
 #include "kinetics/jive_Easing.cpp"
 #include "kinetics/jive_Transition.cpp"
 #include "kinetics/jive_Transitions.cpp"

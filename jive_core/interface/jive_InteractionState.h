@@ -4,6 +4,33 @@
 
 namespace jive
 {
+    [[nodiscard]] inline auto isMouseOverOrDragging(const juce::Component& component)
+    {
+        return component.isMouseOverOrDragging(true)
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::hover"])
+#endif
+            ;
+    }
+
+    [[nodiscard]] inline auto isMouseDown(const juce::Component& component)
+    {
+        return component.isMouseButtonDown(true)
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::active"])
+#endif
+            ;
+    }
+
+    [[nodiscard]] inline auto hasKeyboardFocus(const juce::Component& component)
+    {
+        return component.hasKeyboardFocus(false)
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::focus"])
+#endif
+            ;
+    }
+
     // Represents a specific state a component might be in, and includes
     // methods for check if this state applies to a given component, and
     // finding the most applicable properties according to this state.
@@ -170,10 +197,10 @@ namespace jive
             if (auto* button = dynamic_cast<const juce::Button*>(&component))
                 toggleApplies = (flags.count(checked) > 0 && button->getToggleState()) || flags.count(checked) == 0;
 
-            return !((flags.count(hover) > 0 && !component.isMouseOverOrDragging(true))
-                     || (flags.count(active) > 0 && !component.isMouseButtonDown(true))
+            return !((flags.count(hover) > 0 && !isMouseOverOrDragging(component))
+                     || (flags.count(active) > 0 && !isMouseDown(component))
                      || (flags.count(disabled) > 0 && component.isEnabled())
-                     || (flags.count(focus) > 0 && !component.hasKeyboardFocus(false))
+                     || (flags.count(focus) > 0 && !hasKeyboardFocus(component))
                      || !toggleApplies);
         }
 

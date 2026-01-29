@@ -41,6 +41,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "graphics/jive_FontUtilities.h"
 #include "graphics/jive_Gradient.h"
 #include "graphics/jive_LookAndFeel.h"
+#include "graphics/jive_StyleSelector.h"
 #include "graphics/jive_Styles.h"
 #include "interface/jive_InteractionState.h"
 #include "kinetics/jive_Easing.h"
