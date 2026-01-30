@@ -17,8 +17,10 @@ namespace jive
         ~StyleSelector() = default;
 
         [[nodiscard]] bool appliesTo(const juce::Component& component) const;
+        [[nodiscard]] bool operator<(const StyleSelector& other) const;
 
     private:
         std::function<bool(const juce::Component&)> predicate;
+        std::array<std::uint16_t, 3> precedence;
     };
 } // namespace jive
