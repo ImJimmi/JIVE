@@ -74,7 +74,7 @@ namespace jive
             if (character == ' ' || i == 0)
             {
                 const auto typeName = i == 0
-                                        ? selector
+                                        ? removeLastCharacters(selector, selector.length() - i)
                                         : removeLastCharacters(selector, selector.length() - i - 1);
 
                 if (i != 0)
@@ -135,20 +135,143 @@ namespace jive
         };
     }
 
+    [[nodiscard]] static auto calculatePrecedence(const juce::String& selector)
+    {
+        // [0] = IDs, [1] = classes/attributes/pseudo-classes, [2] = elements/pseudo-elements
+        std::array<std::uint16_t, 3> precedence{ 0, 0, 0 };
+
+        static constexpr auto isIdentStart = [](auto character) {
+            return juce::CharacterFunctions::isLetter(character)
+                || character == '-'
+                || character == '_';
+        };
+        static constexpr auto isIdentChar = [](auto character) {
+            return isIdentStart(character) || juce::CharacterFunctions::isDigit(character);
+        };
+
+        const auto skipIdentifier = [&selector](int& i) {
+            while (i < selector.length() && isIdentChar(selector[i]))
+                i++;
+        };
+
+        const auto skipUntilAfter = [&selector](int& i, juce::juce_wchar terminator) {
+            while (i < selector.length() && selector[i] != terminator)
+                i++;
+            if (i < selector.length())
+                i++; // consume terminator
+        };
+
+        for (int i = 0; i < selector.length();)
+        {
+            auto character = selector[i];
+
+            // Ignore whitespace and combinators
+            if (juce::CharacterFunctions::isWhitespace(character)
+                || character == '>'
+                || character == '+'
+                || character == '~'
+                || character == ',')
+            {
+                i++;
+                continue;
+            }
+
+            // Universal selector: zero specificity
+            if (character == '*')
+            {
+                i++;
+                continue;
+            }
+
+            // ID selector
+            if (character == '#')
+            {
+                precedence[0]++;
+                i++;
+                skipIdentifier(i);
+                continue;
+            }
+
+            // Class selector
+            if (character == '.')
+            {
+                precedence[1]++;
+                i++;
+                skipIdentifier(i);
+                continue;
+            }
+
+            // Attribute selector
+            if (character == '[')
+            {
+                precedence[1]++;
+                i++;
+                skipUntilAfter(i, ']');
+                continue;
+            }
+
+            // Pseudo-class / pseudo-element
+            if (character == ':')
+            {
+                i++;
+
+                if (i < selector.length() && selector[i] == ':')
+                {
+                    // Pseudo-element
+                    precedence[2]++;
+                    i++;
+                }
+                else
+                {
+                    // Pseudo-class
+                    precedence[1]++;
+                }
+
+                skipIdentifier(i);
+
+                // Handle functional pseudos like :not(...)
+                if (i < selector.length() && selector[i] == '(')
+                    skipUntilAfter(i, ')');
+
+                continue;
+            }
+
+            // Element selector (identifier start)
+            if (isIdentStart(character))
+            {
+                precedence[2]++;
+                skipIdentifier(i);
+                continue;
+            }
+
+            // Anything else: just advance
+            i++;
+        }
+
+        return precedence;
+    }
+
     StyleSelector::StyleSelector(const juce::String& selector)
         : predicate{ buildPredicate(selector) }
+        , precedence{ calculatePrecedence(selector) }
     {
     }
 
     StyleSelector& StyleSelector::operator=(const juce::String& selector)
     {
         predicate = buildPredicate(selector);
+        precedence = calculatePrecedence(selector);
         return *this;
     }
 
     bool StyleSelector::appliesTo(const juce::Component& component) const
     {
         return predicate(component);
+    }
+
+    bool StyleSelector::operator<(const StyleSelector& other) const
+    {
+        return precedence < other.precedence;
     }
 } // namespace jive
 
@@ -382,6 +505,40 @@ static jive::UnitTest complexSelectors{
             test.expect(!selector.appliesTo(button1));
             test.expect(selector.appliesTo(button2));
         }
+    },
+};
+
+static jive::UnitTest selectorPrecedence{
+    "jive",
+    "jive::StyleSelector",
+    "Selector precedence",
+    [](auto& test) {
+        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "Component" });
+        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "Component::before" });
+
+        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ "Component.foo" });
+        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ "#foo" });
+
+        test.expect(jive::StyleSelector{ "div span" } < jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "ul li a" } < jive::StyleSelector{ ".nav-link" });
+        test.expect(jive::StyleSelector{ "p em strong" } < jive::StyleSelector{ ".highlight" });
+
+        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ ".foo.bar" });
+        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ ".foo::before" });
+
+        test.expect(jive::StyleSelector{ "[type=text]" } < jive::StyleSelector{ ".foo.bar" });
+        test.expect(jive::StyleSelector{ "[data-x]" } < jive::StyleSelector{ "#foo" });
+
+        test.expect(jive::StyleSelector{ "div::before" } < jive::StyleSelector{ "div:hover" });
+        test.expect(jive::StyleSelector{ "div::before" } < jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ ".foo::before" } < jive::StyleSelector{ ".foo:hover" });
+
+        test.expect(jive::StyleSelector{ "div.foo.bar span" } < jive::StyleSelector{ "#app div.foo.bar span" });
+        test.expect(jive::StyleSelector{ "#app div.foo span::before" } < jive::StyleSelector{ "#app #content div.foo span:hover::before" });
     },
 };
 #endif
