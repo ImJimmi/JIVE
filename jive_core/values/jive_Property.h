@@ -82,6 +82,15 @@ namespace jive
             observeTransition(nullptr);
             removeThisAsListener(source);
             removeThisAsListener(listenerTarget);
+
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (std::holds_alternative<juce::ValueTree>(source))
+                {
+                    Source object = get();
+                    removeThisAsListener(object);
+                }
+            }
         }
 
         [[nodiscard]] ValueType get() const
@@ -288,13 +297,26 @@ namespace jive
         void propertyChanged(Object&,
                              const juce::Identifier& property) override
         {
-            if (property != id)
-                return;
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (std::holds_alternative<juce::ValueTree>(source))
+                {
+                    valueChanged();
 
-            valueChanged();
+                    if (onValueChange != nullptr)
+                        onValueChange();
+                }
+            }
+            else
+            {
+                if (property != id)
+                    return;
 
-            if (onValueChange != nullptr)
-                onValueChange();
+                valueChanged();
+
+                if (onValueChange != nullptr)
+                    onValueChange();
+            }
         }
 
         [[nodiscard]] auto respondToPropertyChanges(juce::ValueTree& treeWhosePropertyChanged) const
@@ -613,6 +635,15 @@ namespace jive
 
             if constexpr (responsiveness == Responsiveness::respondToChanges)
                 addThisAsListener(listenerTarget);
+
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (std::holds_alternative<juce::ValueTree>(source))
+                {
+                    Source object = get();
+                    addThisAsListener(object);
+                }
+            }
 
             if constexpr (autoParseStrings)
             {

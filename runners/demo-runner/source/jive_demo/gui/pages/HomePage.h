@@ -70,30 +70,6 @@ namespace jive_demo
                     break;
                 }
 
-                static constexpr auto style = [] {
-                    return new jive::Object{
-                        {
-                            "background",
-                            juce::String{ "linear-gradient(#{start}, #{end})" }
-                                .replace("{start}", colours::widgetStart.toDisplayString(false))
-                                .replace("{end}", colours::widgetEnd.toDisplayString(false)),
-                        },
-                        { "border", "black" },
-                        { "border-radius", 5 },
-                        {
-                            "hover",
-                            new jive::Object{
-                                {
-                                    "background",
-                                    juce::String{ "linear-gradient(#{start}, #{end})" }
-                                        .replace("{start}", colours::widgetStart.brighter(0.02f).toDisplayString(false))
-                                        .replace("{end}", colours::widgetEnd.brighter(0.01f).toDisplayString(false)),
-                                },
-                            },
-                        },
-                    };
-                };
-
                 return juce::ValueTree{
                     "Button",
                     {
@@ -101,7 +77,6 @@ namespace jive_demo
                         { "align-items", "centre" },
                         { "border-width", 1.5 },
                         { "padding", 20 },
-                        { "style", style() },
                     },
                     {
                         icon

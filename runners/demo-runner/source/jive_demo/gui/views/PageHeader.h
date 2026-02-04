@@ -24,28 +24,6 @@ namespace jive_demo::views
 
         [[nodiscard]] auto operator()() const
         {
-            static constexpr auto style = [] {
-                return new jive::Object{
-                    {
-                        "background",
-                        new jive::Object{
-                            {
-                                "stops",
-                                new jive::Object{
-                                    { "0.0", jive::toVar(colours::blue500) },
-                                    { "0.5", jive::toVar(colours::blue600) },
-                                    { "1.0", jive::toVar(colours::blue700) },
-                                },
-                            },
-                            { "gradient", "radial" },
-                            { "start", "0.0, 0.0" },
-                            { "end", "1.0, 1.0" },
-                        },
-                    },
-                    { "border-radius", 0 },
-                };
-            };
-
             auto iconCopy = icon.createCopy();
             static constexpr auto linkHeight = 25;
 
@@ -54,7 +32,6 @@ namespace jive_demo::views
                 {
                     { "flex-direction", "row" },
                     { "padding", 20 },
-                    { "style", style() },
                     { "align-items", "centre" },
                 },
                 {

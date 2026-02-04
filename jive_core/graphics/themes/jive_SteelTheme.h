@@ -31,160 +31,126 @@ namespace jive::themes
     inline void applySteel(LookAndFeel& laf)
     {
         // Global styles
-        laf.addStyles(jive::Styles{}
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("*"),
+                      jive::Styles{}
                           .withBorderFill(juce::Colours::transparentBlack)
                           .withBorderRadius(steel::borderRadius)
                           .withBorderWidth(steel::borderWidth)
-                          .withFontFamily("Georgia")
-                          .withFontPointSize(15.0f)
-                          .withForeground(steel::azure));
+                          .withFill(steel::azure)
+                          .withFontFamily("<sans-serif>")
+                          .withFontPointSize(14.0f)
+                          .withForeground(steel::azure)
+                          .withTransitions(jive::Transitions::fromString(R"(
+                            background 200ms ease-in-out,
+                            border 200ms ease-in-out,
+                            foreground 200ms ease-in-out
+                          )")));
 
         // Top-level components
-        laf.addStyles(
-            [](const auto& component) {
-                return dynamic_cast<juce::TopLevelWindow*>(component.getParentComponent()) != nullptr
-#if JIVE_IS_PLUGIN_PROJECT
-                    || dynamic_cast<juce::AudioProcessorEditor*>(component.getParentComponent()) != nullptr
-#endif
-                    ;
-            },
-            jive::Styles{}
-                .withBackground(steel::eerieBlack)
-                .withBorderRadius(0)
-                .withBorderWidth(juce::BorderSize<float>{}));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Editor, Window"),
+                      jive::Styles{}
+                          .withBackground(steel::eerieBlack)
+                          .withBorderRadius(0)
+                          .withBorderWidth(juce::BorderSize<float>{}));
 
         // Buttons
-        laf.addStyles<juce::Button>(jive::Styles{}
-                                        .withBackground(steel::raisinBlack)
-                                        .withBorderFill(steel::charcoalGunmetalGradient)
-                                        .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack)
+                          .withBorderFill(steel::charcoalGunmetalGradient)
+                          .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlackHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:active"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlackActive));
 
-        laf.addStyles<juce::Button>(jive::Styles{}
-                                        .withBackground(steel::raisinBlackHover),
-                                    jive::InteractionState::hover);
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Checkbox"),
+                      jive::Styles{}
+                          .withAccent(steel::raisinBlack)
+                          .withBorderWidth(juce::BorderSize{ 2.5f }));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Checkbox:checked"),
+                      jive::Styles{}
+                          .withAccent(steel::raisinBlack)
+                          .withBackground(steel::pictonBlue)
+                          .withBorderFill(juce::Colours::transparentBlack)
+                          .withForeground(steel::azure));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Checkbox:checked:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::pictonBlueHover)
+                          .withBorderFill(juce::Colours::transparentBlack));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Checkbox:checked:active"),
+                      jive::Styles{}
+                          .withBackground(steel::pictonBlueActive)
+                          .withBorderFill(juce::Colours::transparentBlack));
 
-        laf.addStyles<juce::Button>(jive::Styles{}
-                                        .withBackground(steel::raisinBlackActive),
-                                    jive::InteractionState::active);
-
-        laf.addStyles<juce::ToggleButton>(jive::Styles{}
-                                              .withAccent(steel::raisinBlack)
-                                              .withBorderWidth(juce::BorderSize{ 2.5f }));
-
-        laf.addStyles<juce::ToggleButton>(jive::Styles{}
-                                              .withAccent(steel::raisinBlack)
-                                              .withBackground(steel::pictonBlue)
-                                              .withBorderFill(juce::Colours::transparentBlack)
-                                              .withForeground(steel::azure),
-                                          jive::InteractionState::checked);
-
-        laf.addStyles<juce::ToggleButton>(jive::Styles{}
-                                              .withBackground(steel::pictonBlueHover)
-                                              .withBorderFill(juce::Colours::transparentBlack),
-                                          {
-                                              jive::InteractionState::checked,
-                                              jive::InteractionState::hover,
-                                          });
-
-        laf.addStyles<juce::ToggleButton>(jive::Styles{}
-                                              .withBackground(steel::pictonBlueActive)
-                                              .withBorderFill(juce::Colours::transparentBlack),
-                                          {
-                                              jive::InteractionState::checked,
-                                              jive::InteractionState::active,
-                                          });
-
-        laf.addStyles<juce::TextButton>(jive::Styles{}
-                                            .withBackground(steel::emeraldGreen)
-                                            .withBorderFill(steel::emeraldGreen)
-                                            .withForeground(steel::raisinBlack),
-                                        jive::InteractionState::checked);
-
-        laf.addStyles<juce::TextButton>(jive::Styles{}
-                                            .withBackground(steel::emeraldGreenHover)
-                                            .withBorderFill(steel::emeraldGreenHover),
-                                        {
-                                            jive::InteractionState::checked,
-                                            jive::InteractionState::hover,
-                                        });
-
-        laf.addStyles<juce::TextButton>(jive::Styles{}
-                                            .withBackground(steel::emeraldGreenActive)
-                                            .withBorderFill(steel::emeraldGreenActive),
-                                        {
-                                            jive::InteractionState::checked,
-                                            jive::InteractionState::active,
-                                        });
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked"),
+                      jive::Styles{}
+                          .withBackground(steel::emeraldGreen)
+                          .withBorderFill(steel::emeraldGreen)
+                          .withForeground(steel::raisinBlack));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::emeraldGreenHover)
+                          .withBorderFill(steel::emeraldGreenHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:active"),
+                      jive::Styles{}
+                          .withBackground(steel::emeraldGreenActive)
+                          .withBorderFill(steel::emeraldGreenActive));
 
         // Sliders
-        laf.addStyles<juce::Slider>(jive::Styles{}
-                                        .withBackground(steel::raisinBlack)
-                                        .withBorderFill(steel::charcoalGunmetalGradient)
-                                        .withShadow(steel::widgetShadow)
-                                        .withThumb(steel::pictonSphereGradient)
-                                        .withTrack(steel::charcoalGunmetalGradient));
-
-        laf.addStyles([](const juce::Component& component) {
-            if (auto* slider = dynamic_cast<const juce::Slider*>(&component))
-                return slider->isBar();
-
-            return false;
-        },
-                      jive::Styles{}.withTrack("linear-gradient(#6FC4F5, #4FADE4, #3092CB)"));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack)
+                          .withBorderFill(steel::charcoalGunmetalGradient)
+                          .withShadow(steel::widgetShadow)
+                          .withThumb(steel::pictonSphereGradient)
+                          .withTrack(steel::charcoalGunmetalGradient));
 
         // Combo boxes
-        laf.addStyles<juce::ComboBox>(jive::Styles{}
-                                          .withBackground(steel::raisinBlack)
-                                          .withBorderFill(steel::charcoalGunmetalGradient)
-                                          .withShadow(steel::widgetShadow));
-
-        laf.addStyles<juce::ComboBox>(jive::Styles{}
-                                          .withBackground(steel::raisinBlackHover)
-                                          .withBorderFill(steel::charcoalGunmetalGradient),
-                                      jive::InteractionState::hover);
-
-        laf.addStyles<juce::ComboBox>(jive::Styles{}
-                                          .withBackground(steel::raisinBlackActive)
-                                          .withBorderFill(steel::charcoalGunmetalGradient),
-                                      jive::InteractionState::active);
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ComboBox"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack)
+                          .withBorderFill(steel::charcoalGunmetalGradient)
+                          .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ComboBox:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlackHover)
+                          .withBorderFill(steel::charcoalGunmetalGradient));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ComboBox:active"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlackActive)
+                          .withBorderFill(steel::charcoalGunmetalGradient));
 
         // Text fields
-        laf.addStyles<juce::TextEditor>(jive::Styles{}
-                                            .withBackground(steel::raisinBlack)
-                                            .withBorderFill(steel::charcoalGunmetalGradient)
-                                            .withShadow(steel::widgetShadow));
-
-        laf.addStyles<juce::TextEditor>(jive::Styles{}
-                                            .withBorderFill(steel::pictonBlue),
-                                        jive::InteractionState::focus);
-
-        laf.addStyles<jive::Caret>(jive::Styles{}
-                                       .withBackground(steel::pictonBlue));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack)
+                          .withBorderFill(steel::charcoalGunmetalGradient)
+                          .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor:focus"),
+                      jive::Styles{}
+                          .withBorderFill(steel::pictonBlue));
 
         // Scroll bars
-        laf.addStyles<juce::ScrollBar>(jive::Styles{}
-                                           .withForeground(steel::pictonBlue));
-
-        laf.addStyles<juce::ScrollBar>(jive::Styles{}
-                                           .withForeground(steel::pictonBlueHover),
-                                       jive::InteractionState::hover);
-
-        laf.addStyles<juce::ScrollBar>(jive::Styles{}
-                                           .withForeground(steel::pictonBlueActive),
-                                       jive::InteractionState::active);
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar"),
+                      jive::Styles{}
+                          .withForeground(steel::pictonBlue));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar:hover"),
+                      jive::Styles{}
+                          .withForeground(steel::pictonBlueHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar:active"),
+                      jive::Styles{}
+                          .withForeground(steel::pictonBlueActive));
 
         // Progress bars
-        laf.addStyles<juce::ProgressBar>(jive::Styles{}
-                                             .withBackground(steel::raisinBlack)
-                                             .withBorderFill(steel::charcoalGunmetalGradient)
-                                             .withBorderRadius(100)
-                                             .withShadow(steel::widgetShadow)
-                                             .withTrack("linear-gradient(270deg, #20A26E, #26C485, #3EE2A0)"));
-
-        // Groups
-        laf.addStyles<juce::GroupComponent>(jive::Styles{}
-                                                .withBackground(steel::eerieBlack)
-                                                .withBorderFill(steel::charcoalGunmetalGradient)
-                                                .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("ProgressBar"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack)
+                          .withBorderFill(steel::charcoalGunmetalGradient)
+                          .withBorderRadius(100)
+                          .withShadow(steel::widgetShadow)
+                          .withTrack("linear-gradient(270deg, #20A26E, #26C485, #3EE2A0)"));
     }
 } // namespace jive::themes

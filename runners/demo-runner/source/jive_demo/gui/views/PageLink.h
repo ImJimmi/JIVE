@@ -33,31 +33,6 @@ namespace jive_demo::views
 
         [[nodiscard]] auto operator()() const
         {
-            const auto style = [this] {
-                return new jive::Object{
-                    { "background", juce::var{} },
-                    { "border", juce::var{} },
-                    { "fill", jive::toVar(colour) },
-                    { "foreground", jive::toVar(colour) },
-                    { "font-size", 15 },
-                    { "shadow", juce::var{} },
-                    {
-                        "hover",
-                        new jive::Object{
-                            { "fill", "white" },
-                            { "foreground", "white" },
-                        },
-                    },
-                    {
-                        "active",
-                        new jive::Object{
-                            { "fill", jive::toVar(colour.darker(0.2f)) },
-                            { "foreground", jive::toVar(colour.darker(0.2f)) },
-                        },
-                    },
-                };
-            };
-
             return juce::ValueTree{
                 "Button",
                 {
@@ -66,7 +41,6 @@ namespace jive_demo::views
                     { "justify-content", "centre" },
                     { "align-items", "centre" },
                     { "margin", "0 0 5 0" },
-                    { "style", style() },
                 },
                 {
                     iconOnRight ? juce::ValueTree{} : icon,

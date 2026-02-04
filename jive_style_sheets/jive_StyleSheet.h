@@ -26,24 +26,21 @@ namespace jive
 
         void clear();
         void stylePropertyChanged();
-        void addStylesFrom(Object& object,
-                           InteractionState interationState = InteractionState{});
-        void addStylesFrom(Object& object,
-                           LookAndFeel::ComponentPredicate predicate,
-                           InteractionState interationState,
-                           LookAndFeel::Precedence precedence);
+        void addStylesFrom(Object& object);
+        void addInlineStyles(Object& object,
+                             const juce::String&);
+        void addSelectorBasedStyles(Object& object,
+                                    const juce::String& id);
+        // void addStylesFrom(Object& object,
+        //                    const StyleSelector& selector);
 
-        void findAndAddStyleProperties(Object& object,
-                                       const juce::String& id,
-                                       std::optional<Styles>& styles,
-                                       LookAndFeel::ComponentPredicate predicate,
-                                       InteractionState interationState,
-                                       LookAndFeel::Precedence precedence);
-        void findAndAddStatefulStyles(Object& object,
-                                      LookAndFeel::ComponentPredicate predicate,
-                                      InteractionState interationState,
-                                      LookAndFeel::Precedence precedence);
-        void findAndAddOtherStyles(Object& object);
+        // void findAndAddStyleProperties(Object& object,
+        //                                const juce::String& id,
+        //                                std::optional<Styles>& styles,
+        //                                const juce::String& selector);
+        // void findAndAddStatefulStyles(Object& object,
+        //                               const juce::String& selector);
+        // void findAndAddOtherStyles(Object& object);
 
         juce::Component& component;
         LookAndFeel& lookAndFeel;

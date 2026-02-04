@@ -26,78 +26,14 @@ namespace jive
             attachedComponent->setLookAndFeel(nullptr);
     }
 
-    juce::Uuid LookAndFeel::addPainter(const ComponentPredicate& predicate,
-                                       const ComponentPainter& painter,
-                                       Precedence precedence)
+    juce::Uuid LookAndFeel::addPainter(const StyleSelector& selector,
+                                       const ComponentPainter& painter)
     {
-        auto& newItem = painters.emplace_back(Painter<ComponentPainter, ComponentPredicate>{
+        auto& newItem = painters.emplace_back(Painter<ComponentPainter>{
             juce::Uuid{},
-            precedence,
             painter,
-            predicate,
+            selector,
         });
-        std::sort(std::begin(painters),
-                  std::end(painters),
-                  [](auto first, auto second) {
-                      return first.precedence < second.precedence;
-                  });
-
-        return newItem.id;
-    }
-
-    juce::Uuid LookAndFeel::addPainter(const ComponentPredicate& predicate,
-                                       const ProgressBarPainter& painter,
-                                       Precedence precedence)
-    {
-        auto& newItem = progressBarPainters.emplace_back(Painter<ProgressBarPainter, ComponentPredicate>{
-            juce::Uuid{},
-            precedence,
-            painter,
-            predicate,
-        });
-        std::sort(std::begin(progressBarPainters),
-                  std::end(progressBarPainters),
-                  [](auto first, auto second) {
-                      return first.precedence < second.precedence;
-                  });
-
-        return newItem.id;
-    }
-
-    juce::Uuid LookAndFeel::addPainter(const PopupPredicate& predicate,
-                                       const PopupPainter& painter,
-                                       Precedence precedence)
-    {
-        auto& newItem = popupPainters.emplace_back(Painter<PopupPainter, PopupPredicate>{
-            juce::Uuid{},
-            precedence,
-            painter,
-            predicate,
-        });
-        std::sort(std::begin(popupPainters),
-                  std::end(popupPainters),
-                  [](auto first, auto second) {
-                      return first.precedence < second.precedence;
-                  });
-
-        return newItem.id;
-    }
-
-    juce::Uuid LookAndFeel::addPainter(const PopupItemPredicate& predicate,
-                                       const PopupItemPainter& painter,
-                                       Precedence precedence)
-    {
-        auto& newItem = popupItemPainters.emplace_back(Painter<PopupItemPainter, PopupItemPredicate>{
-            juce::Uuid{},
-            precedence,
-            painter,
-            predicate,
-        });
-        std::sort(std::begin(popupItemPainters),
-                  std::end(popupItemPainters),
-                  [](auto first, auto second) {
-                      return first.precedence < second.precedence;
-                  });
 
         return newItem.id;
     }
@@ -114,83 +50,21 @@ namespace jive
         };
 
         remove(uuid, painters);
-        remove(uuid, popupPainters);
-        remove(uuid, popupItemPainters);
-        remove(uuid, progressBarPainters);
     }
 
     void LookAndFeel::clearPainters()
     {
         painters.clear();
-        popupPainters.clear();
-        popupItemPainters.clear();
-        progressBarPainters.clear();
     }
 
-    juce::Uuid LookAndFeel::addStyles(ComponentPredicate predicate,
-                                      const Styles& styles,
-                                      const InteractionState& interactionState,
-                                      Precedence precedence)
+    juce::Uuid LookAndFeel::addStyles(const StyleSelector& selector,
+                                      const Styles& styles)
     {
-        auto& newItem = stylers.emplace_back(Styler<ComponentPredicate>{
+        auto& newItem = stylers.emplace_back(Styler{
             juce::Uuid{},
-            precedence,
-            interactionState,
-            predicate,
+            selector,
             styles,
         });
-        const auto result = newItem.id;
-
-        std::sort(std::begin(stylers),
-                  std::end(stylers),
-                  [](auto first, auto second) {
-                      if (first.precedence == second.precedence)
-                      {
-                          return first.interactionState.asInt()
-                               > second.interactionState.asInt();
-                      }
-
-                      return first.precedence < second.precedence;
-                  });
-
-        return result;
-    }
-
-    juce::Uuid LookAndFeel::addStyles(const juce::String& componentID,
-                                      const Styles& styles,
-                                      const InteractionState& interactionState)
-    {
-        const auto predicate = [componentID](const juce::Component& component) {
-            return component.getComponentID() == componentID;
-        };
-        return addStyles(predicate, styles, interactionState, painterPrecedence::componentID);
-    }
-
-    juce::Uuid LookAndFeel::addStyles(const Styles& styles,
-                                      const InteractionState& interactionState)
-    {
-        static constexpr auto predicate = [](const auto&) {
-            return true;
-        };
-        return addStyles(predicate, styles, interactionState, painterPrecedence::tautologicalPredicate);
-    }
-
-    juce::Uuid LookAndFeel::addStyles(PopupPredicate predicate,
-                                      const Styles& styles,
-                                      Precedence precedence)
-    {
-        auto& newItem = popupStylers.emplace_back(Styler<PopupPredicate>{
-            juce::Uuid{},
-            precedence,
-            InteractionState{},
-            predicate,
-            styles,
-        });
-        std::sort(std::begin(popupStylers),
-                  std::end(popupStylers),
-                  [](auto first, auto second) {
-                      return first.precedence < second.precedence;
-                  });
 
         return newItem.id;
     }
@@ -213,10 +87,6 @@ namespace jive
 
         if (auto* styles = find(uuid, stylers))
             return styles;
-        if (auto* styles = find(uuid, popupStylers))
-            return styles;
-        if (auto* styles = find(uuid, popupItemStylers))
-            return styles;
 
         return nullptr;
     }
@@ -238,15 +108,11 @@ namespace jive
         };
 
         remove(uuid, stylers);
-        remove(uuid, popupStylers);
-        remove(uuid, popupItemStylers);
     }
 
     void LookAndFeel::clearStyles()
     {
         stylers.clear();
-        popupStylers.clear();
-        popupItemStylers.clear();
     }
 
     void LookAndFeel::drawComponent(juce::Graphics& g, const juce::Component& component) const
@@ -350,13 +216,6 @@ namespace jive
 
         if (theme == Theme::steel)
             themes::applySteel(*this);
-
-        for (auto& entry : stylers)
-            entry.precedence += 10000;
-        for (auto& entry : popupStylers)
-            entry.precedence += 10000;
-        for (auto& entry : popupItemStylers)
-            entry.precedence += 10000;
     }
 
     juce::Rectangle<int> LookAndFeel::getToggleButtonCheckboxBounds(const juce::ToggleButton& button,
@@ -468,14 +327,7 @@ namespace jive
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
 
-        const auto styles = findMostApplicableStyles(*popup, comboBox);
-
-        if (const auto painter = findMostApplicablePainter(*popup, comboBox);
-            painter.has_value())
-        {
-            (*painter)(*popup, options, comboBox, bounds, styles, g);
-            return;
-        }
+        const auto styles = findMostApplicableStyles(comboBox);
 
         default_styles::paintPopupMenu(g, *popup, options, bounds, styles);
     }
@@ -503,14 +355,7 @@ namespace jive
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
 
-        const auto styles = findMostApplicableStyles(item, *popup, comboBox);
-
-        if (const auto painter = findMostApplicablePainter(item, *popup, comboBox);
-            painter.has_value())
-        {
-            (*painter)(item, *popup, options, comboBox, bounds, styles, interactionState, g);
-            return;
-        }
+        const auto styles = findMostApplicableStyles(comboBox);
 
         default_styles::paintPopupMenuItem(g, item, *popup, options, comboBox, bounds, interactionState, styles);
     }
@@ -556,7 +401,7 @@ namespace jive
                 comboBox != nullptr && comboBox->getRootMenu() != nullptr)
             {
                 juce::PopupMenu::Item dummyItem{ text };
-                const auto styles = findMostApplicableStyles(dummyItem, *comboBox->getRootMenu(), *comboBox);
+                const auto styles = findMostApplicableStyles(*comboBox);
                 font = getFont(dummyItem, *comboBox, styles);
             }
             else
@@ -709,24 +554,17 @@ namespace jive
     {
         const auto styles = findMostApplicableStyles(progressBar);
 
-        if (const auto painter = findMostApplicablePainter(progressBar);
-            painter.has_value())
-        {
-            (*painter)(progressBar, progress, text, styles, g);
-            return;
-        }
-
         default_styles::paintProgressBar(g, progressBar, progress, text, styles);
         updateShadow<juce::ProgressBar>(progressBar);
     }
 
     std::optional<LookAndFeel::ComponentPainter> LookAndFeel::findMostApplicablePainter(const juce::Component& component) const
     {
-        for (const auto& [uuid, precedence, painter, isApplicable] : painters)
+        for (const auto& [uuid, painter, selector] : painters)
         {
-            juce::ignoreUnused(uuid, precedence);
+            juce::ignoreUnused(uuid);
 
-            if (isApplicable(component))
+            if (selector.appliesTo(component))
                 return painter;
         }
 
@@ -777,14 +615,7 @@ namespace jive
     {
         using GenerationOffset = std::uint16_t;
 
-        std::vector<
-            std::tuple<
-                LookAndFeel::Precedence,
-                GenerationOffset,
-                Styles,
-                InteractionState,
-                juce::Uuid>>
-            allApplicable;
+        std::vector<std::tuple<GenerationOffset, Styles, juce::Uuid, StyleSelector>> allApplicable;
 
         for (const auto& styler : stylers)
         {
@@ -794,15 +625,14 @@ namespace jive
                  ancestor != nullptr;
                  ancestor = ancestor->getParentComponent())
             {
-                if (styler.appliesTo(*ancestor) && styler.interactionState.appliesTo(*ancestor))
+                if (styler.selector.appliesTo(*ancestor))
                 {
                     allApplicable.emplace_back(
                         std::make_tuple(
-                            styler.precedence,
                             generationOffset,
                             styler.styles,
-                            styler.interactionState,
-                            styler.id));
+                            styler.id,
+                            styler.selector));
                     break;
                 }
 
@@ -813,40 +643,13 @@ namespace jive
         std::sort(std::begin(allApplicable),
                   std::end(allApplicable),
                   [](auto& first, auto& second) {
-                      if (std::get<LookAndFeel::Precedence>(first) == std::get<LookAndFeel::Precedence>(second))
+                      if (std::get<StyleSelector>(first) == std::get<StyleSelector>(second))
                           return std::get<GenerationOffset>(first) < std::get<GenerationOffset>(second);
 
-                      return std::get<LookAndFeel::Precedence>(first) < std::get<LookAndFeel::Precedence>(second);
+                      return std::get<StyleSelector>(first) < std::get<StyleSelector>(second);
                   });
 
         return allApplicable;
-    }
-
-    template <typename Cache>
-    [[nodiscard]] static auto findCacheEntry(const Cache& cache,
-                                             const Styles& styles,
-                                             const InteractionState& interactionState)
-    {
-        return std::find_if(std::begin(cache),
-                            std::end(cache),
-                            [&styles, &interactionState](const auto& entry) {
-                                return entry.styles == styles
-                                    && entry.interactionState == interactionState;
-                            });
-    }
-
-    template <typename Cache>
-    static void cleanCache(std::vector<Cache>& cache)
-    {
-        cache.erase(
-            std::remove_if(
-                std::begin(cache),
-                std::end(cache),
-                [](auto& entry) {
-                    return entry.component == nullptr
-                        || !entry.interactionState.appliesTo(*entry.component);
-                }),
-            std::end(cache));
     }
 
     template <typename Styler>
@@ -855,14 +658,13 @@ namespace jive
     {
         Styles result;
 
-        for (const auto& [precedence,
-                          generationOffset,
+        for (const auto& [generationOffset,
                           styles,
-                          interactionState,
-                          uuid] : collectApplicableStylersOrdered(stylers, component))
+                          uuid,
+                          selector] : collectApplicableStylersOrdered(stylers, component))
         {
-            juce::ignoreUnused(precedence);
-            juce::ignoreUnused(interactionState);
+            juce::ignoreUnused(uuid);
+            juce::ignoreUnused(selector);
             mergeLeft(result, styles, generationOffset > 0);
         }
 
@@ -946,80 +748,5 @@ namespace jive
         update(entry.styles, latestStyles);
 
         return entry.styles;
-    }
-
-    std::optional<LookAndFeel::PopupPainter> LookAndFeel::findMostApplicablePainter(const juce::PopupMenu& popup,
-                                                                                    const juce::Component& component) const
-    {
-        for (const auto& [uuid, precedence, painter, isApplicable] : popupPainters)
-        {
-            juce::ignoreUnused(uuid, precedence);
-
-            if (isApplicable(popup, component))
-                return painter;
-        }
-
-        return std::nullopt;
-    }
-
-    Styles LookAndFeel::findMostApplicableStyles(const juce::PopupMenu& popup,
-                                                 const juce::Component& component) const
-    {
-        Styles result;
-
-        for (const auto& styler : popupStylers)
-        {
-            if (styler.appliesTo(popup, component))
-                mergeLeft(result, styler.styles);
-        }
-
-        mergeLeft(result, findMostApplicableStyles(component), true);
-
-        return result;
-    }
-
-    std::optional<LookAndFeel::PopupItemPainter> LookAndFeel::findMostApplicablePainter(const juce::PopupMenu::Item& item,
-                                                                                        const juce::PopupMenu& popup,
-                                                                                        const juce::Component& component) const
-    {
-        for (const auto& [uuid, precedence, painter, isApplicable] : popupItemPainters)
-        {
-            juce::ignoreUnused(uuid, precedence);
-
-            if (isApplicable(item, popup, component))
-                return painter;
-        }
-
-        return std::nullopt;
-    }
-
-    Styles LookAndFeel::findMostApplicableStyles(const juce::PopupMenu::Item& item,
-                                                 const juce::PopupMenu& popup,
-                                                 const juce::Component& component) const
-    {
-        Styles result;
-
-        for (const auto& styler : popupItemStylers)
-        {
-            if (styler.appliesTo(item, popup, component))
-                mergeLeft(result, styler.styles);
-        }
-
-        mergeLeft(result, findMostApplicableStyles(popup, component), true);
-
-        return result;
-    }
-
-    std::optional<LookAndFeel::ProgressBarPainter> LookAndFeel::findMostApplicablePainter(const juce::ProgressBar& bar) const
-    {
-        for (const auto& [uuid, precedence, painter, isApplicable] : progressBarPainters)
-        {
-            juce::ignoreUnused(uuid, precedence);
-
-            if (isApplicable(bar))
-                return painter;
-        }
-
-        return std::nullopt;
     }
 } // namespace jive

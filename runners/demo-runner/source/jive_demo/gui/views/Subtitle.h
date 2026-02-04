@@ -19,7 +19,6 @@ namespace jive_demo::views
                 "Text",
                 {
                     { "text", text },
-                    { "style", style() },
                 },
             };
         }

@@ -33,15 +33,14 @@ namespace jive
     ComponentTypePredicates::ComponentTypePredicates()
     {
         addStandardComponent<juce::Button>(predicates, "Button");
+        addStandardComponent<juce::TextButton>(predicates, "TextButton");
         addStandardComponent<juce::ToggleButton>(predicates, "Checkbox");
         addStandardComponent<juce::ComboBox>(predicates, "ComboBox");
-#if JIVE_IS_PLUGIN_PROJECT
-        addStandardComponent<juce::AudioProcessorEditor>(predicates, "Editor");
-#endif
         addStandardComponent<juce::HyperlinkButton>(predicates, "Hyperlink");
         addStandardComponent<juce::Label>(predicates, "Label");
         addStandardComponent<juce::ProgressBar>(predicates, "ProgressBar");
-        addStandardComponent<juce::TopLevelWindow>(predicates, "Window");
+        addStandardComponent<juce::TextEditor>(predicates, "TextEditor");
+        addStandardComponent<juce::ScrollBar>(predicates, "ScrollBar");
 
         addSlider(predicates, "Knob", [](const juce::Slider& slider) {
             return slider.isRotary();
@@ -52,6 +51,19 @@ namespace jive
         addSlider(predicates, "Spinner", [](const juce::Slider& slider) {
             return slider.getSliderStyle() == juce::Slider::IncDecButtons;
         });
+
+#if JIVE_IS_PLUGIN_PROJECT
+        predicates.emplace(juce::Uuid{},
+                           [](const juce::Component& component, const juce::String& name) {
+                               return name == "Editor"
+                                   && dynamic_cast<juce::AudioProcessorEditor*>(component.getParentComponent()) != nullptr;
+                           });
+#endif
+        predicates.emplace(juce::Uuid{},
+                           [](const juce::Component& component, const juce::String& name) {
+                               return name == "Window"
+                                   && dynamic_cast<juce::TopLevelWindow*>(component.getParentComponent()) != nullptr;
+                           });
     }
 
     ComponentTypePredicates::~ComponentTypePredicates()
