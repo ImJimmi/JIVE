@@ -27,24 +27,11 @@ namespace jive_demo::views
 
         [[nodiscard]] auto operator()() const
         {
-            const auto style = [this] {
-                auto object = new jive::Object{
-                    { "font-family", "Rubik Mono One" },
-                    { "font-size", 35 },
-                };
-
-                if (colour.has_value())
-                    object->setProperty("foreground", jive::toVar(colour));
-
-                return object;
-            };
-
             return juce::ValueTree{
                 "Text",
                 {
                     { "text", text },
                     { "margin", margin },
-                    { "style", style() },
                 },
             };
         }

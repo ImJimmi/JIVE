@@ -17,21 +17,6 @@ namespace jive_demo
     {
         [[nodiscard]] static auto window(const juce::String& windowType)
         {
-            static constexpr auto style = [] {
-                return new jive::Object{
-                    { "background", jive::toVar(colours::page) },
-                    { "foreground", jive::toVar(colours::content) },
-                    { "font-family", "Rubik" },
-                    { "font-size", 14 },
-                    {
-                        "Button",
-                        new jive::Object{
-                            { "border", juce::var{} },
-                        },
-                    }
-                };
-            };
-
             return juce::ValueTree{
                 windowType,
                 {
@@ -41,7 +26,6 @@ namespace jive_demo
                     { "display", "grid" },
                     { "grid-template-rows", "1fr" },
                     { "grid-template-columns", "1fr" },
-                    { "style", style() },
                 },
             };
         }

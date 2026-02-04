@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jive_Shadow.h"
+#include "jive_StyleSelector.h"
 #include "jive_Styles.h"
 
 #include <jive_core/interface/jive_InteractionState.h>
@@ -9,15 +10,6 @@
 
 namespace jive
 {
-    namespace painterPrecedence
-    {
-        static constexpr auto componentPredicate = 1000;
-        static constexpr auto componentID = 2000;
-        static constexpr auto componentClass = 3000;
-        static constexpr auto componentType = 4000;
-        static constexpr auto tautologicalPredicate = 5000;
-    } // namespace painterPrecedence
-
     class Caret;
 
     enum class Theme
@@ -35,58 +27,11 @@ namespace jive
     class LookAndFeel : public juce::LookAndFeel_V4
     {
     public:
-        // Should return true if the given component meets the desired
-        // requirements.
-        using ComponentPredicate = std::function<bool(const juce::Component&)>;
-
         // Should draw the current state of the given component to the graphics
         // context provided, using the set of styles provided.
         using ComponentPainter = std::function<void(const juce::Component&,
                                                     const Styles&,
                                                     juce::Graphics&)>;
-
-        // Should return true if the given popup menu meets the desired
-        // requirements.
-        using PopupPredicate = std::function<bool(const juce::PopupMenu&,
-                                                  const juce::Component&)>;
-
-        // Should draw the current state of the given popup menu to the graphics
-        // context provided, using the set of styles provided.
-        using PopupPainter = std::function<void(const juce::PopupMenu&,
-                                                const juce::PopupMenu::Options&,
-                                                const juce::Component&,
-                                                const juce::Rectangle<float>&,
-                                                const Styles&,
-                                                juce::Graphics&)>;
-
-        // Should return true if the given menu item meets the desired
-        // requirements.
-        using PopupItemPredicate = std::function<bool(const juce::PopupMenu::Item&,
-                                                      const juce::PopupMenu&,
-                                                      const juce::Component&)>;
-
-        // Should draw the current state of the given menu item to the graphics
-        // context provided, using the set of styles provided.
-        using PopupItemPainter = std::function<void(const juce::PopupMenu::Item&,
-                                                    const juce::PopupMenu&,
-                                                    const juce::PopupMenu::Options&,
-                                                    const juce::Component&,
-                                                    const juce::Rectangle<float>&,
-                                                    const Styles&,
-                                                    const InteractionState&,
-                                                    juce::Graphics&)>;
-
-        // Should draw the current state of the given progress bar to the
-        // graphics context provided, using the set of styles provided.
-        using ProgressBarPainter = std::function<void(const juce::ProgressBar&,
-                                                      double progress,
-                                                      const juce::String&,
-                                                      const Styles&,
-                                                      juce::Graphics&)>;
-
-        // The relative important of the associated set of styles - lower
-        // numbers are more important.
-        using Precedence = int;
 
         using juce::LookAndFeel_V4::LookAndFeel_V4;
 
@@ -97,64 +42,9 @@ namespace jive
         ~LookAndFeel() override;
 
         // Adds a painter that will be used to paint any component that matches
-        // the given predicate.
-        // The optional precedence value will be used to determine the priority
-        // if multiple painters match a component. E.g. a painter with a
-        // precedence of 10 will be chosen over one with a precedence of 20. See
-        // the painterPrecedence namespace for a list of default precedence
-        // values.
-        juce::Uuid addPainter(const ComponentPredicate&,
-                              const ComponentPainter&,
-                              Precedence precedence = painterPrecedence::componentPredicate);
-        juce::Uuid addPainter(const ComponentPredicate&,
-                              const ProgressBarPainter&,
-                              Precedence precedence = painterPrecedence::componentPredicate);
-
-        // Adds a painter that will be used to paint any component that has the
-        // given ID.
-        template <typename Painter>
-        juce::Uuid addPainter(const juce::String& componentID,
-                              const Painter& painter)
-        {
-            addPainter([componentID](const juce::Component& component) {
-                return component.getComponentID() == componentID;
-            },
-                       painter,
-                       painterPrecedence::componentID);
-        }
-
-        // Adds a painter that will be used to paint any component
-        template <typename Painter>
-        juce::Uuid addPainter(const Painter& painter)
-        {
-            addPainter([](const auto&) {
-                return true;
-            },
-                       painter,
-                       painterPrecedence::tautologicalPredicate);
-        }
-
-        // Adds a painter that will be used to paint any component that has the
-        // specified type.
-        template <typename ComponentType, typename Painter>
-        juce::Uuid addPainter(const Painter& painter)
-        {
-            return addPainter([](const juce::Component& component) {
-                return dynamic_cast<const ComponentType*>(&component) != nullptr;
-            },
-                              painter,
-                              painterPrecedence::componentType);
-        }
-
-        // Adds a painter that will be used to paint a popup menu
-        juce::Uuid addPainter(const PopupPredicate&,
-                              const PopupPainter&,
-                              Precedence precedence = painterPrecedence::componentPredicate);
-
-        // Adds a painter that will be used to paint a popup menu item
-        juce::Uuid addPainter(const PopupItemPredicate&,
-                              const PopupItemPainter&,
-                              Precedence precedence = painterPrecedence::componentPredicate);
+        // the given selector
+        juce::Uuid addPainter(const StyleSelector& selector,
+                              const ComponentPainter&);
 
         // Removes the specified painter
         void removePainter(const juce::Uuid& uuid);
@@ -163,50 +53,9 @@ namespace jive
         void clearPainters();
 
         // Adds a set of styles that will be used to style any component that
-        // matches the given predicate.
-        // The optional precedence value will be used to determine the priority
-        // if multiple styles match a component. E.g. a set of styles with a
-        // precedence of 10 will be chosen over one with a precedence of 20. See
-        // the painterPrecedence namespace for a list of default precedence
-        // values.
-        juce::Uuid addStyles(ComponentPredicate,
-                             const Styles&,
-                             const InteractionState& = InteractionState{},
-                             Precedence precedence = painterPrecedence::componentPredicate);
-
-        // Adds a set of styles that will be used to style any component that
-        // has the given ID.
-        juce::Uuid addStyles(const juce::String& componentID,
-                             const Styles&,
-                             const InteractionState& = InteractionState{});
-
-        // Adds a set of styles that will be used to style any component
-        juce::Uuid addStyles(const Styles&,
-                             const InteractionState& = InteractionState{});
-
-        // Adds a painter that will be used to paint any component that has the
-        // specified type.
-        template <typename ComponentType>
-        juce::Uuid addStyles(const Styles& styles,
-                             const InteractionState& interactionState = InteractionState{})
-        {
-            return addStyles([](const juce::Component& component) {
-                return dynamic_cast<const ComponentType*>(&component) != nullptr;
-            },
-                             styles,
-                             interactionState,
-                             painterPrecedence::componentType);
-        }
-
-        // Adds a set of styles for a popup menu
-        juce::Uuid addStyles(PopupPredicate,
-                             const Styles&,
-                             Precedence precedence = painterPrecedence::componentPredicate);
-
-        // Adds a set of styles for a popup menu item
-        juce::Uuid addStyles(PopupItemPredicate,
-                             const Styles&,
-                             Precedence precedence = painterPrecedence::componentPredicate);
+        // matches the given selector.
+        juce::Uuid addStyles(const StyleSelector& selector,
+                             const Styles&);
 
         // Returns a pointer to any styles with the given ID
         [[nodiscard]] Styles* findStyles(const juce::Uuid& uuid);
@@ -270,15 +119,10 @@ namespace jive
         // object contains the final set of properties that should be used to
         // render the given component.
         [[nodiscard]] Styles findMostApplicableStyles(const juce::Component&) const;
-        [[nodiscard]] Styles findMostApplicableStyles(const juce::PopupMenu&, const juce::Component&) const;
-        [[nodiscard]] Styles findMostApplicableStyles(const juce::PopupMenu::Item&, const juce::PopupMenu&, const juce::Component&) const;
 
         // Searches all the painters given to this object to find the one
         // (if any) that's most applicable to the given component.
         [[nodiscard]] std::optional<ComponentPainter> findMostApplicablePainter(const juce::Component&) const;
-        [[nodiscard]] std::optional<PopupPainter> findMostApplicablePainter(const juce::PopupMenu&, const juce::Component&) const;
-        [[nodiscard]] std::optional<PopupItemPainter> findMostApplicablePainter(const juce::PopupMenu::Item&, const juce::PopupMenu&, const juce::Component&) const;
-        [[nodiscard]] std::optional<ProgressBarPainter> findMostApplicablePainter(const juce::ProgressBar&) const;
 
         // Can be overridden to change where the actual check-box for the given
         // toggle button should be positioned relative to the button's bounds.
@@ -352,22 +196,18 @@ namespace jive
         // =============================================================================================================
 
     private:
-        template <class PaintFunction, class Predicate>
+        template <class PaintFunction>
         struct Painter
         {
             juce::Uuid id;
-            Precedence precedence;
             PaintFunction paint;
-            Predicate appliesTo;
+            StyleSelector selector;
         };
 
-        template <class Predicate>
         struct Styler
         {
             juce::Uuid id;
-            Precedence precedence;
-            InteractionState interactionState;
-            Predicate appliesTo;
+            StyleSelector selector;
             Styles styles;
         };
 
@@ -397,15 +237,8 @@ namespace jive
 
         juce::Component::SafePointer<juce::Component> attachedComponent;
 
-        std::vector<Painter<ComponentPainter, ComponentPredicate>> painters;
-        std::vector<Painter<PopupPainter, PopupPredicate>> popupPainters;
-        std::vector<Painter<PopupItemPainter, PopupItemPredicate>> popupItemPainters;
-        std::vector<Painter<ProgressBarPainter, ComponentPredicate>> progressBarPainters;
-
-        std::vector<Styler<ComponentPredicate>> stylers;
-        std::vector<Styler<PopupPredicate>> popupStylers;
-        std::vector<Styler<PopupItemPredicate>> popupItemStylers;
-
+        std::vector<Painter<ComponentPainter>> painters;
+        std::vector<Styler> stylers;
         mutable std::vector<ComponentStylesCache> stylesCache;
     };
 

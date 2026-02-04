@@ -434,7 +434,7 @@ namespace jive
         auto* laf = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
 
         for (auto* otherParent = component->getParentComponent();
-             otherParent != nullptr;
+             otherParent != nullptr && dynamic_cast<juce::TopLevelWindow*>(otherParent) == nullptr;
              otherParent = otherParent->getParentComponent())
         {
             juce::FillType background{ juce::Colours::black };
@@ -450,6 +450,7 @@ namespace jive
             {
                 parent = otherParent;
                 parent->addChildComponent(this, 0);
+                jassert(dynamic_cast<juce::TopLevelWindow*>(parent.getComponent()) == nullptr);
                 updateBounds();
                 return;
             }

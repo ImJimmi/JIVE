@@ -14,7 +14,7 @@ namespace jive
         ComponentTypePredicates();
         ~ComponentTypePredicates();
 
-        [[nodiscard]] static auto addPredicate(const Predicate& predicate)
+        static auto addPredicate(const Predicate& predicate)
         {
             juce::Uuid uuid;
             getInstance()->predicates.emplace(uuid, predicate);

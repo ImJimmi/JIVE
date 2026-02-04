@@ -72,18 +72,9 @@ namespace jive_demo
 
             [[nodiscard]] juce::ValueTree operator()()
             {
-                static constexpr auto style = [] {
-                    return new jive::Object{
-                        { "background", jive::toVar(colours::panel) },
-                        { "border", "black" },
-                        { "border-radius", 10 },
-                    };
-                };
-
                 return juce::ValueTree{
                     "Component",
                     {
-                        { "style", style() },
                         { "flex-grow", 1 },
                         { "padding", 10 },
                         { "border-width", 1.5 },

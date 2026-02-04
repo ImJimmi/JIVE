@@ -14,14 +14,19 @@ namespace jive
         return result;
     }
 
-    [[nodiscard]] static std::function<bool(const juce::Component&)> buildPredicate(juce::String selector)
+    [[nodiscard]] static std::function<bool(const juce::Component&)> buildSinglePredicate(juce::String selector,
+                                                                                          juce::Component* root)
     {
         if (selector.isEmpty())
         {
             // Assume we were given an empty string by one of the recursive
-            // steps below. We need to break the recursion so just return true
-            // here for any previous predicates to take effect (affect?).
-            return [](const juce::Component&) {
+            // steps below. This will be the final predicate layer so we should
+            // check if the root component if one has been specified, or just
+            // return true to break the recursion.
+            return [rootComponent = juce::Component::SafePointer<juce::Component>{ root }](const juce::Component& component) {
+                if (rootComponent != nullptr)
+                    return rootComponent->isParentOf(&component) || rootComponent == &component;
+
                 return true;
             };
         }
@@ -36,7 +41,7 @@ namespace jive
             if (character == '*')
             {
                 removeLastCharacters(selector, 1);
-                return [remainingPredicate = buildPredicate(selector)](const juce::Component& component) {
+                return [remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                     return remainingPredicate(component);
                 };
             }
@@ -45,7 +50,7 @@ namespace jive
                 const auto id = removeLastCharacters(selector, selector.length() - i - 1);
                 removeLastCharacters(selector, 1);
 
-                return [id, remainingPredicate = buildPredicate(selector)](const juce::Component& component) {
+                return [id, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                     return component.getComponentID() == id
                         && remainingPredicate(component);
                 };
@@ -55,7 +60,7 @@ namespace jive
                 const auto className = removeLastCharacters(selector, selector.length() - i - 1);
                 removeLastCharacters(selector, 1);
 
-                return [className, remainingPredicate = buildPredicate(selector)](const juce::Component& component) {
+                return [className, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                     return fromVar<juce::StringArray>(component.getProperties().getWithDefault("class", ""))
                                .contains(className)
                         && remainingPredicate(component);
@@ -66,7 +71,7 @@ namespace jive
                 const auto stateName = removeLastCharacters(selector, selector.length() - i - 1);
                 removeLastCharacters(selector, 1);
 
-                return [stateName, remainingPredicate = buildPredicate(selector)](const juce::Component& component) {
+                return [stateName, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                     return InteractionState{}.set(stateName).appliesTo(component)
                         && remainingPredicate(component);
                 };
@@ -82,7 +87,7 @@ namespace jive
 
                 if (!typeName.isEmpty())
                 {
-                    return [typeName, remainingPredicate = buildPredicate(selector)](const juce::Component& component) {
+                    return [typeName, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                         return ComponentTypePredicates::check(component, typeName)
                             && remainingPredicate(component);
                     };
@@ -98,7 +103,7 @@ namespace jive
                     // The next character after thr space isn't a '>' so the
                     // remaining selector applies to any of the component's
                     // ancestors
-                    return [ancestorPredicate = buildPredicate(selector)](const juce::Component& component) {
+                    return [ancestorPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                         for (auto* ancestor = component.getParentComponent();
                              ancestor != nullptr;
                              ancestor = ancestor->getParentComponent())
@@ -120,7 +125,7 @@ namespace jive
                 removeLastCharacters(selector, 1);
                 selector = selector.trimEnd();
 
-                return [parentPredicate = buildPredicate(selector)](const juce::Component& component) {
+                return [parentPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                     return component.getParentComponent() != nullptr
                         && parentPredicate(*component.getParentComponent());
                 };
@@ -133,6 +138,32 @@ namespace jive
         return [](const juce::Component&) {
             return false;
         };
+    }
+
+    [[nodiscard]] static std::function<bool(const juce::Component&)> buildPredicate(juce::String selector, juce::Component* root)
+    {
+        // Handle comma-separated selectors (multiple selectors)
+        const auto selectors = juce::StringArray::fromTokens(selector, ",", "");
+
+        if (selectors.size() > 1)
+        {
+            std::vector<std::function<bool(const juce::Component&)>> predicates;
+            predicates.reserve(static_cast<size_t>(selectors.size()));
+
+            for (const auto& singleSelector : selectors)
+                predicates.push_back(buildSinglePredicate(singleSelector.trim(), root));
+
+            return [predicates](const juce::Component& component) {
+                for (const auto& predicate : predicates)
+                {
+                    if (predicate(component))
+                        return true;
+                }
+                return false;
+            };
+        }
+
+        return buildSinglePredicate(selector, root);
     }
 
     [[nodiscard]] static auto calculatePrecedence(const juce::String& selector)
@@ -251,17 +282,15 @@ namespace jive
         return precedence;
     }
 
-    StyleSelector::StyleSelector(const juce::String& selector)
-        : predicate{ buildPredicate(selector) }
+    StyleSelector::StyleSelector(const juce::String& selector, juce::Component* root)
+        : predicate{ buildPredicate(selector, root) }
         , precedence{ calculatePrecedence(selector) }
     {
     }
 
-    StyleSelector& StyleSelector::operator=(const juce::String& selector)
+    StyleSelector::StyleSelector(const char* selector, juce::Component* root)
+        : StyleSelector{ juce::String{ selector }, root }
     {
-        predicate = buildPredicate(selector);
-        precedence = calculatePrecedence(selector);
-        return *this;
     }
 
     bool StyleSelector::appliesTo(const juce::Component& component) const
@@ -269,9 +298,47 @@ namespace jive
         return predicate(component);
     }
 
+    std::array<std::uint16_t, 3> StyleSelector::getPrecedence() const
+    {
+        return precedence;
+    }
+
     bool StyleSelector::operator<(const StyleSelector& other) const
     {
-        return precedence < other.precedence;
+        if (isSystem && !other.isSystem)
+            return false;
+        if (other.isSystem && !isSystem)
+            return true;
+
+        return precedence > other.precedence;
+    }
+
+    bool StyleSelector::operator>(const StyleSelector& other) const
+    {
+        return other < *this;
+    }
+
+    bool StyleSelector::operator==(const StyleSelector& other) const
+    {
+        return precedence == other.precedence && isSystem == other.isSystem;
+    }
+
+    StyleSelector StyleSelector::makeInlineStyleSelector(const juce::Component& component)
+    {
+        StyleSelector selector{ "*" };
+        selector.predicate = [safeComponent = juce::Component::SafePointer<juce::Component>{ const_cast<juce::Component*>(&component) }](const juce::Component& other) {
+            return safeComponent != nullptr && safeComponent == &other;
+        };
+
+        return selector;
+    }
+
+    StyleSelector StyleSelector::makeSystemStyleSelector(const juce::String& pattern)
+    {
+        StyleSelector selector{ pattern };
+        selector.isSystem = true;
+
+        return selector;
     }
 } // namespace jive
 
@@ -513,32 +580,112 @@ static jive::UnitTest selectorPrecedence{
     "jive::StyleSelector",
     "Selector precedence",
     [](auto& test) {
-        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "Component" });
-        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ ".foo" });
-        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "#foo" });
-        test.expect(jive::StyleSelector{ "*" } < jive::StyleSelector{ "Component::before" });
+        test.expect(jive::StyleSelector{ "*" } > jive::StyleSelector{ "Component" });
+        test.expect(jive::StyleSelector{ "*" } > jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "*" } > jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ "*" } > jive::StyleSelector{ "Component::before" });
 
-        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ "Component.foo" });
-        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ ".foo" });
-        test.expect(jive::StyleSelector{ "Component" } < jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ "Component" } > jive::StyleSelector{ "Component.foo" });
+        test.expect(jive::StyleSelector{ "Component" } > jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "Component" } > jive::StyleSelector{ "#foo" });
 
-        test.expect(jive::StyleSelector{ "div span" } < jive::StyleSelector{ ".foo" });
-        test.expect(jive::StyleSelector{ "ul li a" } < jive::StyleSelector{ ".nav-link" });
-        test.expect(jive::StyleSelector{ "p em strong" } < jive::StyleSelector{ ".highlight" });
+        test.expect(jive::StyleSelector{ "div span" } > jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "ul li a" } > jive::StyleSelector{ ".nav-link" });
+        test.expect(jive::StyleSelector{ "p em strong" } > jive::StyleSelector{ ".highlight" });
 
-        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ ".foo.bar" });
-        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ "#foo" });
-        test.expect(jive::StyleSelector{ ".foo" } < jive::StyleSelector{ ".foo::before" });
+        test.expect(jive::StyleSelector{ ".foo" } > jive::StyleSelector{ ".foo.bar" });
+        test.expect(jive::StyleSelector{ ".foo" } > jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ ".foo" } > jive::StyleSelector{ ".foo::before" });
 
-        test.expect(jive::StyleSelector{ "[type=text]" } < jive::StyleSelector{ ".foo.bar" });
-        test.expect(jive::StyleSelector{ "[data-x]" } < jive::StyleSelector{ "#foo" });
+        test.expect(jive::StyleSelector{ "[type=text]" } > jive::StyleSelector{ ".foo.bar" });
+        test.expect(jive::StyleSelector{ "[data-x]" } > jive::StyleSelector{ "#foo" });
 
-        test.expect(jive::StyleSelector{ "div::before" } < jive::StyleSelector{ "div:hover" });
-        test.expect(jive::StyleSelector{ "div::before" } < jive::StyleSelector{ ".foo" });
-        test.expect(jive::StyleSelector{ ".foo::before" } < jive::StyleSelector{ ".foo:hover" });
+        test.expect(jive::StyleSelector{ "div::before" } > jive::StyleSelector{ "div:hover" });
+        test.expect(jive::StyleSelector{ "div::before" } > jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ ".foo::before" } > jive::StyleSelector{ ".foo:hover" });
 
-        test.expect(jive::StyleSelector{ "div.foo.bar span" } < jive::StyleSelector{ "#app div.foo.bar span" });
-        test.expect(jive::StyleSelector{ "#app div.foo span::before" } < jive::StyleSelector{ "#app #content div.foo span:hover::before" });
+        test.expect(jive::StyleSelector{ "div.foo.bar span" } > jive::StyleSelector{ "#app div.foo.bar span" });
+        test.expect(jive::StyleSelector{ "#app div.foo span::before" } > jive::StyleSelector{ "#app #content div.foo span:hover::before" });
+    },
+};
+
+static jive::UnitTest multipleSelectors{
+    "jive",
+    "jive::StyleSelector",
+    "Multiple selectors (comma-separated)",
+    [](auto& test) {
+        juce::Component component1;
+        component1.setComponentID("first");
+        component1.getProperties().set("class", "foo");
+
+        juce::Component component2;
+        component2.setComponentID("second");
+        component2.getProperties().set("class", "bar");
+
+        juce::Component component3;
+        component3.setComponentID("third");
+        component3.getProperties().set("class", "baz");
+
+        // Basic comma-separated class selectors
+        {
+            const jive::StyleSelector selector{ ".foo, .bar" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
+
+        // Comma-separated ID selectors
+        {
+            const jive::StyleSelector selector{ "#first, #second" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
+
+        // Mixed ID and class selectors
+        {
+            const jive::StyleSelector selector{ "#first, .bar" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
+
+        // Three comma-separated selectors
+        {
+            const jive::StyleSelector selector{ ".foo, .bar, .baz" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(selector.appliesTo(component3));
+        }
+
+        // Comma-separated with complex selectors
+        {
+            juce::Component parent;
+            parent.setComponentID("parent");
+            parent.addAndMakeVisible(component1);
+            parent.addAndMakeVisible(component2);
+
+            const jive::StyleSelector selector{ "#parent > .foo, #parent > .bar" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
+
+        // Comma-separated with no spaces around comma
+        {
+            const jive::StyleSelector selector{ ".foo,.bar" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
+
+        // Comma-separated with extra spaces
+        {
+            const jive::StyleSelector selector{ ".foo ,  .bar" };
+            test.expect(selector.appliesTo(component1));
+            test.expect(selector.appliesTo(component2));
+            test.expect(!selector.appliesTo(component3));
+        }
     },
 };
 #endif
