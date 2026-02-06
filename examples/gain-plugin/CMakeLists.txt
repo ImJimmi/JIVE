@@ -1,16 +1,9 @@
 juce_add_plugin(jive-gain-example
-                PRODUCT_NAME
-                "JIVE Gain Example"
-                VERSION
-                ${PROJECT_VERSION}
-                FORMATS
-                Standalone
-                VST3
-                AU
-                PLUGIN_MANUFACTURER_CODE
-                Jive
-                PLUGIN_CODE
-                Gain
+    PRODUCT_NAME "JIVE Gain Example"
+    VERSION ${PROJECT_VERSION}
+    FORMATS Standalone VST3 AU
+    PLUGIN_MANUFACTURER_CODE "Jive"
+    PLUGIN_CODE "Gain"
 )
 
 target_sources(jive-gain-example
