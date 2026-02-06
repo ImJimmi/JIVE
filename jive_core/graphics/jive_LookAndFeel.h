@@ -234,11 +234,16 @@ namespace jive
             updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component));
         }
 
+        void onVBlankUpdate();
+
         juce::Component::SafePointer<juce::Component> attachedComponent;
 
         std::vector<Painter<ComponentPainter>> painters;
         std::vector<Styler> stylers;
         mutable std::vector<ComponentStylesCache> stylesCache;
+
+        juce::VBlankAttachment vBlank;
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> transitioningComponents;
     };
 
     // A custom Caret component which is drawn by its look-and-feel, rather

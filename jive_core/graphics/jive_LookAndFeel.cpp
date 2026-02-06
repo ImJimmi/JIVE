@@ -15,6 +15,12 @@ namespace jive
 
     LookAndFeel::LookAndFeel(juce::Component& comp)
         : attachedComponent{ &comp }
+        , vBlank{
+            &comp,
+            [this]() {
+                onVBlankUpdate();
+            },
+        }
     {
         attachedComponent->setLookAndFeel(this);
         applyTheme(Theme::steel);
@@ -747,6 +753,17 @@ namespace jive
 
         update(entry.styles, latestStyles);
 
+        if (entry.styles.hasTransitionsInProgress())
+            transitioningComponents.addIfNotAlreadyThere(const_cast<juce::Component*>(&component));
+        else
+            transitioningComponents.removeAllInstancesOf(const_cast<juce::Component*>(&component));
+
         return entry.styles;
+    }
+
+    void LookAndFeel::onVBlankUpdate()
+    {
+        for (auto& component : transitioningComponents)
+            component->repaint();
     }
 } // namespace jive

@@ -25,7 +25,6 @@ END_JUCE_MODULE_DECLARATION */
     #define JIVE_TRACE(...)
 #endif
 
-#include "algorithms/jive_Async.h"
 #include "algorithms/jive_Bezier.h"
 #include "algorithms/jive_Find.h"
 #include "algorithms/jive_Interpolate.h"
@@ -44,6 +43,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "files/jive_SourceDirectories.h"
 #include "geometry/jive_BorderRadii.h"
 #include "geometry/jive_BoxModel.h"
+#include "geometry/jive_Geometry.h"
 #include "geometry/jive_Length.h"
 #include "geometry/jive_Orientation.h"
 #include "graphics/jive_ComponentTypePredicates.h"

@@ -182,10 +182,6 @@ namespace jive
                 styles = styles
                              .value_or(Styles{})
                              .withTransitions(transitions);
-
-                vBlank = std::make_unique<juce::VBlankAttachment>(&component, [this, transitions]() {
-                    component.repaint();
-                });
             }
         }
 
