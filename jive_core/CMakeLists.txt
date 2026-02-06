@@ -115,3 +115,7 @@ target_include_directories(jive_core
 target_link_libraries(jive_core
                       INTERFACE juce::juce_gui_basics
 )
+
+if (JIVE_ENABLE_PERFETTO)
+    add_melatonin_perfetto(jive_core)
+endif()

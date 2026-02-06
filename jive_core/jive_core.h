@@ -16,6 +16,16 @@ END_JUCE_MODULE_DECLARATION */
     #include <juce_audio_processors/juce_audio_processors.h>
 #endif
 
+#if PERFETTO
+    #include <melatonin_perfetto/melatonin_perfetto.h>
+
+    #define JIVE_TRACE(...) \
+        TRACE_COMPONENT(__VA_ARGS__)
+#else
+    #define JIVE_TRACE(...)
+#endif
+
+#include "algorithms/jive_Async.h"
 #include "algorithms/jive_Bezier.h"
 #include "algorithms/jive_Find.h"
 #include "algorithms/jive_Interpolate.h"

@@ -45,6 +45,8 @@ namespace jive
         if (layoutRecursionLock)
             return;
 
+        JIVE_TRACE();
+
         const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
 
         GuiItemDecorator::layOutChildren();
@@ -144,6 +146,7 @@ namespace jive
     juce::FlexBox FlexContainer::buildFlexBox(juce::Rectangle<float> bounds,
                                               LayoutStrategy strategy)
     {
+        JIVE_TRACE("x", bounds.getX(), "y", bounds.getY(), "width", bounds.getWidth(), "height", bounds.getHeight(), "strategy", strategy);
         juce::FlexBox flex;
 
         flex.flexDirection = flexDirection.getOr(juce::FlexBox::Direction::column);

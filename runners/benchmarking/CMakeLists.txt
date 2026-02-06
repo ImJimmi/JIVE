@@ -24,3 +24,7 @@ target_link_libraries(jive-benchmarking
                               juce::juce_recommended_lto_flags
                               juce::juce_recommended_warning_flags
 )
+
+if (JIVE_ENABLE_PERFETTO)
+    add_melatonin_perfetto(jive-benchmarking)
+endif()

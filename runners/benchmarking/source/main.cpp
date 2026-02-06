@@ -23,6 +23,10 @@ public:
         // StyleSheetsQueryingBenchmark{}.run();
         MinimumViewBenchmark{}.run();
         FlexStressTest{}.run();
+#if PERFETTO
+        MelatoninPerfetto tracingSession;
+#endif
+
         quit();
     }
 

@@ -89,3 +89,7 @@ target_link_libraries(jive_layouts
 
 target_compile_definitions(jive_layouts
                            INTERFACE JIVE_TREE_EDITOR_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tree-editor")
+
+if (JIVE_ENABLE_PERFETTO)
+    add_melatonin_perfetto(jive_layouts)
+endif()

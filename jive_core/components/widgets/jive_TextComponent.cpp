@@ -1,7 +1,6 @@
 #include "jive_TextComponent.h"
 
-#include <jive_core/graphics/jive_FontUtilities.h>
-#include <jive_core/graphics/jive_LookAndFeel.h>
+#include <jive_core/jive_core.h>
 
 namespace jive
 {
@@ -12,6 +11,7 @@ namespace jive
 
     void TextComponent::paint(juce::Graphics& g)
     {
+        JIVE_TRACE();
         updateCachedFont();
 
         if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)

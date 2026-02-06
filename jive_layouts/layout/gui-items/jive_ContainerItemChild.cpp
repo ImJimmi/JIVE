@@ -24,6 +24,7 @@ namespace jive
                               Orientation orientation,
                               LayoutStrategy strategy) const
         {
+            JIVE_TRACE();
             const auto minBounds = boxModel.getMinimumBounds();
             item.minWidth = minBounds.getWidth();
             item.minHeight = minBounds.getHeight();

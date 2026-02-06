@@ -20,6 +20,8 @@ namespace jive
 
     void ContainerItem::insertChild(std::unique_ptr<GuiItem> child, int index)
     {
+        JIVE_TRACE("index", index);
+
         const auto numChildrenBefore = getChildren().size();
         GuiItemDecorator::insertChild(std::move(child), index);
 
@@ -29,6 +31,8 @@ namespace jive
 
     void ContainerItem::setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren)
     {
+        JIVE_TRACE("std::size(newChildren)", std::size(newChildren));
+
         {
             const BoxModel::ScopedCallbackLock boxModelLock{ box };
             GuiItemDecorator::setChildren(std::move(newChildren));
@@ -56,6 +60,8 @@ namespace jive
 
     void ContainerItem::updateIdealSize(bool informParentOfChanges)
     {
+        JIVE_TRACE("inform parent?", informParentOfChanges);
+
         for (auto* child : getChildren())
         {
             if (auto* decorator = dynamic_cast<GuiItemDecorator*>(child))

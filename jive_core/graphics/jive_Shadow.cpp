@@ -2,8 +2,7 @@
 
 #include "jive_LookAndFeel.h"
 
-#include <jive_core/geometry/jive_Geometry.h>
-#include <jive_core/values/jive_Colours.h>
+#include <jive_core/jive_core.h>
 
 namespace jive
 {
@@ -335,6 +334,8 @@ namespace jive
     {
         if (component == nullptr)
             return;
+
+        JIVE_TRACE();
 
         juce::Path shape;
 

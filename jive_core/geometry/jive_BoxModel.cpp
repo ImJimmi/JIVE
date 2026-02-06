@@ -1,5 +1,7 @@
 #include "jive_BoxModel.h"
 
+#include <jive_core/jive_core.h>
+
 namespace jive
 {
     BoxModel::BoxModel(juce::ValueTree stateSource)
@@ -47,6 +49,8 @@ namespace jive
             property.onValueChange = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
                 if (callbackLock.get())
                     return;
+
+                JIVE_TRACE("property", property.id.toString());
 
                 if (updateWidth && !width.isAuto())
                     componentWidth = width.get().toPixels(getParentBounds().getWidth());
@@ -103,6 +107,7 @@ namespace jive
 
     void BoxModel::setWidth(float newWidth)
     {
+        JIVE_TRACE("newWidth", newWidth);
         componentWidth = newWidth;
 
         if (!state.getParent().isValid())
@@ -129,6 +134,7 @@ namespace jive
 
     void BoxModel::setHeight(float newHeight)
     {
+        JIVE_TRACE("newHeight", newHeight);
         componentHeight = newHeight;
 
         if (!state.getParent().isValid())
@@ -147,6 +153,7 @@ namespace jive
 
     void BoxModel::setSize(float newWidth, float newHeight)
     {
+        JIVE_TRACE("newWidth", newWidth, "newHeight", newHeight);
         const auto widthChanged = !juce::approximatelyEqual(newWidth, componentWidth.get());
         const auto heightChanged = !juce::approximatelyEqual(newHeight, componentHeight.get());
         std::unique_ptr<ScopedCallbackLock> scopedLock;
