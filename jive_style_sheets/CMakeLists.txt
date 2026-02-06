@@ -20,3 +20,7 @@ target_include_directories(jive_style_sheets
 target_link_libraries(jive_style_sheets
                       INTERFACE jive::jive_core
 )
+
+if (JIVE_ENABLE_PERFETTO)
+    add_melatonin_perfetto(jive_style_sheets)
+endif()

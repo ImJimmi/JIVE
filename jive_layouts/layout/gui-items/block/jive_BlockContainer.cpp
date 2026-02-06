@@ -15,6 +15,7 @@ namespace jive
 
     void BlockContainer::layOutChildren()
     {
+        JIVE_TRACE();
         GuiItemDecorator::layOutChildren();
 
         for (auto child : getChildren())

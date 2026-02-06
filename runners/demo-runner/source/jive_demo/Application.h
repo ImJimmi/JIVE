@@ -47,6 +47,10 @@ namespace jive_demo
         }
 
     private:
+#if PERFETTO
+        MelatoninPerfetto tracingSession;
+#endif
+
         DemoState state;
 
         jive::Interpreter interpreter;

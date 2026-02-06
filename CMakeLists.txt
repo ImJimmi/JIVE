@@ -10,30 +10,7 @@ include(cmake/CPM.cmake)
 include(cmake/jive_options.cmake)
 include(cmake/jive_code_coverage.cmake)
 include(cmake/jive_compiler_and_linker_options.cmake)
-
-if (JIVE_ENABLE_MELATONIN_INSPECTOR)
-    include(cmake/melatonin_inspector.cmake)
-endif()
-
-if (JIVE_ENABLE_PLUGINVAL)
-    include(cmake/pluginval.cmake)
-endif()
-
-if (JIVE_ENABLE_PROJUCER_PROJECTS)
-    include(cmake/projucer.cmake)
-endif()
-
 CPMUsePackageLock(package-lock.cmake)
-if (JIVE_BUILD_BENCHMARKS
-    OR JIVE_BUILD_DEMO_RUNNER
-    OR JIVE_BUILD_TEST_RUNNER
-)
-    include(CTest)
-endif ()
-
-add_subdirectory(jive_core)
-add_subdirectory(jive_layouts)
-add_subdirectory(jive_style_sheets)
 
 if (JIVE_BUILD_BENCHMARKS
     OR JIVE_BUILD_DEMO_RUNNER
@@ -49,6 +26,32 @@ set_directory_properties(PROPERTIES JUCE_COMPANY_NAME
                                     "https://github.com/ImJimmi/JIVE"
 )
 
+if (JIVE_ENABLE_MELATONIN_INSPECTOR)
+    include(cmake/melatonin_inspector.cmake)
+endif()
+
+if (JIVE_ENABLE_PERFETTO)
+    include(cmake/melatonin_perfetto.cmake)
+endif()
+
+if (JIVE_ENABLE_PLUGINVAL)
+    include(cmake/pluginval.cmake)
+endif()
+
+if (JIVE_ENABLE_PROJUCER_PROJECTS)
+    include(cmake/projucer.cmake)
+endif()
+
+if (JIVE_BUILD_BENCHMARKS
+    OR JIVE_BUILD_DEMO_RUNNER
+    OR JIVE_BUILD_TEST_RUNNER
+)
+    include(CTest)
+endif ()
+
+add_subdirectory(jive_core)
+add_subdirectory(jive_layouts)
+add_subdirectory(jive_style_sheets)
 add_subdirectory(runners)
 
 if (JIVE_BUILD_EXAMPLES)

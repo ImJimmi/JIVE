@@ -100,6 +100,8 @@ namespace jive
 
     juce::TextLayout Text::buildTextLayout(float maxWidth) const
     {
+        JIVE_TRACE("max-width", maxWidth);
+
         for (auto* parentItem = getParent();
              maxWidth < 0.0f && parentItem != nullptr;
              parentItem = parentItem->getParent())

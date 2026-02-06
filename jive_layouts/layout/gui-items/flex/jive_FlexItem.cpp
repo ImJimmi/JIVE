@@ -71,6 +71,7 @@ namespace jive
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
+        JIVE_TRACE("x", parentContentBounds.getX(), "y", parentContentBounds.getY(), "width", parentContentBounds.getWidth(), "height", parentContentBounds.getHeight(), "strategy", strategy);
         const auto key = std::make_pair(parentContentBounds, strategy);
 
         if (cachedItems.find(key) == std::end(cachedItems))

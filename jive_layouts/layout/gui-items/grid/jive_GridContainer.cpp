@@ -80,6 +80,8 @@ namespace jive
         if (layoutRecursionLock)
             return;
 
+        JIVE_TRACE();
+
         const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
 
         GuiItemDecorator::layOutChildren();

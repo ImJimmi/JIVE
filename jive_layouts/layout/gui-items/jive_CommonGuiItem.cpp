@@ -149,6 +149,7 @@ namespace jive
             return;
 
         const auto componentBounds = getComponent()->getBounds().toFloat();
+        JIVE_TRACE("x", componentBounds.getX(), "y", componentBounds.getY(), "width", componentBounds.getWidth(), "height", componentBounds.getHeight());
 
         if (!width.isTransitioning() && !height.isTransitioning())
             boxModel.setSize(componentBounds.getWidth(), componentBounds.getHeight());
@@ -232,6 +233,7 @@ namespace jive
 
     void CommonGuiItem::componentParentHierarchyChanged(juce::Component& componentThatsParentChanged)
     {
+        JIVE_TRACE();
         if (&componentThatsParentChanged != getComponent().get())
             return;
 
@@ -248,6 +250,7 @@ namespace jive
 
     void CommonGuiItem::boxModelChanged(BoxModel& boxModelThatChanged)
     {
+        JIVE_TRACE();
         jassertquiet(&boxModelThatChanged == &boxModel);
 
         if (!static_cast<bool>(state["jive::setup-in-progress"]))
