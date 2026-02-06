@@ -97,7 +97,6 @@ namespace jive
                                                                                    .getObject())
                                     ->shadow;
             shadowComp.setShadow(styles.find<Shadow>("shadow").value());
-            shadowComp.repaint();
         }
 
         // Updates the shadow component (if any) associated with the given
