@@ -7,6 +7,7 @@ namespace jive
     class Text
         : public GuiItemDecorator
         , private TextComponent::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         explicit Text(std::unique_ptr<GuiItem> itemToDecorate);
@@ -26,6 +27,7 @@ namespace jive
         const TextComponent& getTextComponent() const;
 
     private:
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
         void textFontChanged(TextComponent& text) final;
 
         juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
@@ -42,6 +44,8 @@ namespace jive
         juce::RangedAudioParameter* parameter;
         std::unique_ptr<juce::ParameterAttachment> parameterAttachment;
 #endif
+
+        mutable std::unordered_map<float, juce::TextLayout> layoutsCache;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };

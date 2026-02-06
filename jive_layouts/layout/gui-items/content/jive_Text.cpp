@@ -34,10 +34,12 @@ namespace jive
 
         updateTextComponent();
         getTextComponent().addListener(*this);
+        state.addListener(this);
     }
 
     Text::~Text()
     {
+        state.removeListener(this);
         getTextComponent().removeListener(*this);
     }
 
@@ -93,6 +95,14 @@ namespace jive
         return dynamic_cast<const TextComponent&>(*getComponent());
     }
 
+    void Text::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id)
+    {
+        if (id.toString().startsWith("jive::"))
+            return;
+
+        layoutsCache.clear();
+    }
+
     void Text::textFontChanged(TextComponent&)
     {
         updateTextComponent();
@@ -102,19 +112,16 @@ namespace jive
     {
         JIVE_TRACE("max-width", maxWidth);
 
-        for (auto* parentItem = getParent();
-             maxWidth < 0.0f && parentItem != nullptr;
-             parentItem = parentItem->getParent())
+        if (const auto layout = layoutsCache.find(maxWidth);
+            layout != std::end(layoutsCache))
         {
-            if (const auto& parentBoxModel = dynamic_cast<const GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel;
-                !parentBoxModel.hasAutoWidth())
-            {
-                maxWidth = parentBoxModel.getContentBounds().getWidth();
-            }
+            return layout->second;
         }
 
         juce::TextLayout layout;
         layout.createLayout(getTextComponent().getAttributedString(), maxWidth);
+
+        layoutsCache[maxWidth] = layout;
 
         return layout;
     }
