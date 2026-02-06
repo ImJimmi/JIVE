@@ -57,12 +57,10 @@ target_link_libraries(jive-demo-app
 )
 
 juce_add_plugin(jive-demo-plugin
-                PRODUCT_NAME
-                "JIVE Demo"
-                FORMATS
-                Standalone
-                VST3
-                AU
+    FORMATS Standalone VST3 AU
+    PLUGIN_CODE "Demo"
+    PLUGIN_MANUFACTURER_CODE "Jive"
+    PRODUCT_NAME "JIVE Demo"
 )
 
 target_sources(jive-demo-plugin
