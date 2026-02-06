@@ -537,7 +537,60 @@ namespace jive
             return tie(*this) == tie(other);
         }
 
+        [[nodiscard]] auto hasTransitionsInProgress() const
+        {
+            if (transitions == nullptr)
+                return false;
+
+            bool anyTransitioning = false;
+
+            forEach([this, &anyTransitioning](auto property) {
+                if (auto* transition = (*transitions)[property.id.toString()])
+                {
+                    const auto proportion = transition->calculateProgress(property.getLastUpdated());
+
+                    if (!juce::approximatelyEqual(proportion, 1.0))
+                        anyTransitioning = true;
+                }
+            });
+
+            return anyTransitioning;
+        }
+
     private:
+        template <typename UnaryFunction>
+        void forEach(UnaryFunction function)
+        {
+            function(accent);
+            function(background);
+            function(borderFill);
+            function(borderRadius);
+            function(borderWidth);
+            function(direction);
+            function(fill);
+#if JUCE_MAJOR_VERSION >= 8
+            function(fontAscentOverride);
+            function(fontDescentOverride);
+#endif
+            function(fontExtraKerningFactor);
+            function(fontFamily);
+            function(fontHorizontalScale);
+            function(fontPointSize);
+            function(fontStyleFlags);
+            function(foreground);
+            function(shadow);
+            function(stroke);
+            function(textAlign);
+            function(thumb);
+            function(track);
+        }
+
+        template <typename UnaryFunction>
+        void forEach(UnaryFunction function) const
+        {
+            const_cast<Styles*>(this)->forEach(std::move(function));
+        }
+
         template <typename T>
         [[nodiscard]] std::optional<T> calculateCurrent(const StyleProperty<T>& property) const
         {

@@ -31,16 +31,6 @@ namespace jive
                              const juce::String&);
         void addSelectorBasedStyles(Object& object,
                                     const juce::String& id);
-        // void addStylesFrom(Object& object,
-        //                    const StyleSelector& selector);
-
-        // void findAndAddStyleProperties(Object& object,
-        //                                const juce::String& id,
-        //                                std::optional<Styles>& styles,
-        //                                const juce::String& selector);
-        // void findAndAddStatefulStyles(Object& object,
-        //                               const juce::String& selector);
-        // void findAndAddOtherStyles(Object& object);
 
         juce::Component& component;
         LookAndFeel& lookAndFeel;
@@ -55,7 +45,6 @@ namespace jive
         Property<juce::BorderSize<float>> border;
         std::unordered_map<juce::String, juce::Uuid> uuids;
         std::unordered_map<juce::String, StyleProperty> observedObjects;
-        std::unique_ptr<juce::VBlankAttachment> vBlank;
 
         std::unique_ptr<FileObserver> fileObserver;
         Property<SourceDirectories::ReferenceCountedPointer> sourceDirectories;
