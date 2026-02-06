@@ -31,6 +31,7 @@ public:
     }
 
 protected:
+    virtual void prepare(jive::Interpreter&) {}
     virtual void doIteration(jive::Interpreter& interpreter) = 0;
 
 private:
@@ -76,6 +77,8 @@ private:
         std::cout << "Duration:   " << duration->getDescription() << "\n\n";
 
         jive::Interpreter interpreter;
+        prepare(interpreter);
+
         const auto start = juce::Time::getCurrentTime();
         std::vector<juce::RelativeTime> durations;
 
@@ -98,6 +101,7 @@ private:
         std::cout << "Iterations: " << *iterations << "\n";
 
         jive::Interpreter interpreter;
+        prepare(interpreter);
 
         std::vector<juce::RelativeTime> durations;
 
