@@ -177,9 +177,11 @@ namespace jive_demo
     private:
         void setContent(const juce::ValueTree& content)
         {
-            auto container = jive::findElementWithID(view, "animations-page-content");
-            container.removeAllChildren(nullptr);
-            container.appendChild(content, nullptr);
+            juce::MessageManager::callAsync([this, content]() {
+                auto container = jive::findElementWithID(view, "animations-page-content");
+                container.removeAllChildren(nullptr);
+                container.appendChild(content, nullptr);
+            });
         }
 
         juce::ValueTree view{ views::animationsPage() };
