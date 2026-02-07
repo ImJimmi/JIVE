@@ -1,0 +1,15 @@
+{
+  "#home-page": {
+    "#welcome": {
+      "#title": {
+        "font-family": "Rubik Mono One",
+        "font-size": 35,
+        "foreground": "#4184E4"
+      },
+      "#subtitle": {
+        "font-size": 20,
+        "font-kerning": 0.06
+      }
+    }
+  }
+}

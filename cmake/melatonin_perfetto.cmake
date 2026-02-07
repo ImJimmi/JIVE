@@ -5,7 +5,6 @@ function(add_melatonin_perfetto TARGET)
         GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
         GIT_TAG origin/main
     )
-
     FetchContent_MakeAvailable(melatonin_perfetto)
 
     target_link_libraries(${TARGET} INTERFACE Melatonin::Perfetto)

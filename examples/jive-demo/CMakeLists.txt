@@ -27,6 +27,7 @@ target_compile_definitions(jive-demo
                                      JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo,JUCE_VERSION>"
                                      JUCE_VST3_CAN_REPLACE_VST2=0
                                      JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>
+                                     JIVE_DEMO_VIEWS_SOURCE_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/source"
 )
 
 target_link_libraries(jive-demo
