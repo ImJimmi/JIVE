@@ -130,7 +130,7 @@ jobs:
           verbose: true
 
       - name: Stage Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: "${{ matrix.platform-name }} #${{ github.event.pull_request.number }}"
           path: ${{ env.CMAKE_BUILD_DIRECTORY }}/ctest.log
