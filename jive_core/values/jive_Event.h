@@ -9,8 +9,11 @@ namespace jive
     public:
         Event() = delete;
 
-        Event(juce::ValueTree sourceState, const juce::Identifier& eventID)
+        Event(juce::ValueTree sourceState,
+              const juce::Identifier& eventID,
+              std::function<void()> onEventTrigger = nullptr)
             : id{ eventID }
+            , onTrigger{ std::move(onEventTrigger) }
             , event{ sourceState, eventID }
         {
             if (!event.exists())
