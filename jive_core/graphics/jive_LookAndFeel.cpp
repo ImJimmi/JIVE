@@ -699,51 +699,30 @@ namespace jive
 
     static void update(Styles& destination, const Styles& source)
     {
-        if (source.accent.hasValue())
-            destination.accent = source.accent.get();
-        if (source.background.hasValue())
-            destination.background = source.background.get();
-        if (source.borderFill.hasValue())
-            destination.borderFill = source.borderFill.get();
-        if (source.borderRadius.hasValue())
-            destination.borderRadius = source.borderRadius.get();
-        if (source.borderWidth.hasValue())
-            destination.borderWidth = source.borderWidth.get();
-        if (source.direction.hasValue())
-            destination.direction = source.direction.get();
-        if (source.fill.hasValue())
-            destination.fill = source.fill.get();
+        destination.accent = source.accent;
+        destination.background = source.background;
+        destination.borderFill = source.borderFill;
+        destination.borderRadius = source.borderRadius;
+        destination.borderWidth = source.borderWidth;
+        destination.direction = source.direction;
+        destination.fill = source.fill;
 #if JUCE_MAJOR_VERSION >= 8
-        if (source.fontAscentOverride.hasValue())
-            destination.fontAscentOverride = source.fontAscentOverride.get();
-        if (source.fontDescentOverride.hasValue())
-            destination.fontDescentOverride = source.fontDescentOverride.get();
+        destination.fontAscentOverride = source.fontAscentOverride;
+        destination.fontDescentOverride = source.fontDescentOverride;
 #endif
-        if (source.fontExtraKerningFactor.hasValue())
-            destination.fontExtraKerningFactor = source.fontExtraKerningFactor.get();
-        if (source.fontFamily.hasValue())
-            destination.fontFamily = source.fontFamily.get();
-        if (source.fontHorizontalScale.hasValue())
-            destination.fontHorizontalScale = source.fontHorizontalScale.get();
-        if (source.fontPointSize.hasValue())
-            destination.fontPointSize = source.fontPointSize.get();
-        if (source.fontStyleFlags.hasValue())
-            destination.fontStyleFlags = source.fontStyleFlags.get();
-        if (source.foreground.hasValue())
-            destination.foreground = source.foreground.get();
-        if (source.shadow.hasValue())
-            destination.shadow = source.shadow.get();
-        if (source.stroke.hasValue())
-            destination.stroke = source.stroke.get();
-        if (source.textAlign.hasValue())
-            destination.textAlign = source.textAlign.get();
-        if (source.thumb.hasValue())
-            destination.thumb = source.thumb.get();
-        if (source.track.hasValue())
-            destination.track = source.track.get();
+        destination.fontExtraKerningFactor = source.fontExtraKerningFactor;
+        destination.fontFamily = source.fontFamily;
+        destination.fontHorizontalScale = source.fontHorizontalScale;
+        destination.fontPointSize = source.fontPointSize;
+        destination.fontStyleFlags = source.fontStyleFlags;
+        destination.foreground = source.foreground;
+        destination.shadow = source.shadow;
+        destination.stroke = source.stroke;
+        destination.textAlign = source.textAlign;
+        destination.thumb = source.thumb;
+        destination.track = source.track;
 
-        if (source.transitions != nullptr)
-            destination.transitions = source.transitions;
+        destination.transitions = source.transitions;
     }
 
     Styles LookAndFeel::findMostApplicableStyles(const juce::Component& component) const

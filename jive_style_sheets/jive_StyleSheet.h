@@ -27,10 +27,8 @@ namespace jive
         void clear();
         void stylePropertyChanged();
         void addStylesFrom(Object& object);
-        void addInlineStyles(Object& object,
-                             const juce::String&);
-        void addSelectorBasedStyles(Object& object,
-                                    const juce::String& id);
+        void addInlineStyles(Object& object);
+        void addSelectorBasedStyles(Object& object);
 
         juce::Component& component;
         LookAndFeel& lookAndFeel;
