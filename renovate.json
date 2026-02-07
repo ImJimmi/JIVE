@@ -8,8 +8,8 @@
     {
       "fileMatch": ["(^|/)package-lock\\.cmake$"],
       "matchStrings": [
-        "CPMDeclarePackage\\s*\\(\\s*\\w+\\s*.*GIT_TAG\\s+\"?(?<currentValue>.*?[^0-9a-f\\s]+.*|.{1,4}?)\"?\\s+GITHUB_REPOSITORY\\s+\"?(?<depName>.*?)\"?\\s+",
-        "CPMDeclarePackage\\s*\\(\\s*\\w+\\s*.*GITHUB_REPOSITORY\\s+\"?(?<depName>.*?[^0-9a-f\\s]+.*|.{1,4}?)\"?\\s+GIT_TAG\\s+\"?(?<currentValue>.*?)\"?\\s+"
+        "CPMDeclarePackage\\s*\\(\\s*\\w+[\\s\\S]*?GIT_TAG\\s+\"?(?<currentValue>[^\"\\s]+)\"?[\\s\\S]*?GITHUB_REPOSITORY\\s+\"?(?<depName>[^\"\\s]+)\"?",
+        "CPMDeclarePackage\\s*\\(\\s*\\w+[\\s\\S]*?GITHUB_REPOSITORY\\s+\"?(?<depName>[^\"\\s]+)\"?[\\s\\S]*?GIT_TAG\\s+\"?(?<currentValue>[^\"\\s]+)\"?"
       ],
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.*?)$"

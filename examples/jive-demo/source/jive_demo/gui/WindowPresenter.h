@@ -21,6 +21,7 @@ namespace jive_demo
                 windowType,
                 {
                     { "id", "window" },
+                    { "style", "jive_demo/gui/styles.json" },
                     { "width", 800 },
                     { "height", 500 },
                     { "display", "grid" },
@@ -37,7 +38,6 @@ namespace jive_demo
         explicit WindowPresenter(WindowState sourceState, const juce::String& windowType)
             : state{ sourceState }
             , window{ views::window(windowType) }
-            , homePage{ sourceState }
             , layoutsPage{ sourceState }
             , styleSheetsPage{ sourceState }
             , developmentPage{ sourceState }
@@ -64,7 +64,7 @@ namespace jive_demo
             switch (page)
             {
             case Page::home:
-                return homePage.present();
+                return jive::makeView<HomePage>(state);
             case Page::layouts:
                 return layoutsPage.present();
             case Page::styleSheets:
@@ -88,7 +88,6 @@ namespace jive_demo
         WindowState state;
         juce::ValueTree window;
 
-        HomePagePresenter homePage;
         LayoutsPagePresenter layoutsPage;
         StyleSheetsPagePresenter styleSheetsPage;
         DevelopmentPagePresenter developmentPage;

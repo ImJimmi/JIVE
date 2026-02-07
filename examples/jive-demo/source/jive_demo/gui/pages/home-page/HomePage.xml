@@ -1,0 +1,14 @@
+<Component id="home-page" align-items="centre" justify-content="centre">
+    <Component id="welcome" align-items="centre" margin="0 0 50 0">
+        <Text id="title" margin="0 0 5 0">Welcome to JIVE!</Text>
+        <Text id="subtitle">The ultimate JUCE extension for building GUIs</Text>
+    </Component>
+
+    <Component id="navigation" display="grid" grid-template-rows="1fr 1fr"
+        grid-template-columns="1fr 1fr" gap="25">
+        <Button id="layouts" source="jive_demo/gui/pages/home-page/NavButton.xml" />
+        <Button id="style-sheets" source="jive_demo/gui/pages/home-page/NavButton.xml" />
+        <Button id="development" source="jive_demo/gui/pages/home-page/NavButton.xml" />
+        <Button id="animations" source="jive_demo/gui/pages/home-page/NavButton.xml" />
+    </Component>
+</Component>

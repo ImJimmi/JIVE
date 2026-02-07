@@ -28,6 +28,7 @@ namespace jive_demo
 
         void initialise(const juce::String& /*commandLineArguments*/) final
         {
+            interpreter.addSourceDirectory(juce::File{ JIVE_DEMO_VIEWS_SOURCE_DIRECTORY });
             window = interpreter.interpret(windowPresenter.present());
             interpreter.listenTo(*window);
 
