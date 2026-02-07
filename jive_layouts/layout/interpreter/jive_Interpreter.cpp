@@ -59,9 +59,6 @@ namespace jive
     {
         auto sourceTree = jive::parseXML(file.loadFileAsString());
 
-        if (sourceTree.isValid())
-            sourceTree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
-
         return sourceTree;
     }
 
@@ -335,6 +332,9 @@ namespace jive
 
     void Interpreter::loadExternalSources(juce::ValueTree tree)
     {
+        if (tree.isValid())
+            tree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
+
         auto file = sourceDirectories->find(tree["source"].toString());
 
         if (!file.existsAsFile())

@@ -106,6 +106,7 @@ namespace jive
     void Text::textFontChanged(TextComponent&)
     {
         updateTextComponent();
+        layoutsCache.clear();
     }
 
     juce::TextLayout Text::buildTextLayout(float maxWidth) const

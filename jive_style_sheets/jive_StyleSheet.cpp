@@ -104,10 +104,7 @@ namespace jive
                     auto fileContents = parseJSON(f.loadFileAsString());
 
                     if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
-                    {
-                        clear();
                         addStylesFrom(*object);
-                    }
                 };
 
                 fileObserver = std::make_unique<FileObserver>(file);
@@ -117,37 +114,11 @@ namespace jive
         }
     }
 
-    [[nodiscard]] static juce::String calculateStylesID(Object& object)
-    {
-        if (object.getParent() == nullptr)
-            return "Component";
-
-        juce::StringArray parts;
-        parts.add(object.findNameInParent());
-
-        for (auto* parent = object.getParent();
-             parent != nullptr;
-             parent = parent->getParent())
-        {
-            if (parent->getParent() != nullptr)
-                parts.insert(0, parent->findNameInParent());
-        }
-
-        return parts.joinIntoString("/");
-    }
-
     void StyleSheet::addStylesFrom(Object& object)
     {
-        const auto id = calculateStylesID(object);
-
-        if (uuids.count(id))
-        {
-            lookAndFeel.removeStyles(uuids[id]);
-            uuids.erase(id);
-        }
-
-        addInlineStyles(object, id);
-        addSelectorBasedStyles(object, id);
+        clear();
+        addInlineStyles(object);
+        addSelectorBasedStyles(object);
 
         component.lookAndFeelChanged();
         component.repaint();
@@ -167,8 +138,7 @@ namespace jive
         }
     }
 
-    void StyleSheet::addInlineStyles(Object& object,
-                                     const juce::String& id)
+    void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
         appendStyleProperties(object, styles);
@@ -187,14 +157,13 @@ namespace jive
 
         if (styles.has_value())
         {
-            uuids[id] = lookAndFeel.addStyles(
+            uuids[""] = lookAndFeel.addStyles(
                 StyleSelector::makeInlineStyleSelector(component),
                 *styles);
         }
     }
 
-    void StyleSheet::addSelectorBasedStyles(Object& object,
-                                            const juce::String& id)
+    void StyleSheet::addSelectorBasedStyles(Object& object)
     {
         static constexpr auto getObjectIfNestedStyleObject = [](const juce::Identifier& name,
                                                                 const juce::var& value) -> Object* {
@@ -204,13 +173,13 @@ namespace jive
             return nullptr;
         };
         std::function<void(Object&, const juce::String&)> appendFromChild;
-        appendFromChild = [this, &id, &appendFromChild](Object& child,
-                                                        const juce::String& selector) {
+        appendFromChild = [this, &appendFromChild](Object& child,
+                                                   const juce::String& selector) {
             std::optional<Styles> styles;
             appendStyleProperties(child, styles);
 
             if (styles.has_value())
-                uuids[id] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
+                uuids[selector] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
 
             for (const auto& [name, value] : child.getProperties())
             {
@@ -225,194 +194,6 @@ namespace jive
                 appendFromChild(*child, name.toString());
         }
     }
-
-    // void StyleSheet::addStylesFrom(Object& object,
-    //                                LookAndFeel::ComponentPredicate predicate,
-    //                                InteractionState interationState,
-    //                                LookAndFeel::Precedence precedence)
-    // {
-    //     const auto id = calculateStylesID(object);
-    //     const auto addStyles = [this, id, obj = Object::WeakReference{ &object }, predicate, interationState, precedence]() {
-    //         std::optional<Styles> styles;
-
-    //         if (uuids.count(id))
-    //         {
-    //             styles = *lookAndFeel.findStyles(uuids[id]);
-    //             lookAndFeel.removeStyles(uuids[id]);
-    //             uuids.erase(id);
-    //         }
-
-    //         if (obj == nullptr)
-    //             return;
-
-    //         findAndAddStyleProperties(*obj,
-    //                                   id,
-    //                                   styles,
-    //                                   predicate,
-    //                                   interationState,
-    //                                   precedence);
-    //         findAndAddStatefulStyles(*obj,
-    //                                  predicate,
-    //                                  interationState,
-    //                                  precedence);
-    //         findAndAddOtherStyles(*obj);
-
-    //         component.lookAndFeelChanged();
-    //         component.repaint();
-    //     };
-
-    //     if (observedObjects.count(id) == 0 || observedObjects.at(id).get().get() != &object)
-    //     {
-    //         StyleProperty* newProperty = nullptr;
-    //         observedObjects.erase(id);
-
-    //         jassert(observedObjects.count(id) == 0);
-
-    //         if (auto* parent = object.getParent())
-    //         {
-    //             const auto [entry, wasAdded] = observedObjects.emplace(id, StyleProperty{ parent, object.findNameInParent() });
-    //             newProperty = &entry->second;
-    //         }
-    //         else if (&object == style.get().get())
-    //         {
-    //             const auto [entry, wasAdded] = observedObjects.emplace(id, StyleProperty{ state, "style" });
-    //             newProperty = &entry->second;
-    //         }
-
-    //         if (newProperty != nullptr)
-    //         {
-    //             newProperty->get()->addListener(*this);
-    //             newProperty->onValueChange = addStyles;
-    //         }
-    //     }
-
-    //     addStyles();
-    // }
-
-    // void StyleSheet::findAndAddStyleProperties(Object& object,
-    //                                            const juce::String& id,
-    //                                            std::optional<Styles>& styles,
-    //                                            LookAndFeel::ComponentPredicate predicate,
-    //                                            InteractionState interationState,
-    //                                            LookAndFeel::Precedence precedence)
-    // {
-    //     auto newStylesAdded = false;
-
-    //     for (const auto& propertyName : Styles::propertyNames)
-    //     {
-    //         if (!object.hasProperty(propertyName))
-    //             continue;
-
-    //         styles = styles
-    //                      .value_or(Styles{})
-    //                      .with(propertyName, object.getProperty(propertyName));
-    //         newStylesAdded = true;
-    //     }
-
-    //     if (&object == style.get().get() && object.hasProperty("transition"))
-    //     {
-    //         auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object["transition"]);
-
-    //         if (transitions != nullptr)
-    //         {
-    //             styles = styles
-    //                          .value_or(Styles{})
-    //                          .withTransitions(transitions);
-    //             newStylesAdded = true;
-
-    //             vBlank = std::make_unique<juce::VBlankAttachment>(&component, [this, transitions]() {
-    //                 component.repaint();
-    //             });
-    //         }
-    //     }
-
-    //     if (styles.has_value() && newStylesAdded)
-    //     {
-    //         uuids[id] = lookAndFeel.addStyles(
-    //             predicate,
-    //             *styles,
-    //             interationState,
-    //             precedence);
-    //     }
-    // }
-
-    // void StyleSheet::findAndAddStatefulStyles(Object& object,
-    //                                           LookAndFeel::ComponentPredicate predicate,
-    //                                           InteractionState interationState,
-    //                                           LookAndFeel::Precedence precedence)
-    // {
-    //     for (const auto& stateName : InteractionState::propertyNames)
-    //     {
-    //         if (!object.hasProperty(stateName))
-    //             continue;
-
-    //         if (auto* child = dynamic_cast<Object*>(object[stateName].getDynamicObject()))
-    //         {
-    //             auto newState = interationState;
-    //             newState.set(stateName);
-    //             addStylesFrom(*child, predicate, newState, precedence);
-    //         }
-    //     }
-    // }
-
-    // void StyleSheet::findAndAddOtherStyles(Object& object)
-    // {
-    //     for (const auto& [name, value] : object.getProperties())
-    //     {
-    //         if (Styles::propertyNames.count(name.toString()) > 0 || InteractionState::propertyNames.count(name.toString()) > 0)
-    //             continue;
-
-    //         auto child = dynamic_cast<Object*>(value.getDynamicObject());
-
-    //         if (child == nullptr)
-    //             continue;
-
-    //         if (name.toString().startsWith("#"))
-    //         {
-    //             addStylesFrom(
-    //                 *child,
-    //                 [safeComponent = juce::Component::SafePointer<juce::Component>{ &component },
-    //                  compID = name.toString().fromFirstOccurrenceOf("#", false, false)](const juce::Component& comp) {
-    //                     return comp.getComponentID() == compID
-    //                         && safeComponent != nullptr
-    //                         && (safeComponent.getComponent() == &comp
-    //                             || safeComponent->isParentOf(&comp));
-    //                 },
-    //                 InteractionState{},
-    //                 painterPrecedence::componentID);
-    //         }
-    //         else if (name.toString().startsWith("."))
-    //         {
-    //             addStylesFrom(
-    //                 *child,
-    //                 [safeComponent = juce::Component::SafePointer<juce::Component>{ &component },
-    //                  className = name.toString().fromFirstOccurrenceOf(".", false, false)](const juce::Component& comp) {
-    //                     const auto classes = fromVar<juce::StringArray>(comp.getProperties().getWithDefault("class", ""));
-
-    //                     return classes.contains(className)
-    //                         && safeComponent != nullptr
-    //                         && (safeComponent.getComponent() == &comp
-    //                             || safeComponent->isParentOf(&comp));
-    //                 },
-    //                 InteractionState{},
-    //                 painterPrecedence::componentClass);
-    //         }
-    //         else
-    //         {
-    //             addStylesFrom(
-    //                 *child,
-    //                 [safeComponent = juce::Component::SafePointer<juce::Component>{ &component },
-    //                  typeName = name.toString()](const juce::Component& comp) {
-    //                     return ComponentTypePredicates::check(comp, typeName)
-    //                         && safeComponent != nullptr
-    //                         && (safeComponent.getComponent() == &comp
-    //                             || safeComponent->isParentOf(&comp));
-    //                 },
-    //                 InteractionState{},
-    //                 painterPrecedence::componentType);
-    //         }
-    //     }
-    // }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
