@@ -84,7 +84,7 @@ namespace jive
             removeThisAsListener(listenerTarget);
         }
 
-        [[nodiscard]] virtual ValueType get() const
+        [[nodiscard]] ValueType get() const
         {
             return getFrom(getRootOfInheritance());
         }
