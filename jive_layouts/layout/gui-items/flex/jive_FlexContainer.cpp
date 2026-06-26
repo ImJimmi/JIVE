@@ -165,6 +165,16 @@ namespace jive
             flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
             flex.alignItems = juce::FlexBox::AlignItems::flexStart;
             flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+            // Reversing a direction only changes where items are positioned, not
+            // the size of the content. When measuring the ideal size a reversed
+            // direction pushes items against the far edge of the constraints, so
+            // the measured extent becomes the constraints' size rather than the
+            // intrinsic content size. Normalise to the forward direction.
+            if (flex.flexDirection == juce::FlexBox::Direction::rowReverse)
+                flex.flexDirection = juce::FlexBox::Direction::row;
+            else if (flex.flexDirection == juce::FlexBox::Direction::columnReverse)
+                flex.flexDirection = juce::FlexBox::Direction::column;
             break;
         default:
             jassertfalse;
