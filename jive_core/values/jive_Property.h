@@ -329,7 +329,7 @@ namespace jive
 
         [[nodiscard]] auto respondToPropertyChanges(Object& objectWhosePropertyChanged) const
         {
-            return &objectWhosePropertyChanged == static_cast<Object*>(std::get<Object::ReferenceCountedPointer>(source));
+            return &objectWhosePropertyChanged == std::get<Object::ReferenceCountedPointer>(source).get();
         }
 
         [[nodiscard]] auto getRootOfInheritance() const
