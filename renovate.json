@@ -14,5 +14,13 @@
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.*?)$"
     }
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "groupName": "All",
+      "groupSlug": "all-deps"
+    }
   ]
 }
