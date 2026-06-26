@@ -11,6 +11,12 @@ namespace jive
         , enabled{ tree, "enabled" }
         , selected{ tree, "selected" }
     {
+        // Options are enabled unless explicitly disabled. Without this an
+        // option with no "enabled" property would resolve to false and the item
+        // would be greyed-out and unselectable in the popup.
+        if (!enabled.exists())
+            enabled = true;
+
         comboBox.addItem(text, id);
 
         text.onValueChange = [this]() {
