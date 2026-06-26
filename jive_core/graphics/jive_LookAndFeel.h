@@ -194,6 +194,16 @@ namespace jive
 
         // =============================================================================================================
 
+#if JIVE_UNIT_TESTS
+        // Runs the per-frame update that would normally be driven by the
+        // display's vertical blank. Exposed for testing so the behaviour can be
+        // exercised deterministically.
+        void simulateVBlank()
+        {
+            onVBlankUpdate();
+        }
+#endif
+
     private:
         template <class PaintFunction>
         struct Painter

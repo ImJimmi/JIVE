@@ -117,6 +117,77 @@ static jive::UnitTest nestedFileSourcesTest{
     },
 };
 
+static jive::UnitTest topLevelFileWithNestedSourceTest{
+    "jive",
+    "jive::Interpreter",
+    "Top-Level File With Nested Source",
+    [](auto& test) {
+        // Replicates the xml-views example: a top-level file (main.xml)
+        // containing a Window that pulls in a nested file via "source"
+        // (heading.xml). Editing *either* file should be reflected live.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        // Mirror the example's directory layout: main.xml lives in the source
+        // directory, the nested view lives in a separate "views" directory
+        // that's added via addSourceDirectory().
+        auto viewsDir = cwd.getChildFile("views");
+        auto heading = viewsDir.getChildFile("heading.xml");
+        heading.create();
+        heading.replaceWithText(R"(<Component id="heading"/>)");
+
+        auto mainView = cwd.getChildFile("main.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component source="heading.xml"/>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(viewsDir);
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        auto* window = dynamic_cast<jive::Window*>(item->getComponent()->getTopLevelComponent());
+        test.expectEquals(window->getWidth(), 100);
+
+        // Editing the top-level file should be reflected.
+        mainView.replaceWithText(R"(
+            <Window width="200" height="200">
+                <Component source="heading.xml"/>
+            </Window>
+        )");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(window->getWidth(),
+                          200,
+                          "Changes to the top-level source file should be reflected");
+
+        // Editing the top-level file *again* should also be reflected - the
+        // first reinterpret mustn't stop subsequent changes from being picked
+        // up.
+        mainView.replaceWithText(R"(
+            <Window width="300" height="300">
+                <Component source="heading.xml"/>
+            </Window>
+        )");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(window->getWidth(),
+                          300,
+                          "Subsequent changes to the top-level source file should be reflected");
+
+        // Editing the nested file should also still be reflected, even after
+        // the top-level file has been reinterpreted.
+        heading.replaceWithText(R"(<Component id="heading" name="updated"/>)");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(window->getComponent()->findChildWithID("heading")->getName(),
+                          juce::String{ "updated" },
+                          "Changes to the nested source file should be reflected");
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:

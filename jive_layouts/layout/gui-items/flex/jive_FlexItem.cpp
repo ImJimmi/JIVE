@@ -131,6 +131,7 @@ public:
 
     void runTest() final
     {
+        testExplicitlySizedItemNotShrunk();
         testOrder();
         testFlexGrow();
         testFlexShrink();
@@ -142,6 +143,43 @@ public:
     }
 
 private:
+    void testExplicitlySizedItemNotShrunk()
+    {
+        beginTest("an item with an explicit size is not shrunk below it when a sibling grows");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="600" height="400" align-items="centre" justify-content="centre">
+                <Component id="heading" max-width="325" align-items="centre">
+                    <Component flex-direction="row" align-items="centre">
+                        <svg id="icon" width="25" height="25">
+                            <circle cx="50%" cy="50%" r="50%" fill="blue" />
+                        </svg>
+                        <Text id="title">Short</Text>
+                    </Component>
+                </Component>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto* icon = root->getChildren()[0]
+                         ->getChildren()[0]
+                         ->getChildren()[0]
+                         ->getComponent()
+                         .get();
+        expectEquals(icon->getWidth(), 25);
+        expectEquals(icon->getHeight(), 25);
+
+        // Growing a sibling so that the row would overflow the max-width should
+        // shrink/wrap that sibling, not the fixed-size icon.
+        auto titleState = state.getChild(0).getChild(0).getChild(1);
+        titleState.setProperty("text",
+                               "Live Editing Demo with a great deal more text that definitely wraps onto multiple lines",
+                               nullptr);
+
+        expectEquals(icon->getWidth(), 25);
+        expectEquals(icon->getHeight(), 25);
+    }
+
     void testOrder()
     {
         beginTest("order");

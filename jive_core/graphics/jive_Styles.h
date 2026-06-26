@@ -64,6 +64,18 @@ namespace jive
                 lastUpdated = now();
             }
 
+            // Sets a new target value while explicitly specifying the value to
+            // transition away from. This is used to restart an in-progress
+            // transition from its current (interpolated) value so that
+            // interrupting one transition with another continues smoothly
+            // rather than snapping back to the previous target.
+            void setTransitioningFrom(const T& from, const T& newValue)
+            {
+                previousValue = from;
+                currentValue = newValue;
+                lastUpdated = now();
+            }
+
             [[nodiscard]] const T& get() const
             {
                 return currentValue.value();

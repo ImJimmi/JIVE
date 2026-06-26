@@ -24,6 +24,7 @@ namespace jive
         Property<juce::GridItem::StartAndEndProperty> gridColumn;
         Property<juce::GridItem::StartAndEndProperty> gridRow;
         Property<juce::String> gridArea;
+        Property<float> idealWidth;
 
         const BoxModel& box{ boxModel(*this) };
         std::unordered_map<ItemCacheKey, juce::GridItem> cachedItems;

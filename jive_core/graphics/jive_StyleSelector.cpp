@@ -82,11 +82,16 @@ namespace jive
                                         ? removeLastCharacters(selector, selector.length() - i)
                                         : removeLastCharacters(selector, selector.length() - i - 1);
 
-                if (i != 0)
-                    removeLastCharacters(selector, 1);
-
                 if (!typeName.isEmpty())
                 {
+                    // `selector` now holds everything up to and including the
+                    // combinator (the space) that preceded this type selector.
+                    // It's deliberately left intact so that the recursion treats
+                    // the rest of the selector as applying to ancestor/parent
+                    // components (i.e. a descendant or child combinator) rather
+                    // than ANDing it onto this same component. For a type at the
+                    // very start of the selector (i == 0) `selector` is now
+                    // empty and the recursion simply checks the root.
                     return [typeName, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
                         return ComponentTypePredicates::check(component, typeName)
                             && remainingPredicate(component);
@@ -95,7 +100,8 @@ namespace jive
 
                 // The space was at the end of the string meaning the
                 // remaining selector applies to ancestor components
-                selector.trim();
+                removeLastCharacters(selector, 1);
+                selector = selector.trimEnd();
                 character = selector.getLastCharacter();
 
                 if (character != '>')
@@ -459,6 +465,61 @@ static jive::UnitTest indirectChildSelectorTest{
             test.expect(!selector.appliesTo(topLevel));
             test.expect(!selector.appliesTo(container));
             test.expect(selector.appliesTo(child));
+        }
+    },
+};
+
+static jive::UnitTest descendantTypeSelectorTest{
+    "jive",
+    "jive::StyleSelector",
+    "Descendant and child selectors ending in a type",
+    [](auto& test) {
+        juce::Component topLevel;
+        topLevel.setComponentID("top-level");
+        juce::Component container;
+        container.setComponentID("container");
+        topLevel.addAndMakeVisible(container);
+        juce::TextButton directButton;
+        container.addAndMakeVisible(directButton);
+        juce::Component wrapper;
+        container.addAndMakeVisible(wrapper);
+        juce::TextButton indirectButton;
+        wrapper.addAndMakeVisible(indirectButton);
+
+        // Plain type selector.
+        {
+            const jive::StyleSelector selector{ "TextButton" };
+            test.expect(selector.appliesTo(directButton));
+            test.expect(selector.appliesTo(indirectButton));
+            test.expect(!selector.appliesTo(container));
+        }
+        // Descendant combinator ending in a type - should match a TextButton at
+        // any depth beneath #container.
+        {
+            const jive::StyleSelector selector{ "#container TextButton" };
+            test.expect(selector.appliesTo(directButton));
+            test.expect(selector.appliesTo(indirectButton));
+            test.expect(!selector.appliesTo(container));
+            test.expect(!selector.appliesTo(wrapper));
+        }
+        // A non-matching ancestor id should not match.
+        {
+            const jive::StyleSelector selector{ "#nope TextButton" };
+            test.expect(!selector.appliesTo(directButton));
+            test.expect(!selector.appliesTo(indirectButton));
+        }
+        // Child combinator ending in a type - should only match a TextButton
+        // that is a *direct* child of #container.
+        {
+            const jive::StyleSelector selector{ "#container > TextButton" };
+            test.expect(selector.appliesTo(directButton));
+            test.expect(!selector.appliesTo(indirectButton));
+        }
+        // A descendant combinator mixing a type ancestor with a type target.
+        {
+            const jive::StyleSelector selector{ "TextButton TextButton" };
+            test.expect(!selector.appliesTo(directButton));
+            test.expect(!selector.appliesTo(indirectButton));
         }
     },
 };

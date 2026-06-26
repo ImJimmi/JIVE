@@ -65,6 +65,9 @@ namespace jive
             if (!width.isAuto())
             {
                 item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minWidth = item.width;
             }
             else if (idealWidth.exists())
             {
@@ -77,6 +80,9 @@ namespace jive
             if (!height.isAuto())
             {
                 item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minHeight = item.height;
             }
             else if (idealHeight.exists())
             {
@@ -109,6 +115,9 @@ namespace jive
             if (!width.isAuto())
             {
                 item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minWidth = item.width;
             }
             else if (idealWidth.exists())
             {
@@ -121,6 +130,9 @@ namespace jive
             if (!height.isAuto())
             {
                 item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minHeight = item.height;
             }
             else if (idealHeight.exists())
             {

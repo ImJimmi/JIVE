@@ -182,9 +182,37 @@ public:
         testChildComponent();
         testSVG();
         testInlineSVG();
+        testSVGFillRespected();
     }
 
 private:
+    void testSVGFillRespected()
+    {
+        beginTest("svg / an explicit fill is respected rather than overridden by the theme");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="blue" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
     void testImage()
     {
         beginTest("image");

@@ -697,30 +697,75 @@ namespace jive
         });
     }
 
+    // Copies the latest value of a style property into the persistent cached
+    // entry. When the value has actually changed, this uses set() semantics so
+    // that the previously-cached value is retained as the transition's starting
+    // point and the property's last-updated time is reset to now. This is what
+    // allows transitions to work even though the source styles are rebuilt from
+    // scratch every time a style property changes.
+    template <typename T>
+    static void updateStyleProperty(Styles::StyleProperty<T>& destination,
+                                    const Styles::StyleProperty<T>& source,
+                                    Transitions* transitions)
+    {
+        if (!source.hasValue())
+        {
+            destination = source;
+            return;
+        }
+
+        // If the value is changing while a transition is still in progress,
+        // restart the transition from the current (interpolated) value so the
+        // animation continues smoothly instead of jumping back to the old
+        // target value.
+        if (destination.hasValue()
+            && !(destination == source)
+            && transitions != nullptr)
+        {
+            if (auto* transition = (*transitions)[destination.id.toString()])
+            {
+                if (const auto progress = transition->calculateProgress(destination.getLastUpdated());
+                    progress < 1.0)
+                {
+                    destination.setTransitioningFrom(destination.interpolated(progress),
+                                                     source.get());
+                    return;
+                }
+            }
+        }
+
+        destination.set(source.get());
+    }
+
     static void update(Styles& destination, const Styles& source)
     {
-        destination.accent = source.accent;
-        destination.background = source.background;
-        destination.borderFill = source.borderFill;
-        destination.borderRadius = source.borderRadius;
-        destination.borderWidth = source.borderWidth;
-        destination.direction = source.direction;
-        destination.fill = source.fill;
+        // Interruptions are calculated against the transition that's currently
+        // governing the cached value (i.e. the existing one), so this is read
+        // before the transitions themselves are updated below.
+        auto* const transitions = destination.transitions.get();
+
+        updateStyleProperty(destination.accent, source.accent, transitions);
+        updateStyleProperty(destination.background, source.background, transitions);
+        updateStyleProperty(destination.borderFill, source.borderFill, transitions);
+        updateStyleProperty(destination.borderRadius, source.borderRadius, transitions);
+        updateStyleProperty(destination.borderWidth, source.borderWidth, transitions);
+        updateStyleProperty(destination.direction, source.direction, transitions);
+        updateStyleProperty(destination.fill, source.fill, transitions);
 #if JUCE_MAJOR_VERSION >= 8
-        destination.fontAscentOverride = source.fontAscentOverride;
-        destination.fontDescentOverride = source.fontDescentOverride;
+        updateStyleProperty(destination.fontAscentOverride, source.fontAscentOverride, transitions);
+        updateStyleProperty(destination.fontDescentOverride, source.fontDescentOverride, transitions);
 #endif
-        destination.fontExtraKerningFactor = source.fontExtraKerningFactor;
-        destination.fontFamily = source.fontFamily;
-        destination.fontHorizontalScale = source.fontHorizontalScale;
-        destination.fontPointSize = source.fontPointSize;
-        destination.fontStyleFlags = source.fontStyleFlags;
-        destination.foreground = source.foreground;
-        destination.shadow = source.shadow;
-        destination.stroke = source.stroke;
-        destination.textAlign = source.textAlign;
-        destination.thumb = source.thumb;
-        destination.track = source.track;
+        updateStyleProperty(destination.fontExtraKerningFactor, source.fontExtraKerningFactor, transitions);
+        updateStyleProperty(destination.fontFamily, source.fontFamily, transitions);
+        updateStyleProperty(destination.fontHorizontalScale, source.fontHorizontalScale, transitions);
+        updateStyleProperty(destination.fontPointSize, source.fontPointSize, transitions);
+        updateStyleProperty(destination.fontStyleFlags, source.fontStyleFlags, transitions);
+        updateStyleProperty(destination.foreground, source.foreground, transitions);
+        updateStyleProperty(destination.shadow, source.shadow, transitions);
+        updateStyleProperty(destination.stroke, source.stroke, transitions);
+        updateStyleProperty(destination.textAlign, source.textAlign, transitions);
+        updateStyleProperty(destination.thumb, source.thumb, transitions);
+        updateStyleProperty(destination.track, source.track, transitions);
 
         destination.transitions = source.transitions;
     }
@@ -742,7 +787,56 @@ namespace jive
 
     void LookAndFeel::onVBlankUpdate()
     {
+        // The entries are safe-pointers that become null when their component is
+        // deleted (e.g. when a view is rebuilt while a transition is still in
+        // progress), so they must be null-checked before being dereferenced.
         for (auto& component : transitioningComponents)
-            component->repaint();
+        {
+            if (component != nullptr)
+                component->repaint();
+        }
     }
 } // namespace jive
+
+#if JIVE_UNIT_TESTS
+class LookAndFeelTest : public juce::UnitTest
+{
+public:
+    LookAndFeelTest()
+        : juce::UnitTest{ "jive::LookAndFeel", "jive" }
+    {
+    }
+
+    void runTest() final
+    {
+        beginTest("vblank / safely handles a transitioning component being destroyed");
+        {
+            juce::Component parent;
+            parent.setSize(100, 100);
+            jive::LookAndFeel lookAndFeel{ parent };
+
+            {
+                juce::TextButton child;
+                child.setBounds(0, 0, 50, 25);
+                parent.addAndMakeVisible(child);
+
+                // Resolving a component's styles registers it as transitioning
+                // (the default theme applies a transition to every component),
+                // adding it to the look-and-feel's list of components to repaint
+                // on each vertical blank.
+                juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(child));
+            }
+
+            // The child has now been destroyed, so its entry in the
+            // transitioning-components list is a null safe-pointer. The vblank
+            // update must not dereference it. This used to crash when, for
+            // example, a view was hot-reloaded while components were still
+            // transitioning.
+            lookAndFeel.simulateVBlank();
+            expect(true);
+        }
+    }
+};
+
+static LookAndFeelTest lookAndFeelTest;
+#endif

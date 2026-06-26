@@ -143,11 +143,52 @@ namespace jive
         for (auto childState : state)
         {
             if (childState.hasType("Option"))
+            {
+                // Options can be written with inline text, e.g.
+                // <Option>One</Option>, which the XML parser turns into an
+                // Option with a nested <Text> child rather than a "text"
+                // attribute. Fall back to that child so inline text behaves the
+                // same as the "text" attribute.
+                if (!childState.hasProperty("text"))
+                {
+                    if (const auto textChild = childState.getChildWithName("Text");
+                        textChild.isValid())
+                    {
+                        childState.setProperty("text", textChild["text"], nullptr);
+                    }
+                }
+
+                // A juce::ComboBox can't contain an item with empty text, so
+                // skip options that have none rather than triggering an
+                // assertion.
+                if (childState["text"].toString().isEmpty())
+                    continue;
+
                 options.add(std::make_unique<Option>(childState, options.size(), getComboBox()));
+            }
             else if (childState.hasType("Header"))
+            {
+                // Headers support inline text in the same way options do.
+                if (!childState.hasProperty("text"))
+                {
+                    if (const auto textChild = childState.getChildWithName("Text");
+                        textChild.isValid())
+                    {
+                        childState.setProperty("text", textChild["text"], nullptr);
+                    }
+                }
+
+                // A section heading can't have empty text, so skip it if it has
+                // none rather than triggering an assertion.
+                if (childState["text"].toString().isEmpty())
+                    continue;
+
                 headers.add(std::make_unique<Header>(childState, *this));
+            }
             else if (childState.hasType("Separator"))
+            {
                 getComboBox().addSeparator();
+            }
         }
     }
 
@@ -389,6 +430,57 @@ private:
             expectEquals(comboBox.getItemText(1), juce::String{ "Two" });
             expectEquals(comboBox.getSelectedId(), 1);
             expect(!comboBox.isItemEnabled(2));
+        }
+        {
+            // Options written with inline text (e.g. <Option>One</Option>)
+            // should behave the same as those using a "text" attribute. The XML
+            // parser turns inline text on a non-Text element into a nested
+            // <Text> child, so the combo box needs to honour that.
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(jive::parseXML(R"(
+                <ComboBox width="222" height="333">
+                    <Option>One</Option>
+                    <Option>Two</Option>
+                </ComboBox>
+            )"));
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getNumItems(), 2);
+            expectEquals(comboBox.getItemText(0), juce::String{ "One" });
+            expectEquals(comboBox.getItemText(1), juce::String{ "Two" });
+        }
+        {
+            // Headers can also be written with inline text, e.g.
+            // <Header>Section</Header>.
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(jive::parseXML(R"(
+                <ComboBox width="222" height="333">
+                    <Option>One</Option>
+                    <Header>Section</Header>
+                    <Option>Two</Option>
+                </ComboBox>
+            )"));
+            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                 .toType<jive::ComboBox>()
+                                 ->getComboBox();
+            expectEquals(comboBox.getNumItems(), 2);
+
+            auto foundSectionHeader = false;
+
+            if (auto* rootMenu = comboBox.getRootMenu())
+            {
+                for (juce::PopupMenu::MenuItemIterator iterator{ *rootMenu }; iterator.next();)
+                {
+                    if (iterator.getItem().isSectionHeader
+                        && iterator.getItem().text == "Section")
+                    {
+                        foundSectionHeader = true;
+                    }
+                }
+            }
+
+            expect(foundSectionHeader);
         }
     }
 

@@ -10,12 +10,16 @@ namespace jive
         , gridColumn{ state, "grid-column" }
         , gridRow{ state, "grid-row" }
         , gridArea{ state, "grid-area" }
+        , idealWidth{ state, "jive::ideal-width" }
     {
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
 
-            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSize();
+            if (auto* parentDecorator = dynamic_cast<GuiItemDecorator*>(getParent()))
+            {
+                if (auto* containerParent = parentDecorator->getTopLevelDecorator().toType<ContainerItem>())
+                    containerParent->updateIdealSize();
+            }
         };
         order.onValueChange = updateParentLayout;
         justifySelf.onValueChange = updateParentLayout;
@@ -23,6 +27,12 @@ namespace jive
         gridColumn.onValueChange = updateParentLayout;
         gridRow.onValueChange = updateParentLayout;
         gridArea.onValueChange = updateParentLayout;
+
+        // A child's ideal width changes when, for example, a text item's font is
+        // resolved after the look-and-feel has been attached. The grid's cached
+        // geometry would otherwise hold the stale size, so invalidate it and
+        // re-resolve the parent's layout when this happens.
+        idealWidth.onValueChange = updateParentLayout;
 
         box.addListener(*this);
     }

@@ -36,7 +36,11 @@ namespace jive::themes
                           .withBorderFill(juce::Colours::transparentBlack)
                           .withBorderRadius(steel::borderRadius)
                           .withBorderWidth(steel::borderWidth)
-                          .withFill(steel::azure)
+                          // NB: deliberately no default "fill" - that style tints
+                          // SVG shapes, and applying it globally would override
+                          // the colours an SVG specifies for itself. Components
+                          // that want to tint an SVG can set "fill" via a
+                          // selector targeting it.
                           .withFontFamily("<sans-serif>")
                           .withFontPointSize(14.0f)
                           .withForeground(steel::azure)

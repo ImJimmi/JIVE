@@ -110,6 +110,14 @@ namespace jive
                 auto* topLevel = dynamic_cast<TopLevelGuiItem*>(item);
                 jassert(topLevel != nullptr);
                 topLevel->replaceDecoratedItem(interpretInternal(source, nullptr));
+
+                // Replacing the decorated item swaps in a brand-new state tree,
+                // so the metadata and listener that let us find and observe the
+                // top-level item need to be re-established - otherwise any
+                // further changes to this file (or its nested sources) would go
+                // unnoticed.
+                item->state.setProperty("jive::top-level-source-file", file.getFullPathName(), nullptr);
+                listenTo(*item);
             }
             else
             {
