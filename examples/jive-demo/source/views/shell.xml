@@ -1,0 +1,38 @@
+<Component flex-direction="row" align-items="stretch">
+    <Component id="sidebar" width="220" padding="20" gap="6" align-items="stretch">
+        <Component flex-direction="row" align-items="centre" gap="10" margin="0 0 24 0">
+            <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="9" height="9" rx="2" fill="#4184E4" />
+                <rect x="13" y="2" width="9" height="9" rx="2" fill="#E5534B" />
+                <rect x="2" y="13" width="9" height="9" rx="2" fill="#347D39" />
+                <rect x="13" y="13" width="9" height="9" rx="2" fill="#966600" />
+            </svg>
+            <Text id="brand">JIVE</Text>
+        </Component>
+
+        <Text class="label" margin="0 0 8 0">SHOWCASE</Text>
+
+        <Button id="nav-layouts" class="nav-button" padding="10 12"
+            toggleable="true" toggle-on-click="true" radio-group="1" toggled="true">
+            <Text justification="centred-left">Layouts</Text>
+        </Button>
+        <Button id="nav-styles" class="nav-button" padding="10 12"
+            toggleable="true" toggle-on-click="true" radio-group="1">
+            <Text justification="centred-left">Styles</Text>
+        </Button>
+        <Button id="nav-animations" class="nav-button" padding="10 12"
+            toggleable="true" toggle-on-click="true" radio-group="1">
+            <Text justification="centred-left">Animations</Text>
+        </Button>
+        <Button id="nav-widgets" class="nav-button" padding="10 12"
+            toggleable="true" toggle-on-click="true" radio-group="1">
+            <Text justification="centred-left">Widgets</Text>
+        </Button>
+
+        <Component flex-grow="1" />
+
+        <Text class="label" word-wrap="by-word">Edit any .xml or styles.json in source/views while this is running.</Text>
+    </Component>
+
+    <Component id="content" flex-grow="1" />
+</Component>

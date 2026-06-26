@@ -1,0 +1,190 @@
+{
+  "font-family": "Rubik",
+  "font-size": 15,
+  "foreground": "#CDD9E5",
+  "background": "#14181D",
+
+  ".section-title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 26,
+    "foreground": "#4184E4"
+  },
+  ".section-subtitle": {
+    "font-size": 15,
+    "foreground": "#8B98A5"
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 16,
+    "foreground": "#CDD9E5"
+  },
+  ".label": {
+    "font-size": 13,
+    "foreground": "#8B98A5"
+  },
+  ".code": {
+    "font-family": "Source Code Pro",
+    "font-size": 13,
+    "foreground": "#A9C7E8"
+  },
+
+  "#sidebar": {
+    "background": "#0D1117",
+    "border": "#21262D"
+  },
+  "#brand": {
+    "font-family": "Rubik Mono One",
+    "font-size": 20,
+    "foreground": "#CDD9E5"
+  },
+
+  ".nav-button": {
+    "background": "rgba(0, 0, 0, 0.0)",
+    "foreground": "#8B98A5",
+    "border-radius": 6,
+    "transition": "background 150ms ease-out, foreground 150ms ease-out",
+    "hover": {
+      "background": "rgba(255, 255, 255, 0.06)",
+      "foreground": "#CDD9E5"
+    },
+    "checked": {
+      "background": "rgba(65, 132, 228, 0.18)",
+      "foreground": "#4184E4"
+    }
+  },
+
+  ".card": {
+    "background": "#181F27",
+    "border": "#21262D",
+    "border-radius": 10
+  },
+  ".panel": {
+    "background": "#0D1117",
+    "border": "#21262D",
+    "border-radius": 8
+  },
+
+  "Button": {
+    "background": "#255AB2",
+    "foreground": "#FFFFFF",
+    "border-radius": 6,
+    "transition": "background 150ms ease-out",
+    "hover": {
+      "background": "#316DCA"
+    }
+  },
+  ".danger": {
+    "background": "#C93C37",
+    "hover": {
+      "background": "#E5534B"
+    }
+  },
+  ".ghost": {
+    "background": "rgba(255, 255, 255, 0.0)",
+    "foreground": "#CDD9E5",
+    "border": "#30363D",
+    "hover": {
+      "background": "rgba(255, 255, 255, 0.08)"
+    },
+    "checked": {
+      "background": "rgba(65, 132, 228, 0.25)",
+      "border": "#4184E4"
+    }
+  },
+  "#special": {
+    "background": {
+      "gradient": "linear",
+      "orientation": "horizontal",
+      "stops": { "0.0": "#8256D0", "1.0": "#AE4C82" }
+    },
+    "hover": {
+      "background": {
+        "gradient": "linear",
+        "orientation": "horizontal",
+        "stops": { "0.0": "#9268E0", "1.0": "#C25C95" }
+      }
+    }
+  },
+
+  ".box-red": {
+    "background": "#e06377"
+  },
+  ".box-orange": {
+    "background": "#eb7c00"
+  },
+  ".box-yellow": {
+    "background": "#c5a000"
+  },
+  ".box-green": {
+    "background": "#67b370"
+  },
+  ".box-cyan": {
+    "background": "#00a8b7"
+  },
+  ".box-blue": {
+    "background": "#019ae9"
+  },
+  ".box-purple": {
+    "background": "#ae73da"
+  },
+  ".box": {
+    "background": "#316DCA",
+    "border-radius": 6
+  },
+
+  ".anim-tile": {
+    "background": "#21262D",
+    "foreground": "#8B98A5",
+    "border-radius": 4,
+    "border": "#30363D",
+    "transition": "background 350ms ease-in-out, border-radius 350ms ease-in-out, border 350ms ease-in-out",
+    "hover": {
+      "background": "#4184E4",
+      "foreground": "#0D1117",
+      "border-radius": 24,
+      "border": "#A9E4EF"
+    }
+  },
+  ".lift": {
+    "shadow": "0 0 0 rgba(65,132,228,0)",
+    "transition": "shadow 250ms ease-out, background 250ms ease-out",
+    "hover": {
+      "shadow": "0 6 16 rgba(65,132,228,0.65)"
+    }
+  },
+  ".bar": {
+    "background": {
+      "gradient": "linear",
+      "orientation": "horizontal",
+      "stops": { "0.0": "#4184E4", "1.0": "#8256D0" }
+    },
+    "border-radius": 4
+  },
+
+  ".chip": {
+    "background": "#4184E4",
+    "foreground": "#0D1117",
+    "border-radius": 6
+  },
+
+  "ComboBox": {
+    "background": "#0D1117",
+    "foreground": "#CDD9E5",
+    "border": "#30363D",
+    "border-radius": 6
+  },
+
+  "Slider": {
+    "track": "#30363D",
+    "thumb": "#4184E4"
+  },
+  "Knob": {
+    "foreground": "#4184E4",
+    "track": "#30363D"
+  },
+  "ProgressBar": {
+    "background": "#0D1117",
+    "foreground": "#4184E4",
+    "border-radius": 999
+  }
+}

@@ -1,0 +1,69 @@
+<Component id="widgets-section" padding="24" gap="16" align-items="stretch">
+    <Component>
+        <Text class="section-title" margin="0 0 4 0">Widgets</Text>
+        <Text class="section-subtitle">Every built-in element type, styled by the same sheet and wired up with hooks.</Text>
+    </Component>
+
+    <Component flex-grow="1" display="grid"
+        grid-template-columns="1fr 1fr 1fr" grid-auto-rows="1fr" gap="14">
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">Button</Text>
+            <Button padding="8 16"><Text>Press me</Text></Button>
+            <Button class="ghost" padding="8 16" toggleable="true" toggle-on-click="true">
+                <Text>Toggle me</Text>
+            </Button>
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">Checkbox</Text>
+            <Checkbox id="enable-toggle" toggled="true"><Text>Enable the button</Text></Checkbox>
+            <Button id="toggle-target" padding="8 16"><Text>Controlled</Text></Button>
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">ComboBox</Text>
+            <ComboBox selected="1">
+                <Option>Sine</Option>
+                <Option>Triangle</Option>
+                <Option>Square</Option>
+                <Option>Sawtooth</Option>
+            </ComboBox>
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">Slider</Text>
+            <Slider id="demo-slider" orientation="horizontal" min="0" max="100" value="40" height="28" />
+            <Text id="slider-readout" class="label">40%</Text>
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="centre" justify-content="centre">
+            <Text class="heading">Knob</Text>
+            <Knob orientation="vertical" min="0" max="100" value="65" width="80" height="80" />
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">ProgressBar</Text>
+            <Text class="label">Driven by the slider</Text>
+            <ProgressBar id="demo-progress" value="0.4" height="14" />
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="stretch" justify-content="centre">
+            <Text class="heading">Hyperlink</Text>
+            <Hyperlink url="https://github.com/ImJimmi/JIVE"><Text>github.com/ImJimmi/JIVE</Text></Hyperlink>
+        </Component>
+
+        <Component class="card" padding="16" gap="6" align-items="stretch" justify-content="centre">
+            <Text class="heading">Text</Text>
+            <Text class="label">Rich typography from the style sheet, including custom fonts.</Text>
+        </Component>
+
+        <Component class="card" padding="16" gap="10" align-items="centre" justify-content="centre">
+            <Text class="heading">SVG</Text>
+            <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#4184E4" />
+                <path d="M7 12 l3 3 l7 -7" stroke="#0D1117" stroke-width="2.5" fill="none" />
+            </svg>
+        </Component>
+    </Component>
+</Component>

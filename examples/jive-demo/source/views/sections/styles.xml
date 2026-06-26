@@ -1,0 +1,51 @@
+<Component id="styles-section" padding="24" gap="16" align-items="stretch">
+    <Component>
+        <Text class="section-title" margin="0 0 4 0">Styles</Text>
+        <Text class="section-subtitle">Every graphical property lives in a JSON style sheet. Tweak the preview live.</Text>
+    </Component>
+
+    <Component flex-grow="1" flex-direction="row" gap="16" align-items="stretch">
+        <Component class="card" width="270" padding="16" gap="10">
+            <Text class="heading" margin="0 0 4 0">Live style editor</Text>
+
+            <Text class="label">background</Text>
+            <ComboBox id="style-background" selected="0">
+                <Option>Blue</Option>
+                <Option>Green</Option>
+                <Option>Crimson</Option>
+                <Option>Gradient</Option>
+            </ComboBox>
+
+            <Text id="style-radius-label" class="label">border-radius: 12px</Text>
+            <Slider id="style-radius" orientation="horizontal" min="0" max="60" value="12" height="24" />
+
+            <Text id="style-border-label" class="label">border-width: 0px</Text>
+            <Slider id="style-border" orientation="horizontal" min="0" max="8" value="0" height="24" />
+
+            <Text id="style-font-label" class="label">font-size: 22px</Text>
+            <Slider id="style-font" orientation="horizontal" min="12" max="44" value="22" height="24" />
+
+            <Checkbox id="style-shadow" margin="6 0 0 0">
+                <Text>Drop shadow</Text>
+            </Checkbox>
+        </Component>
+
+        <Component class="panel" flex-grow="1" align-items="centre" justify-content="centre">
+            <Component id="style-preview" width="200" height="140" align-items="centre" justify-content="centre">
+                <Text id="style-preview-text">Aa</Text>
+            </Component>
+        </Component>
+    </Component>
+
+    <Component class="card" height="150" padding="16" gap="12">
+        <Text class="heading">Selectors &amp; states</Text>
+        <Text class="label">Styled by Type, .class and #id selectors with hover / checked states &#8212; hover the buttons.</Text>
+        <Component flex-direction="row" gap="12" align-items="centre">
+            <Button padding="8 16"><Text>Type: Button</Text></Button>
+            <Button class="danger" padding="8 16"><Text>.danger</Text></Button>
+            <Button class="ghost" padding="8 16"><Text>.ghost</Text></Button>
+            <Button id="special" padding="8 16"><Text>#special</Text></Button>
+            <Checkbox><Text>Checkbox</Text></Checkbox>
+        </Component>
+    </Component>
+</Component>

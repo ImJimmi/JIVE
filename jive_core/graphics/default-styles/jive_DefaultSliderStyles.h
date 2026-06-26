@@ -50,15 +50,17 @@ namespace jive::default_styles
                                 .getSliderLayout(*const_cast<juce::Slider*>(&slider))
                                 .sliderBounds.toFloat();
         const auto style = slider.getSliderStyle();
+        const auto isMultiValue = slider.isTwoValue() || slider.isThreeValue();
         const auto progress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
-        const auto minProgress = static_cast<float>(slider.getNormalisableRange()
-                                                        .convertTo0to1(slider.isTwoValue() || slider.isThreeValue()
-                                                                           ? slider.getMinValue()
-                                                                           : 0.0));
-        const auto maxProgress = static_cast<float>(slider.getNormalisableRange()
-                                                        .convertTo0to1(slider.isTwoValue() || slider.isThreeValue()
-                                                                           ? slider.getMaxValue()
-                                                                           : 0.0));
+        // For single-value sliders these aren't used (the fill runs from the
+        // start of the track to the thumb), so default them to 0 rather than
+        // calling convertTo0to1(0.0), which is out of bounds when min != 0.
+        const auto minProgress = isMultiValue
+                                   ? static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getMinValue()))
+                                   : 0.0f;
+        const auto maxProgress = isMultiValue
+                                   ? static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getMaxValue()))
+                                   : 0.0f;
         const auto isTwoVal = style == juce::Slider::SliderStyle::TwoValueVertical
                            || style == juce::Slider::SliderStyle::TwoValueHorizontal;
         const auto isThreeVal = style == juce::Slider::SliderStyle::ThreeValueVertical

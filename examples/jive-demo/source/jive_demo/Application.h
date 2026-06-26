@@ -1,9 +1,6 @@
 #pragma once
 
-#include "DemoState.h"
-
-#include <jive_demo/gui/WindowPresenter.h>
-#include <jive_demo/gui/tokens/Typography.h>
+#include <jive_demo/DemoController.h>
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
     #include <melatonin_inspector/melatonin_inspector.h>
@@ -28,9 +25,7 @@ namespace jive_demo
 
         void initialise(const juce::String& /*commandLineArguments*/) final
         {
-            interpreter.addSourceDirectory(juce::File{ JIVE_DEMO_VIEWS_SOURCE_DIRECTORY });
-            window = interpreter.interpret(windowPresenter.present());
-            interpreter.listenTo(*window);
+            window = controller.create("app.xml");
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
             inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
@@ -48,14 +43,7 @@ namespace jive_demo
         }
 
     private:
-#if PERFETTO
-        MelatoninPerfetto tracingSession;
-#endif
-
-        DemoState state;
-
-        jive::Interpreter interpreter;
-        WindowPresenter windowPresenter{ state.getWindowState(), "Window" };
+        DemoController controller;
         std::unique_ptr<jive::GuiItem> window;
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR

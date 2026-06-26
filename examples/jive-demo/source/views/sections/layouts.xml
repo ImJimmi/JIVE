@@ -1,0 +1,85 @@
+<Component id="layouts-section" padding="20" gap="16" align-items="stretch">
+    <Text class="section-title">Layouts</Text>
+    <Text class="section-subtitle"
+        text="Flexbox &amp; Grid, described in markup and driven live by the controls." />
+
+    <Component class="card" flex-grow="1" flex-direction="row" padding="16" gap="16"
+        margin="20 0 20 0"
+        align-items="stretch" max-height="300">
+        <Component width="220" gap="10">
+            <Text class="heading" margin="0 0 4 0">Flexbox</Text>
+
+            <Text class="label">flex-direction</Text>
+            <ComboBox id="flex-direction" selected="0">
+                <Option>row</Option>
+                <Option>column</Option>
+                <Option>row-reverse</Option>
+                <Option>column-reverse</Option>
+            </ComboBox>
+
+            <Text class="label">justify-content</Text>
+            <ComboBox id="flex-justify" selected="0">
+                <Option>flex-start</Option>
+                <Option>centre</Option>
+                <Option>flex-end</Option>
+                <Option>space-between</Option>
+                <Option>space-around</Option>
+            </ComboBox>
+
+            <Text class="label">align-items</Text>
+            <ComboBox id="flex-align" selected="0">
+                <Option>flex-start</Option>
+                <Option>centre</Option>
+                <Option>flex-end</Option>
+                <Option>stretch</Option>
+            </ComboBox>
+
+            <Text class="label">flex-wrap</Text>
+            <ComboBox id="flex-wrap" selected="1">
+                <Option>nowrap</Option>
+                <Option>wrap</Option>
+            </ComboBox>
+        </Component>
+
+        <Component id="flex-preview" class="panel" flex-grow="1" padding="12"
+            flex-direction="row" justify-content="flex-start" align-items="flex-start"
+            flex-wrap="wrap" gap="10">
+            <Component class="box box-red" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-orange" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-yellow" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-green" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-cyan" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-blue" min-width="50" min-height="50" flex-shrink="0" />
+            <Component class="box box-purple" min-width="50" min-height="50" flex-shrink="0" />
+        </Component>
+    </Component>
+
+    <Component class="card" height="190" flex-direction="row" padding="16" gap="16"
+        align-items="stretch" flex-grow="1">
+        <Component width="220" gap="10">
+            <Text class="heading" margin="0 0 4 0">Grid</Text>
+
+            <Text class="label">grid-template-columns</Text>
+            <ComboBox id="grid-columns" selected="0">
+                <Option>1fr 1fr 1fr</Option>
+                <Option>1fr 1fr</Option>
+                <Option>2fr 1fr</Option>
+                <Option>1fr 2fr 1fr</Option>
+            </ComboBox>
+
+            <Text id="grid-gap-label" class="label">gap: 10px</Text>
+            <Slider id="grid-gap" orientation="horizontal" min="0" max="30" value="10" height="24" />
+        </Component>
+
+        <Component id="grid-preview" class="panel" flex-grow="1" padding="12"
+            display="grid" grid-template-columns="1fr 1fr 1fr" grid-template-rows="1fr 1fr" gap="10">
+            <Component class="box box-red" />
+            <Component class="box box-orange" />
+            <Component class="box box-yellow" />
+            <Component class="box box-green" />
+            <Component class="box box-cyan" />
+            <Component class="box box-blue" />
+            <Component class="box box-purple" />
+        </Component>
+    </Component>
+</Component>

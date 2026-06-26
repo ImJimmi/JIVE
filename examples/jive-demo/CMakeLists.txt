@@ -6,13 +6,6 @@ juce_add_binary_data(jive-demo-resources
                      NAMESPACE
                      "binary_data"
                      SOURCES
-                     resources/icons/back-small.svg
-                     resources/icons/build-large.svg
-                     resources/icons/code-large.svg
-                     resources/icons/layout-large.svg
-                     resources/icons/motion-blur-large.svg
-                     resources/icons/next-small.svg
-                     resources/icons/palette-large.svg
                      resources/rubik-mono-one.ttf
                      resources/rubik.ttf
                      resources/source-code-pro.ttf
@@ -27,13 +20,14 @@ target_compile_definitions(jive-demo
                                      JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-demo,JUCE_VERSION>"
                                      JUCE_VST3_CAN_REPLACE_VST2=0
                                      JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>
-                                     JIVE_DEMO_VIEWS_SOURCE_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/source"
+                                     JIVE_DEMO_VIEWS_SOURCE_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/source/views"
 )
 
 target_link_libraries(jive-demo
                       INTERFACE jive-demo-resources
                                 jive::compiler_and_linker_options
                                 jive::jive_layouts
+                                jive::jive_style_sheets
                                 juce::juce_recommended_config_flags
                                 juce::juce_recommended_lto_flags
                                 juce::juce_recommended_warning_flags

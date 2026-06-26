@@ -1,0 +1,46 @@
+<Component id="animations-section" padding="24" gap="16" align-items="stretch">
+    <Component>
+        <Text class="section-title" margin="0 0 4 0">Animations</Text>
+        <Text class="section-subtitle">Add a CSS-style "transition" to any property and JIVE animates it for you.</Text>
+    </Component>
+
+    <Component class="card" padding="16" gap="12">
+        <Text class="heading">Declarative transitions</Text>
+        <Text class="label">These tiles only define a transition + :hover in the style sheet &#8212; no C++. Hover them.</Text>
+        <Component flex-direction="row" gap="14" align-items="centre">
+            <Component class="anim-tile" width="120" height="80" align-items="centre" justify-content="centre">
+                <Text>background</Text>
+            </Component>
+            <Component class="anim-tile" width="120" height="80" align-items="centre" justify-content="centre">
+                <Text>radius</Text>
+            </Component>
+            <Component class="anim-tile" width="120" height="80" align-items="centre" justify-content="centre">
+                <Text>border</Text>
+            </Component>
+            <Button class="lift" padding="10 18"><Text>shadow lift</Text></Button>
+        </Component>
+    </Component>
+
+    <Component class="card" flex-grow="1" padding="16" gap="12" align-items="stretch">
+        <Text class="heading">Easing curves</Text>
+        <Component flex-direction="row" gap="12" align-items="centre">
+            <Text class="label">timing-function</Text>
+            <ComboBox id="ease-function" selected="3" width="200">
+                <Option>linear</Option>
+                <Option>ease-in</Option>
+                <Option>ease-out</Option>
+                <Option>ease-in-out</Option>
+                <Option>cubic-bezier(.68,-.55,.27,1.55)</Option>
+            </ComboBox>
+            <Text id="ease-duration-label" class="label">duration: 800ms</Text>
+            <Slider id="ease-duration" orientation="horizontal" min="200" max="2000" value="800" width="160" height="24" />
+            <Component flex-grow="1" />
+            <Button id="ease-play" padding="8 20"><Text>Play</Text></Button>
+        </Component>
+
+        <Component class="panel" height="38" flex-direction="row" align-items="stretch" padding="4">
+            <Component id="anim-box" class="bar" flex-grow="0.1" />
+            <Component flex-grow="1" />
+        </Component>
+    </Component>
+</Component>

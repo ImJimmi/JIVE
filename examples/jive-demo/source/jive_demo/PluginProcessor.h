@@ -1,11 +1,7 @@
 #pragma once
 
-#include "DemoState.h"
+#include <jive_demo/DemoController.h>
 
-#include <jive_demo/gui/WindowPresenter.h>
-#include <jive_demo/gui/tokens/Typography.h>
-
-#include <jive_layouts/jive_layouts.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace jive_demo
@@ -43,13 +39,10 @@ namespace jive_demo
         {
             jassert(JIVE_IS_PLUGIN_PROJECT);
 
-            if (auto view = interpreter.interpret(editorPresenter.present(), this))
+            if (auto editor = controller.create("plugin.xml", this))
             {
-                if (dynamic_cast<juce::AudioProcessorEditor*>(view.get()) != nullptr)
-                {
-                    interpreter.listenTo(*view);
-                    return dynamic_cast<juce::AudioProcessorEditor*>(view.release());
-                }
+                if (dynamic_cast<juce::AudioProcessorEditor*>(editor.get()) != nullptr)
+                    return dynamic_cast<juce::AudioProcessorEditor*>(editor.release());
             }
 
             return new juce::GenericAudioProcessorEditor{ *this };
@@ -82,9 +75,6 @@ namespace jive_demo
         void setStateInformation(const void*, int) final {}
 
     private:
-        DemoState state;
-
-        jive::Interpreter interpreter;
-        WindowPresenter editorPresenter{ state.getWindowState(), "Editor" };
+        DemoController controller;
     };
 } // namespace jive_demo
