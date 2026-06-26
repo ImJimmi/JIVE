@@ -20,7 +20,9 @@
       "matchPackagePatterns": ["*"],
       "matchUpdateTypes": ["major", "minor", "patch"],
       "groupName": "All",
-      "groupSlug": "all-deps"
+      "groupSlug": "all-deps",
+      "separateMajorMinor": false,
+      "separateMultipleMajor": false
     }
   ]
 }
