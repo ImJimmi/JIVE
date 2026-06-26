@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
+  "separateMajorMinor": false,
+  "separateMultipleMajor": false,
   "git-submodules": {
     "enabled": true
   },
@@ -20,9 +22,7 @@
       "matchPackagePatterns": ["*"],
       "matchUpdateTypes": ["major", "minor", "patch"],
       "groupName": "All",
-      "groupSlug": "all-deps",
-      "separateMajorMinor": false,
-      "separateMultipleMajor": false
+      "groupSlug": "all-deps"
     }
   ]
 }
