@@ -215,7 +215,7 @@ namespace jive
 
         [[nodiscard]] Transition* getTransition()
         {
-            if (currentTransition == nullptr)
+            if (currentTransition == nullptr && !getVar(source, "transition").isVoid())
             {
                 using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
                                                      Inheritance::doNotInherit,
@@ -223,8 +223,8 @@ namespace jive
                                                      true,
                                                      Responsiveness::ignoreChanges>;
 
-                if (const TransitionsProperty transitions{ source, "transition" }; transitions.exists())
-                    currentTransition = (*transitions.get())[transitionSourceID.toString()];
+                const TransitionsProperty transitions{ source, "transition" };
+                currentTransition = (*transitions.get())[transitionSourceID.toString()];
             }
 
             if (currentTransition != nullptr && currentTransition->source.isVoid())

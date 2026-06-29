@@ -67,6 +67,7 @@ namespace jive
         void loadExternalSources(juce::ValueTree tree);
         [[nodiscard]] juce::ValueTree parseFileToValueTree(const juce::File&) const;
         void onObservedFileChanged(const juce::File& file);
+        void observeFileForChanges(const juce::File& file);
 
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;

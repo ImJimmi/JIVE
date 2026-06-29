@@ -105,8 +105,8 @@ namespace jive
 
     void Text::textFontChanged(TextComponent&)
     {
-        updateTextComponent();
         layoutsCache.clear();
+        updateTextComponent(false);
     }
 
     juce::TextLayout Text::buildTextLayout(float maxWidth) const
@@ -139,7 +139,7 @@ namespace jive
         return valueRoundedUp;
     }
 
-    void Text::updateTextComponent()
+    void Text::updateTextComponent(bool alwaysReflowParent)
     {
         getTextComponent().setText(text.getOr(""));
         getTextComponent().setLineSpacing(lineSpacing.getOr(0.0f));
@@ -162,8 +162,15 @@ namespace jive
             }
         }
 
-        idealWidth = nextWholeNumberAbove(buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()))
-                                              .getWidth());
+        const auto naturalLayout = buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+        const juce::Point naturalSize{ nextWholeNumberAbove(naturalLayout.getWidth()), naturalLayout.getHeight() };
+        const auto naturalSizeChanged = naturalSize != previousNaturalSize;
+        previousNaturalSize = naturalSize;
+
+        idealWidth = naturalSize.x;
+
+        const auto reflowParent = (alwaysReflowParent || naturalSizeChanged)
+                               && !static_cast<bool>(state["jive::setup-in-progress"]);
 
         if (auto* parentItem = getParent())
         {
@@ -173,7 +180,8 @@ namespace jive
             if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem)
                                             .getTopLevelDecorator()
                                             .toType<ContainerItem>();
-                containerParent != nullptr)
+                containerParent != nullptr
+                && reflowParent)
             {
                 containerParent->updateIdealSize();
             }

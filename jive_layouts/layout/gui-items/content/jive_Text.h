@@ -32,7 +32,7 @@ namespace jive
 
         juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
 
-        void updateTextComponent();
+        void updateTextComponent(bool alwaysReflowParent = true);
 
         Property<juce::String> text;
         Property<float, Inheritance::inheritFromAncestors> lineSpacing;
@@ -46,6 +46,7 @@ namespace jive
 #endif
 
         mutable std::unordered_map<float, juce::TextLayout> layoutsCache;
+        juce::Point<float> previousNaturalSize{ -1.0f, -1.0f };
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };

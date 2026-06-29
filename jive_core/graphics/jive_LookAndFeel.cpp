@@ -621,7 +621,7 @@ namespace jive
     {
         using GenerationOffset = std::uint16_t;
 
-        std::vector<std::tuple<GenerationOffset, Styles, juce::Uuid, StyleSelector>> allApplicable;
+        std::vector<std::tuple<GenerationOffset, const Styles*, const StyleSelector*>> allApplicable;
 
         for (const auto& styler : stylers)
         {
@@ -636,9 +636,8 @@ namespace jive
                     allApplicable.emplace_back(
                         std::make_tuple(
                             generationOffset,
-                            styler.styles,
-                            styler.id,
-                            styler.selector));
+                            &styler.styles,
+                            &styler.selector));
                     break;
                 }
 
@@ -648,11 +647,14 @@ namespace jive
 
         std::sort(std::begin(allApplicable),
                   std::end(allApplicable),
-                  [](auto& first, auto& second) {
-                      if (std::get<StyleSelector>(first) == std::get<StyleSelector>(second))
+                  [](const auto& first, const auto& second) {
+                      const auto& firstSelector = *std::get<const StyleSelector*>(first);
+                      const auto& secondSelector = *std::get<const StyleSelector*>(second);
+
+                      if (firstSelector == secondSelector)
                           return std::get<GenerationOffset>(first) < std::get<GenerationOffset>(second);
 
-                      return std::get<StyleSelector>(first) < std::get<StyleSelector>(second);
+                      return firstSelector < secondSelector;
                   });
 
         return allApplicable;
@@ -664,14 +666,10 @@ namespace jive
     {
         Styles result;
 
-        for (const auto& [generationOffset,
-                          styles,
-                          uuid,
-                          selector] : collectApplicableStylersOrdered(stylers, component))
+        for (const auto& [generationOffset, styles, selector] : collectApplicableStylersOrdered(stylers, component))
         {
-            juce::ignoreUnused(uuid);
             juce::ignoreUnused(selector);
-            mergeLeft(result, styles, generationOffset > 0);
+            mergeLeft(result, *styles, generationOffset > 0);
         }
 
         return result;
@@ -681,6 +679,13 @@ namespace jive
     [[nodiscard]] static auto& findOrAddCacheEntry(std::vector<Cache>& cache,
                                                    const juce::Component& component)
     {
+        cache.erase(std::remove_if(std::begin(cache),
+                                   std::end(cache),
+                                   [](const auto& cacheEntry) {
+                                       return cacheEntry.component == nullptr;
+                                   }),
+                    std::end(cache));
+
         if (auto entry = std::find_if(std::begin(cache),
                                       std::end(cache),
                                       [&component](auto& cacheEntry) {
@@ -777,6 +782,8 @@ namespace jive
 
         update(entry.styles, latestStyles);
 
+        transitioningComponents.removeAllInstancesOf(nullptr);
+
         if (entry.styles.hasTransitionsInProgress())
             transitioningComponents.addIfNotAlreadyThere(const_cast<juce::Component*>(&component));
         else
@@ -795,6 +802,8 @@ namespace jive
             if (component != nullptr)
                 component->repaint();
         }
+
+        transitioningComponents.removeAllInstancesOf(nullptr);
     }
 } // namespace jive
 

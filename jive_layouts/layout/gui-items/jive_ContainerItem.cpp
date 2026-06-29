@@ -58,15 +58,18 @@ namespace jive
                                 .subtractedFrom(constraints));
     }
 
-    void ContainerItem::updateIdealSize(bool informParentOfChanges)
+    void ContainerItem::updateIdealSize(bool informParentOfChanges, bool measureChildren)
     {
         JIVE_TRACE("inform parent?", informParentOfChanges);
 
-        for (auto* child : getChildren())
+        if (measureChildren)
         {
-            if (auto* decorator = dynamic_cast<GuiItemDecorator*>(child))
-                if (auto* container = decorator->getTopLevelDecorator().toType<ContainerItem>())
-                    container->updateIdealSize(false);
+            for (auto* child : getChildren())
+            {
+                if (auto* decorator = dynamic_cast<GuiItemDecorator*>(child))
+                    if (auto* container = decorator->getTopLevelDecorator().toType<ContainerItem>())
+                        container->updateIdealSize(false);
+            }
         }
 
         const auto newIdealSize = calculateIdealSize(getContentConstraints());
@@ -101,7 +104,7 @@ namespace jive
             if (auto* decorator = dynamic_cast<GuiItemDecorator*>(getParent()))
             {
                 if (auto* containerParent = decorator->getTopLevelDecorator().toType<ContainerItem>())
-                    containerParent->updateIdealSize();
+                    containerParent->updateIdealSize(true, false);
             }
         }
 

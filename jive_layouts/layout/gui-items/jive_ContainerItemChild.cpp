@@ -227,7 +227,7 @@ namespace jive
                  || getComponent()->getHeight() < idealHeight.get())
                 && !static_cast<bool>(state["jive::setup-in-progress"]))
             {
-                container->updateIdealSize();
+                container->updateIdealSize(true, false);
             }
         }
     }

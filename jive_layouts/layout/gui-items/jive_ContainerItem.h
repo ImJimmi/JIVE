@@ -56,7 +56,7 @@ namespace jive
         void insertChild(std::unique_ptr<GuiItem> child, int index) override;
         void setChildren(std::vector<std::unique_ptr<GuiItem>>&& newChildren) override;
 
-        void updateIdealSize(bool informParentOfChanges = true);
+        void updateIdealSize(bool informParentOfChanges = true, bool measureChildren = true);
 
     protected:
         virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;

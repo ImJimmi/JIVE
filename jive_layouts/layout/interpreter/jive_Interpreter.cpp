@@ -140,12 +140,23 @@ namespace jive
 
         item->state.setProperty("jive::top-level-source-file", file.getFullPathName(), nullptr);
 
+        observeFileForChanges(file);
+
+        return item;
+    }
+
+    void Interpreter::observeFileForChanges(const juce::File& file)
+    {
+        for (auto* observer : fileObservers)
+        {
+            if (observer->file == file)
+                return;
+        }
+
         auto* observer = fileObservers.add(std::make_unique<FileObserver>(file));
         observer->onFileModified = [this, f = file]() {
             onObservedFileChanged(f);
         };
-
-        return item;
     }
 
     void Interpreter::listenTo(GuiItem& item)
@@ -343,7 +354,12 @@ namespace jive
         if (tree.isValid())
             tree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
 
-        auto file = sourceDirectories->find(tree["source"].toString());
+        const auto source = tree["source"].toString();
+
+        if (source.isEmpty())
+            return;
+
+        auto file = sourceDirectories->find(source);
 
         if (!file.existsAsFile())
             return;
@@ -360,10 +376,7 @@ namespace jive
 
         tree.copyPropertiesAndChildrenFrom(newTree, nullptr);
 
-        auto* observer = fileObservers.add(std::make_unique<FileObserver>(file));
-        observer->onFileModified = [this, f = file]() {
-            onObservedFileChanged(f);
-        };
+        observeFileForChanges(file);
     }
 
     void Interpreter::setChildItems(GuiItem& item)

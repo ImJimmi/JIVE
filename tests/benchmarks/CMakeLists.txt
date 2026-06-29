@@ -13,6 +13,7 @@ target_include_directories(jive-benchmarking
 
 target_compile_definitions(jive-benchmarking
                            PRIVATE JIVE_UNIT_TESTS=0
+                                   JIVE_DEMO_VIEWS_SOURCE_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/../../examples/jive-demo/source/views"
                                    JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-benchmarking,JUCE_PRODUCT_NAME>"
                                    JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-benchmarking,JUCE_VERSION>"
 )
