@@ -42,6 +42,8 @@ namespace jive
         Property<float> minWidth;
         Property<float> minHeight;
         Property<bool> focusable;
+        Property<juce::FlexBox::JustifyContent> flexJustifyContent;
+        Property<juce::FlexBox::AlignItems> flexAlignItems;
 
         Event onClick;
 

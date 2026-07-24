@@ -37,6 +37,8 @@ namespace jive
         , minWidth{ state, "min-width" }
         , minHeight{ state, "min-height" }
         , focusable{ state, "focusable" }
+        , flexJustifyContent{ state, "justify-content" }
+        , flexAlignItems{ state, "align-items" }
         , onClick{ state, "on-click" }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
@@ -49,6 +51,10 @@ namespace jive
             minHeight = 20.0f;
         if (!focusable.exists())
             focusable = true;
+        if (!flexJustifyContent.exists())
+            flexJustifyContent = juce::FlexBox::JustifyContent::center;
+        if (!flexAlignItems.exists())
+            flexAlignItems = juce::FlexBox::AlignItems::center;
 
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
