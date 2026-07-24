@@ -62,37 +62,46 @@ namespace jive
         return sourceTree;
     }
 
-    [[nodiscard]] static GuiItem* findItemWithSource(GuiItem* root, const juce::File& file)
+    static void findItemsWithSource(GuiItem* root, const juce::File& file, std::vector<GuiItem*>& results)
     {
         if (root == nullptr)
-            return nullptr;
+            return;
 
-        if (file.getFullPathName().contains(root->state.getProperty("source", "jive::no-source-found").toString()))
-            return root;
-        if (file.getFullPathName() == root->state.getProperty("jive::top-level-source-file", "jive::no-source-found").toString())
-            return root;
-
-        for (auto* child : root->getChildren())
+        if (file.getFullPathName().contains(root->state.getProperty("source", "jive::no-source-found").toString())
+            || file.getFullPathName() == root->state.getProperty("jive::top-level-source-file", "jive::no-source-found").toString())
         {
-            if (auto* item = findItemWithSource(child, file))
-                return item;
+            // Don't descend into an item that's about to be entirely replaced.
+            results.push_back(root);
+            return;
         }
 
-        return nullptr;
+        for (auto* child : root->getChildren())
+            findItemsWithSource(child, file, results);
     }
 
     void Interpreter::onObservedFileChanged(const juce::File& file)
     {
-        auto source = parseFileToValueTree(file);
+        std::vector<GuiItem*> items;
+        findItemsWithSource(observedItem.get(), file, items);
 
-        if (!source.isValid())
+        for (auto* item : items)
         {
-            jassertfalse;
-            return;
-        }
+            auto source = parseFileToValueTree(file);
 
-        if (auto* item = findItemWithSource(observedItem.get(), file))
-        {
+            if (!source.isValid())
+            {
+                jassertfalse;
+                continue;
+            }
+
+            // These children came straight from the source file, so mark
+            // them as such before any inline children are appended below -
+            // otherwise the reinterpretation triggered by re-parenting this
+            // tree (see valueTreeChildAdded) would mistake them for inline
+            // content and re-append them a second time.
+            for (auto i = 0; i < source.getNumChildren(); i++)
+                source.getChild(i).setProperty("jive::external-source-child", true, nullptr);
+
             for (auto i = 0; i < item->state.getNumProperties(); i++)
             {
                 const auto name = item->state.getPropertyName(i).toString();
@@ -121,6 +130,25 @@ namespace jive
             }
             else
             {
+                // Children declared inline at the usage site (e.g. a Button's
+                // text) aren't part of the source file, so they need to be
+                // carried across onto the freshly-parsed replacement tree.
+                std::vector<juce::ValueTree> inlineChildren;
+
+                for (auto i = 0; i < item->state.getNumChildren(); i++)
+                {
+                    auto child = item->state.getChild(i);
+
+                    if (!static_cast<bool>(child.getProperty("jive::external-source-child")))
+                        inlineChildren.push_back(child);
+                }
+
+                for (auto& child : inlineChildren)
+                    item->state.removeChild(child, nullptr);
+
+                for (auto& child : inlineChildren)
+                    source.appendChild(child, nullptr);
+
                 auto* parent = item->getParent();
                 jassert(parent != nullptr);
 
@@ -374,14 +402,22 @@ namespace jive
             newTree.setProperty(name, tree[name], nullptr);
         }
 
-        std::vector<juce::ValueTree> existingChildren;
+        std::vector<juce::ValueTree> inlineChildren;
 
         for (auto i = 0; i < tree.getNumChildren(); i++)
-            existingChildren.push_back(tree.getChild(i));
+        {
+            auto child = tree.getChild(i);
+
+            if (!static_cast<bool>(child.getProperty("jive::external-source-child")))
+                inlineChildren.push_back(child);
+        }
 
         tree.copyPropertiesAndChildrenFrom(newTree, nullptr);
 
-        for (auto& child : existingChildren)
+        for (auto i = 0; i < tree.getNumChildren(); i++)
+            tree.getChild(i).setProperty("jive::external-source-child", true, nullptr);
+
+        for (auto& child : inlineChildren)
             tree.appendChild(child, nullptr);
 
         observeFileForChanges(file);

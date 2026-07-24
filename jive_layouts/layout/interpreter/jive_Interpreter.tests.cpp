@@ -229,6 +229,147 @@ static jive::UnitTest fileSourceRetainsChildrenTest{
     },
 };
 
+static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
+    "jive",
+    "jive::Interpreter",
+    "File Source Live Reload With Shared Source",
+    [](auto& test) {
+        // Replicates the SideBar/NavButton example: several Buttons share the
+        // same "source" file, each with their own inline text. Editing the
+        // source file should update *every* item that references it, and
+        // each item's inline text should survive the reload.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto navButton = cwd.getChildFile("nav-button.xml");
+        navButton.create();
+        navButton.replaceWithText(R"(<Button padding="10"/>)");
+
+        auto mainView = cwd.getChildFile("side-bar.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Button source="nav-button.xml">Layouts</Button>
+                <Button source="nav-button.xml">Styles</Button>
+                <Button source="nav-button.xml">Animations</Button>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+        test.expectEquals(static_cast<int>(item->getChildren().size()), 3);
+
+        static const juce::StringArray labels{ "Layouts", "Styles", "Animations" };
+
+        auto getPadding = [&](int index) {
+            return static_cast<float>(item->getChildren()[index]->state["padding"]);
+        };
+        auto getText = [&](int index) -> juce::String {
+            const auto* text = jive::findFirstTextContent(*item->getChildren()[index]);
+            return text != nullptr
+                     ? text->getTextComponent().getAttributedString().getText()
+                     : juce::String{};
+        };
+
+        for (auto i = 0; i < 3; i++)
+        {
+            test.expectEquals(getPadding(i), 10.0f, "Initial padding should come from the source file");
+            test.expectEquals(getText(i), labels[i], "Initial text should be retained");
+        }
+
+        navButton.replaceWithText(R"(<Button padding="20"/>)");
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        for (auto i = 0; i < 3; i++)
+        {
+            test.expectEquals(getPadding(i),
+                              20.0f,
+                              "Every button sharing the source should pick up the change, not just the first");
+            test.expectEquals(getText(i),
+                              labels[i],
+                              "Inline text should survive a source file reload");
+        }
+
+        navButton.replaceWithText(R"(<Button padding="30"/>)");
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        for (auto i = 0; i < 3; i++)
+        {
+            test.expectEquals(getPadding(i), 30.0f, "Subsequent reloads should keep applying to every button");
+            test.expectEquals(getText(i), labels[i], "Inline text should survive repeated reloads");
+        }
+    },
+};
+
+static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
+    "jive",
+    "jive::Interpreter",
+    "File Source Reload Does Not Duplicate Own Children",
+    [](auto& test) {
+        // Reproduces the jive-demo app: a Window contains a Component whose
+        // "source" points at a file (main.xml) that itself declares children
+        // of its own (a side-bar and a content area). Editing main.xml
+        // shouldn't duplicate those children on every reload.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto mainXml = cwd.getChildFile("main.xml");
+        mainXml.create();
+        mainXml.replaceWithText(R"(
+            <Component flex-direction="row">
+                <Component id="side-bar" />
+                <Component flex-grow="1" />
+            </Component>
+        )");
+
+        juce::ValueTree windowTree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "source", "main.xml" },
+                    },
+                },
+            },
+        };
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+        const auto item = interpreter.interpret(windowTree);
+        test.expect(item != nullptr, "Item should have been created");
+        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+                          2,
+                          "Should start with two children");
+
+        for (auto i = 0; i < 3; i++)
+        {
+            mainXml.replaceWithText(juce::String(R"(
+                <Component flex-direction="row" padding=")")
+                                    + juce::String(i)
+                                    + R"(">
+                    <Component id="side-bar" />
+                    <Component flex-grow="1" />
+                </Component>
+            )");
+            jive::FileObserver::triggerAllTimerCallbacks();
+
+            test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+                              2,
+                              "Reloading the source file shouldn't duplicate its own children");
+        }
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:
