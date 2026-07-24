@@ -233,7 +233,11 @@ namespace jive
             for (const auto& [name, value] : child.getProperties())
             {
                 if (auto* nested = getObjectIfNestedStyleObject(name, value))
-                    appendFromChild(*nested, selector + " " + name.toString());
+                {
+                    const auto nestedName = name.toString();
+                    const auto combinator = nestedName.startsWith(":") ? "" : " ";
+                    appendFromChild(*nested, selector + combinator + nestedName);
+                }
             }
         };
 
@@ -1750,6 +1754,57 @@ private:
             button.getProperties().set("jive::active", true);
             button.lookAndFeelChanged();
             expectEquals(settledColourAt(button, 50, 12), juce::Colours::darkgrey);
+        }
+
+        beginTest("selector-based styles / state selector nested inside a class selector");
+        {
+            juce::Component parent;
+            parent.setComponentID("side-bar");
+            parent.setSize(100, 100);
+
+            juce::TextButton button;
+            button.getProperties().set("class", "nav-button");
+            button.setBounds(10, 10, 80, 25);
+            parent.addAndMakeVisible(button);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            {
+                                "#side-bar",
+                                new jive::Object{
+                                    {
+                                        ".nav-button",
+                                        new jive::Object{
+                                            { "background", "gray" },
+                                            {
+                                                ":hover",
+                                                new jive::Object{
+                                                    { "background", "lightgray" },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            // Default state
+            expectEquals(settledColourAt(button, 40, 12), juce::Colours::grey);
+
+            // Hover state
+            button.getProperties().set("jive::hover", true);
+            button.lookAndFeelChanged();
+            expectEquals(settledColourAt(button, 40, 12), juce::Colours::lightgrey);
         }
 
         beginTest("selector-based styles / multiple selectors (comma-separated)");
