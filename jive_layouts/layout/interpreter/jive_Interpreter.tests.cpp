@@ -188,6 +188,47 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
     },
 };
 
+static jive::UnitTest fileSourceRetainsChildrenTest{
+    "jive",
+    "jive::Interpreter",
+    "File Source Retains Children",
+    [](auto& test) {
+        // A component using an external "source" may still declare its own
+        // children in-place (e.g. a Button's inline text). Those children
+        // should be retained alongside whatever the source tree defines,
+        // rather than being wiped out when the source tree is merged in.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto navButton = cwd.getChildFile("nav-button.xml");
+        navButton.create();
+        navButton.replaceWithText(R"(<Button padding="10"/>)");
+
+        auto mainView = cwd.getChildFile("side-bar.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Button source="nav-button.xml">Layouts</Button>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        const auto* text = jive::findFirstTextContent(*item);
+        test.expect(text != nullptr, "Button's inline text should be retained alongside its external source");
+
+        if (text != nullptr)
+        {
+            test.expectEquals(text->getTextComponent().getAttributedString().getText(),
+                              juce::String{ "Layouts" });
+        }
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:

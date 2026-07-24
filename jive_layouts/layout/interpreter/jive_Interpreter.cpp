@@ -374,7 +374,15 @@ namespace jive
             newTree.setProperty(name, tree[name], nullptr);
         }
 
+        std::vector<juce::ValueTree> existingChildren;
+
+        for (auto i = 0; i < tree.getNumChildren(); i++)
+            existingChildren.push_back(tree.getChild(i));
+
         tree.copyPropertiesAndChildrenFrom(newTree, nullptr);
+
+        for (auto& child : existingChildren)
+            tree.appendChild(child, nullptr);
 
         observeFileForChanges(file);
     }
