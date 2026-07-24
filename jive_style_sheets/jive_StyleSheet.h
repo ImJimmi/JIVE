@@ -27,6 +27,7 @@ namespace jive
         void clear();
         void stylePropertyChanged();
         void addStylesFrom(Object& object);
+        void addTokensFrom(Object& object);
         void addInlineStyles(Object& object);
         void addSelectorBasedStyles(Object& object);
 
@@ -46,5 +47,7 @@ namespace jive
 
         std::unique_ptr<FileObserver> fileObserver;
         Property<SourceDirectories::ReferenceCountedPointer> sourceDirectories;
+
+        std::unordered_map<juce::String, juce::var> tokens;
     };
 } // namespace jive

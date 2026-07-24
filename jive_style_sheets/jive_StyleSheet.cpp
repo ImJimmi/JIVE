@@ -98,6 +98,8 @@ namespace jive
             lookAndFeel.removeStyles(entry->second);
             entry = uuids.erase(entry);
         }
+
+        tokens.clear();
     }
 
     void StyleSheet::stylePropertyChanged()
@@ -136,6 +138,7 @@ namespace jive
     void StyleSheet::addStylesFrom(Object& object)
     {
         clear();
+        addTokensFrom(object);
         addInlineStyles(object);
         addSelectorBasedStyles(object);
 
@@ -143,24 +146,51 @@ namespace jive
         component.repaint();
     }
 
+    void StyleSheet::addTokensFrom(Object& object)
+    {
+        for (const auto& [name, value] : object.getProperties())
+        {
+            if (!name.toString().startsWith("$"))
+                continue;
+
+            tokens.emplace(name.toString(), value);
+        }
+    }
+
     static void appendStyleProperties(Object& object,
-                                      std::optional<Styles>& styles)
+                                      std::optional<Styles>& styles,
+                                      const std::unordered_map<juce::String, juce::var>& tokens)
     {
         for (const auto& propertyName : Styles::propertyNames)
         {
             if (!object.hasProperty(propertyName))
                 continue;
 
+            auto value = object.getProperty(propertyName);
+
+            if (value.isString() && value.toString().startsWith("$"))
+            {
+                if (auto token = tokens.find(value.toString()); token != std::end(tokens))
+                {
+                    value = token->second;
+                }
+                else
+                {
+                    DBG("No token with the name '" << value.toString() << "'");
+                    jassertfalse;
+                }
+            }
+
             styles = styles
                          .value_or(Styles{})
-                         .with(propertyName, object.getProperty(propertyName));
+                         .with(propertyName, value);
         }
     }
 
     void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
-        appendStyleProperties(object, styles);
+        appendStyleProperties(object, styles, tokens);
 
         if (&object == style.get().get() && object.hasProperty("transition"))
         {
@@ -195,7 +225,7 @@ namespace jive
         appendFromChild = [this, &appendFromChild](Object& child,
                                                    const juce::String& selector) {
             std::optional<Styles> styles;
-            appendStyleProperties(child, styles);
+            appendStyleProperties(child, styles, tokens);
 
             if (styles.has_value())
                 uuids[selector] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
@@ -239,6 +269,7 @@ public:
         testSelectorEdgeCases();
         testInheritance();
         testMiscStyleProperties();
+        testTokens();
         testFileBasedStyles();
     }
 
@@ -1013,6 +1044,211 @@ private:
                              .find<juce::BorderSize<float>>("border-width")
                              ->getTop(),
                          5.0f);
+        }
+    }
+
+    void testTokens()
+    {
+        beginTest("tokens / a token referenced by an inline style property resolves to its value");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$primary", "royalblue" },
+                            { "background", "$primary" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::royalblue);
+        }
+
+        beginTest("tokens / a token referenced by a selector-based style property resolves to its value");
+        {
+            juce::Component parent;
+            parent.setSize(100, 100);
+
+            juce::TextButton button;
+            button.getProperties().set("class", "highlight");
+            button.setBounds(10, 10, 80, 25);
+            parent.addAndMakeVisible(button);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$accent", "crimson" },
+                            {
+                                ".highlight",
+                                new jive::Object{
+                                    { "background", "$accent" },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
+            expectEquals(snapshot.getPixelAt(40, 12), juce::Colours::crimson);
+        }
+
+        beginTest("tokens / multiple tokens each resolve independently across different properties");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$primary", "red" },
+                            { "$secondary", "lime" },
+                            { "background", "$primary" },
+                            { "foreground", "$secondary" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            expect(styles.find<jive::Fill>("background").value() == juce::Colours::red);
+            expect(styles.find<jive::Fill>("foreground").value() == juce::Colours::lime);
+        }
+
+        beginTest("tokens / changing a token's value updates any styles that reference it");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$primary", "red" },
+                            { "background", "$primary" },
+                        },
+                    },
+                },
+            };
+            auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::red);
+
+            style.setProperty("$primary", "seagreen");
+
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::seagreen);
+        }
+
+        beginTest("tokens / replacing the style object entirely resolves tokens against the new object only");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$primary", "red" },
+                            { "background", "$primary" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::red);
+
+            state.setProperty(
+                "style",
+                new jive::Object{
+                    { "$primary", "gold" },
+                    { "background", "$primary" },
+                },
+                nullptr);
+
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::gold);
+        }
+
+        beginTest("tokens / a token can be referenced by a stateful selector");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$hoverColour", "orange" },
+                            { "background", "gray" },
+                            {
+                                ":hover",
+                                new jive::Object{
+                                    { "background", "$hoverColour" },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::grey);
+
+            button.getProperties().set("jive::hover", true);
+            button.lookAndFeelChanged();
+            expectEquals(settledColourAt(button, 50, 12), juce::Colours::orange);
+        }
+
+        beginTest("tokens / a token can be used for a non-colour style property");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$radii", "5 10 15 20" },
+                            { "border-radius", "$radii" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            const auto radii = styles.find<jive::BorderRadii<float>>("border-radius");
+            expect(radii.has_value());
+            expectEquals(radii->topLeft, 5.0f);
+            expectEquals(radii->topRight, 10.0f);
+            expectEquals(radii->bottomRight, 15.0f);
+            expectEquals(radii->bottomLeft, 20.0f);
         }
     }
 
