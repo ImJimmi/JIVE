@@ -20,14 +20,15 @@ namespace jive::default_styles
         if (backgroundFill.isInvisible() && borderFill.isInvisible())
             return;
 
-        const auto fillShape = getShape(borderRadius,
-                                        bounds,
-                                        juce::BorderSize{
-                                            borderWidth.getTop() * 0.5f,
-                                            borderWidth.getLeft() * 0.5f,
-                                            borderWidth.getBottom() * 0.5f,
-                                            borderWidth.getRight() * 0.5f,
-                                        });
+        const auto borderSize = borderFill.isInvisible()
+                                  ? juce::BorderSize<float>{}
+                                  : juce::BorderSize{
+                                        borderWidth.getTop() * 0.5f,
+                                        borderWidth.getLeft() * 0.5f,
+                                        borderWidth.getBottom() * 0.5f,
+                                        borderWidth.getRight() * 0.5f,
+                                    };
+        const auto fillShape = getShape(borderRadius, bounds, borderSize);
         g.setFillType(backgroundFill);
         g.fillPath(fillShape);
 

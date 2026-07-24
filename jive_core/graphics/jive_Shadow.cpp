@@ -229,7 +229,7 @@ namespace jive
                       const juce::Rectangle<int>& bounds,
                       const juce::Path& shape) const
     {
-        const auto scale = 0.333f;
+        static constexpr auto scale = 1.0f;
         auto frameBuffer = renderNonBlurredShadow(bounds, shape, spreadRadius, scale);
         blurHorizontally(frameBuffer, *this, scale);
         blurVertically(frameBuffer, *this, scale);
@@ -342,14 +342,15 @@ namespace jive
         if (component->getProperties().contains("jive::shadow-path"))
         {
             shape.restoreFromString(component->getProperties()["jive::shadow-path"].toString());
-            shape.applyTransform(juce::AffineTransform::translation(component->getPosition()));
         }
         else
         {
             const auto boundsString = component
                                           ->getProperties()
                                           .getWithDefault("jive::shadow-bounds",
-                                                          component->getBounds().toString())
+                                                          component->getBounds()
+                                                              .withZeroOrigin()
+                                                              .toString())
                                           .toString();
             shape = getShape(borderRadius,
                              juce::Rectangle<int>::fromString(boundsString)
@@ -357,10 +358,20 @@ namespace jive
         }
 
         const juce::Point blurRadiusOffset{
-            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
-            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
+            static_cast<int>(std::ceil(shadow.getBlurRadius())),
+            static_cast<int>(std::ceil(shadow.getBlurRadius())),
         };
-        shape.applyTransform(juce::AffineTransform::translation(shadow.getOffset() - component->getPosition() + blurRadiusOffset));
+        shape.applyTransform(juce::AffineTransform::translation(blurRadiusOffset));
+
+        auto offsetShape = shape;
+        offsetShape.applyTransform(juce::AffineTransform::translation(-shadow.getOffset()));
+
+        juce::Path clipRegion;
+        clipRegion.addRectangle(getLocalBounds());
+        clipRegion.addPath(offsetShape);
+        clipRegion.setUsingNonZeroWinding(false);
+        g.reduceClipRegion(clipRegion);
+
         shadow.draw(g, getLocalBounds(), shape);
     }
 
@@ -395,17 +406,17 @@ namespace jive
             return;
 
         const juce::Point blurRadiusOffset{
-            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
-            static_cast<int>(std::ceil(shadow.getBlurRadius())) * 2,
+            static_cast<int>(std::ceil(shadow.getBlurRadius())),
+            static_cast<int>(std::ceil(shadow.getBlurRadius())),
         };
 
         auto bounds = juce::Rectangle<int>::fromString(component
                                                            ->getProperties()
                                                            .getWithDefault("jive::shadow-bounds",
                                                                            component->getBounds().toString())
-                                                           .toString());
-
-        auto position = component->getPosition();
+                                                           .toString())
+                          .withPosition(component->getPosition() + shadow.getOffset())
+                          .expanded(blurRadiusOffset.x, blurRadiusOffset.y);
 
         for (auto* parentComp = component->getParentComponent();
              parentComp != nullptr;
@@ -414,12 +425,10 @@ namespace jive
             if (parentComp == parent)
                 break;
 
-            position += parentComp->getPosition();
+            bounds.translate(parentComp->getX(), parentComp->getY());
         }
 
-        setBounds(bounds
-                      .expanded(blurRadiusOffset.x, blurRadiusOffset.y)
-                      .withPosition(position - blurRadiusOffset + shadow.getOffset()));
+        setBounds(bounds);
     }
 
     void ShadowComponent::updateVisibility()
