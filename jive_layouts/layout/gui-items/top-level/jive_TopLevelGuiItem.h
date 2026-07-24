@@ -7,7 +7,11 @@ namespace jive
     class TopLevelGuiItem : public GuiItemDecorator
     {
     public:
-        using GuiItemDecorator::GuiItemDecorator;
+        explicit TopLevelGuiItem(std::unique_ptr<GuiItem> itemToDecorate)
+            : GuiItemDecorator{ std::move(itemToDecorate) }
+        {
+            getComponent()->setInterceptsMouseClicks(true, true);
+        }
 
         virtual void replaceDecoratedItem(std::unique_ptr<GuiItem>) = 0;
     };
