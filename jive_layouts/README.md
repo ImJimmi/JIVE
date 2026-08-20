@@ -174,6 +174,7 @@ The following properties will apply to any element with a `display` value of `fl
 | `"align-items"`     | [`juce::FlexBox::alignItems`](https://docs.juce.com/master/classFlexBox.html#a9e928c10773d54e50e4bfcfc2814f541)     | [`"align-items"`](https://www.w3schools.com/cssref/css3_pr_align-items.php)         | `juce::FlexBox::AlignItems`     |
 | `"flex-direction"`  | [`juce::FlexBox::direction`](https://docs.juce.com/master/classFlexBox.html#a6fff1e86d4ae97ed4a0dd5face653914)      | [`"flex-direction"`](https://www.w3schools.com/cssref/css3_pr_flex-direction.php)   | `juce::FlexBox::Direction`      |
 | `"flex-wrap"`       | [`juce::FlexBox::flexWrap`](https://docs.juce.com/master/classFlexBox.html#a58870e7df132cee2eda6d7586d026303)       | [`"flex-wrap"`](https://www.w3schools.com/cssref/css3_pr_flex-wrap.php)             | `juce::FlexBox::Wrap`           |
+| `"gap"`             | _N/A_                                                                                                               | [`"gap"`](https://www.w3schools.com/cssref/css3_pr_gap.php)                         | `juce::Grid::Px`                |
 | `"justify-content"` | [`juce::FlexBox::justifyContent`](https://docs.juce.com/master/classFlexBox.html#a20627d266f82422c5e72152ba07e5bc1) | [`"justify-content"`](https://www.w3schools.com/cssref/css3_pr_justify-content.php) | `juce::FlexBox::JustifyContent` |
 
 #### Flex Items
