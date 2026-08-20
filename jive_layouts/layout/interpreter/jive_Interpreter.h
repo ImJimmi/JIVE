@@ -47,6 +47,8 @@ namespace jive
 
     private:
         // ValueTree callbacks
+        void valueTreePropertyChanged(juce::ValueTree& tree,
+                                      const juce::Identifier& property) final;
         void valueTreeChildAdded(juce::ValueTree& parentTree,
                                  juce::ValueTree& childWhichHasBeenAdded) final;
         void valueTreeChildRemoved(juce::ValueTree& parentTree,
@@ -64,7 +66,7 @@ namespace jive
         void setupItemsRecursive(GuiItem& item) const;
 
         // File sources
-        void loadExternalSources(juce::ValueTree tree);
+        [[nodiscard]] juce::ValueTree loadExternalSources(juce::ValueTree tree);
         [[nodiscard]] juce::ValueTree parseFileToValueTree(const juce::File&) const;
         void onObservedFileChanged(const juce::File& file);
         void observeFileForChanges(const juce::File& file);

@@ -114,6 +114,13 @@ namespace jive
                 source.setProperty(name, item->state[name], nullptr);
             }
 
+            // Reloading this item's own source file doesn't change its
+            // relationship to its parent's - without the marker, the next
+            // reload of the parent's file would mistake this item for inline
+            // content and keep it around alongside its freshly-parsed twin.
+            if (item->state.hasProperty("jive::external-source-child"))
+                source.setProperty("jive::external-source-child", true, nullptr);
+
             if (item->isTopLevel())
             {
                 auto* topLevel = dynamic_cast<TopLevelGuiItem*>(item);
@@ -220,6 +227,35 @@ namespace jive
         return nullptr;
     }
 
+    void Interpreter::valueTreePropertyChanged(juce::ValueTree& tree,
+                                               const juce::Identifier& property)
+    {
+        static const juce::Identifier sourceProperty{ "source" };
+
+        if (observedItem == nullptr || ignoreValueTreeChanges || property != sourceProperty)
+            return;
+
+        auto parentTree = tree.getParent();
+        auto* parentItem = findItem(*observedItem, parentTree);
+
+        if (parentItem == nullptr)
+            return;
+
+        for (auto* child : parentItem->getChildren())
+        {
+            if (child->state == tree)
+            {
+                parentItem->removeChild(*child);
+                break;
+            }
+        }
+
+        const auto index = parentTree.indexOf(tree);
+
+        if (auto newChild = interpretInternal(tree, parentItem))
+            parentItem->insertChild(std::move(newChild), index);
+    }
+
     void Interpreter::valueTreeChildAdded(juce::ValueTree& parentTree,
                                           juce::ValueTree& childWhichHasBeenAdded)
     {
@@ -234,12 +270,10 @@ namespace jive
             return;
         }
 
+        const auto indexInParent = parentTree.indexOf(childWhichHasBeenAdded);
+
         if (auto newChild = interpretInternal(childWhichHasBeenAdded, parentItem))
-        {
-            childWhichHasBeenAdded.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
-            const auto indexInParent = parentTree.indexOf(childWhichHasBeenAdded);
             parentItem->insertChild(std::move(newChild), indexInParent);
-        }
     }
 
     void Interpreter::valueTreeChildRemoved(juce::ValueTree& parentTree,
@@ -299,18 +333,16 @@ namespace jive
         if (existingChild != nullptr)
             parentItem->removeChild(*existingChild);
 
+        const auto indexInParent = parentTree.indexOf(treeWhichHasBeenChanged);
+
         if (auto newChild = interpretInternal(treeWhichHasBeenChanged, parentItem))
-        {
-            treeWhichHasBeenChanged.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
-            const auto indexInParent = parentTree.indexOf(treeWhichHasBeenChanged);
             parentItem->insertChild(std::move(newChild), indexInParent);
-        }
     }
 
     std::unique_ptr<GuiItem> Interpreter::interpretInternal(juce::ValueTree tree,
                                                             GuiItem* const parent)
     {
-        loadExternalSources(tree);
+        tree = loadExternalSources(tree);
 
         auto item = createUndecoratedItem(tree, parent);
 
@@ -377,7 +409,9 @@ namespace jive
             view->setup(item);
     }
 
-    void Interpreter::loadExternalSources(juce::ValueTree tree)
+    static const juce::Identifier externalSourceProperties{ "jive::external-source-properties" };
+
+    juce::ValueTree Interpreter::loadExternalSources(juce::ValueTree tree)
     {
         if (tree.isValid())
             tree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
@@ -385,16 +419,33 @@ namespace jive
         const auto source = tree["source"].toString();
 
         if (source.isEmpty())
-            return;
+            return tree;
 
         auto file = sourceDirectories->find(source);
 
         if (!file.existsAsFile())
-            return;
+            return tree;
 
         const juce::ScopedValueSetter svs{ ignoreValueTreeChanges, true };
 
+        // Properties merged in from a previously loaded source would otherwise
+        // outlive it, overriding whatever the new source has to say.
+        if (const auto* previousProperties = tree[externalSourceProperties].getArray())
+        {
+            for (const auto& name : *previousProperties)
+                tree.removeProperty(name.toString(), nullptr);
+        }
+
         auto newTree = parseFileToValueTree(file);
+        juce::Array<juce::var> propertiesFromSource;
+
+        for (auto i = 0; i < newTree.getNumProperties(); i++)
+        {
+            const auto name = newTree.getPropertyName(i);
+
+            if (!tree.hasProperty(name))
+                propertiesFromSource.add(name.toString());
+        }
 
         for (auto i = 0; i < tree.getNumProperties(); i++)
         {
@@ -412,15 +463,41 @@ namespace jive
                 inlineChildren.push_back(child);
         }
 
+        for (auto& child : inlineChildren)
+            tree.removeChild(child, nullptr);
+
+        auto finalise = [&](juce::ValueTree destination) {
+            for (auto i = 0; i < destination.getNumChildren(); i++)
+                destination.getChild(i).setProperty("jive::external-source-child", true, nullptr);
+
+            for (auto& child : inlineChildren)
+                destination.appendChild(child, nullptr);
+
+            destination.setProperty(externalSourceProperties, propertiesFromSource, nullptr);
+
+            observeFileForChanges(file);
+
+            return destination;
+        };
+
+        // The root of the source file decides what kind of element this is - a
+        // <Component source="icon.svg"/> is really an <svg>. A tree's type can
+        // only change by swapping it out of its parent, so an element with no
+        // parent to swap it in has to keep the type it was declared with.
+        auto parentTree = tree.getParent();
+
+        if (newTree.getType() != tree.getType() && parentTree.isValid())
+        {
+            const auto index = parentTree.indexOf(tree);
+            parentTree.removeChild(index, nullptr);
+            parentTree.addChild(newTree, index, nullptr);
+
+            return finalise(newTree);
+        }
+
         tree.copyPropertiesAndChildrenFrom(newTree, nullptr);
 
-        for (auto i = 0; i < tree.getNumChildren(); i++)
-            tree.getChild(i).setProperty("jive::external-source-child", true, nullptr);
-
-        for (auto& child : inlineChildren)
-            tree.appendChild(child, nullptr);
-
-        observeFileForChanges(file);
+        return finalise(tree);
     }
 
     void Interpreter::setChildItems(GuiItem& item)

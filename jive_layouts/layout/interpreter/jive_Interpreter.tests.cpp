@@ -370,6 +370,225 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
     },
 };
 
+static jive::UnitTest sourcePropertyChangedTest{
+    "jive",
+    "jive::Interpreter",
+    "Source Property Changed",
+    [](auto& test) {
+        // Changing an element's "source" at runtime - like an app swapping out
+        // the page shown in its content area - should replace that element's
+        // content with the newly referenced file's.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto layouts = cwd.getChildFile("layouts.xml");
+        layouts.create();
+        layouts.replaceWithText(R"(<Component padding="10"><Component id="layouts-page"/></Component>)");
+
+        auto styles = cwd.getChildFile("styles.xml");
+        styles.create();
+        styles.replaceWithText(R"(<Component><Component id="styles-page"/></Component>)");
+
+        juce::ValueTree windowTree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "id", "content" },
+                    },
+                },
+            },
+        };
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+        const auto item = interpreter.interpret(windowTree);
+        test.expect(item != nullptr, "Item should have been created");
+
+        auto page = [&item]() -> juce::String {
+            const auto& pages = item->getChildren()[0]->getChildren();
+
+            if (pages.isEmpty())
+                return {};
+
+            return pages[0]->getComponent()->getComponentID();
+        };
+
+        test.expectEquals(page(), juce::String{}, "Content should start out empty");
+
+        windowTree.getChild(0).setProperty("source", "layouts.xml", nullptr);
+        test.expectEquals(page(),
+                          juce::String{ "layouts-page" },
+                          "Setting the source should load the file's content");
+
+        windowTree.getChild(0).setProperty("source", "styles.xml", nullptr);
+        test.expectEquals(page(),
+                          juce::String{ "styles-page" },
+                          "Changing the source should replace the previous file's content");
+
+        test.expectEquals(item->getChildren()[0]->getChildren().size(),
+                          1,
+                          "The previous source's content shouldn't be left behind");
+        test.expect(!windowTree.getChild(0).hasProperty("padding"),
+                    "The previous source's properties shouldn't be left behind");
+    },
+};
+
+static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
+    "jive",
+    "jive::Interpreter",
+    "Nested Source Reload Does Not Duplicate Siblings",
+    [](auto& test) {
+        // Reloading a nested source file (page.xml) shouldn't sever the
+        // element's ties to the file it was declared in (main.xml) - otherwise
+        // the next reload of main.xml would treat the element as inline content
+        // and leave it in place alongside its freshly-parsed twin.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto page = cwd.getChildFile("page.xml");
+        page.create();
+        page.replaceWithText(R"(<Component><Text>Layouts</Text></Component>)");
+
+        auto mainXml = cwd.getChildFile("main.xml");
+        mainXml.create();
+
+        auto writeMainXml = [&mainXml](int padding) {
+            mainXml.replaceWithText(juce::String{ R"(
+                <Component flex-direction="row">
+                    <Component id="side-bar" />
+                    <Component id="demo" source="page.xml" padding=")" }
+                                    + juce::String{ padding }
+                                    + R"(" />
+                </Component>
+            )");
+        };
+        writeMainXml(20);
+
+        juce::ValueTree windowTree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "source", "main.xml" },
+                    },
+                },
+            },
+        };
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+        const auto item = interpreter.interpret(windowTree);
+        test.expect(item != nullptr, "Item should have been created");
+        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+                          2,
+                          "Should start with two children");
+
+        page.replaceWithText(R"(<Component><Text class="demo-title">Layouts</Text></Component>)");
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        writeMainXml(25);
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+                          2,
+                          "An element whose own source was reloaded shouldn't be duplicated");
+        test.expectEquals(static_cast<float>(item->getChildren()[0]->getChildren()[1]->state["padding"]),
+                          25.0f,
+                          "The surviving element should be the freshly-parsed one");
+    },
+};
+
+static jive::UnitTest sourceFileDeterminesElementTypeTest{
+    "jive",
+    "jive::Interpreter",
+    "Source File Determines Element Type",
+    [](auto& test) {
+        // An element's type comes from the root of the file it sources, so a
+        // <Component source="icon.svg"/> is really an <svg> - and stays one
+        // when the file it was declared in is reloaded.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto icon = cwd.getChildFile("icon.svg");
+        icon.create();
+        icon.replaceWithText(R"(<svg viewBox="0 0 24 24"><path d="M0,0 L24,24"/></svg>)");
+
+        auto mainXml = cwd.getChildFile("main.xml");
+        mainXml.create();
+
+        auto writeMainXml = [&mainXml](int padding) {
+            mainXml.replaceWithText(juce::String{ R"(
+                <Component padding=")" }
+                                    + juce::String{ padding }
+                                    + R"(">
+                    <Component source="icon.svg" width="24" height="24" />
+                </Component>
+            )");
+        };
+        writeMainXml(10);
+
+        juce::ValueTree windowTree{
+            "Window",
+            {
+                { "width", 100 },
+                { "height", 100 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "source", "main.xml" },
+                    },
+                },
+            },
+        };
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+        const auto item = interpreter.interpret(windowTree);
+        test.expect(item != nullptr, "Item should have been created");
+
+        auto iconItem = [&item]() -> jive::GuiItem* {
+            const auto& icons = item->getChildren()[0]->getChildren();
+            return icons.isEmpty() ? nullptr : icons[0];
+        };
+
+        test.expect(iconItem() != nullptr, "The icon should have been created");
+        test.expectEquals(iconItem()->state.getType().toString(),
+                          juce::String{ "svg" },
+                          "The element should take its type from its source file's root");
+        auto* image = dynamic_cast<jive::GuiItemDecorator&>(*iconItem()).toType<jive::Image>();
+        test.expect(image != nullptr, "The element should be treated as an image");
+        test.expect(image != nullptr && image->getDrawable().isSVG(),
+                    "The element should have found the source file's drawable");
+
+        writeMainXml(15);
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        test.expect(iconItem() != nullptr, "The icon should have survived the reload");
+        test.expectEquals(iconItem()->state.getType().toString(),
+                          juce::String{ "svg" },
+                          "Reloading the file the element was declared in shouldn't change its type");
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:
