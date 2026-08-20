@@ -1,10 +1,6 @@
 #pragma once
 
-#include <jive_demo/DemoController.h>
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-    #include <melatonin_inspector/melatonin_inspector.h>
-#endif
+#include "Presenter.h"
 
 namespace jive_demo
 {
@@ -25,30 +21,16 @@ namespace jive_demo
 
         void initialise(const juce::String& /*commandLineArguments*/) final
         {
-            window = controller.create("app.xml");
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
-            inspector->setVisible(true);
-#endif
+            presenter = std::make_unique<Presenter>();
         }
 
         void shutdown() final
         {
-            window = nullptr;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = nullptr;
-#endif
+            presenter = nullptr;
         }
 
     private:
-        DemoController controller;
-        std::unique_ptr<jive::GuiItem> window;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-        std::unique_ptr<melatonin::Inspector> inspector;
-#endif
+        std::unique_ptr<Presenter> presenter;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Application)
     };

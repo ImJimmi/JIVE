@@ -1,7 +1,5 @@
 #pragma once
 
-#include <jive_demo/DemoController.h>
-
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace jive_demo
@@ -39,12 +37,6 @@ namespace jive_demo
         {
             jassert(JIVE_IS_PLUGIN_PROJECT);
 
-            if (auto editor = controller.create("plugin.xml", this))
-            {
-                if (dynamic_cast<juce::AudioProcessorEditor*>(editor.get()) != nullptr)
-                    return dynamic_cast<juce::AudioProcessorEditor*>(editor.release());
-            }
-
             return new juce::GenericAudioProcessorEditor{ *this };
         }
 
@@ -75,6 +67,5 @@ namespace jive_demo
         void setStateInformation(const void*, int) final {}
 
     private:
-        DemoController controller;
     };
 } // namespace jive_demo

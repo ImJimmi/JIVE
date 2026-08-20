@@ -1,0 +1,41 @@
+<Component>
+    <Text class="demo-title" margin="0 0 20 0">Layouts</Text>
+
+    <Text class="demo-name" margin="0 0 5 0">Flex Box</Text>
+
+    <Component display="grid" grid-template-columns="1fr 1fr" gap="20">
+        <Component padding="10 0 0 0">
+            <Component flex-direction="row">
+                <Text class="demo-label" flex-grow="1" align-self="start" margin="4 0 0 0">Direction</Text>
+
+                <Component>
+                    <Component flex-direction="row" gap="2" margin="0 0 7 0">
+                        <Button min-width="0" min-height="0" toggled="true">
+                            <Component source="views/icons/arrow-small-right.svg" />
+                        </Button>
+                        <Button min-width="0" min-height="0">
+                            <Component source="views/icons/arrow-small-down.svg" />
+                        </Button>
+                        <Button min-width="0" min-height="0">
+                            <Component source="views/icons/arrow-small-left.svg" />
+                        </Button>
+                        <Button min-width="0" min-height="0">
+                            <Component source="views/icons/arrow-small-up.svg" />
+                        </Button>
+                    </Component>
+
+                    <Text margin="0 0 0 2">Row</Text>
+                </Component>
+            </Component>
+        </Component>
+
+        <Component class="demo-container" padding="10" flex-direction="row" height="135" gap="5">
+            <Component class="box box-red" width="35" height="35" />
+            <Component class="box box-orange" width="35" height="35" />
+            <Component class="box box-yellow" width="35" height="35" />
+            <Component class="box box-green" width="35" height="35" />
+            <Component class="box box-blue" width="35" height="35" />
+            <Component class="box box-purple" width="35" height="35" />
+        </Component>
+    </Component>
+</Component>
