@@ -134,6 +134,9 @@ namespace jive
                 // unnoticed.
                 item->state.setProperty("jive::top-level-source-file", file.getFullPathName(), nullptr);
                 listenTo(*item);
+
+                sourcesPendingNotification.push_back(file);
+                notifyExternalSourcesLoaded();
             }
             else
             {
@@ -339,9 +342,22 @@ namespace jive
             parentItem->insertChild(std::move(newChild), indexInParent);
     }
 
+    void Interpreter::notifyExternalSourcesLoaded()
+    {
+        const auto sources = std::exchange(sourcesPendingNotification, {});
+
+        for (const auto& source : sources)
+        {
+            if (onExternalSourceLoaded != nullptr)
+                onExternalSourceLoaded(source);
+        }
+    }
+
     std::unique_ptr<GuiItem> Interpreter::interpretInternal(juce::ValueTree tree,
                                                             GuiItem* const parent)
     {
+        interpretationsInProgress++;
+
         tree = loadExternalSources(tree);
 
         auto item = createUndecoratedItem(tree, parent);
@@ -366,6 +382,12 @@ namespace jive
                 }
             }
         }
+
+        // Listeners are told about the files that were read in only once the
+        // whole tree they were read into has been interpreted, so that they're
+        // free to go looking around it.
+        if (--interpretationsInProgress == 0)
+            notifyExternalSourcesLoaded();
 
         return item;
     }
@@ -476,6 +498,14 @@ namespace jive
             destination.setProperty(externalSourceProperties, propertiesFromSource, nullptr);
 
             observeFileForChanges(file);
+
+            if (std::find(std::begin(sourcesPendingNotification),
+                          std::end(sourcesPendingNotification),
+                          file)
+                == std::end(sourcesPendingNotification))
+            {
+                sourcesPendingNotification.push_back(file);
+            }
 
             return destination;
         };

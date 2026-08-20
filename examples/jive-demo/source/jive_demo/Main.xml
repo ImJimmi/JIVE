@@ -1,0 +1,4 @@
+<Component style="Styles.json" flex-direction="row" height="100%">
+    <Component source="views/side-bar/SideBar.xml" />
+    <Component id="demo" source="views/demos/LayoutsDemo.xml" flex-grow="1" padding="20" />
+</Component>

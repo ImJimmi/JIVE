@@ -1,0 +1,7 @@
+<Component id="side-bar" padding="15">
+    <Text id="title" margin="0 0 15 0">JIVE</Text>
+
+    <Button source="views/side-bar/NavButton.xml">Layouts</Button>
+    <Button source="views/side-bar/NavButton.xml">Styles</Button>
+    <Button source="views/side-bar/NavButton.xml">Animations</Button>
+</Component>

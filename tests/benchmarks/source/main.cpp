@@ -1,6 +1,7 @@
 #include "FlexStressTest.h"
 #include "MinimumViewBenchmark.h"
 #include "PageSwitchBenchmark.h"
+#include "TextResizeBenchmark.h"
 
 class BenchmarkApp : public juce::JUCEApplication
 {
@@ -17,15 +18,28 @@ public:
         return "1.0.0";
     }
 
-    void initialise(const juce::String&) final
+    void initialise(const juce::String& commandLine) final
     {
 #if PERFETTO
         MelatoninPerfetto tracingSession;
 #endif
 
-        MinimumViewBenchmark{}.run();
-        FlexStressTest{}.run();
-        PageSwitchBenchmark{}.run();
+        const auto shouldRun = [&commandLine](const juce::String& name) {
+            return commandLine.isEmpty() || commandLine.containsIgnoreCase(name);
+        };
+
+        if (shouldRun("minimum"))
+            MinimumViewBenchmark{}.run();
+        if (shouldRun("flex"))
+            FlexStressTest{}.run();
+        if (shouldRun("page-switch"))
+            PageSwitchBenchmark{}.run();
+        if (shouldRun("text-resize"))
+        {
+            TextResizeBenchmark{ false }.run();
+            TextResizeBenchmark{ true }.run();
+        }
+
         quit();
     }
 

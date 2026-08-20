@@ -785,7 +785,7 @@ private:
 
             const juce::AttributedString attributedString{ lorumIpsumSentence };
             juce::TextLayout layout;
-            layout.createLayout(attributedString, textComponent.getWidth());
+            layout.createLayout(attributedString, static_cast<float>(textComponent.getWidth()));
 
             expectLessOrEqual(static_cast<int>(std::ceil(layout.getWidth())), textComponent.getWidth());
             expectEquals(textComponent.getHeight(), static_cast<int>(std::ceil(layout.getHeight())));

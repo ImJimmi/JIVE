@@ -215,7 +215,7 @@ namespace jive
 
         [[nodiscard]] Transition* getTransition()
         {
-            if (currentTransition == nullptr && !getVar(source, "transition").isVoid())
+            if (currentTransition == nullptr && !getVar(source, getTransitionID()).isVoid())
             {
                 using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
                                                      Inheritance::doNotInherit,
@@ -223,7 +223,7 @@ namespace jive
                                                      true,
                                                      Responsiveness::ignoreChanges>;
 
-                const TransitionsProperty transitions{ source, "transition" };
+                const TransitionsProperty transitions{ source, getTransitionID() };
                 currentTransition = (*transitions.get())[transitionSourceID.toString()];
             }
 
@@ -280,7 +280,7 @@ namespace jive
         {
             if (property != id)
             {
-                if (property.toString() == "transition")
+                if (property == getTransitionID())
                     currentTransition = getTransition();
 
                 return;
@@ -626,6 +626,12 @@ namespace jive
         Source source;
 
     private:
+        [[nodiscard]] static const juce::Identifier& getTransitionID()
+        {
+            static const juce::Identifier transitionID{ "transition" };
+            return transitionID;
+        }
+
         void initialise()
         {
             listenerTarget = findListenerTarget(source);

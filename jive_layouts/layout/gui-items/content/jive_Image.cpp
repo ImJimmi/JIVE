@@ -167,9 +167,16 @@ namespace jive
         };
     }
 
+    static bool hasExplicitLength(const juce::XmlElement& svg, juce::StringRef attribute)
+    {
+        const auto length = svg.getStringAttribute(attribute).trim();
+
+        return length.isNotEmpty() && !length.equalsIgnoreCase("auto");
+    }
+
     static juce::Rectangle<float> getIntrinsicBounds(const juce::XmlElement& svg)
     {
-        if (svg.hasAttribute("width") || svg.hasAttribute("height"))
+        if (hasExplicitLength(svg, "width") || hasExplicitLength(svg, "height"))
             return {};
 
         return getViewBox(svg);
@@ -219,6 +226,24 @@ public:
         testSVGFillRespected();
         testSVGFillInherited();
         testSVGContentStaysPutWhenResized();
+        testInlineSVGAutoSize();
+    }
+
+    void testInlineSVGAutoSize()
+    {
+        beginTest("svg / an inline SVG with no explicit size uses its view-box");
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="500" height="500" align-items="flex-start">
+                <svg viewBox="0 0 24 24">
+                    <rect x="5" y="7" width="10" height="8" />
+                </svg>
+            </Component>
+        )"));
+        const auto& boxModel = jive::boxModel(*parent->getChildren()[0]);
+        expectEquals(boxModel.getWidth(), 24.0f);
+        expectEquals(boxModel.getHeight(), 24.0f);
     }
 
 private:
