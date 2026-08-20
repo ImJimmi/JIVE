@@ -27,9 +27,11 @@ namespace jive
         }
     }
 
-    void ImageComponent::setDrawable(std::unique_ptr<juce::Drawable>&& d)
+    void ImageComponent::setDrawable(std::unique_ptr<juce::Drawable>&& d,
+                                     juce::Rectangle<float> intrinsicBoundsToUse)
     {
         drawable = std::move(d);
+        intrinsicBounds = intrinsicBoundsToUse;
 
         if (drawable != nullptr)
             addAndMakeVisible(*drawable);
@@ -82,12 +84,19 @@ namespace jive
 
     void ImageComponent::resized()
     {
-        if (drawable != nullptr)
+        // An SVG's drawable positions itself around its content, keeping the
+        // offset between the origin of its view-box and the first thing it
+        // draws. Setting its bounds would throw that offset away, moving
+        // everything it draws to the top-left.
+        if (drawable != nullptr && dynamic_cast<juce::DrawableComposite*>(drawable.get()) == nullptr)
             drawable->setBounds(getLocalBounds());
     }
 
     float ImageComponent::getMinimumRequiredWidth() const
     {
+        if (!intrinsicBounds.isEmpty())
+            return intrinsicBounds.getWidth();
+
         if (drawable == nullptr)
             return 0.0f;
 
@@ -96,6 +105,9 @@ namespace jive
 
     float ImageComponent::getMinimumRequiredHeight() const
     {
+        if (!intrinsicBounds.isEmpty())
+            return intrinsicBounds.getHeight();
+
         if (drawable == nullptr)
             return 0.0f;
 

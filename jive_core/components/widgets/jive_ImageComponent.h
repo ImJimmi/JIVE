@@ -11,7 +11,8 @@ namespace jive
         ImageComponent();
 
         void paint(juce::Graphics& g) override;
-        void setDrawable(std::unique_ptr<juce::Drawable>&& d);
+        void setDrawable(std::unique_ptr<juce::Drawable>&& d,
+                         juce::Rectangle<float> intrinsicBounds = {});
 
         void resized() override;
 
@@ -20,5 +21,6 @@ namespace jive
 
     private:
         std::unique_ptr<juce::Drawable> drawable;
+        juce::Rectangle<float> intrinsicBounds;
     };
 } // namespace jive
