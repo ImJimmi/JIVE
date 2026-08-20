@@ -84,9 +84,11 @@ namespace jive
         void updateBounds();
         void updateVisibility();
         void updateParent();
+        void updateAncestors();
 
         juce::Component::SafePointer<juce::Component> component;
         juce::Component::SafePointer<juce::Component> parent;
+        std::vector<juce::Component::SafePointer<juce::Component>> ancestors;
         Shadow shadow;
         BorderRadii<float> borderRadius;
     };

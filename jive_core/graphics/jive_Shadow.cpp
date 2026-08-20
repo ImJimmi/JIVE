@@ -328,6 +328,12 @@ namespace jive
     {
         if (component != nullptr)
             component->removeComponentListener(this);
+
+        for (const auto& ancestor : ancestors)
+        {
+            if (ancestor != nullptr)
+                ancestor->removeComponentListener(this);
+        }
     }
 
     void ShadowComponent::paint(juce::Graphics& g)
@@ -436,6 +442,33 @@ namespace jive
         setVisible(component != nullptr ? component->isVisible() : false);
     }
 
+    // The shadow is a child of one of the attached component's ancestors, so
+    // its bounds depend on the positions of all the components in between.
+    // Those in-between components can move without the attached component
+    // moving (e.g. when a window is resized), so they must be listened to as
+    // well.
+    void ShadowComponent::updateAncestors()
+    {
+        for (const auto& ancestor : ancestors)
+        {
+            if (ancestor != nullptr)
+                ancestor->removeComponentListener(this);
+        }
+
+        ancestors.clear();
+
+        if (component == nullptr)
+            return;
+
+        for (auto* ancestor = component->getParentComponent();
+             ancestor != nullptr && ancestor != parent;
+             ancestor = ancestor->getParentComponent())
+        {
+            ancestor->addComponentListener(this);
+            ancestors.emplace_back(ancestor);
+        }
+    }
+
     void ShadowComponent::updateParent()
     {
         if (component == nullptr)
@@ -461,6 +494,7 @@ namespace jive
                 parent = otherParent;
                 parent->addChildComponent(this, 0);
                 jassert(dynamic_cast<juce::TopLevelWindow*>(parent.getComponent()) == nullptr);
+                updateAncestors();
                 updateBounds();
                 return;
             }
@@ -468,5 +502,47 @@ namespace jive
 
         if (auto* thisParent = getParentComponent())
             thisParent->removeChildComponent(this);
+
+        updateAncestors();
     }
 } // namespace jive
+
+#if JIVE_UNIT_TESTS
+    #include <jive_core/testing/jive_UnitTest.h>
+
+static jive::UnitTest shadowFollowsAncestorsTest{
+    "jive",
+    "jive::ShadowComponent",
+    "Follows moved ancestors",
+    [](auto& test) {
+        juce::Component root;
+        root.setComponentID("root");
+        root.setSize(200, 200);
+
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(jive::StyleSelector{ "#root" },
+                              jive::Styles{}.withBackground(juce::Colours::black));
+
+        juce::Component container;
+        container.setBounds(10, 10, 100, 100);
+        root.addAndMakeVisible(container);
+
+        juce::Component target;
+        target.setBounds(5, 5, 20, 20);
+        container.addAndMakeVisible(target);
+
+        jive::ShadowComponent shadow{ target };
+        shadow.setShadow(jive::Shadow{}.setColour(juce::Colours::black));
+
+        test.expect(shadow.getParentComponent() == &root);
+        test.expectEquals(shadow.getBounds(), juce::Rectangle{ 15, 15, 20, 20 });
+
+        container.setTopLeftPosition(50, 30);
+        test.expectEquals(shadow.getBounds(), juce::Rectangle{ 55, 35, 20, 20 });
+
+        container.setBounds(container.getBounds().withWidth(80));
+        target.setBounds(0, 0, 30, 30);
+        test.expectEquals(shadow.getBounds(), juce::Rectangle{ 50, 30, 30, 30 });
+    },
+};
+#endif
