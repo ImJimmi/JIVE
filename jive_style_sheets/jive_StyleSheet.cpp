@@ -157,6 +157,41 @@ namespace jive
         }
     }
 
+    static juce::String resolveTokens(juce::String value,
+                                      const std::unordered_map<juce::String, juce::var>& tokens)
+    {
+        static constexpr auto isTokenChar = [](auto character) {
+            return juce::CharacterFunctions::isLetterOrDigit(character)
+                || character == '-'
+                || character == '_';
+        };
+
+        for (auto i = value.indexOfChar('$'); i >= 0; i = value.indexOfChar(i, '$'))
+        {
+            auto end = i + 1;
+
+            while (end < value.length() && isTokenChar(value[end]))
+                ++end;
+
+            const auto tokenName = value.substring(i, end);
+
+            if (auto token = tokens.find(tokenName); token != std::end(tokens))
+            {
+                const auto replacement = token->second.toString();
+                value = value.substring(0, i) + replacement + value.substring(end);
+                i += replacement.length();
+            }
+            else
+            {
+                DBG("No token with the name '" << tokenName << "'");
+                jassertfalse;
+                i = end;
+            }
+        }
+
+        return value;
+    }
+
     static void appendStyleProperties(Object& object,
                                       std::optional<Styles>& styles,
                                       const std::unordered_map<juce::String, juce::var>& tokens)
@@ -168,18 +203,8 @@ namespace jive
 
             auto value = object.getProperty(propertyName);
 
-            if (value.isString() && value.toString().startsWith("$"))
-            {
-                if (auto token = tokens.find(value.toString()); token != std::end(tokens))
-                {
-                    value = token->second;
-                }
-                else
-                {
-                    DBG("No token with the name '" << value.toString() << "'");
-                    jassertfalse;
-                }
-            }
+            if (value.isString() && value.toString().containsChar('$'))
+                value = resolveTokens(value.toString(), tokens);
 
             styles = styles
                          .value_or(Styles{})
@@ -1253,6 +1278,68 @@ private:
             expectEquals(radii->topRight, 10.0f);
             expectEquals(radii->bottomRight, 15.0f);
             expectEquals(radii->bottomLeft, 20.0f);
+        }
+
+        beginTest("tokens / multiple tokens embedded within a single property value all resolve");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$start", "red" },
+                            { "$middle", "lime" },
+                            { "$end", "blue" },
+                            { "background", "linear-gradient(0deg, $start, $middle, $end)" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            const auto background = styles.find<jive::Fill>("background");
+            expect(background.has_value());
+            const auto gradient = background->getJiveGradient();
+            expect(gradient.has_value());
+            expectEquals((int) gradient->stops.size(), 3);
+            expect(gradient->stops[0].colour == juce::Colours::red);
+            expect(gradient->stops[1].colour == juce::Colours::lime);
+            expect(gradient->stops[2].colour == juce::Colours::blue);
+        }
+
+        beginTest("tokens / a token name that is a prefix of another token name resolves to the correct value");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$accent", "red" },
+                            { "$accentHover", "lime" },
+                            { "background", "linear-gradient(0deg, $accentHover, $accent)" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            const auto background = styles.find<jive::Fill>("background");
+            expect(background.has_value());
+            const auto gradient = background->getJiveGradient();
+            expect(gradient.has_value());
+            expectEquals((int) gradient->stops.size(), 2);
+            expect(gradient->stops[0].colour == juce::Colours::lime);
+            expect(gradient->stops[1].colour == juce::Colours::red);
         }
     }
 
