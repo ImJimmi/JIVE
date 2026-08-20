@@ -19,7 +19,6 @@ namespace jive
         , padding{ state, "padding" }
         , border{ state, "border-width" }
         , margin{ state, "margin" }
-        , callbackLock{ state, "box-model-callback-lock" }
     {
         if (!width.exists())
             width.setAuto();
@@ -40,14 +39,14 @@ namespace jive
             listeners.call(&Listener::boxModelChanged, *this);
         };
         const auto onBoxModelChanged = [this, informBoxModelChanged]() {
-            if (callbackLock.get())
+            if (callbackLock)
                 return;
 
             informBoxModelChanged();
         };
         const auto handleOnValueChange = [this, informBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
             property.onValueChange = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
-                if (callbackLock.get())
+                if (callbackLock)
                     return;
 
                 JIVE_TRACE("property", property.id.toString());
@@ -249,14 +248,15 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getParentBounds() const
     {
-        if (state.getParent().isValid())
-        {
-            const Property<float> parentWidth{ state.getParent(), componentWidth.id };
-            const Property<float> parentHeight{ state.getParent(), componentHeight.id };
-            return { parentWidth.get(), parentHeight.get() };
-        }
+        const auto parent = state.getParent();
 
-        return {};
+        if (!parent.isValid())
+            return {};
+
+        return {
+            fromVar<float>(parent[componentWidth.id]),
+            fromVar<float>(parent[componentHeight.id]),
+        };
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
@@ -277,7 +277,7 @@ namespace jive
 
     void BoxModel::unlock()
     {
-        callbackLock.clear();
+        callbackLock = false;
     }
 } // namespace jive
 

@@ -97,7 +97,7 @@ namespace jive
         Property<juce::BorderSize<float>> padding;
         Property<juce::BorderSize<float>> border;
         Property<juce::BorderSize<float>> margin;
-        Property<bool> callbackLock;
+        bool callbackLock = false;
 
         juce::ListenerList<Listener> listeners;
 

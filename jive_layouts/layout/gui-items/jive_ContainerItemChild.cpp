@@ -86,7 +86,7 @@ namespace jive
             }
             else if (idealHeight.exists())
             {
-                const auto property = state["jive::ideal-height"];
+                const auto property = state[idealHeight.id];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
@@ -136,7 +136,7 @@ namespace jive
             }
             else if (idealHeight.exists())
             {
-                const auto property = state["jive::ideal-height"];
+                const auto property = state[idealHeight.id];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
@@ -223,8 +223,8 @@ namespace jive
 
         if (auto* container = getTopLevelDecorator().toType<ContainerItem>())
         {
-            if ((getComponent()->getWidth() < idealWidth.get()
-                 || getComponent()->getHeight() < idealHeight.get())
+            if ((static_cast<float>(getComponent()->getWidth()) < idealWidth.get()
+                 || static_cast<float>(getComponent()->getHeight()) < idealHeight.get())
                 && !static_cast<bool>(state["jive::setup-in-progress"]))
             {
                 container->updateIdealSize(true, false);

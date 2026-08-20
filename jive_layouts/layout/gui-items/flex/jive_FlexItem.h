@@ -23,6 +23,12 @@ namespace jive
         Property<float> flexShrink;
         Property<float> flexBasis;
         Property<juce::FlexItem::AlignSelf> alignSelf;
+        const Property<juce::FlexBox::Direction,
+                       Inheritance::doNotInherit,
+                       Accumulation::doNotAccumulate,
+                       false,
+                       Responsiveness::ignoreChanges>
+            parentDirection;
 
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;

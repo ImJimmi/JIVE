@@ -1,0 +1,129 @@
+<Window style="Styles.json" width="1000" height="780" min-width="800" min-height="780"
+    resizable="true" padding="28" gap="28">
+    <Component gap="10">
+        <Text id="title">Text</Text>
+        <Text id="lead">None of the text in this window has been measured or given a size. Every Text works out its own ideal width and height, and its parent grows to fit. Make the window narrower: this paragraph re-wraps, and everything below it moves down to make room.</Text>
+    </Component>
+
+    <Component display="grid" grid-template-columns="1fr 1fr" gap="48">
+        <Component gap="24">
+            <Component gap="8">
+                <Text class="heading">Wrapping</Text>
+
+                <Component flex-direction="row" gap="16">
+                    <Component width="100" gap="4">
+                        <Text class="caption">by-word</Text>
+                        <Text class="sample" word-wrap="by-word">Supercalifragilistic expialidocious</Text>
+                    </Component>
+                    <Component width="100" gap="4">
+                        <Text class="caption">by-character</Text>
+                        <Text class="sample" word-wrap="by-character">Supercalifragilistic expialidocious</Text>
+                    </Component>
+                    <Component width="100" gap="4">
+                        <Text class="caption">none</Text>
+                        <Text class="sample" word-wrap="none">Supercalifragilistic expialidocious</Text>
+                    </Component>
+                </Component>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Line spacing</Text>
+
+                <Component flex-direction="row" gap="16">
+                    <Component width="158" gap="4">
+                        <Text class="caption">0</Text>
+                        <Text class="sample">Lines sit snugly on top of one another.</Text>
+                    </Component>
+                    <Component width="158" gap="4">
+                        <Text class="caption">8</Text>
+                        <Text class="sample" line-spacing="8">Extra spacing opens the lines up.</Text>
+                    </Component>
+                </Component>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Alignment</Text>
+
+                <Text class="sample align-left">centred-left</Text>
+                <Text class="sample align-centre">centred</Text>
+                <Text class="sample align-right">centred-right</Text>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Right-to-left</Text>
+
+                <Text class="sample right-to-left">שלום עולם</Text>
+                <Text class="sample right-to-left">مرحبا بالعالم</Text>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Colour</Text>
+
+                <Component flex-direction="row" gap="16">
+                    <Text class="red">Red</Text>
+                    <Text class="green">Green</Text>
+                    <Text class="blue">Blue</Text>
+                </Component>
+            </Component>
+        </Component>
+
+        <Component gap="24">
+            <Component gap="8">
+                <Text class="heading">Font families</Text>
+
+                <Text class="georgia">Georgia, from the system</Text>
+                <Text class="rubik">Rubik, bundled</Text>
+                <Text class="rubik-mono-one">Rubik Mono One</Text>
+                <Text class="source-code-pro">Source Code Pro, bundled</Text>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Font sizes</Text>
+
+                <Component flex-direction="row" align-items="flex-end" gap="16">
+                    <Text class="size-12">12pt</Text>
+                    <Text class="size-18">18pt</Text>
+                    <Text class="size-24">24pt</Text>
+                    <Text class="size-36">36pt</Text>
+                </Component>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Kerning and scale</Text>
+
+                <Component flex-direction="row" gap="24">
+                    <Text class="kerning-tight">Kerning -0.05</Text>
+                    <Text class="kerning-wide">Kerning 0.2</Text>
+                </Component>
+                <Component flex-direction="row" gap="24">
+                    <Text class="scale-narrow">Scale 0.7</Text>
+                    <Text class="scale-wide">Scale 1.5</Text>
+                </Component>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Ascent and descent</Text>
+
+                <Component flex-direction="row" align-items="flex-start" gap="12">
+                    <Text class="metrics">Default</Text>
+                    <Text class="metrics ascent">Ascent 1.4</Text>
+                    <Text class="metrics descent">Descent 0.8</Text>
+                </Component>
+            </Component>
+
+            <Component gap="8">
+                <Text class="heading">Inheritance</Text>
+
+                <Component id="inherited" gap="4">
+                    <Text>A font set on a parent</Text>
+                    <Component padding="0 0 0 16" gap="4">
+                        <Text>applies to every Text inside it,</Text>
+                        <Component padding="0 0 0 16">
+                            <Text>however deeply nested.</Text>
+                        </Component>
+                    </Component>
+                </Component>
+            </Component>
+        </Component>
+    </Component>
+</Window>

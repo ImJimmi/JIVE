@@ -11,7 +11,12 @@ namespace std
     {
         [[nodiscard]] std::size_t operator()(const std::pair<juce::Rectangle<float>, jive::LayoutStrategy>& pair) const noexcept
         {
-            return (pair.first.toString() + jive::toString(pair.second)).hash();
+            auto result = std::hash<int>{}(static_cast<int>(pair.second));
+
+            for (const auto value : { pair.first.getX(), pair.first.getY(), pair.first.getWidth(), pair.first.getHeight() })
+                result = result * 31 + std::hash<float>{}(value);
+
+            return result;
         }
     };
 } // namespace std

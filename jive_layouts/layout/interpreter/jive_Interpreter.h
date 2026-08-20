@@ -45,6 +45,16 @@ namespace jive
             });
         }
 
+        /** Called after a file referenced by a "source" property has been read
+            into the tree, be that for the first time or because the file
+            changed on disk.
+
+            The trees an external source is loaded into are replaced wholesale,
+            so any listeners attached to them need to be reassigned when this
+            is called. The state tree is up to date by the time this is called.
+        */
+        std::function<void(const juce::File&)> onExternalSourceLoaded = nullptr;
+
     private:
         // ValueTree callbacks
         void valueTreePropertyChanged(juce::ValueTree& tree,
@@ -70,6 +80,7 @@ namespace jive
         [[nodiscard]] juce::ValueTree parseFileToValueTree(const juce::File&) const;
         void onObservedFileChanged(const juce::File& file);
         void observeFileForChanges(const juce::File& file);
+        void notifyExternalSourcesLoaded();
 
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
@@ -80,6 +91,8 @@ namespace jive
             juce::File::getCurrentWorkingDirectory(),
         };
         bool ignoreValueTreeChanges = false;
+        std::vector<juce::File> sourcesPendingNotification;
+        int interpretationsInProgress = 0;
 
         JUCE_LEAK_DETECTOR(Interpreter)
     };

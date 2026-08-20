@@ -41,6 +41,7 @@ namespace jive
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
         void updateCachedFont();
+        const juce::TextLayout& getLayoutToDraw(const juce::AttributedString& attributedString, float width);
 
         juce::String text;
         juce::Array<juce::AttributedString> appendices;
@@ -50,5 +51,10 @@ namespace jive
         juce::AttributedString::WordWrap wordWrap{ juce::AttributedString::WordWrap::byWord };
 
         mutable juce::ListenerList<Listener> listeners;
+
+        juce::AttributedString lastDrawnString;
+        std::optional<juce::TextLayout> unwrappedLayout;
+        juce::TextLayout wrappedLayout;
+        std::optional<float> wrappedLayoutWidth;
     };
 } // namespace jive

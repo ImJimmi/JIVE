@@ -15,7 +15,7 @@ namespace jive
 
         g.reduceClipRegion(shape);
 
-        const auto backgroundScale = 1.0f - ((borderWidth / 2.0f) / getWidth());
+        const auto backgroundScale = 1.0f - ((borderWidth / 2.0f) / static_cast<float>(getWidth()));
         g.setFillType(background.toJuceFillType(bounds));
         g.fillPath(shape,
                    juce::AffineTransform::scale(backgroundScale,

@@ -64,7 +64,7 @@ namespace jive
     // A component that rendered the given shadow as its graphics.
     // Useful for showing shadows behind other components so those components
     // don't need to draw outside their bounds.
-    class ShadowComponent
+    class ShadowComponent final
         : public juce::Component
         , private juce::ComponentListener
     {
