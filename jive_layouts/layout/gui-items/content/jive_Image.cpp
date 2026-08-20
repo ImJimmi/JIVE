@@ -48,6 +48,25 @@ namespace jive
         return true;
     }
 
+    static void removeUnserialisableProperties(juce::ValueTree tree)
+    {
+        for (auto i = 0; i < tree.getNumProperties(); i++)
+        {
+            const auto name = tree.getPropertyName(i);
+
+            if (tree[name].isArray()
+                || tree[name].isMethod()
+                || tree[name].isObject())
+            {
+                tree.removeProperty(name, nullptr);
+                i--;
+            }
+        }
+
+        for (auto i = 0; i < tree.getNumChildren(); i++)
+            removeUnserialisableProperties(tree.getChild(i));
+    }
+
     Drawable Image::getDrawable() const
     {
         const auto isInlineSVG = state.getType().toString().compareIgnoreCase("svg") == 0;
@@ -55,19 +74,7 @@ namespace jive
         if (isInlineSVG)
         {
             auto stringSafe = state.createCopy();
-
-            for (auto i = 0; i < stringSafe.getNumProperties(); i++)
-            {
-                const auto name = stringSafe.getPropertyName(i);
-
-                if (stringSafe[name].isArray()
-                    || stringSafe[name].isMethod()
-                    || stringSafe[name].isObject())
-                {
-                    stringSafe.removeProperty(name, nullptr);
-                    i--;
-                }
-            }
+            removeUnserialisableProperties(stringSafe);
 
             return Drawable{ stringSafe.toXmlString() };
         }
@@ -143,10 +150,36 @@ namespace jive
         return getImageComponent().getMinimumRequiredHeight();
     }
 
+    static juce::Rectangle<float> getViewBox(const juce::XmlElement& svg)
+    {
+        juce::StringArray values;
+        values.addTokens(svg.getStringAttribute("viewBox"), " ,", "");
+        values.removeEmptyStrings();
+
+        if (values.size() != 4)
+            return {};
+
+        return {
+            values[0].getFloatValue(),
+            values[1].getFloatValue(),
+            values[2].getFloatValue(),
+            values[3].getFloatValue(),
+        };
+    }
+
+    static juce::Rectangle<float> getIntrinsicBounds(const juce::XmlElement& svg)
+    {
+        if (svg.hasAttribute("width") || svg.hasAttribute("height"))
+            return {};
+
+        return getViewBox(svg);
+    }
+
     void Image::updateImageComponentDrawable()
     {
         const auto drawable = getDrawable();
         std::unique_ptr<juce::Drawable> result;
+        juce::Rectangle<float> intrinsicBounds;
 
         if (drawable.isImage())
             result = std::make_unique<juce::DrawableImage>(static_cast<juce::Image>(drawable));
@@ -155,9 +188,10 @@ namespace jive
         {
             const auto xml = juce::parseXML(static_cast<juce::String>(drawable));
             result = juce::Drawable::createFromSVG(*xml);
+            intrinsicBounds = getIntrinsicBounds(*xml);
         }
 
-        getImageComponent().setDrawable(std::move(result));
+        getImageComponent().setDrawable(std::move(result), intrinsicBounds);
 
         idealWidth = juce::String{ calculateRequiredWidth() } + "px";
         idealHeight = juce::String{ calculateRequiredHeight() } + "px";
@@ -183,6 +217,8 @@ public:
         testSVG();
         testInlineSVG();
         testSVGFillRespected();
+        testSVGFillInherited();
+        testSVGContentStaysPutWhenResized();
     }
 
 private:
@@ -209,6 +245,75 @@ private:
         auto* svgComponent = parent->getChildren()[0]->getComponent().get();
         const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
         expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGContentStaysPutWhenResized()
+    {
+        beginTest("svg / content keeps its position within the view-box when resized");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 100 100" width="100%" height="100%">
+                    <rect x="50" y="50" width="50" height="50" fill="blue" />
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto rectIsInTheBottomRightQuadrant = [svgComponent]() {
+            const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+            return snapshot.getPixelAt(75, 75) == juce::Colours::blue
+                && snapshot.getPixelAt(25, 25) != juce::Colours::blue;
+        };
+        expect(rectIsInTheBottomRightQuadrant());
+
+        state.setProperty("width", 40, nullptr);
+        state.setProperty("height", 40, nullptr);
+        state.setProperty("width", 100, nullptr);
+        state.setProperty("height", 100, nullptr);
+
+        expect(rectIsInTheBottomRightQuadrant());
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGFillInherited()
+    {
+        beginTest("svg / a fill specified for an ancestor is inherited");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#tinted",
+                              jive::Styles{}
+                                  .withFill(juce::Colours::red));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component id="tinted" width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::red);
 
         root.removeChildComponent(parentComponent);
     }
@@ -438,6 +543,40 @@ private:
             const auto& boxModel = jive::boxModel(item);
             expectEquals(boxModel.getWidth(), 155.0f);
             expectEquals(boxModel.getHeight(), 155.0f);
+        }
+        {
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "align-items", "flex-start" },
+                },
+                {
+                    juce::ValueTree{
+                        "Image",
+                        {
+                            {
+                                "source",
+                                R"(
+                                    <svg viewBox="0 0 24 24">
+                                        <rect x="5"
+                                              y="7"
+                                              width="10"
+                                              height="8" />
+                                    </svg>
+                                )",
+                            },
+                        },
+                    },
+                }
+            };
+            jive::Interpreter interpreter;
+            auto parent = interpreter.interpret(tree);
+            auto& item = *parent->getChildren()[0];
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 24.0f);
+            expectEquals(boxModel.getHeight(), 24.0f);
         }
     }
 
