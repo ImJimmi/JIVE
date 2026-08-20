@@ -5,6 +5,7 @@ juce_add_console_app(jive-test-runner
 
 target_sources(jive-test-runner
                PRIVATE source/integration-tests/ButtonWithNestedIconAndText.cpp
+                       source/integration-tests/SideBarWhenWindowIsResized.cpp
                        source/main.cpp
 )
 

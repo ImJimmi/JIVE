@@ -62,10 +62,14 @@ namespace jive
         virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;
 
     private:
+        void boxModelChanged(BoxModel&) final;
+
         [[nodiscard]] juce::Rectangle<float> getContentConstraints() const;
 
         BoxModel& box;
         Property<float> idealWidth;
         Property<float> idealHeight;
+        juce::Rectangle<float> explicitConstraintsWhenIdealSizeWasMeasured;
+        bool idealSizeWasLimitedByConstraints = false;
     };
 } // namespace jive

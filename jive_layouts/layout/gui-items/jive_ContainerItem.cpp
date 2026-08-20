@@ -42,6 +42,30 @@ namespace jive
             updateIdealSize();
     }
 
+    // An ideal size is only as big as the space it was measured in allowed it to
+    // be, so one measured when there wasn't much room says nothing about how big
+    // the content actually wants to be. Nothing else asks for a fresh
+    // measurement when room becomes available again - the content already fits,
+    // so it's never found to be too big for its bounds - leaving whatever size
+    // it was squashed down to for good.
+    void ContainerItem::boxModelChanged(BoxModel& boxModelThatChanged)
+    {
+        if (!idealSizeWasLimitedByConstraints
+            || boxModelThatChanged.state != state
+            || static_cast<bool>(state["jive::setup-in-progress"]))
+        {
+            return;
+        }
+
+        const auto constraints = box.getExplicitConstraints();
+
+        if (constraints.getWidth() > explicitConstraintsWhenIdealSizeWasMeasured.getWidth()
+            || constraints.getHeight() > explicitConstraintsWhenIdealSizeWasMeasured.getHeight())
+        {
+            updateIdealSize();
+        }
+    }
+
     juce::Rectangle<float> ContainerItem::getContentConstraints() const
     {
         auto constraints = box.getExplicitConstraints();
@@ -72,7 +96,12 @@ namespace jive
             }
         }
 
-        const auto newIdealSize = calculateIdealSize(getContentConstraints());
+        explicitConstraintsWhenIdealSizeWasMeasured = box.getExplicitConstraints();
+
+        const auto constraints = getContentConstraints();
+        const auto newIdealSize = calculateIdealSize(constraints);
+        idealSizeWasLimitedByConstraints = newIdealSize.getWidth() >= constraints.getWidth()
+                                        || newIdealSize.getHeight() >= constraints.getHeight();
         const auto widthChanged = !juce::approximatelyEqual(newIdealSize.getWidth(), idealWidth.get());
         const auto heightChanged = !juce::approximatelyEqual(newIdealSize.getHeight(), idealHeight.get());
 
@@ -113,6 +142,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
+
 class ContainerItemUnitTest : public juce::UnitTest
 {
 public:
@@ -124,9 +155,37 @@ public:
     void runTest() final
     {
         testIdealSizeCalculation();
+        testIdealSizeRemeasuredWhenRoomBecomesAvailable();
     }
 
 private:
+    void testIdealSizeRemeasuredWhenRoomBecomesAvailable()
+    {
+        beginTest("ideal-size re-measured when room becomes available");
+
+        auto state = jive::parseXML(R"(
+            <Component flex-direction="row" width="200" height="100">
+                <Component padding="15">
+                    <Button padding="10">Animations</Button>
+                </Component>
+                <Component flex-grow="1" />
+            </Component>
+        )");
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(state);
+        auto& sidebar = *item->getChildren()[0]->getComponent();
+        const auto idealWidth = sidebar.getWidth();
+        expectGreaterThan(idealWidth, 50);
+
+        for (auto width = 200; width >= 1; width--)
+            state.setProperty("width", width, nullptr);
+
+        for (auto width = 1; width <= 200; width++)
+            state.setProperty("width", width, nullptr);
+
+        expectEquals(sidebar.getWidth(), idealWidth);
+    }
+
     void testIdealSizeCalculation()
     {
         beginTest("ideal-size calculation");
