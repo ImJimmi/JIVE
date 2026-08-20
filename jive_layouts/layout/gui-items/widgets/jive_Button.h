@@ -26,11 +26,18 @@ namespace jive
         juce::Button& getButton();
         const juce::Button& getButton() const;
 
+        void layOutChildren() override;
+
     private:
         void buttonClicked(juce::Button* button) final;
         void componentParentHierarchyChanged(juce::Component& component) final;
 
+        // Returns the underlying component as a check-box, or nullptr if this
+        // button isn't one.
+        [[nodiscard]] const juce::ToggleButton* getCheckbox() const;
+
         void updateTriggerEvent();
+        void updateCheckboxTextInset();
 
         Property<bool> toggleable;
         Property<bool> toggled;
@@ -44,6 +51,9 @@ namespace jive
         Property<bool> focusable;
         Property<juce::FlexBox::JustifyContent> flexJustifyContent;
         Property<juce::FlexBox::AlignItems> flexAlignItems;
+        Property<juce::BorderSize<float>> padding;
+
+        bool hasAutomaticPadding{ false };
 
         Event onClick;
 

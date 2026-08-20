@@ -39,6 +39,7 @@ namespace jive
         , focusable{ state, "focusable" }
         , flexJustifyContent{ state, "justify-content" }
         , flexAlignItems{ state, "align-items" }
+        , padding{ state, "padding" }
         , onClick{ state, "on-click" }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
@@ -54,7 +55,15 @@ namespace jive
         if (!flexJustifyContent.exists())
             flexJustifyContent = juce::FlexBox::JustifyContent::center;
         if (!flexAlignItems.exists())
-            flexAlignItems = juce::FlexBox::AlignItems::center;
+        {
+            // Check-boxes draw their box at the left of their bounds, so their
+            // content is left-aligned rather than centred.
+            flexAlignItems = getCheckbox() != nullptr
+                               ? juce::FlexBox::AlignItems::flexStart
+                               : juce::FlexBox::AlignItems::center;
+        }
+
+        hasAutomaticPadding = !padding.exists();
 
         toggleable.onValueChange = [this]() {
             getButton().setToggleable(toggleable);
@@ -124,6 +133,35 @@ namespace jive
         return *dynamic_cast<const juce::Button*>(getComponent().get());
     }
 
+    void Button::layOutChildren()
+    {
+        updateCheckboxTextInset();
+        GuiItemDecorator::layOutChildren();
+    }
+
+    const juce::ToggleButton* Button::getCheckbox() const
+    {
+        return dynamic_cast<const juce::ToggleButton*>(&getButton());
+    }
+
+    void Button::updateCheckboxTextInset()
+    {
+        if (!hasAutomaticPadding)
+            return;
+
+        const auto* checkbox = getCheckbox();
+
+        if (checkbox == nullptr)
+            return;
+
+        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&checkbox->getLookAndFeel()))
+        {
+            const auto inset = lookAndFeel->getToggleButtonTextInset(*checkbox,
+                                                                     lookAndFeel->findMostApplicableStyles(*checkbox));
+            padding = juce::BorderSize<float>{ 0.0f, inset, 0.0f, 0.0f };
+        }
+    }
+
     void Button::buttonClicked(juce::Button* button)
     {
         jassertquiet(button == &getButton());
@@ -184,6 +222,7 @@ public:
         testRadioGroup();
         testTooltip();
         testDefaultSize();
+        testCheckboxTextInset();
         testEvents();
     }
 
@@ -430,6 +469,37 @@ private:
         const auto& boxModel = jive::boxModel(button);
         expectEquals(boxModel.getWidth(), 50.0f);
         expectEquals(boxModel.getHeight(), 20.0f);
+    }
+
+    void testCheckboxTextInset()
+    {
+        beginTest("check-boxes leave room for their box");
+
+        juce::Component root;
+        root.setSize(200, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="100">
+                <Checkbox>Some text</Checkbox>
+            </Component>
+        )"));
+        auto* parentComponent = item->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 200, 100);
+
+        auto& checkbox = *item->getChildren()[0];
+        const auto& toggleButton = dynamic_cast<const juce::ToggleButton&>(*checkbox.getComponent());
+        const auto styles = lookAndFeel.findMostApplicableStyles(toggleButton);
+        const auto boxBounds = lookAndFeel.getToggleButtonCheckboxBounds(toggleButton, styles);
+        const auto* textComponent = checkbox.getChildren()[0]->getComponent().get();
+
+        expectGreaterOrEqual(textComponent->getX(), boxBounds.getRight());
+        expectWithinAbsoluteError(static_cast<float>(textComponent->getX()),
+                                  lookAndFeel.getToggleButtonTextInset(toggleButton, styles),
+                                  1.0f);
+
+        root.removeChildComponent(parentComponent);
     }
 
     void testEvents()

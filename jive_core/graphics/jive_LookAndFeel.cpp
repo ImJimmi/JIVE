@@ -235,6 +235,14 @@ namespace jive
             .toNearestInt();
     }
 
+    float LookAndFeel::getToggleButtonTextInset(const juce::ToggleButton& button,
+                                                const Styles& styles) const
+    {
+        static constexpr auto gapBetweenCheckboxAndText = 5.0f;
+        return static_cast<float>(getToggleButtonCheckboxBounds(button, styles).getWidth())
+             + gapBetweenCheckboxAndText;
+    }
+
     void LookAndFeel::drawToggleButton(juce::Graphics& g,
                                        juce::ToggleButton& button,
                                        bool,
@@ -268,7 +276,7 @@ namespace jive
                  g.setFillType(getForegroundFill(button, styles));
                  default_styles::paintText(g,
                                            button,
-                                           button.getLocalBounds().toFloat().withTrimmedLeft(boxBounds.toFloat().getWidth() + 5.0f),
+                                           button.getLocalBounds().toFloat().withTrimmedLeft(getToggleButtonTextInset(button, styles)),
                                            styles,
                                            button.getButtonText(),
                                            juce::Justification::centredLeft);
@@ -595,7 +603,9 @@ namespace jive
                 destination.fontStyleFlags.get().emplace(entry);
         }
 
+        destination.fill = destination.fill.hasValue() ? destination.fill : source.fill;
         destination.foreground = destination.foreground.hasValue() ? destination.foreground : source.foreground;
+        destination.stroke = destination.stroke.hasValue() ? destination.stroke : source.stroke;
         destination.transitions = destination.transitions != nullptr ? destination.transitions : source.transitions;
 
         if (onlyInheretableStyles)
@@ -607,9 +617,7 @@ namespace jive
         destination.borderRadius = destination.borderRadius.hasValue() ? destination.borderRadius : source.borderRadius;
         destination.borderWidth = destination.borderWidth.hasValue() ? destination.borderWidth : source.borderWidth;
         destination.direction = destination.direction.hasValue() ? destination.direction : source.direction;
-        destination.fill = destination.fill.hasValue() ? destination.fill : source.fill;
         destination.shadow = destination.shadow.hasValue() ? destination.shadow : source.shadow;
-        destination.stroke = destination.stroke.hasValue() ? destination.stroke : source.stroke;
         destination.textAlign = destination.textAlign.hasValue() ? destination.textAlign : source.textAlign;
         destination.thumb = destination.thumb.hasValue() ? destination.thumb : source.thumb;
         destination.track = destination.track.hasValue() ? destination.track : source.track;

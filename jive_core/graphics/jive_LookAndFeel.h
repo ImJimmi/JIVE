@@ -128,6 +128,10 @@ namespace jive
         // Positioned center-left by default.
         virtual juce::Rectangle<int> getToggleButtonCheckboxBounds(const juce::ToggleButton&, const Styles&) const;
 
+        // Returns the space that should be left clear at the left of the given
+        // toggle button so its text doesn't overlap its check-box.
+        [[nodiscard]] float getToggleButtonTextInset(const juce::ToggleButton&, const Styles&) const;
+
         // A generic component drawer - useful for drawing simple components
         // that just have a background, border, corner radius, etc.
         virtual void drawComponent(juce::Graphics&, const juce::Component&) const;
