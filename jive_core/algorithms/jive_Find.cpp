@@ -31,6 +31,26 @@ namespace jive
         return {};
     }
 
+    std::vector<juce::ValueTree> findAll(const juce::ValueTree& root,
+                                         std::function<bool(const juce::ValueTree&)> predicate)
+    {
+        if (predicate == nullptr)
+            return {};
+
+        std::vector<juce::ValueTree> result;
+
+        if (predicate(root))
+            result.emplace_back(root);
+
+        for (auto child : root)
+        {
+            auto others = findAll(child, predicate);
+            result.insert(std::end(result), std::begin(others), std::end(others));
+        }
+
+        return result;
+    }
+
     juce::ValueTree findElementWithID(const juce::ValueTree& root,
                                       const juce::Identifier& id)
     {
@@ -38,6 +58,37 @@ namespace jive
                     [id](const auto& element) {
                         return fromVar<juce::Identifier>(element["id"]) == id;
                     });
+    }
+
+    std::vector<juce::ValueTree> findElementsWithClass(const juce::ValueTree& root,
+                                                       const juce::String& className)
+    {
+        return findAll(root, [&className](const auto& tree) {
+            return juce::StringArray::fromTokens(tree["class"].toString(), true).contains(className);
+        });
+    }
+
+    std::vector<juce::ValueTree> findElementsWithText(const juce::ValueTree& root,
+                                                      const juce::String& text)
+    {
+        return findElementsWithText(std::vector{ root }, text);
+    }
+
+    std::vector<juce::ValueTree> findElementsWithText(const std::vector<juce::ValueTree>& roots,
+                                                      const juce::String& text)
+    {
+        std::vector<juce::ValueTree> result;
+
+        for (const auto& root : roots)
+        {
+            auto others = findAll(root, [&text](const auto& tree) {
+                auto child = tree.getChildWithName("Text");
+                return child.isValid() && child["text"].toString() == text;
+            });
+            result.insert(std::end(result), std::begin(others), std::end(others));
+        }
+
+        return result;
     }
 } // namespace jive
 
