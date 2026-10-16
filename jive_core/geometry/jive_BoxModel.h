@@ -74,6 +74,12 @@ namespace jive
         [[nodiscard]] juce::Rectangle<float> getMinimumBounds() const;
         [[nodiscard]] juce::Rectangle<float> getMaximumBounds() const;
 
+        /** Returns a number that changes whenever something a parent needs in
+            order to lay this item out changes, e.g. its margin or ideal size,
+            but not when the item is simply resized.
+         */
+        [[nodiscard]] std::uint64_t getConstraintsVersion() const;
+
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
@@ -101,6 +107,7 @@ namespace jive
         PassiveProperty<juce::BorderSize<float>> border;
         PassiveProperty<juce::BorderSize<float>> margin;
         bool callbackLock = false;
+        std::uint64_t constraintsVersion = 0;
 
         juce::ListenerList<Listener> listeners;
 

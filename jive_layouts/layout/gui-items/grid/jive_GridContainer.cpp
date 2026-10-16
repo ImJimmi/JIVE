@@ -66,14 +66,9 @@ namespace jive
         gap.onTransitionProgressed = [this] {
             updateIdealSize();
         };
-
-        state.addListener(this);
     }
 
-    GridContainer::~GridContainer()
-    {
-        state.removeListener(this);
-    }
+    GridContainer::~GridContainer() = default;
 
     void GridContainer::layOutChildren()
     {
@@ -165,6 +160,8 @@ namespace jive
 
     void GridContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        ContainerItem::valueTreePropertyChanged(tree, id);
+
         if (forwardPropertyChange(tree,
                                   id,
                                   justifyItems,

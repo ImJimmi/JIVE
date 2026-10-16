@@ -51,20 +51,35 @@ namespace jive
         flexBasis.onTransitionProgressed = updateParentLayout;
         alignSelf.onValueChange = updateParentLayout;
 
-        box.addListener(*this);
         state.addListener(this);
     }
 
     FlexItem::~FlexItem()
     {
         state.removeListener(this);
-        box.removeListener(*this);
     }
 
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
         JIVE_TRACE("x", parentContentBounds.getX(), "y", parentContentBounds.getY(), "width", parentContentBounds.getWidth(), "height", parentContentBounds.getHeight(), "strategy", strategy);
+        const auto orientation = [this]() {
+            const auto direction = parentDirection.getOr(juce::FlexBox::Direction::column);
+
+            if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
+                return Orientation::horizontal;
+
+            return Orientation::vertical;
+        }();
+
+        if (box.getConstraintsVersion() != cachedItemsConstraintsVersion
+            || orientation != cachedItemsOrientation)
+        {
+            cachedItems.clear();
+            cachedItemsConstraintsVersion = box.getConstraintsVersion();
+            cachedItemsOrientation = orientation;
+        }
+
         const auto key = std::make_pair(parentContentBounds, strategy);
 
         if (cachedItems.find(key) == std::end(cachedItems))
@@ -80,18 +95,13 @@ namespace jive
                 flexItem.alignSelf = alignSelf;
             }
 
-            const auto orientation = [this]() {
-                const auto direction = parentDirection.getOr(juce::FlexBox::Direction::column);
-
-                if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
-                    return Orientation::horizontal;
-
-                return Orientation::vertical;
-            };
             applyConstraints(flexItem,
                              parentContentBounds,
-                             orientation(),
+                             orientation,
                              strategy);
+
+            if (std::size(cachedItems) >= maxNumCachedItems)
+                cachedItems.clear();
 
             cachedItems[key] = flexItem;
         }
@@ -101,11 +111,6 @@ namespace jive
     }
 
     void FlexItem::idealSizeChanged()
-    {
-        cachedItems.clear();
-    }
-
-    void FlexItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
     }
@@ -131,6 +136,8 @@ public:
     {
         testExplicitlySizedItemNotShrunk();
         testItemAfterSiblingThatReflows();
+        testConstraintsReusedAfterResize();
+        testConstraintsRecalculatedWhenParentDirectionChanges();
         testOrder();
         testFlexGrow();
         testFlexShrink();
@@ -198,6 +205,58 @@ private:
 
         state.setProperty("width", 300, nullptr);
         expectEquals(item.getWidth(), 300);
+    }
+
+    void testConstraintsReusedAfterResize()
+    {
+        beginTest("an item's constraints aren't recalculated when it has only been resized");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto numIdealHeightCalculations = std::make_shared<int>(0);
+        auto text = state.getChild(0);
+        const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
+        text.setProperty("jive::ideal-height",
+                         juce::var{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
+                             (*numIdealHeightCalculations)++;
+                             return calculateIdealHeight(args);
+                         } },
+                         nullptr);
+
+        state.setProperty("width", 200, nullptr);
+        expectEquals(root->getChildren()[0]->getComponent()->getWidth(), 200);
+
+        *numIdealHeightCalculations = 0;
+        state.setProperty("justify-content", "centre", nullptr);
+        expectEquals(*numIdealHeightCalculations, 0);
+    }
+
+    void testConstraintsRecalculatedWhenParentDirectionChanges()
+    {
+        beginTest("an item's constraints are recalculated when its parent's direction changes");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto& item = *dynamic_cast<jive::GuiItemDecorator&>(*root->getChildren()[0])
+                          .toType<jive::FlexItem>();
+        const juce::Rectangle<float> parentContentBounds{ 50.0f, 5.0f };
+
+        auto flexItem = item.toJuceFlexItem(parentContentBounds, jive::LayoutStrategy::real);
+        expectGreaterThan(flexItem.minHeight, parentContentBounds.getHeight());
+
+        state.setProperty("flex-direction", "row", nullptr);
+        flexItem = item.toJuceFlexItem(parentContentBounds, jive::LayoutStrategy::real);
+        expectEquals(flexItem.height, parentContentBounds.getHeight());
     }
 
     void testOrder()

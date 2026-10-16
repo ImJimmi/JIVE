@@ -6,7 +6,6 @@ namespace jive
 {
     class GridItem
         : public ContainerItem::Child
-        , private BoxModel::Listener
         , private juce::ValueTree::Listener
     {
     public:
@@ -19,7 +18,6 @@ namespace jive
         void idealSizeChanged() final;
 
     private:
-        void boxModelChanged(BoxModel&) final;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         PassiveProperty<int> order;
@@ -32,5 +30,6 @@ namespace jive
 
         const BoxModel& box{ boxModel(*this) };
         std::unordered_map<ItemCacheKey, juce::GridItem> cachedItems;
+        std::uint64_t cachedItemsConstraintsVersion = 0;
     };
 } // namespace jive

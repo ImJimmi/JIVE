@@ -6,7 +6,6 @@ namespace jive
 {
     class GridContainer
         : public ContainerItem
-        , private juce::ValueTree::Listener
     {
     public:
         explicit GridContainer(std::unique_ptr<GuiItem> itemToDecorate);

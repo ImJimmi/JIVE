@@ -34,19 +34,23 @@ namespace jive
         // re-resolve the parent's layout when this happens.
         idealWidth.onValueChange = updateParentLayout;
 
-        box.addListener(*this);
         state.addListener(this);
     }
 
     GridItem::~GridItem()
     {
         state.removeListener(this);
-        box.removeListener(*this);
     }
 
     juce::GridItem GridItem::toJuceGridItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
+        if (box.getConstraintsVersion() != cachedItemsConstraintsVersion)
+        {
+            cachedItems.clear();
+            cachedItemsConstraintsVersion = box.getConstraintsVersion();
+        }
+
         const auto key = std::make_pair(parentContentBounds, strategy);
 
         if (cachedItems.find(key) == std::end(cachedItems))
@@ -84,6 +88,9 @@ namespace jive
                     gridItem.height = gridItem.minHeight;
             }
 
+            if (std::size(cachedItems) >= maxNumCachedItems)
+                cachedItems.clear();
+
             cachedItems[key] = gridItem;
         }
 
@@ -91,11 +98,6 @@ namespace jive
     }
 
     void GridItem::idealSizeChanged()
-    {
-        cachedItems.clear();
-    }
-
-    void GridItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
     }
@@ -147,6 +149,7 @@ public:
     void runTest() final
     {
         testComponent();
+        testConstraintsReusedAfterResize();
         testOrder();
         testJustifySelf();
         testAlignSelf();
@@ -163,6 +166,35 @@ public:
     }
 
 private:
+    void testConstraintsReusedAfterResize()
+    {
+        beginTest("an item's constraints aren't recalculated when it has only been resized");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300" display="grid" grid-template-columns="1fr">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto numIdealHeightCalculations = std::make_shared<int>(0);
+        auto text = state.getChild(0);
+        const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
+        text.setProperty("jive::ideal-height",
+                         juce::var{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
+                             (*numIdealHeightCalculations)++;
+                             return calculateIdealHeight(args);
+                         } },
+                         nullptr);
+
+        state.setProperty("width", 200, nullptr);
+        expectEquals(root->getChildren()[0]->getComponent()->getWidth(), 200);
+
+        *numIdealHeightCalculations = 0;
+        state.setProperty("justify-items", "centre", nullptr);
+        expectEquals(*numIdealHeightCalculations, 0);
+    }
+
     void testComponent()
     {
         beginTest("component");

@@ -38,14 +38,9 @@ namespace jive
         gap.onTransitionProgressed = [this] {
             updateIdealSize();
         };
-
-        state.addListener(this);
     }
 
-    FlexContainer::~FlexContainer()
-    {
-        state.removeListener(this);
-    }
+    FlexContainer::~FlexContainer() = default;
 
     // juce::FlexBox has no notion of gaps, so they're emulated by giving every
     // item half a gap of margin on each side and laying the items out in bounds
@@ -169,6 +164,8 @@ namespace jive
 
     void FlexContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        ContainerItem::valueTreePropertyChanged(tree, id);
+
         if (forwardPropertyChange(tree,
                                   id,
                                   flexDirection,

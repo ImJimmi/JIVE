@@ -1,3 +1,4 @@
+#include "CardsBenchmark.h"
 #include "FlexStressTest.h"
 #include "MinimumViewBenchmark.h"
 #include "PageSwitchBenchmark.h"
@@ -38,6 +39,12 @@ public:
         {
             TextResizeBenchmark{ false }.run();
             TextResizeBenchmark{ true }.run();
+        }
+        if (shouldRun("cards"))
+        {
+            CardsBenchmark{ CardsBenchmark::Scenario::build }.run();
+            CardsBenchmark{ CardsBenchmark::Scenario::cardTextChange }.run();
+            CardsBenchmark{ CardsBenchmark::Scenario::headingTextChange }.run();
         }
 
         quit();
