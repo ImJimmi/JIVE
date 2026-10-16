@@ -27,20 +27,20 @@ namespace jive
 
     Button::Button(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , toggleable{ state, "toggleable" }
-        , toggled{ state, "toggled" }
-        , toggleOnClick{ state, "toggle-on-click" }
-        , radioGroup{ state, "radio-group" }
-        , triggerEvent{ state, "trigger-event" }
-        , tooltip{ state, "tooltip" }
-        , text{ state, "text" }
-        , minWidth{ state, "min-width" }
-        , minHeight{ state, "min-height" }
-        , focusable{ state, "focusable" }
-        , flexJustifyContent{ state, "justify-content" }
-        , flexAlignItems{ state, "align-items" }
-        , padding{ state, "padding" }
-        , onClick{ state, "on-click" }
+        , toggleable{ state, ids::toggleable() }
+        , toggled{ state, ids::toggled() }
+        , toggleOnClick{ state, ids::toggleOnClick() }
+        , radioGroup{ state, ids::radioGroup() }
+        , triggerEvent{ state, ids::triggerEvent() }
+        , tooltip{ state, ids::tooltip() }
+        , text{ state, ids::text() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
+        , focusable{ state, ids::focusable() }
+        , flexJustifyContent{ state, ids::justifyContent() }
+        , flexAlignItems{ state, ids::alignItems() }
+        , padding{ state, ids::padding() }
+        , onClick{ state, ids::onClick() }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
@@ -105,10 +105,12 @@ namespace jive
         };
         getButton().addListener(this);
         getButton().addComponentListener(this);
+        state.addListener(this);
     }
 
     Button::~Button()
     {
+        state.removeListener(this);
         getButton().removeComponentListener(this);
         getButton().removeListener(this);
     }
@@ -122,6 +124,19 @@ namespace jive
             parameterAttachment = nullptr;
     }
 #endif
+
+    void Button::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              toggleable,
+                              toggled,
+                              toggleOnClick,
+                              radioGroup,
+                              triggerEvent,
+                              tooltip,
+                              text);
+    }
 
     juce::Button& Button::getButton()
     {
@@ -218,9 +233,12 @@ public:
     void runTest() final
     {
         testToggleable();
+        testToggled();
         testClickingTogglesState();
         testRadioGroup();
+        testTriggerEvent();
         testTooltip();
+        testTitle();
         testDefaultSize();
         testCheckboxTextInset();
         testEvents();
@@ -445,6 +463,33 @@ private:
             auto& button = getButton(*item);
             expectEquals(button.getTooltip(), juce::String{ "OneTwoThree" });
         }
+    }
+
+    void testTitle()
+    {
+        beginTest("title");
+
+        juce::ValueTree tree{
+            "Button",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{
+                    "Text",
+                    {
+                        { "text", "Click" },
+                    },
+                },
+            },
+        };
+        auto item = interpreter.interpret(tree);
+        auto& button = getButton(*item);
+        expectEquals(button.getTitle(), juce::String{ "Click" });
+
+        tree.getChild(0).setProperty("text", "Press", nullptr);
+        expectEquals(button.getTitle(), juce::String{ "Press" });
     }
 
     void testDefaultSize()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "jive_Identifiers.h"
 #include "jive_Object.h"
 #include "jive_PropertyBehaviours.h"
 #include "variant-converters/jive_VariantConvertion.h"
@@ -215,7 +216,7 @@ namespace jive
 
         [[nodiscard]] Transition* getTransition()
         {
-            if (currentTransition == nullptr && !getVar(source, getTransitionID()).isVoid())
+            if (currentTransition == nullptr && !getVar(source, ids::transition()).isVoid())
             {
                 using TransitionsProperty = Property<Transitions::ReferenceCountedPointer,
                                                      Inheritance::doNotInherit,
@@ -223,7 +224,7 @@ namespace jive
                                                      true,
                                                      Responsiveness::ignoreChanges>;
 
-                const TransitionsProperty transitions{ source, getTransitionID() };
+                const TransitionsProperty transitions{ source, ids::transition() };
                 currentTransition = (*transitions.get())[transitionSourceID.toString()];
             }
 
@@ -270,6 +271,20 @@ namespace jive
             return *this;
         }
 
+        /** For properties that ignore changes, lets whoever is listening to
+            the source on their behalf pass on changes so that transitions are
+            kept up to date and onValueChange is still called.
+
+            Returns true if the change was to this property, in which case
+            onValueChange may have destroyed this property's owner.
+        */
+        bool handlePropertyChange(juce::ValueTree& tree, const juce::Identifier& property)
+        {
+            const auto isThisProperty = property == id;
+            valueTreePropertyChanged(tree, property);
+            return isThisProperty;
+        }
+
         const juce::Identifier id;
         mutable std::function<void(void)> onValueChange = nullptr;
         mutable std::function<void(void)> onTransitionProgressed = nullptr;
@@ -280,7 +295,7 @@ namespace jive
         {
             if (property != id)
             {
-                if (property == getTransitionID())
+                if (property == ids::transition())
                     currentTransition = getTransition();
 
                 return;
@@ -626,12 +641,6 @@ namespace jive
         Source source;
 
     private:
-        [[nodiscard]] static const juce::Identifier& getTransitionID()
-        {
-            static const juce::Identifier transitionID{ "transition" };
-            return transitionID;
-        }
-
         void initialise()
         {
             listenerTarget = findListenerTarget(source);
@@ -725,4 +734,23 @@ namespace jive
         Transition* currentTransition = nullptr;
         Transition* observedTransition = nullptr;
     };
+
+    template <typename ValueType,
+              Accumulation accumulation = Accumulation::doNotAccumulate>
+    using PassiveProperty = Property<ValueType,
+                                     Inheritance::doNotInherit,
+                                     accumulation,
+                                     isReferenceCountedObjectPointer<ValueType>::value,
+                                     Responsiveness::ignoreChanges>;
+
+    // Passes a change on to the given passive properties, stopping at the one
+    // it was for as its callback could have destroyed the properties' owner.
+    // Returns true if one of the properties was the one that changed.
+    template <typename... Properties>
+    bool forwardPropertyChange(juce::ValueTree& tree,
+                               const juce::Identifier& property,
+                               Properties&... properties)
+    {
+        return (properties.handlePropertyChange(tree, property) || ...);
+    }
 } // namespace jive

@@ -4,10 +4,10 @@ namespace jive
 {
     ProgressBar::ProgressBar(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ state, "value" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , focusable{ state, "focusable" }
+        , value{ state, ids::value() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , focusable{ state, ids::focusable() }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
@@ -25,6 +25,18 @@ namespace jive
             width = "135";
         if (height.isAuto())
             height = "20";
+
+        state.addListener(this);
+    }
+
+    ProgressBar::~ProgressBar()
+    {
+        state.removeListener(this);
+    }
+
+    void ProgressBar::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        value.handlePropertyChange(tree, property);
     }
 
     bool ProgressBar::isContainer() const

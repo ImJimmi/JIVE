@@ -7,6 +7,7 @@ namespace jive
     class StyleSheet
         : public juce::ReferenceCountedObject
         , private Object::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         ~StyleSheet();
@@ -23,9 +24,12 @@ namespace jive
 
         void propertyChanged(Object& object,
                              const juce::Identifier& propertyName) final;
+        void valueTreePropertyChanged(juce::ValueTree& tree,
+                                      const juce::Identifier& property) final;
 
         void clear();
         void stylePropertyChanged();
+        void updateLineSpacing();
         void addStylesFrom(Object& object);
         void addTokensFrom(Object& object);
         void addInlineStyles(Object& object);
@@ -41,7 +45,8 @@ namespace jive
                                        false>;
 
         StyleProperty style;
-        Property<juce::BorderSize<float>> border;
+        PassiveProperty<juce::BorderSize<float>> border;
+        PassiveProperty<float> lineSpacing;
         std::unordered_map<juce::String, juce::Uuid> uuids;
         std::unordered_map<juce::String, StyleProperty> observedObjects;
 

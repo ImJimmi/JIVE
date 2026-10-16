@@ -5,6 +5,7 @@
 #include "jive_Styles.h"
 
 #include <jive_core/interface/jive_InteractionState.h>
+#include <jive_core/values/jive_Identifiers.h>
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -57,7 +58,9 @@ namespace jive
         juce::Uuid addStyles(const StyleSelector& selector,
                              const Styles&);
 
-        // Returns a pointer to any styles with the given ID
+        // Returns a pointer to any styles with the given ID. Changes made
+        // through it are picked up the next time styles are resolved, so make
+        // them before then.
         [[nodiscard]] Styles* findStyles(const juce::Uuid& uuid);
         [[nodiscard]] const Styles* findStyles(const juce::Uuid& uuid) const;
 
@@ -72,13 +75,13 @@ namespace jive
         template <typename ComponentType>
         void updateShadow(std::remove_const_t<ComponentType>& component, const Styles& styles) const
         {
-            static constexpr auto property = "jive::attached-shadow-component";
+            const auto& property = ids::attachedShadowComponent();
 
             if (!styles.shadow.hasValue())
             {
                 component.getProperties().remove(property);
-                component.getProperties().remove("jive::shadow-bounds");
-                component.getProperties().remove("jive::shadow-path");
+                component.getProperties().remove(ids::shadowBounds());
+                component.getProperties().remove(ids::shadowPath());
                 return;
             }
 
@@ -224,10 +227,28 @@ namespace jive
             Styles styles;
         };
 
+        // Everything about a component that a selector can match against.
+        struct SelectorInputs
+        {
+            explicit SelectorInputs(const juce::Component&);
+            [[nodiscard]] bool operator==(const SelectorInputs&) const;
+
+            const juce::Component* component;
+            juce::String id;
+            juce::var classes;
+            int interactionState;
+            std::optional<juce::Slider::SliderStyle> sliderStyle;
+        };
+
         struct ComponentStylesCache
         {
             juce::Component::SafePointer<juce::Component> component;
             Styles styles;
+
+            // The inputs of the component and each of its ancestors that the
+            // styles were last resolved from.
+            std::vector<SelectorInputs> resolvedFrom;
+            std::uint64_t resolvedFromStylersVersion;
         };
 
         template <typename Component, typename DefaultStyleDrawer>
@@ -245,7 +266,7 @@ namespace jive
             }
 
             drawDefaultStyle(styles);
-            updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component));
+            updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component), styles);
         }
 
         void onVBlankUpdate();
@@ -254,6 +275,7 @@ namespace jive
 
         std::vector<Painter<ComponentPainter>> painters;
         std::vector<Styler> stylers;
+        std::uint64_t stylersVersion = 0;
         mutable std::vector<ComponentStylesCache> stylesCache;
 
         juce::VBlankAttachment vBlank;

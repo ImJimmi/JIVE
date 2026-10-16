@@ -2,6 +2,7 @@
 
 #include <jive_core/algorithms/jive_Visitor.h>
 #include <jive_core/logging/jive_StringStreams.h>
+#include <jive_core/values/jive_Identifiers.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 namespace jive
@@ -449,25 +450,25 @@ namespace juce
 
         std::visit(jive::Visitor{
                        [&object](jive::RadialPosition::Centre) {
-                           object->setProperty("x", "center");
+                           object->setProperty(jive::ids::x(), "center");
                        },
                        [&object](jive::RadialPosition::Left left) {
-                           object->setProperty("x", "left " + juce::String{ left.inset.toString() });
+                           object->setProperty(jive::ids::x(), "left " + juce::String{ left.inset.toString() });
                        },
                        [&object](jive::RadialPosition::Right right) {
-                           object->setProperty("x", "right " + juce::String{ right.inset.toString() });
+                           object->setProperty(jive::ids::x(), "right " + juce::String{ right.inset.toString() });
                        },
                    },
                    position.xAxis);
         std::visit(jive::Visitor{
                        [&object](jive::RadialPosition::Centre) {
-                           object->setProperty("y", "center");
+                           object->setProperty(jive::ids::y(), "center");
                        },
                        [&object](jive::RadialPosition::Top top) {
-                           object->setProperty("y", "top " + juce::String{ top.inset.toString() });
+                           object->setProperty(jive::ids::y(), "top " + juce::String{ top.inset.toString() });
                        },
                        [&object](jive::RadialPosition::Bottom bottom) {
-                           object->setProperty("y", "bottom " + juce::String{ bottom.inset.toString() });
+                           object->setProperty(jive::ids::y(), "bottom " + juce::String{ bottom.inset.toString() });
                        },
                    },
                    position.yAxis);
@@ -479,8 +480,8 @@ namespace juce
     {
         jive::RadialPosition position;
 
-        const auto x = object["x"].toString();
-        const auto y = object["y"].toString();
+        const auto x = object[jive::ids::x()].toString();
+        const auto y = object[jive::ids::y()].toString();
 
         if (x == "center")
             position.xAxis = jive::RadialPosition::Centre{};
@@ -571,10 +572,10 @@ namespace juce
         {
             auto stopObject = std::make_unique<DynamicObject>();
 
-            stopObject->setProperty("colour", VariantConverter<Colour>::toVar(stop.colour));
+            stopObject->setProperty(jive::ids::colour(), VariantConverter<Colour>::toVar(stop.colour));
 
             if (stop.length.has_value())
-                stopObject->setProperty("length", VariantConverter<jive::Length>::toVar(*stop.length));
+                stopObject->setProperty(jive::ids::length(), VariantConverter<jive::Length>::toVar(*stop.length));
         }
 
         return result;
@@ -589,9 +590,9 @@ namespace juce
             for (const auto& object : *value.getArray())
             {
                 jive::Gradient::ColourStop stop;
-                stop.colour = VariantConverter<Colour>::fromVar(object["colour"]);
-                stop.length = object.hasProperty("length")
-                                ? std::make_optional(VariantConverter<jive::Length>::fromVar(object["length"]))
+                stop.colour = VariantConverter<Colour>::fromVar(object[jive::ids::colour()]);
+                stop.length = object.hasProperty(jive::ids::length())
+                                ? std::make_optional(VariantConverter<jive::Length>::fromVar(object[jive::ids::length()]))
                                 : std::nullopt;
                 stops.push_back(stop);
             }
@@ -645,11 +646,11 @@ namespace juce
     {
         auto object = std::make_unique<DynamicObject>();
 
-        object->setProperty("variant", jive::toVar(gradient.variant));
-        object->setProperty("stops", jive::toVar(gradient.stops));
-        object->setProperty("linear-angle", jive::toVar(gradient.linearAngle));
-        object->setProperty("radial-size", gradient.radialSize);
-        object->setProperty("radial-position", jive::toVar(gradient.radialPosition));
+        object->setProperty(jive::ids::variant(), jive::toVar(gradient.variant));
+        object->setProperty(jive::ids::stops(), jive::toVar(gradient.stops));
+        object->setProperty(jive::ids::linearAngle(), jive::toVar(gradient.linearAngle));
+        object->setProperty(jive::ids::radialSize(), gradient.radialSize);
+        object->setProperty(jive::ids::radialPosition(), jive::toVar(gradient.radialPosition));
 
         return juce::var{ object.release() };
     }
@@ -664,11 +665,11 @@ namespace juce
 
         jive::Gradient gradient;
 
-        gradient.variant = jive::fromVar<jive::Gradient::Variant>(value.hasProperty("variant") ? value["variant"] : value["gradient"]);
-        gradient.stops = jive::fromVar<std::vector<jive::Gradient::ColourStop>>(value["stops"]);
-        gradient.linearAngle = jive::fromVar<std::variant<float, jive::SideOrCorner>>(value["linear-angle"]);
-        gradient.radialSize = static_cast<float>(value["radial-size"]);
-        gradient.radialPosition = jive::fromVar<jive::RadialPosition>(value["radial-position"]);
+        gradient.variant = jive::fromVar<jive::Gradient::Variant>(value.hasProperty(jive::ids::variant()) ? value[jive::ids::variant()] : value[jive::ids::gradient()]);
+        gradient.stops = jive::fromVar<std::vector<jive::Gradient::ColourStop>>(value[jive::ids::stops()]);
+        gradient.linearAngle = jive::fromVar<std::variant<float, jive::SideOrCorner>>(value[jive::ids::linearAngle()]);
+        gradient.radialSize = static_cast<float>(value[jive::ids::radialSize()]);
+        gradient.radialPosition = jive::fromVar<jive::RadialPosition>(value[jive::ids::radialPosition()]);
 
         return gradient;
     }

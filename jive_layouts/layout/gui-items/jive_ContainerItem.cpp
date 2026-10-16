@@ -7,8 +7,8 @@ namespace jive
     ContainerItem::ContainerItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , box{ boxModel(*this) }
-        , idealWidth{ state, "jive::ideal-width" }
-        , idealHeight{ state, "jive::ideal-height" }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
     {
         box.addListener(*this);
     }
@@ -25,7 +25,7 @@ namespace jive
         const auto numChildrenBefore = getChildren().size();
         GuiItemDecorator::insertChild(std::move(child), index);
 
-        if (getChildren().size() != numChildrenBefore && !static_cast<bool>(state["jive::setup-in-progress"]))
+        if (getChildren().size() != numChildrenBefore && !static_cast<bool>(state[ids::setupInProgress()]))
             updateIdealSize();
     }
 
@@ -38,7 +38,7 @@ namespace jive
             GuiItemDecorator::setChildren(std::move(newChildren));
         }
 
-        if (!getChildren().isEmpty() && !static_cast<bool>(state["jive::setup-in-progress"]))
+        if (!getChildren().isEmpty() && !static_cast<bool>(state[ids::setupInProgress()]))
             updateIdealSize();
     }
 
@@ -52,7 +52,7 @@ namespace jive
     {
         if (!idealSizeWasLimitedByConstraints
             || boxModelThatChanged.state != state
-            || static_cast<bool>(state["jive::setup-in-progress"]))
+            || static_cast<bool>(state[ids::setupInProgress()]))
         {
             return;
         }
@@ -128,7 +128,7 @@ namespace jive
             idealHeight = newIdealSize.getHeight();
         }
 
-        if (informParentOfChanges && getParent() != nullptr && !static_cast<bool>(state["jive::setup-in-progress"]))
+        if (informParentOfChanges && getParent() != nullptr && !static_cast<bool>(state[ids::setupInProgress()]))
         {
             if (auto* decorator = dynamic_cast<GuiItemDecorator*>(getParent()))
             {

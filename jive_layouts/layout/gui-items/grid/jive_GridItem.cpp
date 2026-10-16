@@ -4,13 +4,13 @@ namespace jive
 {
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
-        , order{ state, "order" }
-        , justifySelf{ state, "justify-self" }
-        , alignSelf{ state, "align-self" }
-        , gridColumn{ state, "grid-column" }
-        , gridRow{ state, "grid-row" }
-        , gridArea{ state, "grid-area" }
-        , idealWidth{ state, "jive::ideal-width" }
+        , order{ state, ids::order() }
+        , justifySelf{ state, ids::justifySelf() }
+        , alignSelf{ state, ids::alignSelf() }
+        , gridColumn{ state, ids::gridColumn() }
+        , gridRow{ state, ids::gridRow() }
+        , gridArea{ state, ids::gridArea() }
+        , idealWidth{ state, ids::idealWidth() }
     {
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
@@ -35,10 +35,12 @@ namespace jive
         idealWidth.onValueChange = updateParentLayout;
 
         box.addListener(*this);
+        state.addListener(this);
     }
 
     GridItem::~GridItem()
     {
+        state.removeListener(this);
         box.removeListener(*this);
     }
 
@@ -88,9 +90,27 @@ namespace jive
         return cachedItems.find(key)->second;
     }
 
+    void GridItem::idealSizeChanged()
+    {
+        cachedItems.clear();
+    }
+
     void GridItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
+    }
+
+    void GridItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              order,
+                              justifySelf,
+                              alignSelf,
+                              gridColumn,
+                              gridRow,
+                              gridArea,
+                              idealWidth);
     }
 } // namespace jive
 

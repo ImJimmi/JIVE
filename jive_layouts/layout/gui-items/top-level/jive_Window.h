@@ -7,6 +7,7 @@ namespace jive
     class Window
         : public TopLevelGuiItem
         , public DocumentWindow
+        , private juce::ValueTree::Listener
     {
     public:
         explicit Window(std::unique_ptr<GuiItem> itemToDecorate);
@@ -16,26 +17,27 @@ namespace jive
 
     private:
         int getStyleFlags() const;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         LookAndFeel jiveLookAndFeel{ *getComponent() };
 
-        Property<bool> hasShadow;
-        Property<bool> isNative;
-        Property<bool> canBeResized;
-        Property<bool> useCornerResizer;
-        Property<float> minWidth;
-        Property<float> minHeight;
-        Property<float> maxWidth;
-        Property<float> maxHeight;
-        Property<bool> draggable;
-        Property<bool> fullScreen;
-        Property<bool> minimised;
-        Property<bool> visibility;
-        Property<juce::String> name;
-        Property<float> windowTitleBarHeight;
-        Property<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
-        Property<Length> width;
-        Property<Length> height;
+        PassiveProperty<bool> hasShadow;
+        PassiveProperty<bool> isNative;
+        PassiveProperty<bool> canBeResized;
+        PassiveProperty<bool> useCornerResizer;
+        PassiveProperty<float> minWidth;
+        PassiveProperty<float> minHeight;
+        PassiveProperty<float> maxWidth;
+        PassiveProperty<float> maxHeight;
+        PassiveProperty<bool> draggable;
+        PassiveProperty<bool> fullScreen;
+        PassiveProperty<bool> minimised;
+        PassiveProperty<bool> visibility;
+        PassiveProperty<juce::String> name;
+        PassiveProperty<float> windowTitleBarHeight;
+        PassiveProperty<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Window)
     };

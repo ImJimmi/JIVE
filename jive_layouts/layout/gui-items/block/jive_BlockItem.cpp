@@ -7,12 +7,12 @@ namespace jive
 {
     BlockItem::BlockItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
-        , x{ state, "x" }
-        , y{ state, "y" }
-        , centreX{ state, "centre-x" }
-        , centreY{ state, "centre-y" }
-        , width{ state, "width" }
-        , height{ state, "height" }
+        , x{ state, ids::x() }
+        , y{ state, ids::y() }
+        , centreX{ state, ids::centreX() }
+        , centreY{ state, ids::centreY() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
     {
         jassert(getParent() != nullptr);
 
@@ -60,6 +60,18 @@ namespace jive
         };
 
         updateBounds();
+
+        state.addListener(this);
+    }
+
+    BlockItem::~BlockItem()
+    {
+        state.removeListener(this);
+    }
+
+    void BlockItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree, property, x, y, centreX, centreY, width, height);
     }
 
     int BlockItem::calculateX() const

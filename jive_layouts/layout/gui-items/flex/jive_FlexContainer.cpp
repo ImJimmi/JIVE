@@ -8,14 +8,14 @@ namespace jive
 {
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
-        , flexDirection{ state, "flex-direction" }
-        , flexWrap{ state, "flex-wrap" }
-        , flexJustifyContent{ state, "justify-content" }
-        , flexAlignItems{ state, "align-items" }
-        , flexAlignContent{ state, "align-content" }
-        , gap{ state, "gap" }
+        , flexDirection{ state, ids::flexDirection() }
+        , flexWrap{ state, ids::flexWrap() }
+        , flexJustifyContent{ state, ids::justifyContent() }
+        , flexAlignItems{ state, ids::alignItems() }
+        , flexAlignContent{ state, ids::alignContent() }
+        , gap{ state, ids::gap() }
     {
-        jassert(state.getProperty("display", "flex") == juce::VariantConverter<Display>::toVar(Display::flex));
+        jassert(state.getProperty(ids::display(), "flex") == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this] {
             updateIdealSize();
@@ -169,6 +169,18 @@ namespace jive
 
     void FlexContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        if (forwardPropertyChange(tree,
+                                  id,
+                                  flexDirection,
+                                  flexWrap,
+                                  flexJustifyContent,
+                                  flexAlignItems,
+                                  flexAlignContent,
+                                  gap))
+        {
+            return;
+        }
+
         if (tree != state && tree.getParent() != state)
             return;
 

@@ -9,11 +9,11 @@ namespace jive
     public:
         explicit Pimpl(jive::GuiItemDecorator& item)
             : state{ item.state }
-            , order{ state, "order" }
-            , width{ state, "width" }
-            , height{ state, "height" }
-            , idealWidth{ state, "jive::ideal-width" }
-            , idealHeight{ state, "jive::ideal-height" }
+            , order{ state, ids::order() }
+            , width{ state, ids::width() }
+            , height{ state, ids::height() }
+            , idealWidth{ state, ids::idealWidth() }
+            , idealHeight{ state, ids::idealHeight() }
             , boxModel{ item.toType<CommonGuiItem>()->boxModel }
         {
         }
@@ -176,19 +176,19 @@ namespace jive
         }
 
         const juce::ValueTree state;
-        const Property<int> order;
-        const Property<Length> width;
-        const Property<Length> height;
-        const Property<float> idealWidth;
-        const Property<float> idealHeight;
+        const PassiveProperty<int> order;
+        const PassiveProperty<Length> width;
+        const PassiveProperty<Length> height;
+        const PassiveProperty<float> idealWidth;
+        const PassiveProperty<float> idealHeight;
         const BoxModel& boxModel;
     };
 
     ContainerItem::Child::Child(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , pimpl{ std::make_unique<Pimpl>(*this) }
-        , idealWidth{ state, "jive::ideal-width" }
-        , idealHeight{ state, "jive::ideal-height" }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
     {
         getComponent()->addComponentListener(this);
     }
@@ -225,7 +225,7 @@ namespace jive
         {
             if ((static_cast<float>(getComponent()->getWidth()) < idealWidth.get()
                  || static_cast<float>(getComponent()->getHeight()) < idealHeight.get())
-                && !static_cast<bool>(state["jive::setup-in-progress"]))
+                && !static_cast<bool>(state[ids::setupInProgress()]))
             {
                 container->updateIdealSize(true, false);
             }

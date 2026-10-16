@@ -746,7 +746,7 @@ namespace juce
             return jive::Fill{ VariantConverter<Colour>::fromVar(v) };
         }
 
-        if (v.hasProperty("gradient"))
+        if (v.hasProperty(jive::ids::gradient()))
             return jive::Fill{ VariantConverter<jive::Gradient>::fromVar(v) };
 
         return jive::Fill{ Colour{} };

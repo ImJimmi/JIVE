@@ -9,8 +9,8 @@ namespace jive
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
     {
-        jassert(state.hasProperty("display"));
-        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
+        jassert(state.hasProperty(ids::display()));
+        jassert(state[ids::display()] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
     void BlockContainer::layOutChildren()

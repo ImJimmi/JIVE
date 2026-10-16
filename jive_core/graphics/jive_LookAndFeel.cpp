@@ -71,13 +71,20 @@ namespace jive
             selector,
             styles,
         });
+        stylersVersion++;
 
         return newItem.id;
     }
 
     Styles* LookAndFeel::findStyles(const juce::Uuid& uuid)
     {
-        static constexpr auto find = [](const juce::Uuid& id, auto& list) -> Styles* {
+        stylersVersion++;
+        return const_cast<Styles*>(std::as_const(*this).findStyles(uuid));
+    }
+
+    const Styles* LookAndFeel::findStyles(const juce::Uuid& uuid) const
+    {
+        static constexpr auto find = [](const juce::Uuid& id, const auto& list) -> const Styles* {
             if (auto styles = std::find_if(std::begin(list),
                                            std::end(list),
                                            [&id](const auto& entry) {
@@ -91,15 +98,10 @@ namespace jive
             return nullptr;
         };
 
-        if (auto* styles = find(uuid, stylers))
+        if (const auto* styles = find(uuid, stylers))
             return styles;
 
         return nullptr;
-    }
-
-    const Styles* LookAndFeel::findStyles(const juce::Uuid& uuid) const
-    {
-        return const_cast<LookAndFeel*>(this)->findStyles(uuid);
     }
 
     void LookAndFeel::removeStyles(const juce::Uuid& uuid)
@@ -114,11 +116,13 @@ namespace jive
         };
 
         remove(uuid, stylers);
+        stylersVersion++;
     }
 
     void LookAndFeel::clearStyles()
     {
         stylers.clear();
+        stylersVersion++;
     }
 
     void LookAndFeel::drawComponent(juce::Graphics& g, const juce::Component& component) const
@@ -249,7 +253,7 @@ namespace jive
                                        bool)
     {
         const auto boxBounds = getToggleButtonCheckboxBounds(button, findMostApplicableStyles(button));
-        button.getProperties().set("jive::shadow-bounds", boxBounds.translated(button.getX(), button.getY()).toString());
+        button.getProperties().set(ids::shadowBounds(), boxBounds.translated(button.getX(), button.getY()).toString());
 
         draw(g,
              button,
@@ -546,7 +550,7 @@ namespace jive
         const auto bounds = group.getBounds().toFloat();
         group
             .getProperties()
-            .set("jive::shadow-bounds",
+            .set(ids::shadowBounds(),
                  getGroupBounds(group,
                                 findMostApplicableStyles(group))
                      .translated(bounds.getX(), bounds.getY())
@@ -569,7 +573,7 @@ namespace jive
         const auto styles = findMostApplicableStyles(progressBar);
 
         default_styles::paintProgressBar(g, progressBar, progress, text, styles);
-        updateShadow<juce::ProgressBar>(progressBar);
+        updateShadow<juce::ProgressBar>(progressBar, styles);
     }
 
     std::optional<LookAndFeel::ComponentPainter> LookAndFeel::findMostApplicablePainter(const juce::Component& component) const
@@ -596,6 +600,7 @@ namespace jive
         destination.fontFamily = destination.fontFamily.hasValue() ? destination.fontFamily : source.fontFamily;
         destination.fontHorizontalScale = destination.fontHorizontalScale.hasValue() ? destination.fontHorizontalScale : source.fontHorizontalScale;
         destination.fontPointSize = destination.fontPointSize.hasValue() ? destination.fontPointSize : source.fontPointSize;
+        destination.lineSpacing = destination.lineSpacing.hasValue() ? destination.lineSpacing : source.lineSpacing;
 
         if (source.fontStyleFlags.hasValue())
         {
@@ -707,7 +712,51 @@ namespace jive
         return cache.emplace_back(Cache{
             const_cast<juce::Component*>(&component),
             Styles{},
+            {},
+            0,
         });
+    }
+
+    [[nodiscard]] static auto getInteractionState(const juce::Component& component)
+    {
+        const auto* button = dynamic_cast<const juce::Button*>(&component);
+
+        return (isMouseOverOrDragging(component) ? InteractionState::hover : 0)
+             | (isMouseDown(component) ? InteractionState::active : 0)
+             | (hasKeyboardFocus(component) ? InteractionState::focus : 0)
+             | (component.isEnabled() ? 0 : InteractionState::disabled)
+             | (button != nullptr && button->getToggleState() ? InteractionState::checked : 0);
+    }
+
+    [[nodiscard]] static std::optional<juce::Slider::SliderStyle> getSliderStyle(const juce::Component& component)
+    {
+        if (const auto* slider = dynamic_cast<const juce::Slider*>(&component))
+            return slider->getSliderStyle();
+
+        return std::nullopt;
+    }
+
+    [[nodiscard]] static auto getClasses(const juce::Component& component)
+    {
+        return component.getProperties()[ids::classes()];
+    }
+
+    LookAndFeel::SelectorInputs::SelectorInputs(const juce::Component& comp)
+        : component{ &comp }
+        , id{ comp.getComponentID() }
+        , classes{ getClasses(comp) }
+        , interactionState{ getInteractionState(comp) }
+        , sliderStyle{ getSliderStyle(comp) }
+    {
+    }
+
+    bool LookAndFeel::SelectorInputs::operator==(const SelectorInputs& other) const
+    {
+        return component == other.component
+            && id == other.id
+            && classes == other.classes
+            && interactionState == other.interactionState
+            && sliderStyle == other.sliderStyle;
     }
 
     // Copies the latest value of a style property into the persistent cached
@@ -774,6 +823,7 @@ namespace jive
         updateStyleProperty(destination.fontPointSize, source.fontPointSize, transitions);
         updateStyleProperty(destination.fontStyleFlags, source.fontStyleFlags, transitions);
         updateStyleProperty(destination.foreground, source.foreground, transitions);
+        updateStyleProperty(destination.lineSpacing, source.lineSpacing, transitions);
         updateStyleProperty(destination.shadow, source.shadow, transitions);
         updateStyleProperty(destination.stroke, source.stroke, transitions);
         updateStyleProperty(destination.textAlign, source.textAlign, transitions);
@@ -786,9 +836,21 @@ namespace jive
     Styles LookAndFeel::findMostApplicableStyles(const juce::Component& component) const
     {
         auto& entry = findOrAddCacheEntry(stylesCache, component);
-        auto latestStyles = buildStyles(stylers, component);
 
-        update(entry.styles, latestStyles);
+        // Checking every styler against the component and all its ancestors
+        // is expensive, so it's only done when something a selector could
+        // match against has changed since last time.
+        std::vector<SelectorInputs> inputs;
+
+        for (const auto* c = &component; c != nullptr; c = c->getParentComponent())
+            inputs.emplace_back(*c);
+
+        if (inputs != entry.resolvedFrom || stylersVersion != entry.resolvedFromStylersVersion)
+        {
+            update(entry.styles, buildStyles(stylers, component));
+            entry.resolvedFrom = std::move(inputs);
+            entry.resolvedFromStylersVersion = stylersVersion;
+        }
 
         transitioningComponents.removeAllInstancesOf(nullptr);
 
@@ -851,6 +913,142 @@ public:
             // transitioning.
             lookAndFeel.simulateVBlank();
             expect(true);
+        }
+
+        testResolvedStylesAreReused();
+    }
+
+private:
+    void testResolvedStylesAreReused()
+    {
+        beginTest("styles / resolving again with nothing changed doesn't check any selectors");
+        {
+            static auto numChecks = 0;
+            static const auto predicate = jive::ComponentTypePredicates::addPredicate(
+                [](const juce::Component&, const juce::String& typeName) {
+                    if (typeName == "CountedType")
+                        numChecks++;
+
+                    return false;
+                });
+            juce::ignoreUnused(predicate);
+
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Component child;
+            parent.addAndMakeVisible(child);
+            lookAndFeel.addStyles("CountedType", jive::Styles{});
+
+            juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(child));
+            const auto numChecksAfterFirstResolve = numChecks;
+            expectGreaterThan(numChecksAfterFirstResolve, 0);
+
+            juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(child));
+            expectEquals(numChecks, numChecksAfterFirstResolve);
+
+            child.getProperties().set("class", "changed");
+            juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(child));
+            expectGreaterThan(numChecks, numChecksAfterFirstResolve);
+        }
+
+        beginTest("styles / are resolved again when an ancestor's class changes");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Component child;
+            parent.addAndMakeVisible(child);
+            lookAndFeel.addStyles(".large", jive::Styles{}.withFontPointSize(30.0f));
+
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get(), 14.0f);
+
+            parent.getProperties().set("class", "large");
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get(), 30.0f);
+        }
+
+        beginTest("styles / are resolved again when an ancestor's ID changes");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Component child;
+            parent.addAndMakeVisible(child);
+            lookAndFeel.addStyles("#panel *", jive::Styles{}.withAccent(juce::Colours::red));
+
+            expect(!lookAndFeel.findMostApplicableStyles(child).accent.hasValue());
+
+            parent.setComponentID("panel");
+            expect(lookAndFeel.findMostApplicableStyles(child).accent.get() == juce::Colours::red);
+        }
+
+        beginTest("styles / are resolved again when an ancestor is disabled");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Component child;
+            parent.addAndMakeVisible(child);
+            lookAndFeel.addStyles(":disabled", jive::Styles{}.withAccent(juce::Colours::red));
+
+            expect(!lookAndFeel.findMostApplicableStyles(child).accent.hasValue());
+
+            parent.setEnabled(false);
+            expect(lookAndFeel.findMostApplicableStyles(child).accent.get() == juce::Colours::red);
+        }
+
+        beginTest("styles / are resolved again when a component's interaction state changes");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::ToggleButton button;
+            parent.addAndMakeVisible(button);
+            lookAndFeel.addStyles(":checked", jive::Styles{}.withThumb(juce::Colours::red));
+            lookAndFeel.addStyles(":focus", jive::Styles{}.withTrack(juce::Colours::green));
+            lookAndFeel.addStyles(":hover", jive::Styles{}.withStroke(juce::Colours::blue));
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            expect(!styles.thumb.hasValue());
+            expect(!styles.track.hasValue());
+            expect(!styles.stroke.hasValue());
+
+            button.setToggleState(true, juce::dontSendNotification);
+            expect(lookAndFeel.findMostApplicableStyles(button).thumb.get() == juce::Colours::red);
+
+            button.getProperties().set("jive::focus", true);
+            expect(lookAndFeel.findMostApplicableStyles(button).track.get() == juce::Colours::green);
+
+            button.getProperties().set("jive::hover", true);
+            expect(lookAndFeel.findMostApplicableStyles(button).stroke.get() == juce::Colours::blue);
+        }
+
+        beginTest("styles / are resolved again when a slider's style changes");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Slider slider{ juce::Slider::LinearHorizontal, juce::Slider::NoTextBox };
+            parent.addAndMakeVisible(slider);
+            lookAndFeel.addStyles("Knob", jive::Styles{}.withAccent(juce::Colours::red));
+
+            expect(!lookAndFeel.findMostApplicableStyles(slider).accent.hasValue());
+
+            slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+            expect(lookAndFeel.findMostApplicableStyles(slider).accent.get() == juce::Colours::red);
+        }
+
+        beginTest("styles / are resolved again when styles are added or removed");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::Component child;
+            parent.addAndMakeVisible(child);
+
+            expect(!lookAndFeel.findMostApplicableStyles(child).accent.hasValue());
+
+            const auto id = lookAndFeel.addStyles("*", jive::Styles{}.withAccent(juce::Colours::red));
+            expect(lookAndFeel.findMostApplicableStyles(child).accent.get() == juce::Colours::red);
+
+            lookAndFeel.findStyles(id)->accent = juce::Colours::blue;
+            expect(lookAndFeel.findMostApplicableStyles(child).accent.get() == juce::Colours::blue);
+
+            lookAndFeel.removeStyles(id);
+            expect(!lookAndFeel.findMostApplicableStyles(child).accent.hasValue());
         }
     }
 };

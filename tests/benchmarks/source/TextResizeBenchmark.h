@@ -22,7 +22,7 @@ protected:
 
         for (const auto* font : { "rubik.ttf", "rubik-mono-one.ttf", "source-code-pro.ttf" })
         {
-            juce::MemoryBlock data;
+            auto& data = fontData.emplace_back();
             viewsDirectory.getChildFile("../../../resources").getChildFile(font).loadFileAsData(data);
             fonts.push_back(juce::Typeface::createSystemTypefaceFor(data.getData(), data.getSize()));
         }
@@ -33,6 +33,12 @@ protected:
                              .replace("<Window", "<Component")
                              .replace("</Window>", "</Component>");
         window = interpreter.interpret(jive::parseXML(xml), nullptr);
+
+        // Mirrors what jive::Window does, without putting a window on the
+        // desktop: attaching a look-and-feel to the root and then giving the
+        // root a parent creates the style sheets for every item.
+        lookAndFeel = std::make_unique<jive::LookAndFeel>(*window->getComponent());
+        parent.addAndMakeVisible(*window->getComponent());
     }
 
     void doIteration(jive::Interpreter&) final
@@ -61,8 +67,11 @@ private:
     static constexpr auto viewsPath = JIVE_EXAMPLE_01_TEXT_VIEWS_DIRECTORY;
 
     const bool paint;
+    juce::Component parent;
+    std::vector<juce::MemoryBlock> fontData;
     std::vector<juce::Typeface::Ptr> fonts;
     std::unique_ptr<jive::GuiItem> window;
+    std::unique_ptr<jive::LookAndFeel> lookAndFeel;
     int width = 1000;
     int direction = -1;
 };

@@ -4,12 +4,20 @@ namespace jive
 {
     Hyperlink::Hyperlink(std::unique_ptr<GuiItem> itemToDecorate)
         : Button(std::move(itemToDecorate))
-        , url{ state, "url" }
+        , url{ state, ids::url() }
     {
         url.onValueChange = [this]() {
             getHyperlink().setURL(url);
         };
         getHyperlink().setURL(url);
+    }
+
+    void Hyperlink::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (url.handlePropertyChange(tree, property))
+            return;
+
+        Button::valueTreePropertyChanged(tree, property);
     }
 
     bool Hyperlink::isContainer() const

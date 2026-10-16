@@ -25,17 +25,17 @@ namespace jive
         juce::Grid buildGrid(juce::Rectangle<int> bounds,
                              LayoutStrategy strategy);
 
-        Property<juce::Grid::JustifyItems> justifyItems;
-        Property<juce::Grid::AlignItems> alignItems;
-        Property<juce::Grid::JustifyContent> justifyContent;
-        Property<juce::Grid::AlignContent> alignContent;
-        Property<juce::Grid::AutoFlow> gridAutoFlow;
-        Property<juce::Array<juce::Grid::TrackInfo>> gridTemplateColumns;
-        Property<juce::Array<juce::Grid::TrackInfo>> gridTemplateRows;
-        Property<juce::StringArray> gridTemplateAreas;
-        Property<juce::Grid::TrackInfo> gridAutoRows;
-        Property<juce::Grid::TrackInfo> gridAutoColumns;
-        Property<juce::Array<juce::Grid::Px>> gap;
+        PassiveProperty<juce::Grid::JustifyItems> justifyItems;
+        PassiveProperty<juce::Grid::AlignItems> alignItems;
+        PassiveProperty<juce::Grid::JustifyContent> justifyContent;
+        PassiveProperty<juce::Grid::AlignContent> alignContent;
+        PassiveProperty<juce::Grid::AutoFlow> gridAutoFlow;
+        PassiveProperty<juce::Array<juce::Grid::TrackInfo>> gridTemplateColumns;
+        PassiveProperty<juce::Array<juce::Grid::TrackInfo>> gridTemplateRows;
+        PassiveProperty<juce::StringArray> gridTemplateAreas;
+        PassiveProperty<juce::Grid::TrackInfo> gridAutoRows;
+        PassiveProperty<juce::Grid::TrackInfo> gridAutoColumns;
+        PassiveProperty<juce::Array<juce::Grid::Px>> gap;
 
         bool layoutRecursionLock = false;
         bool changesDuringLayout = false;

@@ -11,23 +11,25 @@ namespace jive
 
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ state, "value" }
-        , min{ state, "min" }
-        , max{ state, "max" }
-        , mid{ state, "mid" }
-        , interval{ state, "interval" }
-        , orientation{ state, "orientation" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , sensitivity{ state, "sensitivity" }
-        , isInVelocityMode{ state, "velocity-mode" }
-        , velocitySensitivity{ state, "velocity-sensitivity" }
-        , velocityThreshold{ state, "velocity-threshold" }
-        , velocityOffset{ state, "velocity-offset" }
-        , snapToMouse{ state, "snap-to-mouse" }
-        , focusable{ state, "focusable" }
-        , onChange{ state, "on-change" }
+        , value{ state, ids::value() }
+        , min{ state, ids::minValue() }
+        , max{ state, ids::maxValue() }
+        , mid{ state, ids::midValue() }
+        , interval{ state, ids::interval() }
+        , orientation{ state, ids::orientation() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , sensitivity{ state, ids::sensitivity() }
+        , isInVelocityMode{ state, ids::velocityMode() }
+        , velocitySensitivity{ state, ids::velocitySensitivity() }
+        , velocityThreshold{ state, ids::velocityThreshold() }
+        , velocityOffset{ state, ids::velocityOffset() }
+        , snapToMouse{ state, ids::snapToMouse() }
+        , focusable{ state, ids::focusable() }
+        , onChange{ state, ids::onChange() }
     {
+        state.addListener(this);
+
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
         if (!max.exists())
@@ -106,6 +108,31 @@ namespace jive
             width = juce::String{ defaultWidth };
         if (height.isAuto())
             height = juce::String{ defaultHeight };
+    }
+
+    Slider::~Slider()
+    {
+        state.removeListener(this);
+    }
+
+    void Slider::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              value,
+                              min,
+                              max,
+                              mid,
+                              interval,
+                              orientation,
+                              width,
+                              height,
+                              sensitivity,
+                              isInVelocityMode,
+                              velocitySensitivity,
+                              velocityThreshold,
+                              velocityOffset,
+                              snapToMouse);
     }
 
     bool Slider::isContainer() const

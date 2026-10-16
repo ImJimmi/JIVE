@@ -36,6 +36,10 @@ namespace jive
             explicit Child(std::unique_ptr<GuiItem> itemToDecorate);
             ~Child() override;
 
+            // Lets the item know its ideal size may have changed without its
+            // box model changing, e.g. when text is laid out differently.
+            virtual void idealSizeChanged() {}
+
         protected:
             using ItemCacheKey = std::pair<juce::Rectangle<float>, jive::LayoutStrategy>;
 
@@ -51,8 +55,8 @@ namespace jive
             class Pimpl;
             const std::unique_ptr<Pimpl> pimpl;
 
-            Property<float> idealWidth;
-            Property<float> idealHeight;
+            PassiveProperty<float> idealWidth;
+            PassiveProperty<float> idealHeight;
         };
 
         explicit ContainerItem(std::unique_ptr<GuiItem> itemToDecorate);
@@ -72,8 +76,8 @@ namespace jive
         [[nodiscard]] juce::Rectangle<float> getContentConstraints() const;
 
         BoxModel& box;
-        Property<float> idealWidth;
-        Property<float> idealHeight;
+        PassiveProperty<float> idealWidth;
+        PassiveProperty<float> idealHeight;
         juce::Rectangle<float> explicitConstraintsWhenIdealSizeWasMeasured;
         bool idealSizeWasLimitedByConstraints = false;
     };

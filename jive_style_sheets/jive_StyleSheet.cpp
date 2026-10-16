@@ -17,9 +17,10 @@ namespace jive
         : component{ comp }
         , lookAndFeel{ laf }
         , state{ source }
-        , style{ state, "style" }
-        , border{ state, "border-width" }
-        , sourceDirectories{ state, "jive::source-directories" }
+        , style{ state, ids::style() }
+        , border{ state, ids::borderWidth() }
+        , lineSpacing{ state, ids::lineSpacing() }
+        , sourceDirectories{ state, ids::sourceDirectories() }
     {
         style.onValueChange = [this] {
             stylePropertyChanged();
@@ -52,10 +53,16 @@ namespace jive
         border.onValueChange = updateBorderWidth;
         border.onTransitionProgressed = updateBorderWidth;
         updateBorderWidth();
+
+        updateLineSpacing();
+
+        state.addListener(this);
     }
 
     StyleSheet::~StyleSheet()
     {
+        state.removeListener(this);
+
         if (&component.getLookAndFeel() == &lookAndFeel)
         {
             for (const auto& [name, uuid] : uuids)
@@ -81,15 +88,29 @@ namespace jive
         }
     }
 
+    void StyleSheet::valueTreePropertyChanged(juce::ValueTree& tree,
+                                              const juce::Identifier& property)
+    {
+        if (tree != state)
+            return;
+
+        if (border.handlePropertyChange(tree, property))
+            return;
+
+        if (property == lineSpacing.id)
+            updateLineSpacing();
+    }
+
     void StyleSheet::clear()
     {
-        // The border-width styler is managed separately (see updateBorderWidth
-        // in the constructor) so it must survive clearing of the style-object
-        // stylers, otherwise changing the "style" property would wipe a
-        // border-width that was applied from the component's state.
+        // The border-width and line-spacing stylers are managed separately
+        // (see updateBorderWidth in the constructor, and updateLineSpacing) so
+        // they must survive clearing of the style-object stylers, otherwise
+        // changing the "style" property would wipe a border-width or
+        // line-spacing that was applied from the component's state.
         for (auto entry = std::begin(uuids); entry != std::end(uuids);)
         {
-            if (entry->first == "border-width")
+            if (entry->first == "border-width" || entry->first == "line-spacing")
             {
                 ++entry;
                 continue;
@@ -133,6 +154,33 @@ namespace jive
                 addStylesFromFile();
             }
         }
+    }
+
+    // Line-spacing is inherited, so unlike the border-width, a change here
+    // needs to reach every descendant too.
+    void StyleSheet::updateLineSpacing()
+    {
+        const auto existing = uuids.find("line-spacing");
+
+        if (existing == std::end(uuids) && !lineSpacing.exists())
+            return;
+
+        if (existing != std::end(uuids))
+        {
+            lookAndFeel.removeStyles(existing->second);
+            uuids.erase(existing);
+        }
+
+        if (lineSpacing.exists())
+        {
+            uuids["line-spacing"] = lookAndFeel
+                                        .addStyles(
+                                            StyleSelector::makeInlineStyleSelector(component),
+                                            Styles{}
+                                                .withLineSpacing(lineSpacing.get()));
+        }
+
+        component.sendLookAndFeelChange();
     }
 
     void StyleSheet::addStylesFrom(Object& object)
@@ -217,9 +265,9 @@ namespace jive
         std::optional<Styles> styles;
         appendStyleProperties(object, styles, tokens);
 
-        if (&object == style.get().get() && object.hasProperty("transition"))
+        if (&object == style.get().get() && object.hasProperty(ids::transition()))
         {
-            auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object["transition"]);
+            auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object[ids::transition()]);
 
             if (transitions != nullptr)
             {
@@ -1462,6 +1510,60 @@ private:
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             expect(childStyles.find<float>("font-scale").has_value());
             expectEquals(childStyles.find<float>("font-scale").value(), 4.0f);
+        }
+
+        beginTest("inheritance / line-spacing cascades to descendants");
+        {
+            juce::Component parent;
+            parent.setSize(200, 200);
+
+            juce::TextButton child;
+            child.setBounds(0, 0, 100, 50);
+            parent.addAndMakeVisible(child);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "line-spacing", 6.0 },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
+            expect(childStyles.find<float>("line-spacing").has_value());
+            expectEquals(childStyles.find<float>("line-spacing").value(), 6.0f);
+        }
+
+        beginTest("inheritance / a line-spacing property is applied as an inline style");
+        {
+            juce::Component parent;
+            parent.setSize(200, 200);
+
+            juce::TextButton child;
+            child.setBounds(0, 0, 100, 50);
+            parent.addAndMakeVisible(child);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "line-spacing", 3.0 },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).find<float>("line-spacing").value_or(0.0f), 3.0f);
+
+            state.setProperty("line-spacing", 5.0, nullptr);
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).find<float>("line-spacing").value_or(0.0f), 5.0f);
+
+            state.removeProperty("line-spacing", nullptr);
+            expect(!lookAndFeel.findMostApplicableStyles(child).find<float>("line-spacing").has_value());
         }
     }
 

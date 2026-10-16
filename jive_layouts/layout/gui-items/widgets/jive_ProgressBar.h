@@ -4,10 +4,13 @@
 
 namespace jive
 {
-    class ProgressBar : public GuiItemDecorator
+    class ProgressBar
+        : public GuiItemDecorator
+        , private juce::ValueTree::Listener
     {
     public:
         explicit ProgressBar(std::unique_ptr<GuiItem> itemToDecorate);
+        ~ProgressBar() override;
 
         bool isContainer() const override;
 
@@ -15,10 +18,12 @@ namespace jive
         const NormalisedProgressBar& getProgressBar() const;
 
     private:
-        Property<double> value;
-        Property<Length> width;
-        Property<Length> height;
-        Property<bool> focusable;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        PassiveProperty<double> value;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+        PassiveProperty<bool> focusable;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressBar)
     };

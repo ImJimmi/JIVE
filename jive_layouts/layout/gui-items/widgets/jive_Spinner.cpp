@@ -4,7 +4,7 @@ namespace jive
 {
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
         : Slider{ std::move(itemToDecorate), 70.0f, 20.0f }
-        , draggable{ state, "draggable" }
+        , draggable{ state, ids::draggable() }
     {
         draggable.onValueChange = [this]() {
             getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
@@ -12,6 +12,14 @@ namespace jive
         getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
 
         updateStyle();
+    }
+
+    void Spinner::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (draggable.handlePropertyChange(tree, property))
+            return;
+
+        Slider::valueTreePropertyChanged(tree, property);
     }
 
     juce::Slider::SliderStyle Spinner::getStyleForOrientation(Orientation /* orientation */)

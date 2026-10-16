@@ -1,5 +1,6 @@
 #include "jive_Find.h"
 
+#include <jive_core/values/jive_Identifiers.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 namespace jive
@@ -56,7 +57,7 @@ namespace jive
     {
         return find(root,
                     [id](const auto& element) {
-                        return fromVar<juce::Identifier>(element["id"]) == id;
+                        return fromVar<juce::Identifier>(element[ids::id()]) == id;
                     });
     }
 
@@ -64,7 +65,7 @@ namespace jive
                                                        const juce::String& className)
     {
         return findAll(root, [&className](const auto& tree) {
-            return juce::StringArray::fromTokens(tree["class"].toString(), true).contains(className);
+            return juce::StringArray::fromTokens(tree[ids::classes()].toString(), true).contains(className);
         });
     }
 
@@ -82,8 +83,8 @@ namespace jive
         for (const auto& root : roots)
         {
             auto others = findAll(root, [&text](const auto& tree) {
-                auto child = tree.getChildWithName("Text");
-                return child.isValid() && child["text"].toString() == text;
+                auto child = tree.getChildWithName(ids::textType());
+                return child.isValid() && child[ids::text()].toString() == text;
             });
             result.insert(std::end(result), std::begin(others), std::end(others));
         }

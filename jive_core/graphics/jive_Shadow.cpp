@@ -345,15 +345,15 @@ namespace jive
 
         juce::Path shape;
 
-        if (component->getProperties().contains("jive::shadow-path"))
+        if (component->getProperties().contains(ids::shadowPath()))
         {
-            shape.restoreFromString(component->getProperties()["jive::shadow-path"].toString());
+            shape.restoreFromString(component->getProperties()[ids::shadowPath()].toString());
         }
         else
         {
             const auto boundsString = component
                                           ->getProperties()
-                                          .getWithDefault("jive::shadow-bounds",
+                                          .getWithDefault(ids::shadowBounds(),
                                                           component->getBounds()
                                                               .withZeroOrigin()
                                                               .toString())
@@ -418,7 +418,7 @@ namespace jive
 
         auto bounds = juce::Rectangle<int>::fromString(component
                                                            ->getProperties()
-                                                           .getWithDefault("jive::shadow-bounds",
+                                                           .getWithDefault(ids::shadowBounds(),
                                                                            component->getBounds().toString())
                                                            .toString())
                           .withPosition(component->getPosition() + shadow.getOffset())

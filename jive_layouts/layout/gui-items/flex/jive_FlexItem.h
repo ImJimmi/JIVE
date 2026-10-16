@@ -7,6 +7,7 @@ namespace jive
     class FlexItem
         : public ContainerItem::Child
         , private BoxModel::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
@@ -15,20 +16,18 @@ namespace jive
         [[nodiscard]] juce::FlexItem toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                                     LayoutStrategy strategy);
 
+        void idealSizeChanged() final;
+
     private:
         void boxModelChanged(BoxModel&) final;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        Property<int> order;
-        Property<float> flexGrow;
-        Property<float> flexShrink;
-        Property<float> flexBasis;
-        Property<juce::FlexItem::AlignSelf> alignSelf;
-        const Property<juce::FlexBox::Direction,
-                       Inheritance::doNotInherit,
-                       Accumulation::doNotAccumulate,
-                       false,
-                       Responsiveness::ignoreChanges>
-            parentDirection;
+        PassiveProperty<int> order;
+        PassiveProperty<float> flexGrow;
+        PassiveProperty<float> flexShrink;
+        PassiveProperty<float> flexBasis;
+        PassiveProperty<juce::FlexItem::AlignSelf> alignSelf;
+        const PassiveProperty<juce::FlexBox::Direction> parentDirection;
 
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;

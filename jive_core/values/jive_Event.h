@@ -19,7 +19,7 @@ namespace jive
             if (!event.exists())
                 event = new Object{};
 
-            auto callbacks = event.get()->getProperty("callbacks");
+            auto callbacks = event.get()->getProperty(ids::callbacks());
 
             callbacks.append(juce::var{
                 [weakThis = juce::WeakReference{ this }](const juce::var::NativeFunctionArgs&) {
@@ -30,7 +30,7 @@ namespace jive
                 },
             });
 
-            event.get()->setProperty("callbacks", callbacks);
+            event.get()->setProperty(ids::callbacks(), callbacks);
         }
 
         Event(const Event& other)
@@ -54,19 +54,19 @@ namespace jive
 
         int getAssumedTriggerCount() const
         {
-            if (!event.get()->hasProperty("count"))
+            if (!event.get()->hasProperty(ids::count()))
                 return 0;
 
-            return static_cast<int>(event.get()->getProperty("count"));
+            return static_cast<int>(event.get()->getProperty(ids::count()));
         }
 
         juce::Time getTimeLastTriggered() const
         {
-            if (!event.get()->hasProperty("time"))
+            if (!event.get()->hasProperty(ids::time()))
                 return juce::Time{};
 
             return juce::Time{
-                static_cast<juce::int64>(event.get()->getProperty("time")),
+                static_cast<juce::int64>(event.get()->getProperty(ids::time())),
             };
         }
 
@@ -74,12 +74,12 @@ namespace jive
         {
             event
                 .get()
-                ->setProperty("count", getAssumedTriggerCount() + 1);
+                ->setProperty(ids::count(), getAssumedTriggerCount() + 1);
             event
                 .get()
-                ->setProperty("time", juce::Time::currentTimeMillis());
+                ->setProperty(ids::time(), juce::Time::currentTimeMillis());
 
-            for (auto& callback : *event.get()->getProperty("callbacks").getArray())
+            for (auto& callback : *event.get()->getProperty(ids::callbacks()).getArray())
             {
                 callback.getNativeFunction()(juce::var::NativeFunctionArgs{
                     callback,

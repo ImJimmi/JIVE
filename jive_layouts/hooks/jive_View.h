@@ -60,7 +60,7 @@ namespace jive
             const auto buildView = makeViewBuilder<ViewType, Args...>(std::forward<Args>(args)...);
             const auto wrappedState = buildView({ juce::var{}, nullptr, 0 });
             auto state = dynamic_cast<ReferenceCountedValueTreeWrapper*>(wrappedState.getObject())->state;
-            state.setProperty("make-view", buildView, nullptr);
+            state.setProperty(ids::makeView(), buildView, nullptr);
 
             return state;
         }
@@ -75,7 +75,7 @@ namespace jive
                 };
                 const View::ReferenceCountedPointer view{ std::apply(createRawView, std::move(arguments)) };
                 auto state = view->initialise();
-                state.setProperty("view-object", view.get(), nullptr);
+                state.setProperty(ids::viewObject(), view.get(), nullptr);
 
                 return juce::var{
                     new ReferenceCountedValueTreeWrapper{ state },
