@@ -34,14 +34,25 @@ namespace jive
         void append(const juce::AttributedString& attributedStringToAppend);
         [[nodiscard]] juce::AttributedString getAttributedString() const;
 
+        // The returned layout is only valid until the next call.
+        [[nodiscard]] const juce::TextLayout& getTextLayout(float maxWidth) const;
+
         void addListener(Listener&) const;
         void removeListener(Listener&) const;
 
     private:
+        struct CachedTextLayout
+        {
+            float maxWidth;
+            juce::TextLayout layout;
+        };
+
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
         void updateCachedStyles();
-        const juce::TextLayout& getLayoutToDraw(const juce::AttributedString& attributedString, float width);
+        void updateTextLayoutsSource(const juce::AttributedString& attributedString) const;
+
+        static constexpr std::size_t maxNumCachedTextLayouts = 16;
 
         juce::String text;
         juce::Array<juce::AttributedString> appendices;
@@ -52,9 +63,8 @@ namespace jive
 
         mutable juce::ListenerList<Listener> listeners;
 
-        juce::AttributedString lastDrawnString;
-        std::optional<juce::TextLayout> unwrappedLayout;
-        juce::TextLayout wrappedLayout;
-        std::optional<float> wrappedLayoutWidth;
+        mutable juce::AttributedString textLayoutsSource;
+        mutable bool textLayoutsSourceMayBeOutOfDate{ true };
+        mutable std::vector<CachedTextLayout> textLayouts;
     };
 } // namespace jive
