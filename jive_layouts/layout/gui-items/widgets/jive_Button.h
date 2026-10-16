@@ -8,6 +8,7 @@ namespace jive
         : public GuiItemDecorator
         , private juce::Button::Listener
         , private juce::ComponentListener
+        , private juce::ValueTree::Listener
     {
     public:
         enum class TriggerEvent
@@ -28,6 +29,9 @@ namespace jive
 
         void layOutChildren() override;
 
+    protected:
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
+
     private:
         void buttonClicked(juce::Button* button) final;
         void componentParentHierarchyChanged(juce::Component& component) final;
@@ -39,19 +43,19 @@ namespace jive
         void updateTriggerEvent();
         void updateCheckboxTextInset();
 
-        Property<bool> toggleable;
-        Property<bool> toggled;
-        Property<bool> toggleOnClick;
-        Property<int> radioGroup;
-        Property<TriggerEvent> triggerEvent;
-        Property<juce::String> tooltip;
-        Property<juce::String, Inheritance::doNotInherit, Accumulation::accumulate> text;
-        Property<float> minWidth;
-        Property<float> minHeight;
-        Property<bool> focusable;
-        Property<juce::FlexBox::JustifyContent> flexJustifyContent;
-        Property<juce::FlexBox::AlignItems> flexAlignItems;
-        Property<juce::BorderSize<float>> padding;
+        PassiveProperty<bool> toggleable;
+        PassiveProperty<bool> toggled;
+        PassiveProperty<bool> toggleOnClick;
+        PassiveProperty<int> radioGroup;
+        PassiveProperty<TriggerEvent> triggerEvent;
+        PassiveProperty<juce::String> tooltip;
+        PassiveProperty<juce::String, Accumulation::accumulate> text;
+        PassiveProperty<float> minWidth;
+        PassiveProperty<float> minHeight;
+        PassiveProperty<bool> focusable;
+        PassiveProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
+        PassiveProperty<juce::FlexBox::AlignItems> flexAlignItems;
+        PassiveProperty<juce::BorderSize<float>> padding;
 
         bool hasAutomaticPadding{ false };
 

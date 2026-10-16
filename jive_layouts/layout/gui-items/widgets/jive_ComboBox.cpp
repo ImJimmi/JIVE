@@ -7,9 +7,9 @@ namespace jive
         , comboBox{ box }
         , index{ itemIndex }
         , id{ index + 1 }
-        , text{ tree, "text" }
-        , enabled{ tree, "enabled" }
-        , selected{ tree, "selected" }
+        , text{ tree, ids::text() }
+        , enabled{ tree, ids::enabled() }
+        , selected{ tree, ids::selected() }
     {
         // Options are enabled unless explicitly disabled. Without this an
         // option with no "enabled" property would resolve to false and the item
@@ -53,26 +53,24 @@ namespace jive
         selected = shouldBeSelected;
     }
 
-    ComboBox::Header::Header(juce::ValueTree sourceTree, ComboBox& box)
-        : comboBox{ box }
-        , text{ sourceTree, "text" }
+    bool ComboBox::Option::handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property)
     {
-        box.getComboBox().addSectionHeading(text);
+        if (changedTree != tree)
+            return false;
 
-        text.onValueChange = [this]() {
-            comboBox.updateItems();
-        };
+        forwardPropertyChange(changedTree, property, text, enabled, selected);
+        return true;
     }
 
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator(std::move(itemToDecorate))
-        , editable{ state, "editable" }
-        , tooltip{ state, "tooltip" }
-        , selected{ state, "selected" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , focusable{ state, "focusable" }
-        , onChange{ state, "on-change" }
+        , editable{ state, ids::editable() }
+        , tooltip{ state, ids::tooltip() }
+        , selected{ state, ids::selected() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , focusable{ state, ids::focusable() }
+        , onChange{ state, ids::onChange() }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
@@ -92,10 +90,10 @@ namespace jive
         selected.onValueChange = [this]() {
             getComboBox().setSelectedItemIndex(selected);
 
-            auto currentlySelectedOption = state.getChildWithProperty("selected", true);
+            auto currentlySelectedOption = state.getChildWithProperty(ids::selected(), true);
 
             if (currentlySelectedOption.isValid())
-                currentlySelectedOption.setProperty("selected", false, nullptr);
+                currentlySelectedOption.setProperty(ids::selected(), false, nullptr);
 
             if (selected < options.size())
             {
@@ -114,6 +112,32 @@ namespace jive
             width = "50px";
         if (height.isAuto())
             height = "20px";
+    }
+
+    // The options and headers are child trees, so the changes to them come
+    // through this item's listener too. As they share property names with
+    // this item, changes are routed by the tree that changed.
+    void ComboBox::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (tree == state)
+        {
+            forwardPropertyChange(tree, property, editable, tooltip, selected);
+            return;
+        }
+
+        if (tree.hasType(ids::headerType()) && tree.getParent() == state && property == ids::text())
+        {
+            if (!updatingItems)
+                updateItems();
+
+            return;
+        }
+
+        for (auto* option : options)
+        {
+            if (option->handlePropertyChange(tree, property))
+                return;
+        }
     }
 
     bool ComboBox::isContainer() const
@@ -143,55 +167,57 @@ namespace jive
 
     void ComboBox::updateItems()
     {
+        const juce::ScopedValueSetter svs{ updatingItems, true };
+
         options.clear();
         getComboBox().clear();
 
         for (auto childState : state)
         {
-            if (childState.hasType("Option"))
+            if (childState.hasType(ids::optionType()))
             {
                 // Options can be written with inline text, e.g.
                 // <Option>One</Option>, which the XML parser turns into an
                 // Option with a nested <Text> child rather than a "text"
                 // attribute. Fall back to that child so inline text behaves the
                 // same as the "text" attribute.
-                if (!childState.hasProperty("text"))
+                if (!childState.hasProperty(ids::text()))
                 {
-                    if (const auto textChild = childState.getChildWithName("Text");
+                    if (const auto textChild = childState.getChildWithName(ids::textType());
                         textChild.isValid())
                     {
-                        childState.setProperty("text", textChild["text"], nullptr);
+                        childState.setProperty(ids::text(), textChild[ids::text()], nullptr);
                     }
                 }
 
                 // A juce::ComboBox can't contain an item with empty text, so
                 // skip options that have none rather than triggering an
                 // assertion.
-                if (childState["text"].toString().isEmpty())
+                if (childState[ids::text()].toString().isEmpty())
                     continue;
 
                 options.add(std::make_unique<Option>(childState, options.size(), getComboBox()));
             }
-            else if (childState.hasType("Header"))
+            else if (childState.hasType(ids::headerType()))
             {
                 // Headers support inline text in the same way options do.
-                if (!childState.hasProperty("text"))
+                if (!childState.hasProperty(ids::text()))
                 {
-                    if (const auto textChild = childState.getChildWithName("Text");
+                    if (const auto textChild = childState.getChildWithName(ids::textType());
                         textChild.isValid())
                     {
-                        childState.setProperty("text", textChild["text"], nullptr);
+                        childState.setProperty(ids::text(), textChild[ids::text()], nullptr);
                     }
                 }
 
                 // A section heading can't have empty text, so skip it if it has
                 // none rather than triggering an assertion.
-                if (childState["text"].toString().isEmpty())
+                if (childState[ids::text()].toString().isEmpty())
                     continue;
 
-                headers.add(std::make_unique<Header>(childState, *this));
+                getComboBox().addSectionHeading(childState[ids::text()].toString());
             }
-            else if (childState.hasType("Separator"))
+            else if (childState.hasType(ids::separatorType()))
             {
                 getComboBox().addSeparator();
             }
@@ -240,6 +266,7 @@ public:
         testEditable();
         testTooltip();
         testOptions();
+        testHeaders();
         testSelected();
         testEvents();
     }
@@ -488,6 +515,69 @@ private:
 
             expect(foundSectionHeader);
         }
+    }
+
+    [[nodiscard]] static juce::StringArray getSectionHeadings(juce::ComboBox& comboBox)
+    {
+        juce::StringArray headings;
+
+        if (auto* rootMenu = comboBox.getRootMenu())
+        {
+            for (juce::PopupMenu::MenuItemIterator iterator{ *rootMenu }; iterator.next();)
+            {
+                if (iterator.getItem().isSectionHeader)
+                    headings.add(iterator.getItem().text);
+            }
+        }
+
+        return headings;
+    }
+
+    void testHeaders()
+    {
+        beginTest("headers");
+
+        juce::ValueTree tree{
+            "ComboBox",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{ "Option", { { "text", "One" } } },
+                juce::ValueTree{ "Header", { { "text", "Section" } } },
+                juce::ValueTree{ "Option", { { "text", "Two" } } },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                             .toType<jive::ComboBox>()
+                             ->getComboBox();
+        expectEquals(getSectionHeadings(comboBox), juce::StringArray{ "Section" });
+
+        tree.appendChild(juce::ValueTree{ "Option", { { "text", "Three" } } }, nullptr);
+        tree.appendChild(juce::ValueTree{ "Option", { { "text", "Four" } } }, nullptr);
+        tree.getChild(1).setProperty("text", "Renamed", nullptr);
+        expectEquals(getSectionHeadings(comboBox), juce::StringArray{ "Renamed" });
+        expectEquals(comboBox.getNumItems(), 4);
+
+        tree.appendChild(juce::ValueTree{ "Header" }, nullptr);
+        expectEquals(getSectionHeadings(comboBox), juce::StringArray{ "Renamed" });
+
+        tree.getChild(tree.getNumChildren() - 1).setProperty("text", "Late", nullptr);
+        expectEquals(getSectionHeadings(comboBox), juce::StringArray{ "Renamed", "Late" });
+
+        tree.appendChild(juce::ValueTree{
+                             "Header",
+                             {},
+                             {
+                                 juce::ValueTree{ "Text", { { "text", "Inline" } } },
+                             },
+                         },
+                         nullptr);
+        expectEquals(getSectionHeadings(comboBox), juce::StringArray{ "Renamed", "Late", "Inline" });
+        expectEquals(comboBox.getNumItems(), 4);
     }
 
     void testSelected()

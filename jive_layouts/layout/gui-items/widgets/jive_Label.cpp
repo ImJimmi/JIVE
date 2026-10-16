@@ -14,12 +14,24 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , border{ state, "border-width" }
+        , border{ state, ids::borderWidth() }
     {
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));
         };
         getLabel().setBorderSize(toNearestInt(border));
+
+        state.addListener(this);
+    }
+
+    Label::~Label()
+    {
+        state.removeListener(this);
+    }
+
+    void Label::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        border.handlePropertyChange(tree, property);
     }
 
     bool Label::isContainer() const

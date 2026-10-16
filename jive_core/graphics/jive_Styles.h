@@ -7,6 +7,7 @@
 #include <jive_core/geometry/jive_BorderRadii.h>
 #include <jive_core/kinetics/jive_Transitions.h>
 #include <jive_core/time/jive_Timer.h>
+#include <jive_core/values/jive_Identifiers.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 #include <juce_graphics/juce_graphics.h>
@@ -138,28 +139,29 @@ namespace jive
             juce::Time lastUpdated = now();
         };
 
-        StyleProperty<Fill> accent{ "accent" };
-        StyleProperty<Fill> background{ "background" };
-        StyleProperty<Fill> borderFill{ "border" };
-        StyleProperty<BorderRadii<float>> borderRadius{ "border-radius" };
-        StyleProperty<juce::BorderSize<float>> borderWidth{ "border-width" };
-        StyleProperty<juce::AttributedString::ReadingDirection> direction{ "direction" };
-        StyleProperty<Fill> fill{ "fill" };
+        StyleProperty<Fill> accent{ ids::accent() };
+        StyleProperty<Fill> background{ ids::background() };
+        StyleProperty<Fill> borderFill{ ids::border() };
+        StyleProperty<BorderRadii<float>> borderRadius{ ids::borderRadius() };
+        StyleProperty<juce::BorderSize<float>> borderWidth{ ids::borderWidth() };
+        StyleProperty<juce::AttributedString::ReadingDirection> direction{ ids::direction() };
+        StyleProperty<Fill> fill{ ids::fill() };
 #if JUCE_MAJOR_VERSION >= 8
-        StyleProperty<float> fontAscentOverride{ "font-ascent-override" };
-        StyleProperty<float> fontDescentOverride{ "font-descent-override" };
+        StyleProperty<float> fontAscentOverride{ ids::fontAscentOverride() };
+        StyleProperty<float> fontDescentOverride{ ids::fontDescentOverride() };
 #endif
-        StyleProperty<float> fontExtraKerningFactor{ "font-kerning" };
-        StyleProperty<juce::String> fontFamily{ "font-family" };
-        StyleProperty<float> fontHorizontalScale{ "font-scale" };
-        StyleProperty<float> fontPointSize{ "font-size" };
-        StyleProperty<std::unordered_set<juce::Font::FontStyleFlags>> fontStyleFlags{ "font-styles" };
-        StyleProperty<Fill> foreground{ "foreground" };
-        StyleProperty<Shadow> shadow{ "shadow" };
-        StyleProperty<Fill> stroke{ "stroke" };
-        StyleProperty<juce::Justification> textAlign{ "text-align" };
-        StyleProperty<Fill> thumb{ "thumb" };
-        StyleProperty<Fill> track{ "track" };
+        StyleProperty<float> fontExtraKerningFactor{ ids::fontKerning() };
+        StyleProperty<juce::String> fontFamily{ ids::fontFamily() };
+        StyleProperty<float> fontHorizontalScale{ ids::fontScale() };
+        StyleProperty<float> fontPointSize{ ids::fontSize() };
+        StyleProperty<std::unordered_set<juce::Font::FontStyleFlags>> fontStyleFlags{ ids::fontStyles() };
+        StyleProperty<Fill> foreground{ ids::foreground() };
+        StyleProperty<float> lineSpacing{ ids::lineSpacing() };
+        StyleProperty<Shadow> shadow{ ids::shadow() };
+        StyleProperty<Fill> stroke{ ids::stroke() };
+        StyleProperty<juce::Justification> textAlign{ ids::textAlign() };
+        StyleProperty<Fill> thumb{ ids::thumb() };
+        StyleProperty<Fill> track{ ids::track() };
 
         Transitions::ReferenceCountedPointer transitions;
 
@@ -181,6 +183,7 @@ namespace jive
             "font-size",
             "font-styles",
             "foreground",
+            "line-spacing",
             "shadow",
             "stroke",
             "text-align",
@@ -223,6 +226,8 @@ namespace jive
                 return withFontStyleFlags(fromVar<std::unordered_set<juce::Font::FontStyleFlags>>(value));
             if (propertyName == foreground.id)
                 return withForeground(fromVar<Fill>(value));
+            if (propertyName == lineSpacing.id)
+                return withLineSpacing(fromVar<float>(value));
             if (propertyName == shadow.id)
                 return withShadow(fromVar<Shadow>(value));
             if (propertyName == stroke.id)
@@ -327,6 +332,12 @@ namespace jive
         [[nodiscard]] Styles& withForeground(const Fill& value)
         {
             foreground = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withLineSpacing(float value)
+        {
+            lineSpacing = value;
             return *this;
         }
 
@@ -457,6 +468,8 @@ namespace jive
                 property = &fontHorizontalScale;
             else if (styleName == "font-kerning")
                 property = &fontExtraKerningFactor;
+            else if (styleName == "line-spacing")
+                property = &lineSpacing;
 #if JUCE_MAJOR_VERSION
             else if (styleName == "font-ascent-override")
                 property = &fontAscentOverride;
@@ -539,6 +552,7 @@ namespace jive
                                        styles.fontPointSize,
                                        styles.fontStyleFlags,
                                        styles.foreground,
+                                       styles.lineSpacing,
                                        styles.shadow,
                                        styles.stroke,
                                        styles.textAlign,
@@ -590,6 +604,7 @@ namespace jive
             function(fontPointSize);
             function(fontStyleFlags);
             function(foreground);
+            function(lineSpacing);
             function(shadow);
             function(stroke);
             function(textAlign);

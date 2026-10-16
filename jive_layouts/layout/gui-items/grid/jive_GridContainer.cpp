@@ -9,20 +9,20 @@ namespace jive
 {
     GridContainer::GridContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem(std::move(itemToDecorate))
-        , justifyItems{ state, "justify-items" }
-        , alignItems{ state, "align-items" }
-        , justifyContent{ state, "justify-content" }
-        , alignContent{ state, "align-content" }
-        , gridAutoFlow{ state, "grid-auto-flow" }
-        , gridTemplateColumns{ state, "grid-template-columns" }
-        , gridTemplateRows{ state, "grid-template-rows" }
-        , gridTemplateAreas{ state, "grid-template-areas" }
-        , gridAutoRows{ state, "grid-auto-rows" }
-        , gridAutoColumns{ state, "grid-auto-columns" }
-        , gap{ state, "gap" }
+        , justifyItems{ state, ids::justifyItems() }
+        , alignItems{ state, ids::alignItems() }
+        , justifyContent{ state, ids::justifyContent() }
+        , alignContent{ state, ids::alignContent() }
+        , gridAutoFlow{ state, ids::gridAutoFlow() }
+        , gridTemplateColumns{ state, ids::gridTemplateColumns() }
+        , gridTemplateRows{ state, ids::gridTemplateRows() }
+        , gridTemplateAreas{ state, ids::gridTemplateAreas() }
+        , gridAutoRows{ state, ids::gridAutoRows() }
+        , gridAutoColumns{ state, ids::gridAutoColumns() }
+        , gap{ state, ids::gap() }
     {
-        jassert(state.hasProperty("display"));
-        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::grid));
+        jassert(state.hasProperty(ids::display()));
+        jassert(state[ids::display()] == juce::VariantConverter<Display>::toVar(Display::grid));
 
         justifyItems.onValueChange = [this] {
             callLayoutChildrenWithRecursionLock();
@@ -165,6 +165,23 @@ namespace jive
 
     void GridContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        if (forwardPropertyChange(tree,
+                                  id,
+                                  justifyItems,
+                                  alignItems,
+                                  justifyContent,
+                                  alignContent,
+                                  gridAutoFlow,
+                                  gridTemplateColumns,
+                                  gridTemplateRows,
+                                  gridTemplateAreas,
+                                  gridAutoRows,
+                                  gridAutoColumns,
+                                  gap))
+        {
+            return;
+        }
+
         if (tree != state && tree.getParent() != state)
             return;
 
@@ -764,6 +781,16 @@ private:
                                             .toType<jive::GridContainer>());
         expectEquals(grid.columnGap.pixels, 33.0L);
         expectEquals(grid.rowGap.pixels, 5.0L);
+
+        state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        state.appendChild(juce::ValueTree{ "Component" }, nullptr);
+        state.setProperty("grid-template-columns", "1fr 1fr", nullptr);
+        state.setProperty("gap", "0", nullptr);
+        const auto& secondChild = *item->getChildren()[1]->getComponent();
+        expectEquals(secondChild.getX(), 111);
+
+        state.setProperty("gap", "20", nullptr);
+        expectEquals(secondChild.getX(), 121);
     }
 
     void testItems()

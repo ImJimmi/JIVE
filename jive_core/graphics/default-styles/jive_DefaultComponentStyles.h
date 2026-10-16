@@ -3,6 +3,7 @@
 #include <jive_core/geometry/jive_BorderRadii.h>
 #include <jive_core/geometry/jive_BorderWidth.h>
 #include <jive_core/geometry/jive_Geometry.h>
+#include <jive_core/values/jive_Identifiers.h>
 
 namespace jive::default_styles
 {
@@ -64,7 +65,7 @@ namespace jive::default_styles
         const auto shape = getShape(borderRadius, bounds);
         const_cast<Component*>(&component)
             ->getProperties()
-            .set("jive::shadow-path",
+            .set(ids::shadowPath(),
                  shape.toString());
     }
 } // namespace jive::default_styles

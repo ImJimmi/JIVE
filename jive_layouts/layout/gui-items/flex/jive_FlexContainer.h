@@ -25,12 +25,12 @@ namespace jive
         juce::FlexBox buildFlexBox(juce::Rectangle<float> bounds, LayoutStrategy strategy);
         juce::Point<float> calculateGaps() const;
 
-        Property<juce::FlexBox::Direction> flexDirection;
-        Property<juce::FlexBox::Wrap> flexWrap;
-        Property<juce::FlexBox::JustifyContent> flexJustifyContent;
-        Property<juce::FlexBox::AlignItems> flexAlignItems;
-        Property<juce::FlexBox::AlignContent> flexAlignContent;
-        Property<juce::Array<juce::Grid::Px>> gap;
+        PassiveProperty<juce::FlexBox::Direction> flexDirection;
+        PassiveProperty<juce::FlexBox::Wrap> flexWrap;
+        PassiveProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
+        PassiveProperty<juce::FlexBox::AlignItems> flexAlignItems;
+        PassiveProperty<juce::FlexBox::AlignContent> flexAlignContent;
+        PassiveProperty<juce::Array<juce::Grid::Px>> gap;
 
         bool layoutRecursionLock = false;
         bool changesDuringLayout = false;

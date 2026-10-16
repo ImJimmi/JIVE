@@ -27,8 +27,8 @@ namespace jive
         [[nodiscard]] const juce::String& getText() const;
         void setText(const juce::String& text);
 
-        void setLineSpacing(float spacing);
         void setWordWrap(juce::AttributedString::WordWrap wrap);
+        [[nodiscard]] float getLineSpacing() const;
 
         void clearAttributes();
         void append(const juce::AttributedString& attributedStringToAppend);
@@ -40,7 +40,7 @@ namespace jive
     private:
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
-        void updateCachedFont();
+        void updateCachedStyles();
         const juce::TextLayout& getLayoutToDraw(const juce::AttributedString& attributedString, float width);
 
         juce::String text;

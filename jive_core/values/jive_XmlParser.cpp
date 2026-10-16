@@ -1,5 +1,7 @@
 #include "jive_XmlParser.h"
 
+#include "jive_Identifiers.h"
+
 namespace jive
 {
     static juce::String accumulateInlineText(juce::XmlElement& xml)
@@ -21,7 +23,7 @@ namespace jive
                         + accumulateInlineText(xml);
 
         if (text.isNotEmpty())
-            xml.setAttribute("text", text);
+            xml.setAttribute(ids::text(), text);
 
         xml.deleteAllTextElements();
     }
@@ -32,7 +34,7 @@ namespace jive
             text.isNotEmpty())
         {
             auto textElement = std::make_unique<juce::XmlElement>("Text");
-            textElement->setAttribute("text", text);
+            textElement->setAttribute(ids::text(), text);
             xml.addChildElement(textElement.release());
         }
 

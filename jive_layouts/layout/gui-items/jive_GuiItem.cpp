@@ -27,18 +27,18 @@ namespace jive
     {
         View::ReferenceCountedPointer view;
 
-        if (state.hasProperty("view-object"))
+        if (state.hasProperty(ids::viewObject()))
         {
-            view = dynamic_cast<View*>(state["view-object"].getObject());
+            view = dynamic_cast<View*>(state[ids::viewObject()].getObject());
         }
-        else if (state.hasProperty("make-view"))
+        else if (state.hasProperty(ids::makeView()))
         {
-            const auto buildView = state["make-view"].getNativeFunction();
+            const auto buildView = state[ids::makeView()].getNativeFunction();
             const auto viewObjectProperty = buildView({ juce::var{}, nullptr, 0 });
 
             if (auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
             {
-                if (auto* viewObject = dynamic_cast<View*>(wrappedState->state["view-object"].getObject()))
+                if (auto* viewObject = dynamic_cast<View*>(wrappedState->state[ids::viewObject()].getObject()))
                     view = viewObject;
                 else
                     jassertfalse;
@@ -53,7 +53,7 @@ namespace jive
             view = new PassiveView{ state };
         }
 
-        state.removeProperty("view-object", nullptr);
+        state.removeProperty(ids::viewObject(), nullptr);
         view->state = state;
 
         return view;
@@ -251,7 +251,7 @@ namespace jive
 
     GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id)
     {
-        if (root.state["id"].toString() == id.toString())
+        if (root.state[ids::id()].toString() == id.toString())
             return &root;
 
         for (auto* child : root.getChildren())

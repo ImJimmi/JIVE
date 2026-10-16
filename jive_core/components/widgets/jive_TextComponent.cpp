@@ -12,7 +12,7 @@ namespace jive
     void TextComponent::paint(juce::Graphics& g)
     {
         JIVE_TRACE();
-        updateCachedFont();
+        updateCachedStyles();
 
         if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
             return;
@@ -31,12 +31,12 @@ namespace jive
 
     void TextComponent::lookAndFeelChanged()
     {
-        updateCachedFont();
+        updateCachedStyles();
     }
 
     void TextComponent::parentHierarchyChanged()
     {
-        updateCachedFont();
+        updateCachedStyles();
     }
 
     const juce::String& TextComponent::getText() const
@@ -53,16 +53,6 @@ namespace jive
         }
     }
 
-    void TextComponent::setLineSpacing(float newLineSpacing)
-    {
-        if (!juce::approximatelyEqual(newLineSpacing, lineSpacing))
-        {
-            lineSpacing = newLineSpacing;
-            repaint();
-        }
-        updateCachedFont();
-    }
-
     void TextComponent::setWordWrap(juce::AttributedString::WordWrap newWordWrap)
     {
         if (newWordWrap != wordWrap)
@@ -70,6 +60,11 @@ namespace jive
             wordWrap = newWordWrap;
             repaint();
         }
+    }
+
+    float TextComponent::getLineSpacing() const
+    {
+        return lineSpacing;
     }
 
     void TextComponent::clearAttributes()
@@ -261,14 +256,18 @@ namespace jive
         return wrappedLayout;
     }
 
-    void TextComponent::updateCachedFont()
+    void TextComponent::updateCachedStyles()
     {
         if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
-            if (auto newFont = getFont(*this, laf->findMostApplicableStyles(*this));
-                newFont != cachedFont)
+            const auto styles = laf->findMostApplicableStyles(*this);
+            const auto newFont = getFont(*this, styles);
+            const auto newLineSpacing = styles.find<float>("line-spacing").value_or(0.0f);
+
+            if (newFont != cachedFont || !juce::exactlyEqual(newLineSpacing, lineSpacing))
             {
                 cachedFont = newFont;
+                lineSpacing = newLineSpacing;
                 listeners.call(&Listener::textFontChanged, *this);
             }
         }

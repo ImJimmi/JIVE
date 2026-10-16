@@ -8,7 +8,7 @@
 
 namespace jive
 {
-    class BoxModel
+    class BoxModel : private juce::ValueTree::Listener
     {
     public:
         struct Listener
@@ -38,6 +38,7 @@ namespace jive
         };
 
         explicit BoxModel(juce::ValueTree sourceState);
+        ~BoxModel() override;
 
         [[nodiscard]] float getWidth() const;
         void setWidth(float newWidth);
@@ -79,24 +80,26 @@ namespace jive
         juce::ValueTree state;
 
     private:
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
         void lock();
         void unlock();
 
         juce::Rectangle<float> getParentBounds() const;
 
-        Property<Length> width;
-        Property<Length> height;
-        Property<Length> minWidth;
-        Property<Length> minHeight;
-        Property<Length> maxWidth;
-        Property<Length> maxHeight;
-        Property<float> idealWidth;
-        Property<float> idealHeight;
-        Property<float> componentWidth;
-        Property<float> componentHeight;
-        Property<juce::BorderSize<float>> padding;
-        Property<juce::BorderSize<float>> border;
-        Property<juce::BorderSize<float>> margin;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+        PassiveProperty<Length> minWidth;
+        PassiveProperty<Length> minHeight;
+        PassiveProperty<Length> maxWidth;
+        PassiveProperty<Length> maxHeight;
+        PassiveProperty<float> idealWidth;
+        PassiveProperty<float> idealHeight;
+        PassiveProperty<float> componentWidth;
+        PassiveProperty<float> componentHeight;
+        PassiveProperty<juce::BorderSize<float>> padding;
+        PassiveProperty<juce::BorderSize<float>> border;
+        PassiveProperty<juce::BorderSize<float>> margin;
         bool callbackLock = false;
 
         juce::ListenerList<Listener> listeners;

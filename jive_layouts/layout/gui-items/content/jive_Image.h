@@ -25,7 +25,7 @@ namespace jive
     protected:
         void componentMovedOrResized(juce::Component&, bool, bool) override;
         void boxModelChanged(BoxModel& boxModelThatChanged) override;
-        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& id) override;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id) override;
 
     private:
         float calculateAspectRatio(const juce::ImageComponent& image) const;
@@ -41,12 +41,12 @@ namespace jive
         std::unique_ptr<juce::Component> childComponent;
         bool changingChild = false;
 
-        Property<Drawable> source;
-        Property<juce::RectanglePlacement> placement;
-        Property<Length> width;
-        Property<Length> height;
-        Property<Length> idealWidth;
-        Property<Length> idealHeight;
+        PassiveProperty<Drawable> source;
+        PassiveProperty<juce::RectanglePlacement> placement;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+        PassiveProperty<Length> idealWidth;
+        PassiveProperty<Length> idealHeight;
 
         const BoxModel& boxModel;
 

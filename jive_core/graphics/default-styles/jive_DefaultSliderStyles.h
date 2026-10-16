@@ -164,7 +164,7 @@ namespace jive::default_styles
             backgroundTrack.addEllipse(thumb);
         }
 
-        const_cast<juce::Slider*>(&slider)->getProperties().set("jive::shadow-path", backgroundTrack.toString());
+        const_cast<juce::Slider*>(&slider)->getProperties().set(ids::shadowPath(), backgroundTrack.toString());
     }
 
     inline void paintRotarySlider(juce::Graphics& g,
@@ -232,6 +232,6 @@ namespace jive::default_styles
         g.fillEllipse(thumb);
 
         backgroundArc.addEllipse(thumb);
-        const_cast<juce::Slider*>(&slider)->getProperties().set("jive::shadow-path", backgroundArc.toString());
+        const_cast<juce::Slider*>(&slider)->getProperties().set(ids::shadowPath(), backgroundArc.toString());
     }
 } // namespace jive::default_styles

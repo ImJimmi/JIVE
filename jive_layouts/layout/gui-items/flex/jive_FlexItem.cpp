@@ -28,12 +28,12 @@ namespace jive
 
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
-        , order{ state, "order" }
-        , flexGrow{ state, "flex-grow" }
-        , flexShrink{ state, "flex-shrink" }
-        , flexBasis{ state, "flex-basis" }
-        , alignSelf{ state, "align-self" }
-        , parentDirection{ state.getParent(), "flex-direction" }
+        , order{ state, ids::order() }
+        , flexGrow{ state, ids::flexGrow() }
+        , flexShrink{ state, ids::flexShrink() }
+        , flexBasis{ state, ids::flexBasis() }
+        , alignSelf{ state, ids::alignSelf() }
+        , parentDirection{ state.getParent(), ids::flexDirection() }
         , layoutDummy{ std::make_unique<FlexLayoutDummy>(*this) }
     {
         const auto updateParentLayout = [this]() {
@@ -52,10 +52,12 @@ namespace jive
         alignSelf.onValueChange = updateParentLayout;
 
         box.addListener(*this);
+        state.addListener(this);
     }
 
     FlexItem::~FlexItem()
     {
+        state.removeListener(this);
         box.removeListener(*this);
     }
 
@@ -98,9 +100,19 @@ namespace jive
         return cachedItems.find(key)->second;
     }
 
+    void FlexItem::idealSizeChanged()
+    {
+        cachedItems.clear();
+    }
+
     void FlexItem::boxModelChanged(BoxModel&)
     {
         cachedItems.clear();
+    }
+
+    void FlexItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree, property, order, flexGrow, flexShrink, flexBasis, alignSelf);
     }
 } // namespace jive
 

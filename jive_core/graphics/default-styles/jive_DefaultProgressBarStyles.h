@@ -1,5 +1,7 @@
 #pragma once
 
+#include <jive_core/values/jive_Identifiers.h>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive::default_styles
@@ -51,7 +53,7 @@ namespace jive::default_styles
 
         const_cast<juce::ProgressBar*>(&bar)
             ->getProperties()
-            .set("jive::shadow-path",
+            .set(ids::shadowPath(),
                  getShape(getBorderRadius(bar, styles),
                           bar.getLocalBounds().toFloat())
                      .toString());
@@ -108,7 +110,7 @@ namespace jive::default_styles
 
         const_cast<juce::ProgressBar*>(&bar)
             ->getProperties()
-            .set("jive::shadow-path", backgroundPath.toString());
+            .set(ids::shadowPath(), backgroundPath.toString());
     }
 
     inline void paintProgressBar(juce::Graphics& g,

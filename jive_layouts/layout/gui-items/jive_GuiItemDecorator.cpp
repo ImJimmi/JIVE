@@ -126,7 +126,7 @@ namespace jive
 
     [[nodiscard]] static std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
-        Property<Display> display{ item->state, "display" };
+        const PassiveProperty<Display> display{ item->state, ids::display() };
 
         switch (display.getOr(Display::flex))
         {
@@ -148,7 +148,7 @@ namespace jive
         if (item->getParent() == nullptr)
             return item;
 
-        Property<Display> display{ item->state.getParent(), "display" };
+        const PassiveProperty<Display> display{ item->state.getParent(), ids::display() };
 
         switch (display.getOr(Display::flex))
         {

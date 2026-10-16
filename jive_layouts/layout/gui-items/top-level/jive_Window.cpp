@@ -10,24 +10,26 @@ namespace jive
 {
     Window::Window(std::unique_ptr<GuiItem> itemToDecorate)
         : TopLevelGuiItem{ std::move(itemToDecorate) }
-        , hasShadow{ state, "shadow" }
-        , isNative{ state, "native" }
-        , canBeResized{ state, "resizable" }
-        , useCornerResizer{ state, "corner-resizer" }
-        , minWidth{ state, "min-width" }
-        , minHeight{ state, "min-height" }
-        , maxWidth{ state, "max-width" }
-        , maxHeight{ state, "max-height" }
-        , draggable{ state, "draggable" }
-        , fullScreen{ state, "full-screen" }
-        , minimised{ state, "minimised" }
-        , visibility{ state, "visibility" }
-        , name{ state, "name" }
-        , windowTitleBarHeight{ state, "title-bar-height" }
-        , windowTitleBarButtons{ state, "title-bar-buttons" }
-        , width{ state, "width" }
-        , height{ state, "height" }
+        , hasShadow{ state, ids::shadow() }
+        , isNative{ state, ids::native() }
+        , canBeResized{ state, ids::resizable() }
+        , useCornerResizer{ state, ids::cornerResizer() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
+        , maxWidth{ state, ids::maxWidth() }
+        , maxHeight{ state, ids::maxHeight() }
+        , draggable{ state, ids::draggable() }
+        , fullScreen{ state, ids::fullScreen() }
+        , minimised{ state, ids::minimised() }
+        , visibility{ state, ids::visibility() }
+        , name{ state, ids::name() }
+        , windowTitleBarHeight{ state, ids::titleBarHeight() }
+        , windowTitleBarButtons{ state, ids::titleBarButtons() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
     {
+        state.addListener(this);
+
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
         hasShadow.onValueChange = [this]() {
@@ -136,8 +138,30 @@ namespace jive
 
     Window::~Window()
     {
+        state.removeListener(this);
         setLookAndFeel(nullptr);
         getComponent()->setLookAndFeel(nullptr);
+    }
+
+    void Window::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              hasShadow,
+                              isNative,
+                              canBeResized,
+                              useCornerResizer,
+                              minWidth,
+                              minHeight,
+                              maxWidth,
+                              maxHeight,
+                              draggable,
+                              fullScreen,
+                              minimised,
+                              visibility,
+                              name,
+                              windowTitleBarHeight,
+                              windowTitleBarButtons);
     }
 } // namespace jive
 

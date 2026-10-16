@@ -3,6 +3,7 @@
 #include "jive_ComponentTypePredicates.h"
 
 #include <jive_core/interface/jive_InteractionState.h>
+#include <jive_core/values/jive_Identifiers.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 namespace jive
@@ -61,7 +62,7 @@ namespace jive
                 removeLastCharacters(selector, 1);
 
                 return [className, remainingPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
-                    return fromVar<juce::StringArray>(component.getProperties().getWithDefault("class", ""))
+                    return fromVar<juce::StringArray>(component.getProperties().getWithDefault(ids::classes(), ""))
                                .contains(className)
                         && remainingPredicate(component);
                 };

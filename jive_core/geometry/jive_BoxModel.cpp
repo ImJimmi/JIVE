@@ -6,20 +6,22 @@ namespace jive
 {
     BoxModel::BoxModel(juce::ValueTree stateSource)
         : state{ stateSource }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , minWidth{ state, "min-width" }
-        , minHeight{ state, "min-height" }
-        , maxWidth{ state, "max-width" }
-        , maxHeight{ state, "max-height" }
-        , idealWidth{ state, "jive::ideal-width" }
-        , idealHeight{ state, "jive::ideal-height" }
-        , componentWidth{ state, "jive::component-width" }
-        , componentHeight{ state, "jive::component-height" }
-        , padding{ state, "padding" }
-        , border{ state, "border-width" }
-        , margin{ state, "margin" }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
+        , maxWidth{ state, ids::maxWidth() }
+        , maxHeight{ state, ids::maxHeight() }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
+        , componentWidth{ state, ids::componentWidth() }
+        , componentHeight{ state, ids::componentHeight() }
+        , padding{ state, ids::padding() }
+        , border{ state, ids::borderWidth() }
+        , margin{ state, ids::margin() }
     {
+        state.addListener(this);
+
         if (!width.exists())
             width.setAuto();
         if (!height.exists())
@@ -94,6 +96,11 @@ namespace jive
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
         margin.onTransitionProgressed = informBoxModelChanged;
+    }
+
+    BoxModel::~BoxModel()
+    {
+        state.removeListener(this);
     }
 
     float BoxModel::getWidth() const
@@ -257,6 +264,25 @@ namespace jive
             fromVar<float>(parent[componentWidth.id]),
             fromVar<float>(parent[componentHeight.id]),
         };
+    }
+
+    void BoxModel::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              componentWidth,
+                              componentHeight,
+                              width,
+                              height,
+                              idealWidth,
+                              idealHeight,
+                              padding,
+                              border,
+                              margin,
+                              minWidth,
+                              minHeight,
+                              maxWidth,
+                              maxHeight);
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)

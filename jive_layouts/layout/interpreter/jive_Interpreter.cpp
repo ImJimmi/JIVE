@@ -67,8 +67,8 @@ namespace jive
         if (root == nullptr)
             return;
 
-        if (file.getFullPathName().contains(root->state.getProperty("source", "jive::no-source-found").toString())
-            || file.getFullPathName() == root->state.getProperty("jive::top-level-source-file", "jive::no-source-found").toString())
+        if (file.getFullPathName().contains(root->state.getProperty(ids::source(), "jive::no-source-found").toString())
+            || file.getFullPathName() == root->state.getProperty(ids::topLevelSourceFile(), "jive::no-source-found").toString())
         {
             // Don't descend into an item that's about to be entirely replaced.
             results.push_back(root);
@@ -100,7 +100,7 @@ namespace jive
             // tree (see valueTreeChildAdded) would mistake them for inline
             // content and re-append them a second time.
             for (auto i = 0; i < source.getNumChildren(); i++)
-                source.getChild(i).setProperty("jive::external-source-child", true, nullptr);
+                source.getChild(i).setProperty(ids::externalSourceChild(), true, nullptr);
 
             for (auto i = 0; i < item->state.getNumProperties(); i++)
             {
@@ -118,8 +118,8 @@ namespace jive
             // relationship to its parent's - without the marker, the next
             // reload of the parent's file would mistake this item for inline
             // content and keep it around alongside its freshly-parsed twin.
-            if (item->state.hasProperty("jive::external-source-child"))
-                source.setProperty("jive::external-source-child", true, nullptr);
+            if (item->state.hasProperty(ids::externalSourceChild()))
+                source.setProperty(ids::externalSourceChild(), true, nullptr);
 
             if (item->isTopLevel())
             {
@@ -132,7 +132,7 @@ namespace jive
                 // top-level item need to be re-established - otherwise any
                 // further changes to this file (or its nested sources) would go
                 // unnoticed.
-                item->state.setProperty("jive::top-level-source-file", file.getFullPathName(), nullptr);
+                item->state.setProperty(ids::topLevelSourceFile(), file.getFullPathName(), nullptr);
                 listenTo(*item);
 
                 sourcesPendingNotification.push_back(file);
@@ -149,7 +149,7 @@ namespace jive
                 {
                     auto child = item->state.getChild(i);
 
-                    if (!static_cast<bool>(child.getProperty("jive::external-source-child")))
+                    if (!static_cast<bool>(child.getProperty(ids::externalSourceChild())))
                         inlineChildren.push_back(child);
                 }
 
@@ -176,7 +176,7 @@ namespace jive
         auto item = interpret(parseFileToValueTree(file), pluginProcessor);
         listenTo(*item);
 
-        item->state.setProperty("jive::top-level-source-file", file.getFullPathName(), nullptr);
+        item->state.setProperty(ids::topLevelSourceFile(), file.getFullPathName(), nullptr);
 
         observeFileForChanges(file);
 
@@ -233,9 +233,7 @@ namespace jive
     void Interpreter::valueTreePropertyChanged(juce::ValueTree& tree,
                                                const juce::Identifier& property)
     {
-        static const juce::Identifier sourceProperty{ "source" };
-
-        if (observedItem == nullptr || ignoreValueTreeChanges || property != sourceProperty)
+        if (observedItem == nullptr || ignoreValueTreeChanges || property != ids::source())
             return;
 
         auto parentTree = tree.getParent();
@@ -364,11 +362,11 @@ namespace jive
 
         if (item != nullptr)
         {
-            tree.setProperty("jive::setup-in-progress", true, nullptr);
+            tree.setProperty(ids::setupInProgress(), true, nullptr);
             item = decorate(std::move(item), customDecorators);
             setChildItems(*item);
 
-            tree.setProperty("jive::setup-in-progress", false, nullptr);
+            tree.setProperty(ids::setupInProgress(), false, nullptr);
 
             if (item->isTopLevel())
             {
@@ -407,7 +405,7 @@ namespace jive
 
     std::shared_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
     {
-        if (auto* viewObject = dynamic_cast<jive::View*>(tree["view-object"].getObject()))
+        if (auto* viewObject = dynamic_cast<jive::View*>(tree[ids::viewObject()].getObject()))
         {
             if (auto component = viewObject->createComponent(tree))
                 return component;
@@ -431,14 +429,12 @@ namespace jive
             view->setup(item);
     }
 
-    static const juce::Identifier externalSourceProperties{ "jive::external-source-properties" };
-
     juce::ValueTree Interpreter::loadExternalSources(juce::ValueTree tree)
     {
         if (tree.isValid())
-            tree.setProperty("jive::source-directories", sourceDirectories.get(), nullptr);
+            tree.setProperty(ids::sourceDirectories(), sourceDirectories.get(), nullptr);
 
-        const auto source = tree["source"].toString();
+        const auto source = tree[ids::source()].toString();
 
         if (source.isEmpty())
             return tree;
@@ -452,7 +448,7 @@ namespace jive
 
         // Properties merged in from a previously loaded source would otherwise
         // outlive it, overriding whatever the new source has to say.
-        if (const auto* previousProperties = tree[externalSourceProperties].getArray())
+        if (const auto* previousProperties = tree[ids::externalSourceProperties()].getArray())
         {
             for (const auto& name : *previousProperties)
                 tree.removeProperty(name.toString(), nullptr);
@@ -481,7 +477,7 @@ namespace jive
         {
             auto child = tree.getChild(i);
 
-            if (!static_cast<bool>(child.getProperty("jive::external-source-child")))
+            if (!static_cast<bool>(child.getProperty(ids::externalSourceChild())))
                 inlineChildren.push_back(child);
         }
 
@@ -490,12 +486,12 @@ namespace jive
 
         auto finalise = [&](juce::ValueTree destination) {
             for (auto i = 0; i < destination.getNumChildren(); i++)
-                destination.getChild(i).setProperty("jive::external-source-child", true, nullptr);
+                destination.getChild(i).setProperty(ids::externalSourceChild(), true, nullptr);
 
             for (auto& child : inlineChildren)
                 destination.appendChild(child, nullptr);
 
-            destination.setProperty(externalSourceProperties, propertiesFromSource, nullptr);
+            destination.setProperty(ids::externalSourceProperties(), propertiesFromSource, nullptr);
 
             observeFileForChanges(file);
 

@@ -16,30 +16,19 @@ namespace jive
             Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box);
 
             void setSelected(bool shouldBeSelected);
+            bool handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property);
 
         private:
             juce::ValueTree tree;
             juce::ComboBox& comboBox;
             const int index;
             const int id;
-            Property<juce::String> text;
-            Property<bool> enabled;
-            Property<bool> selected;
+            PassiveProperty<juce::String> text;
+            PassiveProperty<bool> enabled;
+            PassiveProperty<bool> selected;
             bool wasSelected{ false };
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Option)
-        };
-
-        class Header
-        {
-        public:
-            Header(juce::ValueTree sourceTree, ComboBox& comboBox);
-
-        private:
-            ComboBox& comboBox;
-            Property<juce::String> text;
-
-            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Header)
         };
 
         explicit ComboBox(std::unique_ptr<GuiItem> itemToDecorate);
@@ -61,18 +50,19 @@ namespace jive
 
     private:
         void comboBoxChanged(juce::ComboBox* box) final;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        Property<bool> editable;
-        Property<juce::String> tooltip;
-        Property<int> selected;
-        Property<Length> width;
-        Property<Length> height;
-        Property<bool> focusable;
+        PassiveProperty<bool> editable;
+        PassiveProperty<juce::String> tooltip;
+        PassiveProperty<int> selected;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+        PassiveProperty<bool> focusable;
 
         Event onChange;
 
         juce::OwnedArray<Option> options;
-        juce::OwnedArray<Header> headers;
+        bool updatingItems = false;
 
 #if JIVE_IS_PLUGIN_PROJECT
         std::unique_ptr<juce::ComboBoxParameterAttachment> parameterAttachment;

@@ -9,6 +9,7 @@ namespace jive
         : public GuiItemDecorator
         , private juce::ComponentListener
         , private BoxModel::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         explicit CommonGuiItem(std::unique_ptr<GuiItem> itemToDecorate);
@@ -27,26 +28,30 @@ namespace jive
         void childrenChanged() override;
 
     private:
-        Property<juce::String> name;
-        Property<juce::String> title;
-        Property<juce::Identifier> id;
-        Property<juce::String> description;
-        Property<juce::String> tooltip;
-        Property<bool> enabled;
-        Property<bool> accessible;
-        Property<bool> visibility;
-        Property<bool> alwaysOnTop;
-        Property<bool> bufferedToImage;
-        Property<bool> opaque;
-        Property<bool> focusable;
-        Property<bool> clickingGrabsFocus;
-        Property<bool> focusOutline;
-        Property<int> focusOrder;
-        Property<float> opacity;
-        Property<juce::String> classes;
-        Property<juce::MouseCursor::StandardCursorType> cursor;
-        Property<Length> width;
-        Property<Length> height;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        PassiveProperty<juce::String> name;
+        PassiveProperty<juce::String> title;
+        PassiveProperty<juce::Identifier> id;
+        PassiveProperty<juce::String> description;
+        PassiveProperty<juce::String> tooltip;
+        PassiveProperty<bool> enabled;
+        PassiveProperty<bool> accessible;
+        PassiveProperty<bool> visibility;
+        PassiveProperty<bool> alwaysOnTop;
+        PassiveProperty<bool> bufferedToImage;
+        PassiveProperty<bool> opaque;
+        PassiveProperty<bool> focusable;
+        PassiveProperty<bool> clickingGrabsFocus;
+        PassiveProperty<bool> focusOutline;
+        PassiveProperty<int> focusOrder;
+        PassiveProperty<float> opacity;
+        PassiveProperty<juce::String> classes;
+        PassiveProperty<juce::MouseCursor::StandardCursorType> cursor;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+
+        const std::vector<std::pair<juce::Identifier, std::function<void()>>> propertyUpdaters;
 
         JUCE_LEAK_DETECTOR(CommonGuiItem)
     };

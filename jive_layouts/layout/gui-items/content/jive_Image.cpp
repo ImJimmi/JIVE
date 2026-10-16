@@ -6,12 +6,12 @@ namespace jive
 {
     Image::Image(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , source{ state, "source" }
-        , placement{ state, "placement" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , idealWidth{ state, "jive::ideal-width" }
-        , idealHeight{ state, "jive::ideal-height" }
+        , source{ state, ids::source() }
+        , placement{ state, ids::placement() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
@@ -121,8 +121,10 @@ namespace jive
         idealHeight = calculateRequiredHeight();
     }
 
-    void Image::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
+    void Image::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        forwardPropertyChange(tree, id, source, placement);
+
         if (state.getType().toString().compareIgnoreCase("svg") == 0)
         {
             if (!changingChild && childComponent != nullptr)

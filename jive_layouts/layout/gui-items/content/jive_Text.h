@@ -34,11 +34,10 @@ namespace jive
 
         void updateTextComponent(bool alwaysReflowParent = true);
 
-        Property<juce::String> text;
-        Property<float, Inheritance::inheritFromAncestors> lineSpacing;
-        Property<juce::AttributedString::WordWrap> wordWrap;
-        Property<float> idealWidth;
-        Property<float> idealHeight;
+        PassiveProperty<juce::String> text;
+        PassiveProperty<juce::AttributedString::WordWrap> wordWrap;
+        PassiveProperty<float> idealWidth;
+        PassiveProperty<float> idealHeight;
 
 #if JIVE_IS_PLUGIN_PROJECT
         juce::RangedAudioParameter* parameter;
@@ -47,6 +46,7 @@ namespace jive
 
         mutable std::unordered_map<float, juce::TextLayout> layoutsCache;
         juce::Point<float> previousNaturalSize{ -1.0f, -1.0f };
+        float previousLineSpacing = 0.0f;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };

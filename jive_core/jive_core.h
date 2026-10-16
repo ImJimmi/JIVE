@@ -64,6 +64,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "time/jive_Timer.h"
 #include "values/jive_Colours.h"
 #include "values/jive_Event.h"
+#include "values/jive_Identifiers.h"
 #include "values/jive_Object.h"
 #include "values/jive_Property.h"
 #include "values/jive_PropertyBehaviours.h"
