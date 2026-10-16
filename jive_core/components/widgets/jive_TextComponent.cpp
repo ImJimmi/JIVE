@@ -25,8 +25,10 @@ namespace jive
         if (attributedString.getText().isEmpty() || !g.clipRegionIntersects(getLocalBounds()))
             return;
 
+        updateTextLayoutsSource(attributedString);
+
         const auto bounds = getLocalBounds().toFloat();
-        getLayoutToDraw(attributedString, bounds.getWidth()).draw(g, bounds);
+        getTextLayout(bounds.getWidth()).draw(g, bounds);
     }
 
     void TextComponent::lookAndFeelChanged()
@@ -49,6 +51,7 @@ namespace jive
         if (newText != text)
         {
             text = newText;
+            textLayoutsSourceMayBeOutOfDate = true;
             repaint();
         }
     }
@@ -58,6 +61,7 @@ namespace jive
         if (newWordWrap != wordWrap)
         {
             wordWrap = newWordWrap;
+            textLayoutsSourceMayBeOutOfDate = true;
             repaint();
         }
     }
@@ -70,12 +74,14 @@ namespace jive
     void TextComponent::clearAttributes()
     {
         appendices.clear();
+        textLayoutsSourceMayBeOutOfDate = true;
         repaint();
     }
 
     void TextComponent::append(const juce::AttributedString& attributedStringToAppend)
     {
         appendices.add(attributedStringToAppend);
+        textLayoutsSourceMayBeOutOfDate = true;
         repaint();
     }
 
@@ -220,44 +226,66 @@ namespace jive
         return true;
     }
 
-    // Shaping text is expensive, and most repaints draw exactly the same text
-    // as last time. When only the width has changed (e.g. while the window is
-    // being resized), text that fits without wrapping is laid out identically
-    // at any width, so its unwrapped layout can be reused as well.
-    const juce::TextLayout& TextComponent::getLayoutToDraw(const juce::AttributedString& attributedString,
-                                                           float width)
+    // A layout created at some maximum width breaks its lines in the same
+    // places at any narrower width that its longest line still fits in, so it
+    // can be reused at any of those widths instead of shaping the text again.
+    // Text that isn't wrapped is laid out the same at every width.
+    [[nodiscard]] static auto canBeReusedAt(const juce::TextLayout& layout,
+                                            float createdAtMaxWidth,
+                                            float maxWidth,
+                                            juce::AttributedString::WordWrap wordWrap)
     {
-        if (!isEquivalent(lastDrawnString, attributedString))
-        {
-            lastDrawnString = attributedString;
-            unwrappedLayout.reset();
-            wrappedLayoutWidth.reset();
-        }
-        else if (wrappedLayoutWidth.has_value() && juce::exactlyEqual(*wrappedLayoutWidth, width))
-        {
-            return wrappedLayout;
-        }
-        else
-        {
-            if (!unwrappedLayout.has_value())
-            {
-                unwrappedLayout.emplace();
-                unwrappedLayout->createLayout(attributedString,
-                                              static_cast<float>(std::numeric_limits<juce::uint16>::max()));
-            }
+        return wordWrap == juce::AttributedString::WordWrap::none
+            || juce::exactlyEqual(maxWidth, createdAtMaxWidth)
+            || (layout.getWidth() <= maxWidth && maxWidth <= createdAtMaxWidth);
+    }
 
-            if (unwrappedLayout->getWidth() < width)
-                return *unwrappedLayout;
+    const juce::TextLayout& TextComponent::getTextLayout(float maxWidth) const
+    {
+        JIVE_TRACE("max-width", maxWidth);
+
+        if (textLayoutsSourceMayBeOutOfDate)
+            updateTextLayoutsSource(getAttributedString());
+
+        const auto reusable = std::find_if(std::begin(textLayouts),
+                                           std::end(textLayouts),
+                                           [this, maxWidth](const auto& cached) {
+                                               return canBeReusedAt(cached.layout,
+                                                                    cached.maxWidth,
+                                                                    maxWidth,
+                                                                    textLayoutsSource.getWordWrap());
+                                           });
+
+        if (reusable != std::end(textLayouts))
+        {
+            std::rotate(reusable, std::next(reusable), std::end(textLayouts));
+            return textLayouts.back().layout;
         }
 
-        wrappedLayout.createLayout(attributedString, width);
-        wrappedLayoutWidth = width;
+        if (std::size(textLayouts) >= maxNumCachedTextLayouts)
+            textLayouts.erase(std::begin(textLayouts));
 
-        return wrappedLayout;
+        auto& created = textLayouts.emplace_back(CachedTextLayout{ maxWidth, {} });
+        created.layout.createLayout(textLayoutsSource, maxWidth);
+
+        return created.layout;
+    }
+
+    void TextComponent::updateTextLayoutsSource(const juce::AttributedString& attributedString) const
+    {
+        if (!isEquivalent(textLayoutsSource, attributedString))
+        {
+            textLayoutsSource = attributedString;
+            textLayouts.clear();
+        }
+
+        textLayoutsSourceMayBeOutOfDate = false;
     }
 
     void TextComponent::updateCachedStyles()
     {
+        textLayoutsSourceMayBeOutOfDate = true;
+
         if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
             const auto styles = laf->findMostApplicableStyles(*this);
@@ -286,6 +314,9 @@ public:
     void runTest() final
     {
         testRewrapsWhenNarrowed();
+        testLayoutsMatchFreshLayouts();
+        testLayoutsAreReusedAcrossWidths();
+        testLayoutsFollowChanges();
     }
 
 private:
@@ -334,6 +365,115 @@ private:
 
         text.setSize(1000, lineHeight * 3);
         expect(!hasInkBetween(paint(text), secondLineTop, secondLineBottom));
+    }
+
+    void expectEquivalent(const juce::TextLayout& actual,
+                          const juce::TextLayout& expected,
+                          const juce::String& context)
+    {
+        static constexpr auto tolerance = 0.01f;
+
+        expectEquals(actual.getNumLines(), expected.getNumLines(), context);
+        expectWithinAbsoluteError(actual.getWidth(), expected.getWidth(), tolerance, context);
+        expectWithinAbsoluteError(actual.getHeight(), expected.getHeight(), tolerance, context);
+
+        for (auto i = 0; i < std::min(actual.getNumLines(), expected.getNumLines()); i++)
+        {
+            const auto& actualLine = actual.getLine(i);
+            const auto& expectedLine = expected.getLine(i);
+
+            expect(actualLine.stringRange == expectedLine.stringRange, context);
+            expectWithinAbsoluteError(actualLine.lineOrigin.x, expectedLine.lineOrigin.x, tolerance, context);
+            expectWithinAbsoluteError(actualLine.lineOrigin.y, expectedLine.lineOrigin.y, tolerance, context);
+        }
+    }
+
+    void testLayoutsMatchFreshLayouts()
+    {
+        beginTest("layouts match fresh layouts at every width");
+
+        static constexpr auto widest = 260.0f;
+        static constexpr auto narrowest = 30.0f;
+
+        for (const juce::Justification justification : {
+                 juce::Justification::centredLeft,
+                 juce::Justification::centred,
+                 juce::Justification::centredRight,
+                 juce::Justification::horizontallyJustified,
+             })
+        {
+            for (const auto wordWrap : {
+                     juce::AttributedString::WordWrap::byWord,
+                     juce::AttributedString::WordWrap::byChar,
+                     juce::AttributedString::WordWrap::none,
+                 })
+            {
+                jive::TextComponent text;
+                jive::LookAndFeel lookAndFeel{ text };
+                lookAndFeel.addStyles(jive::StyleSelector::makeInlineStyleSelector(text),
+                                      jive::Styles{}.withTextAlignment(justification));
+                text.setText("The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.");
+                text.setWordWrap(wordWrap);
+
+                const auto expectEquivalentToFreshLayout = [&](float width) {
+                    juce::TextLayout fresh;
+                    fresh.createLayout(text.getAttributedString(), width);
+
+                    expectEquivalent(text.getTextLayout(width),
+                                     fresh,
+                                     "justification " + juce::String{ justification.getFlags() }
+                                         + ", word-wrap " + juce::String{ static_cast<int>(wordWrap) }
+                                         + ", width " + juce::String{ width });
+                };
+
+                for (auto width = widest; width > narrowest; width -= 3.7f)
+                    expectEquivalentToFreshLayout(width);
+                for (auto width = narrowest; width < widest; width += 2.9f)
+                    expectEquivalentToFreshLayout(width);
+            }
+        }
+    }
+
+    void testLayoutsAreReusedAcrossWidths()
+    {
+        beginTest("layouts are reused at widths that don't change where their lines break");
+
+        jive::TextComponent text;
+        text.setText("Wrapping text that spans a few lines");
+
+        const auto* wrapped = &text.getTextLayout(100.0f);
+        expectGreaterThan(wrapped->getNumLines(), 1);
+        expect(&text.getTextLayout((wrapped->getWidth() + 100.0f) / 2.0f) == wrapped);
+
+        const auto* unwrapped = &text.getTextLayout(10000.0f);
+        expectEquals(unwrapped->getNumLines(), 1);
+        expect(&text.getTextLayout(unwrapped->getWidth() + 1.0f) == unwrapped);
+    }
+
+    void testLayoutsFollowChanges()
+    {
+        beginTest("layouts follow changes to the text, word-wrap, and styles");
+
+        jive::TextComponent text;
+        jive::LookAndFeel lookAndFeel{ text };
+
+        text.setText("One two three four five six");
+        expectGreaterThan(text.getTextLayout(60.0f).getNumLines(), 1);
+
+        text.setWordWrap(juce::AttributedString::WordWrap::none);
+        expectEquals(text.getTextLayout(60.0f).getNumLines(), 1);
+
+        text.setText("One");
+        expect(text.getTextLayout(60.0f).getLine(0).stringRange == juce::Range{ 0, 3 });
+
+        text.append(juce::AttributedString{ " more" });
+        expect(text.getTextLayout(60.0f).getLine(0).stringRange == juce::Range{ 0, 8 });
+
+        const auto heightBefore = text.getTextLayout(60.0f).getHeight();
+        lookAndFeel.addStyles(jive::StyleSelector::makeInlineStyleSelector(text),
+                              jive::Styles{}.withFontPointSize(40.0f));
+        text.sendLookAndFeelChange();
+        expectGreaterThan(text.getTextLayout(60.0f).getHeight(), heightBefore * 2.0f);
     }
 };
 

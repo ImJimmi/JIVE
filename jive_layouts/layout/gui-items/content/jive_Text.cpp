@@ -23,7 +23,7 @@ namespace jive
 
         state.setProperty(ids::idealHeight(),
                           juce::var{ [this](const juce::var::NativeFunctionArgs& args) {
-                              const auto layout = buildTextLayout(args.arguments[0]);
+                              const auto& layout = getTextComponent().getTextLayout(args.arguments[0]);
                               return std::ceil(layout.getHeight());
                           } },
                           nullptr);
@@ -93,34 +93,12 @@ namespace jive
 
     void Text::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
-        if (!id.toString().startsWith("jive::"))
-            layoutsCache.clear();
-
         forwardPropertyChange(tree, id, text, wordWrap);
     }
 
     void Text::textFontChanged(TextComponent&)
     {
-        layoutsCache.clear();
         updateTextComponent(false);
-    }
-
-    juce::TextLayout Text::buildTextLayout(float maxWidth) const
-    {
-        JIVE_TRACE("max-width", maxWidth);
-
-        if (const auto layout = layoutsCache.find(maxWidth);
-            layout != std::end(layoutsCache))
-        {
-            return layout->second;
-        }
-
-        juce::TextLayout layout;
-        layout.createLayout(getTextComponent().getAttributedString(), maxWidth);
-
-        layoutsCache[maxWidth] = layout;
-
-        return layout;
     }
 
     template <typename T>
@@ -157,7 +135,7 @@ namespace jive
             }
         }
 
-        const auto naturalLayout = buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+        const auto& naturalLayout = getTextComponent().getTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
         const juce::Point naturalSize{ nextWholeNumberAbove(naturalLayout.getWidth()), naturalLayout.getHeight() };
         const auto lineSpacing = getTextComponent().getLineSpacing();
         const auto measurementsChanged = naturalSize != previousNaturalSize

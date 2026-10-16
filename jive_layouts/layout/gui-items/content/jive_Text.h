@@ -30,8 +30,6 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
         void textFontChanged(TextComponent& text) final;
 
-        juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
-
         void updateTextComponent(bool alwaysReflowParent = true);
 
         PassiveProperty<juce::String> text;
@@ -44,7 +42,6 @@ namespace jive
         std::unique_ptr<juce::ParameterAttachment> parameterAttachment;
 #endif
 
-        mutable std::unordered_map<float, juce::TextLayout> layoutsCache;
         juce::Point<float> previousNaturalSize{ -1.0f, -1.0f };
         float previousLineSpacing = 0.0f;
 
