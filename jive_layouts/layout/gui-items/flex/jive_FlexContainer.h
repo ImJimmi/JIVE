@@ -6,7 +6,6 @@ namespace jive
 {
     class FlexContainer
         : public ContainerItem
-        , private juce::ValueTree::Listener
     {
     public:
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);

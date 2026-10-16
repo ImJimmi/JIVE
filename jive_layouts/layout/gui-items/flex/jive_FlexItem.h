@@ -6,7 +6,6 @@ namespace jive
 {
     class FlexItem
         : public ContainerItem::Child
-        , private BoxModel::Listener
         , private juce::ValueTree::Listener
     {
     public:
@@ -19,7 +18,6 @@ namespace jive
         void idealSizeChanged() final;
 
     private:
-        void boxModelChanged(BoxModel&) final;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         PassiveProperty<int> order;
@@ -32,6 +30,8 @@ namespace jive
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;
         std::unordered_map<ItemCacheKey, juce::FlexItem> cachedItems;
+        std::uint64_t cachedItemsConstraintsVersion = 0;
+        Orientation cachedItemsOrientation = Orientation::vertical;
         float lastMinHeight = -1.0f;
     };
 } // namespace jive

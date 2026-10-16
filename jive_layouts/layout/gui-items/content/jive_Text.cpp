@@ -180,11 +180,12 @@ namespace jive
 
             if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem)
                                             .getTopLevelDecorator()
-                                            .toType<ContainerItem>();
-                containerParent != nullptr
-                && reflowParent)
+                                            .toType<ContainerItem>())
             {
-                containerParent->updateIdealSize();
+                if (reflowParent)
+                    containerParent->updateIdealSize();
+                else
+                    containerParent->invalidateIdealSize();
             }
         }
     }

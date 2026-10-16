@@ -95,7 +95,10 @@ namespace jive
         componentHeight.onTransitionProgressed = informBoxModelChanged;
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
-        margin.onTransitionProgressed = informBoxModelChanged;
+        margin.onTransitionProgressed = [this, informBoxModelChanged] {
+            constraintsVersion++;
+            informBoxModelChanged();
+        };
     }
 
     BoxModel::~BoxModel()
@@ -243,6 +246,11 @@ namespace jive
         };
     }
 
+    std::uint64_t BoxModel::getConstraintsVersion() const
+    {
+        return constraintsVersion;
+    }
+
     void BoxModel::addListener(Listener& listener) const
     {
         const_cast<juce::ListenerList<Listener>*>(&listeners)->add(&listener);
@@ -268,6 +276,20 @@ namespace jive
 
     void BoxModel::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
     {
+        if (tree == state
+            && (property == width.id
+                || property == height.id
+                || property == minWidth.id
+                || property == minHeight.id
+                || property == maxWidth.id
+                || property == maxHeight.id
+                || property == idealWidth.id
+                || property == idealHeight.id
+                || property == margin.id))
+        {
+            constraintsVersion++;
+        }
+
         forwardPropertyChange(tree,
                               property,
                               componentWidth,
@@ -327,6 +349,7 @@ public:
         testMargin();
         testContentBounds();
         testTransitions();
+        testConstraintsVersion();
     }
 
 private:
@@ -614,6 +637,67 @@ private:
             expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
             expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 60.0f, 60.0f });
             expectWithinAbsoluteError(listener.callbackCount, 60, 1);
+        }
+    }
+
+    void testConstraintsVersion()
+    {
+        beginTest("constraints version / changes");
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 200 },
+                    { "height", 200 },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            };
+            auto state = parentState.getChild(0);
+            jive::BoxModel boxModel{ state };
+            auto version = boxModel.getConstraintsVersion();
+
+            boxModel.setSize(100.0f, 50.0f);
+            state.setProperty("padding", 10, nullptr);
+            state.setProperty("border-width", 5, nullptr);
+            expectEquals(boxModel.getConstraintsVersion(), version);
+
+            for (const auto* property : {
+                     "width",
+                     "height",
+                     "min-width",
+                     "min-height",
+                     "max-width",
+                     "max-height",
+                     "margin",
+                     "jive::ideal-width",
+                     "jive::ideal-height",
+                 })
+            {
+                state.setProperty(property, 20, nullptr);
+                expectNotEquals(boxModel.getConstraintsVersion(), version, property);
+                version = boxModel.getConstraintsVersion();
+            }
+        }
+
+        beginTest("constraints version / margin transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                    { "margin", 0 },
+                    { "transition", "margin 10s" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            state.setProperty("margin", 100, nullptr);
+            const auto version = boxModel.getConstraintsVersion();
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectNotEquals(boxModel.getConstraintsVersion(), version);
         }
     }
 };
