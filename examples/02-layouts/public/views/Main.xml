@@ -1,0 +1,23 @@
+<Window
+    width="1000"
+    height="780"
+    min-height="720"
+    min-width="900"
+    padding="25"
+    resizable="true"
+    style="public/styles/Styles.json"
+>
+    <Component id="content" max-width="1280" align-self="center" flex-grow="1">
+        <Text id="title" margin="0 0 25 0" align-self="center">Layouts</Text>
+
+        <Text margin="0 0 25 0">JIVE has three layout options — Flex, Grid, and Absolute. Use the controls below to see how they each work.</Text>
+
+        <Component flex-direction="row" gap="10" margin="0 0 25 0" align-self="center">
+            <Button id="flex-tab" radio-group="1" toggle-on-click="true" toggled="true" padding="4 12">Flex</Button>
+            <Button id="grid-tab" radio-group="1" toggle-on-click="true" padding="4 12">Grid</Button>
+            <Button id="absolute-tab" radio-group="1" toggle-on-click="true" padding="4 12">Absolute</Button>
+        </Component>
+
+        <Component id="page" source="public/views/Flex.xml" flex-grow="1" />
+    </Component>
+</Window>

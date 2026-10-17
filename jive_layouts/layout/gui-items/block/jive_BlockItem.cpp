@@ -52,12 +52,10 @@ namespace jive
         };
         centreY.onTransitionProgressed = updateBounds;
 
-        width.onTransitionProgressed = [this] {
-            getComponent()->setBounds(calculateBounds());
-        };
-        height.onTransitionProgressed = [this] {
-            getComponent()->setBounds(calculateBounds());
-        };
+        width.onValueChange = updateBounds;
+        width.onTransitionProgressed = updateBounds;
+        height.onValueChange = updateBounds;
+        height.onTransitionProgressed = updateBounds;
 
         updateBounds();
 
@@ -74,7 +72,7 @@ namespace jive
         forwardPropertyChange(tree, property, x, y, centreX, centreY, width, height);
     }
 
-    int BlockItem::calculateX() const
+    int BlockItem::calculateX(float itemWidth) const
     {
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
@@ -84,7 +82,7 @@ namespace jive
                 centreX
                     .calculateCurrent()
                     .toPixels(parentContentBounds.getWidth())
-                - boxModel(*this).getWidth() / 2.f);
+                - itemWidth / 2.f);
         }
 
         return juce::roundToInt(
@@ -93,7 +91,7 @@ namespace jive
                 .toPixels(parentContentBounds.getWidth()));
     }
 
-    int BlockItem::calculateY() const
+    int BlockItem::calculateY(float itemHeight) const
     {
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
@@ -102,7 +100,7 @@ namespace jive
             return juce::roundToInt(centreY
                                         .calculateCurrent()
                                         .toPixels(parentContentBounds.getHeight())
-                                    - boxModel(*this).getHeight() / 2.f);
+                                    - itemHeight / 2.f);
         }
 
         return juce::roundToInt(
@@ -117,18 +115,29 @@ namespace jive
         const auto& parentBoxModel = boxModel(*getParent());
         const auto parentBounds = parentBoxModel.getContentBounds();
 
+        // The size is calculated here rather than taken from the box model, as
+        // the box model may not have seen a change to the width or height yet.
+        auto itemWidth = boxModel(*this).getWidth();
+        auto itemHeight = boxModel(*this).getHeight();
+
         if (!width.isAuto())
-            bounds.setWidth(juce::roundToInt(width.calculateCurrent().toPixels(parentBounds.getWidth())));
+        {
+            itemWidth = width.calculateCurrent().toPixels(parentBounds.getWidth());
+            bounds.setWidth(juce::roundToInt(itemWidth));
+        }
         if (!height.isAuto())
-            bounds.setHeight(juce::roundToInt(height.calculateCurrent().toPixels(parentBounds.getHeight())));
+        {
+            itemHeight = height.calculateCurrent().toPixels(parentBounds.getHeight());
+            bounds.setHeight(juce::roundToInt(itemHeight));
+        }
 
         return bounds.withPosition(parentBoxModel
                                        .getContentBounds()
                                        .getPosition()
                                        .roundToInt()
                                    + juce::Point{
-                                       calculateX(),
-                                       calculateY(),
+                                       calculateX(itemWidth),
+                                       calculateY(itemHeight),
                                    });
     }
 } // namespace jive
@@ -363,6 +372,22 @@ private:
 
         parentState.getChild(0).setProperty("height", 20.89f, nullptr);
         expectEquals(item.getComponent()->getHeight(), 21);
+
+        parentState.getChild(0).setProperty("width", "50%", nullptr);
+        expectEquals(item.getComponent()->getWidth(), 111);
+
+        parentState.getChild(0).setProperty("height", "10%", nullptr);
+        expectEquals(item.getComponent()->getHeight(), 33);
+
+        beginTest("a centred item stays centred when its size changes");
+
+        parentState.getChild(0).setProperty("centre-x", "50%", nullptr);
+        parentState.getChild(0).setProperty("centre-y", 100, nullptr);
+        expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 56, 83, 111, 33 });
+
+        parentState.getChild(0).setProperty("width", 20, nullptr);
+        parentState.getChild(0).setProperty("height", "20%", nullptr);
+        expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 101, 67, 20, 67 });
     }
 };
 

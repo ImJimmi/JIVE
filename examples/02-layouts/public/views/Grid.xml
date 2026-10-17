@@ -1,0 +1,107 @@
+<Component>
+    <Text margin="0 0 25 0">Set 'display' to grid to place children in rows and columns. Tracks are sized in pixels, as fractions of the remaining space, or to fit their content. Children fill the cells in order, and any that don't fit the template get new tracks sized to fit their content. When the tracks don't fill the container, 'justify-content' and 'align-content' position them within it.</Text>
+
+    <Component display="grid" grid-template-columns="350px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Container</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr auto" gap="10 15" align-items="center" margin="0 0 25 0">
+                <Label>Columns</Label>
+                <ComboBox id="columns-combo-box" grid-column="2 / span 2">
+                    <Option>60px 60px 60px</Option>
+                    <Option>1fr 1fr 1fr</Option>
+                    <Option>1fr 2fr 1fr</Option>
+                    <Option>60px 1fr 60px</Option>
+                    <Option>1fr 1fr</Option>
+                </ComboBox>
+
+                <Label>Rows</Label>
+                <ComboBox id="rows-combo-box" grid-column="2 / span 2" grid-row="2 / 3">
+                    <Option>60px 60px</Option>
+                    <Option>1fr 1fr</Option>
+                    <Option>60px 1fr</Option>
+                    <Option>1fr</Option>
+                </ComboBox>
+
+                <Label>Gap</Label>
+                <Slider id="grid-gap-slider" min="0" max="20" interval="1" value="5" />
+                <Text id="grid-gap-label" class="value" accessible="false">5px</Text>
+
+                <Label>Justify Items</Label>
+                <ComboBox id="justify-items-combo-box" grid-column="2 / span 2" grid-row="4 / 5">
+                    <Option>stretch</Option>
+                    <Option>start</Option>
+                    <Option>center</Option>
+                    <Option>end</Option>
+                </ComboBox>
+
+                <Label>Align Items</Label>
+                <ComboBox id="grid-align-items-combo-box" grid-column="2 / span 2" grid-row="5 / 6">
+                    <Option>stretch</Option>
+                    <Option>start</Option>
+                    <Option>center</Option>
+                    <Option>end</Option>
+                </ComboBox>
+
+                <Label>Justify Content</Label>
+                <ComboBox id="grid-justify-content-combo-box" grid-column="2 / span 2" grid-row="6 / 7">
+                    <Option>start</Option>
+                    <Option>center</Option>
+                    <Option>end</Option>
+                    <Option>space-between</Option>
+                    <Option>space-around</Option>
+                    <Option>space-evenly</Option>
+                </ComboBox>
+
+                <Label>Align Content</Label>
+                <ComboBox id="grid-align-content-combo-box" grid-column="2 / span 2" grid-row="7 / 8">
+                    <Option>start</Option>
+                    <Option>center</Option>
+                    <Option>end</Option>
+                    <Option>space-between</Option>
+                    <Option>space-around</Option>
+                    <Option>space-evenly</Option>
+                </ComboBox>
+
+                <Label>Auto Flow</Label>
+                <ComboBox id="auto-flow-combo-box" grid-column="2 / span 2" grid-row="8 / 9">
+                    <Option>row</Option>
+                    <Option>column</Option>
+                    <Option>row dense</Option>
+                    <Option>column dense</Option>
+                </ComboBox>
+            </Component>
+
+            <Text class="heading" margin="0 0 10 0">Items</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr auto" gap="10 15" align-items="center">
+                <Label>Box</Label>
+                <ComboBox id="grid-item-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                    <Option>Red</Option>
+                    <Option>Orange</Option>
+                    <Option>Yellow</Option>
+                    <Option>Green</Option>
+                    <Option>Blue</Option>
+                    <Option>Purple</Option>
+                </ComboBox>
+
+                <Label>Column Span</Label>
+                <Slider id="column-span-slider" min="1" max="3" interval="1" value="1" />
+                <Text id="column-span-label" class="value" accessible="false">auto / span 1</Text>
+
+                <Label>Row Span</Label>
+                <Slider id="row-span-slider" min="1" max="3" interval="1" value="1" />
+                <Text id="row-span-label" class="value" accessible="false">auto / span 1</Text>
+            </Component>
+        </Component>
+
+        <Component id="grid-preview" class="preview" padding="10" display="grid" grid-template-columns="60px 60px 60px" grid-template-rows="60px 60px" gap="5">
+            <Component class="box box-red" min-width="35" min-height="35" />
+            <Component class="box box-orange" min-width="35" min-height="35" />
+            <Component class="box box-yellow" min-width="35" min-height="35" />
+            <Component class="box box-green" min-width="35" min-height="35" />
+            <Component class="box box-blue" min-width="35" min-height="35" />
+            <Component class="box box-purple" min-width="35" min-height="35" />
+        </Component>
+    </Component>
+</Component>
