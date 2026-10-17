@@ -1,5 +1,7 @@
 #include "jive_ComboBox.h"
 
+#include <jive_layouts/layout/gui-items/jive_ContainerItem.h>
+
 namespace jive
 {
     ComboBox::Option::Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box)
@@ -10,6 +12,8 @@ namespace jive
         , text{ tree, ids::text() }
         , enabled{ tree, ids::enabled() }
         , selected{ tree, ids::selected() }
+        , componentID{ tree, ids::id() }
+        , classes{ tree, ids::classes() }
     {
         // Options are enabled unless explicitly disabled. Without this an
         // option with no "enabled" property would resolve to false and the item
@@ -46,6 +50,20 @@ namespace jive
             comboBox.setItemEnabled(id, enabled);
         };
         comboBox.setItemEnabled(id, enabled);
+
+        if (auto* comboBoxComponent = dynamic_cast<ComboBoxComponent*>(&comboBox))
+        {
+            standIn = std::make_unique<ComboBoxComponent::Item>(id);
+            comboBoxComponent->getPopup().addChildComponent(*standIn);
+
+            componentID.onValueChange = [this]() {
+                updateStandIn();
+            };
+            classes.onValueChange = [this]() {
+                updateStandIn();
+            };
+            updateStandIn();
+        }
     }
 
     void ComboBox::Option::setSelected(bool shouldBeSelected)
@@ -58,8 +76,15 @@ namespace jive
         if (changedTree != tree)
             return false;
 
-        forwardPropertyChange(changedTree, property, text, enabled, selected);
+        forwardPropertyChange(changedTree, property, text, enabled, selected, componentID, classes);
         return true;
+    }
+
+    // Style sheets match the option's stand-in by its ID and classes.
+    void ComboBox::Option::updateStandIn()
+    {
+        standIn->setComponentID(componentID);
+        standIn->getProperties().set(ids::classes(), classes.get());
     }
 
     ComboBox::ComboBox(std::unique_ptr<GuiItem> itemToDecorate)
@@ -67,10 +92,12 @@ namespace jive
         , editable{ state, ids::editable() }
         , tooltip{ state, ids::tooltip() }
         , selected{ state, ids::selected() }
-        , width{ state, ids::width() }
-        , height{ state, ids::height() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
         , focusable{ state, ids::focusable() }
         , onChange{ state, ids::onChange() }
+        , hasAutomaticMinWidth{ !minWidth.exists() }
+        , hasAutomaticMinHeight{ !minHeight.exists() }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
@@ -108,10 +135,18 @@ namespace jive
 
         state.addListener(this);
 
-        if (width.isAuto())
-            width = "50px";
-        if (height.isAuto())
-            height = "20px";
+        if (auto* comboBox = dynamic_cast<ComboBoxComponent*>(&getComboBox()))
+        {
+            comboBox->onMetricsChange = [this] {
+                updateMinimumSize();
+            };
+        }
+    }
+
+    ComboBox::~ComboBox()
+    {
+        if (auto* comboBox = dynamic_cast<ComboBoxComponent*>(&getComboBox()))
+            comboBox->onMetricsChange = nullptr;
     }
 
     // The options and headers are child trees, so the changes to them come
@@ -136,7 +171,12 @@ namespace jive
         for (auto* option : options)
         {
             if (option->handlePropertyChange(tree, property))
+            {
+                if (property == ids::text())
+                    updateMinimumSize();
+
                 return;
+            }
         }
     }
 
@@ -222,6 +262,44 @@ namespace jive
                 getComboBox().addSeparator();
             }
         }
+
+        updateMinimumSize();
+    }
+
+    // Unless told otherwise, a combo box won't shrink below the size it needs to
+    // show any of its options alongside its icon. Without a JIVE look-and-feel
+    // to measure with, it falls back to a fixed minimum size.
+    void ComboBox::updateMinimumSize()
+    {
+        if (!hasAutomaticMinWidth && !hasAutomaticMinHeight)
+            return;
+
+        const auto& comboBox = getComboBox();
+        const auto* lookAndFeel = dynamic_cast<const LookAndFeel*>(&comboBox.getLookAndFeel());
+        const auto size = lookAndFeel != nullptr
+                            ? lookAndFeel->getIdealComboBoxSize(comboBox)
+                            : juce::Rectangle{ 50.0f, 20.0f };
+        const auto widthChanged = hasAutomaticMinWidth
+                               && !(minWidth.exists() && juce::approximatelyEqual(size.getWidth(), minWidth.get()));
+        const auto heightChanged = hasAutomaticMinHeight
+                                && !(minHeight.exists() && juce::approximatelyEqual(size.getHeight(), minHeight.get()));
+
+        if (!widthChanged && !heightChanged)
+            return;
+
+        if (widthChanged)
+            minWidth = size.getWidth();
+        if (heightChanged)
+            minHeight = size.getHeight();
+
+        if (static_cast<bool>(state[ids::setupInProgress()]))
+            return;
+
+        if (auto* parentItem = dynamic_cast<GuiItemDecorator*>(getParent()))
+        {
+            if (auto* containerParent = parentItem->getTopLevelDecorator().toType<ContainerItem>())
+                containerParent->updateIdealSize();
+        }
     }
 
     void ComboBox::valueTreeChildAdded(juce::ValueTree& parentState, juce::ValueTree& /* child */)
@@ -250,6 +328,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/geometry/jive_BorderWidth.h>
+    #include <jive_core/graphics/jive_FontUtilities.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class ComboBoxTest : public juce::UnitTest
@@ -269,9 +349,161 @@ public:
         testHeaders();
         testSelected();
         testEvents();
+        testSize();
     }
 
 private:
+    [[nodiscard]] static const juce::ComboBox& getComboBox(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item)
+            .toType<jive::ComboBox>()
+            ->getComboBox();
+    }
+
+    [[nodiscard]] static const juce::Label& getLabel(const juce::ComboBox& comboBox)
+    {
+        for (const auto* child : comboBox.getChildren())
+        {
+            if (const auto* label = dynamic_cast<const juce::Label*>(child))
+                return *label;
+        }
+
+        jassertfalse;
+        static const juce::Label noLabel;
+        return noLabel;
+    }
+
+    void expectTextFitsAlongsideIcon(const juce::ComboBox& comboBox,
+                                     const jive::LookAndFeel& lookAndFeel,
+                                     const juce::String& longestText)
+    {
+        const auto& label = getLabel(comboBox);
+        const auto labelStyles = lookAndFeel.findMostApplicableStyles(label);
+        const auto textArea = jive::getBorderWidth(label, labelStyles)
+                                  .subtractedFrom(label.getBounds().toFloat());
+        const auto iconBounds = lookAndFeel.getComboBoxIconBounds(comboBox,
+                                                                  lookAndFeel.findMostApplicableStyles(comboBox));
+
+        expectGreaterOrEqual(textArea.getWidth(),
+                             jive::calculateStringWidth(longestText, jive::getFont(label, labelStyles)));
+        expectLessOrEqual(textArea.getRight(), iconBounds.getX());
+        expect(comboBox.getLocalBounds().toFloat().contains(iconBounds));
+    }
+
+    void testSize()
+    {
+        beginTest("size / fits its longest option alongside its icon");
+        {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(jive::parseXML(R"(
+                <Component width="400" height="200" align-items="flex-start">
+                    <ComboBox>
+                        <Option>One</Option>
+                        <Option>A much longer option</Option>
+                    </ComboBox>
+                </Component>
+            )"));
+            root.addAndMakeVisible(*item->getComponent());
+
+            expectTextFitsAlongsideIcon(getComboBox(*item->getChildren()[0]),
+                                        lookAndFeel,
+                                        "A much longer option");
+        }
+
+        beginTest("size / grows to fit longer options");
+        {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
+            auto tree = jive::parseXML(R"(
+                <Component width="400" height="200" align-items="flex-start">
+                    <ComboBox>
+                        <Option>One</Option>
+                    </ComboBox>
+                </Component>
+            )");
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            root.addAndMakeVisible(*item->getComponent());
+
+            const auto& comboBox = getComboBox(*item->getChildren()[0]);
+            auto previousWidth = comboBox.getWidth();
+
+            tree.getChild(0).appendChild(juce::ValueTree{ "Option", { { "text", "A much longer option" } } }, nullptr);
+            expectGreaterThan(comboBox.getWidth(), previousWidth);
+            expectTextFitsAlongsideIcon(comboBox, lookAndFeel, "A much longer option");
+            previousWidth = comboBox.getWidth();
+
+            tree.getChild(0).getChild(0).setProperty("text", "An option that's even longer than that", nullptr);
+            expectGreaterThan(comboBox.getWidth(), previousWidth);
+            expectTextFitsAlongsideIcon(comboBox, lookAndFeel, "An option that's even longer than that");
+        }
+
+        beginTest("size / follows changes to its font");
+        {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
+            auto tree = jive::parseXML(R"(
+                <Component width="400" height="200" align-items="flex-start">
+                    <ComboBox>
+                        <Option>Option</Option>
+                    </ComboBox>
+                </Component>
+            )");
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            root.addAndMakeVisible(*item->getComponent());
+
+            const auto& comboBox = getComboBox(*item->getChildren()[0]);
+            const auto previousBounds = comboBox.getBounds();
+
+            tree.setProperty("style", new jive::Object{ { "font-size", 30 } }, nullptr);
+            juce::ignoreUnused(item->getComponent()->createComponentSnapshot(item->getComponent()->getLocalBounds()));
+
+            expectGreaterThan(comboBox.getWidth(), previousBounds.getWidth());
+            expectGreaterThan(comboBox.getHeight(), previousBounds.getHeight());
+            expectTextFitsAlongsideIcon(comboBox, lookAndFeel, "Option");
+        }
+
+        beginTest("size / leaves room for a custom icon");
+        {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
+            auto tree = jive::parseXML(R"(
+                <Component width="400" height="200" align-items="flex-start">
+                    <ComboBox>
+                        <Option>Option</Option>
+                    </ComboBox>
+                </Component>
+            )");
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            root.addAndMakeVisible(*item->getComponent());
+
+            const auto& comboBox = getComboBox(*item->getChildren()[0]);
+            const auto previousIconBounds = lookAndFeel.getComboBoxIconBounds(comboBox,
+                                                                              lookAndFeel.findMostApplicableStyles(comboBox));
+
+            tree.getChild(0).setProperty("style",
+                                         new jive::Object{
+                                             { "icon", R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 10"><path d="M0 0 L15 10 L30 0" /></svg>)" },
+                                         },
+                                         nullptr);
+            juce::ignoreUnused(item->getComponent()->createComponentSnapshot(item->getComponent()->getLocalBounds()));
+
+            const auto iconBounds = lookAndFeel.getComboBoxIconBounds(comboBox,
+                                                                      lookAndFeel.findMostApplicableStyles(comboBox));
+            expectEquals(iconBounds.getWidth(), iconBounds.getHeight() * 3.0f);
+            expectGreaterThan(iconBounds.getWidth(), previousIconBounds.getWidth());
+            expectTextFitsAlongsideIcon(comboBox, lookAndFeel, "Option");
+        }
+    }
+
     void testGuiItem()
     {
         beginTest("gui-item");
@@ -514,6 +746,31 @@ private:
             }
 
             expect(foundSectionHeader);
+        }
+        {
+            // Options have stand-ins in the combo box's popup so that style
+            // sheets can style them.
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(jive::parseXML(R"(
+                <ComboBox width="222" height="333">
+                    <Option id="first" class="large">One</Option>
+                    <Option>Two</Option>
+                </ComboBox>
+            )"));
+            auto& comboBox = dynamic_cast<const jive::ComboBoxComponent&>(getComboBox(*item));
+            expectEquals(comboBox.getPopup().getNumChildComponents(), 2);
+            expect(comboBox.findItem(1) != nullptr && comboBox.findItem(2) != nullptr);
+            expectEquals(comboBox.findItem(1)->getComponentID(), juce::String{ "first" });
+            expectEquals(comboBox.findItem(1)->getProperties()["class"].toString(), juce::String{ "large" });
+
+            auto state = item->state;
+            state.getChild(1).setProperty("class", "small", nullptr);
+            expectEquals(comboBox.findItem(2)->getProperties()["class"].toString(), juce::String{ "small" });
+
+            state.removeChild(0, nullptr);
+            expectEquals(comboBox.getPopup().getNumChildComponents(), 1);
+            expect(comboBox.findItem(1) != nullptr);
+            expectEquals(comboBox.findItem(1)->getProperties()["class"].toString(), juce::String{ "small" });
         }
     }
 

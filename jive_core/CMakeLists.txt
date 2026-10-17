@@ -26,6 +26,8 @@ target_sources(jive_core
                       components/containers/jive_DocumentWindow.cpp
                       components/containers/jive_DocumentWindow.h
                       components/utilities/jive_HierarchyTraversal.h
+                      components/widgets/jive_ComboBoxComponent.cpp
+                      components/widgets/jive_ComboBoxComponent.h
                       components/widgets/jive_ImageComponent.cpp
                       components/widgets/jive_ImageComponent.h
                       components/widgets/jive_NormalisedProgressBar.cpp
@@ -59,6 +61,8 @@ target_sources(jive_core
                       graphics/jive_FontUtilities.h
                       graphics/jive_Gradient.cpp
                       graphics/jive_Gradient.h
+                      graphics/jive_Icon.cpp
+                      graphics/jive_Icon.h
                       graphics/jive_LookAndFeel.cpp
                       graphics/jive_LookAndFeel.h
                       graphics/jive_Shadow.cpp

@@ -103,6 +103,7 @@ namespace jive
     [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::PopupMenu& popup,
                                                      const Styles& styles);
     [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::PopupMenu::Item& item,
+                                                     const juce::PopupMenu& popup,
                                                      const Styles& styles);
     [[nodiscard]] BorderRadii<float> getBorderRadius(const juce::ComboBox& comboBox,
                                                      const Styles& styles);

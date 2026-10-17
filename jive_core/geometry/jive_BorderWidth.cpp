@@ -75,14 +75,6 @@ namespace jive
             });
     }
 
-    juce::BorderSize<float> getBorderWidth(const juce::PopupMenu::Item&,
-                                           const Styles& styles)
-    {
-        return styles
-            .find<juce::BorderSize<float>>("border-width")
-            .value_or(juce::BorderSize{ 0.0f });
-    }
-
     juce::BorderSize<float> getBorderWidth(const juce::ComboBox& comboBox,
                                            const Styles& styles)
     {

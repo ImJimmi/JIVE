@@ -48,8 +48,9 @@ namespace jive
             triggerEvent = TriggerEvent::mouseUp;
         if (!minWidth.exists())
             minWidth = 50.0f;
-        if (!minHeight.exists())
-            minHeight = 20.0f;
+        hasAutomaticMinHeight = !minHeight.exists();
+        if (hasAutomaticMinHeight)
+            minHeight = defaultMinHeight;
         if (!focusable.exists())
             focusable = true;
         if (!flexJustifyContent.exists())
@@ -150,7 +151,7 @@ namespace jive
 
     void Button::layOutChildren()
     {
-        updateCheckboxTextInset();
+        reserveSpaceForCheckbox();
         GuiItemDecorator::layOutChildren();
     }
 
@@ -159,11 +160,8 @@ namespace jive
         return dynamic_cast<const juce::ToggleButton*>(&getButton());
     }
 
-    void Button::updateCheckboxTextInset()
+    void Button::reserveSpaceForCheckbox()
     {
-        if (!hasAutomaticPadding)
-            return;
-
         const auto* checkbox = getCheckbox();
 
         if (checkbox == nullptr)
@@ -171,9 +169,18 @@ namespace jive
 
         if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&checkbox->getLookAndFeel()))
         {
-            const auto inset = lookAndFeel->getToggleButtonTextInset(*checkbox,
-                                                                     lookAndFeel->findMostApplicableStyles(*checkbox));
-            padding = juce::BorderSize<float>{ 0.0f, inset, 0.0f, 0.0f };
+            const auto styles = lookAndFeel->findMostApplicableStyles(*checkbox);
+
+            if (hasAutomaticPadding)
+            {
+                const auto inset = lookAndFeel->getToggleButtonTextInset(*checkbox, styles);
+                padding = juce::BorderSize<float>{ 0.0f, inset, 0.0f, 0.0f };
+            }
+            if (hasAutomaticMinHeight)
+            {
+                const auto boxHeight = lookAndFeel->getToggleButtonCheckboxBounds(*checkbox, styles).getHeight();
+                minHeight = juce::jmax(defaultMinHeight, static_cast<float>(boxHeight));
+            }
         }
     }
 
@@ -545,6 +552,29 @@ private:
                                   1.0f);
 
         root.removeChildComponent(parentComponent);
+
+        beginTest("check-boxes are tall enough for their box");
+        {
+            lookAndFeel.addStyles(jive::StyleSelector{ "Checkbox" },
+                                  jive::Styles{}.withFontPointSize(30.0f));
+
+            auto bigItem = interpreter.interpret(jive::parseXML(R"(
+                <Component width="200" height="100" align-items="flex-start">
+                    <Checkbox>Some text</Checkbox>
+                </Component>
+            )"));
+            auto* bigParentComponent = bigItem->getComponent().get();
+            root.addAndMakeVisible(*bigParentComponent);
+            bigParentComponent->setBounds(0, 0, 200, 100);
+
+            const auto& bigCheckbox = dynamic_cast<const juce::ToggleButton&>(*bigItem->getChildren()[0]->getComponent());
+            const auto bigBoxBounds = lookAndFeel.getToggleButtonCheckboxBounds(bigCheckbox,
+                                                                                lookAndFeel.findMostApplicableStyles(bigCheckbox));
+
+            expect(bigCheckbox.getLocalBounds().contains(bigBoxBounds));
+
+            root.removeChildComponent(bigParentComponent);
+        }
     }
 
     void testEvents()

@@ -376,6 +376,18 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& highlighted()
+    {
+        static const juce::Identifier identifier{ "jive::highlighted" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& icon()
+    {
+        static const juce::Identifier identifier{ "icon" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& id()
     {
         static const juce::Identifier identifier{ "id" };
@@ -613,12 +625,6 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& shadow()
     {
         static const juce::Identifier identifier{ "shadow" };
-        return identifier;
-    }
-
-    [[nodiscard]] inline const juce::Identifier& shadowBounds()
-    {
-        static const juce::Identifier identifier{ "jive::shadow-bounds" };
         return identifier;
     }
 

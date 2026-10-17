@@ -3,7 +3,7 @@
 namespace jive
 {
     Knob::Knob(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 55.0f, 55.0f }
+        : Slider{ std::move(itemToDecorate), { 55.0f, 55.0f }, DefaultSize::fixed }
     {
         updateStyle();
     }

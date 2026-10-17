@@ -1,6 +1,7 @@
 #include "jive_ComponentFactory.h"
 
 #include <jive_core/components/accessibility/jive_IgnoredComponent.h>
+#include <jive_core/components/widgets/jive_ComboBoxComponent.h>
 #include <jive_core/components/widgets/jive_ImageComponent.h>
 #include <jive_core/components/widgets/jive_NormalisedProgressBar.h>
 #include <jive_core/components/widgets/jive_TextComponent.h>
@@ -24,7 +25,7 @@ namespace jive
         creators.insert({
             "ComboBox",
             []() {
-                return std::make_shared<juce::ComboBox>();
+                return std::make_shared<ComboBoxComponent>();
             },
         });
         creators.insert({

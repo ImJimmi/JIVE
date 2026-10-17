@@ -240,9 +240,24 @@ namespace jive
         return value;
     }
 
+    // An icon can be given as the name of a file, which is looked for in the
+    // same places as the style sheet itself.
+    [[nodiscard]] static juce::var findIconFile(const juce::var& value,
+                                                const SourceDirectories* sourceDirectories)
+    {
+        if (sourceDirectories == nullptr || value.toString().trimStart().startsWithChar('<'))
+            return value;
+
+        if (const auto file = sourceDirectories->find(value.toString()); file.existsAsFile())
+            return file.getFullPathName();
+
+        return value;
+    }
+
     static void appendStyleProperties(Object& object,
                                       std::optional<Styles>& styles,
-                                      const std::unordered_map<juce::String, juce::var>& tokens)
+                                      const std::unordered_map<juce::String, juce::var>& tokens,
+                                      const SourceDirectories* sourceDirectories)
     {
         for (const auto& propertyName : Styles::propertyNames)
         {
@@ -254,6 +269,9 @@ namespace jive
             if (value.isString() && value.toString().containsChar('$'))
                 value = resolveTokens(value.toString(), tokens);
 
+            if (propertyName == ids::icon().toString())
+                value = findIconFile(value, sourceDirectories);
+
             styles = styles
                          .value_or(Styles{})
                          .with(propertyName, value);
@@ -263,7 +281,7 @@ namespace jive
     void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
-        appendStyleProperties(object, styles, tokens);
+        appendStyleProperties(object, styles, tokens, sourceDirectories.get().get());
 
         if (&object == style.get().get() && object.hasProperty(ids::transition()))
         {
@@ -298,7 +316,7 @@ namespace jive
         appendFromChild = [this, &appendFromChild](Object& child,
                                                    const juce::String& selector) {
             std::optional<Styles> styles;
-            appendStyleProperties(child, styles, tokens);
+            appendStyleProperties(child, styles, tokens, sourceDirectories.get().get());
 
             if (styles.has_value())
                 uuids[selector] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
@@ -348,6 +366,7 @@ public:
         testMiscStyleProperties();
         testTokens();
         testFileBasedStyles();
+        testIcons();
     }
 
 private:
@@ -971,6 +990,85 @@ private:
         }
     }
 
+    void testIcons()
+    {
+        static constexpr auto chevron = R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0 L10 10 L20 0" /></svg>)";
+
+        beginTest("icons / an icon can be given as SVG markup");
+        {
+            juce::ComboBox comboBox;
+            juce::ValueTree state{
+                "ComboBox",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "icon", chevron },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ comboBox };
+            auto sheet = jive::StyleSheet::create(comboBox, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
+            expect(styles.icon.hasValue());
+            expect(!styles.icon.get().isEmpty());
+            expectEquals(styles.icon.get().getAspectRatio(), 2.0f);
+        }
+
+        beginTest("icons / an icon file is found in the same places as the style sheet");
+        {
+            auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                 .getChildFile("jive-style-sheet-tests");
+            directory.createDirectory();
+            directory.getChildFile("chevron.svg").replaceWithText(chevron);
+            directory.getChildFile("styles.json").replaceWithText(R"({ "icon": "chevron.svg" })");
+
+            juce::ComboBox comboBox;
+            juce::ValueTree state{
+                "ComboBox",
+                {
+                    { "jive::source-directories", new jive::SourceDirectories{ directory } },
+                    { "style", "styles.json" },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ comboBox };
+            auto sheet = jive::StyleSheet::create(comboBox, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
+            expect(styles.icon.hasValue());
+            expect(!styles.icon.get().isEmpty());
+            expectEquals(styles.icon.get().getAspectRatio(), 2.0f);
+
+            directory.deleteRecursively();
+        }
+
+        beginTest("icons / icons aren't inherited");
+        {
+            juce::Component parent;
+            juce::ComboBox comboBox;
+            parent.addAndMakeVisible(comboBox);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "icon", chevron },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            expect(lookAndFeel.findMostApplicableStyles(parent).icon.hasValue());
+            expect(!lookAndFeel.findMostApplicableStyles(comboBox).icon.hasValue());
+        }
+    }
+
     void testMiscStyleProperties()
     {
         beginTest("misc style properties / gradient background resolves as a gradient");
@@ -1538,6 +1636,71 @@ private:
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             expect(childStyles.find<float>("line-spacing").has_value());
             expectEquals(childStyles.find<float>("line-spacing").value(), 6.0f);
+        }
+
+        beginTest("inheritance / font-styles cascade to descendants");
+        {
+            juce::Component parent;
+            parent.setSize(200, 200);
+
+            juce::TextButton child;
+            child.setBounds(0, 0, 100, 50);
+            parent.addAndMakeVisible(child);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "font-styles", "bold" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
+            const auto fontStyles = childStyles.find<std::unordered_set<juce::Font::FontStyleFlags>>("font-styles");
+            expect(fontStyles.has_value());
+            expect(fontStyles.value() == std::unordered_set{ juce::Font::bold });
+        }
+
+        beginTest("inheritance / a descendant's font-styles combine with inherited ones");
+        {
+            juce::Component parent;
+            parent.setSize(200, 200);
+
+            juce::TextButton child;
+            child.getProperties().set("class", "child");
+            child.setBounds(0, 0, 100, 50);
+            parent.addAndMakeVisible(child);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "font-styles", "bold" },
+                            {
+                                ".child",
+                                new jive::Object{
+                                    { "font-styles", "italic" },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
+            const auto fontStyles = childStyles.find<std::unordered_set<juce::Font::FontStyleFlags>>("font-styles");
+            expect(fontStyles.has_value());
+            expect(fontStyles.value() == std::unordered_set{ juce::Font::bold, juce::Font::italic });
         }
 
         beginTest("inheritance / a line-spacing property is applied as an inline style");

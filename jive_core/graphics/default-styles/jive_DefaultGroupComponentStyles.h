@@ -16,6 +16,10 @@ namespace jive::default_styles
                              borderWidth,
                              getBackgroundFill(group, styles),
                              juce::Colours::transparentBlack);
+        const_cast<juce::GroupComponent*>(&group)
+            ->getProperties()
+            .set(ids::shadowPath(),
+                 getShape(borderRadius, groupBounds).toString());
 
         if (group.getText().isNotEmpty())
         {

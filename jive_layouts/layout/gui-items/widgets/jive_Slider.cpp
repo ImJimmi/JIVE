@@ -5,11 +5,11 @@
 namespace jive
 {
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 135.0f, 20.0f }
+        : Slider{ std::move(itemToDecorate), { 135.0f, 20.0f }, DefaultSize::minimum }
     {
     }
 
-    Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight)
+    Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, juce::Point<float> defaultSize, DefaultSize defaultSizeKind)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , value{ state, ids::value() }
         , min{ state, ids::minValue() }
@@ -19,6 +19,8 @@ namespace jive
         , orientation{ state, ids::orientation() }
         , width{ state, ids::width() }
         , height{ state, ids::height() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
         , sensitivity{ state, ids::sensitivity() }
         , isInVelocityMode{ state, ids::velocityMode() }
         , velocitySensitivity{ state, ids::velocitySensitivity() }
@@ -67,12 +69,7 @@ namespace jive
         orientation.onValueChange = [this]() {
             updateStyle();
         };
-        width.onValueChange = [this]() {
-            updateStyle();
-        };
-        height.onValueChange = [this]() {
-            updateStyle();
-        };
+        toType<CommonGuiItem>()->boxModel.addListener(*this);
         updateStyle();
 
         sensitivity.onValueChange = [this]() {
@@ -104,14 +101,26 @@ namespace jive
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
 
-        if (width.isAuto())
-            width = juce::String{ defaultWidth };
-        if (height.isAuto())
-            height = juce::String{ defaultHeight };
+        switch (defaultSizeKind)
+        {
+        case DefaultSize::minimum:
+            if (!minWidth.exists())
+                minWidth = defaultSize.x;
+            if (!minHeight.exists())
+                minHeight = defaultSize.y;
+            break;
+        case DefaultSize::fixed:
+            if (width.isAuto())
+                width = juce::String{ defaultSize.x };
+            if (height.isAuto())
+                height = juce::String{ defaultSize.y };
+            break;
+        }
     }
 
     Slider::~Slider()
     {
+        toType<CommonGuiItem>()->boxModel.removeListener(*this);
         state.removeListener(this);
     }
 
@@ -188,6 +197,11 @@ namespace jive
 
         value = getSlider().getTextFromValue(getSlider().getValue());
         onChange.triggerWithoutSelfCallback();
+    }
+
+    void Slider::boxModelChanged(BoxModel&)
+    {
+        updateStyle();
     }
 
     juce::Slider::SliderStyle Slider::getStyleForOrientation(Orientation ori)
@@ -556,28 +570,60 @@ private:
     void testAutoSize()
     {
         beginTest("auto size");
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "align-items", "flex-start" },
+                },
+                {
+                    juce::ValueTree{ "Slider" },
+                },
+            };
+            auto parent = interpreter.interpret(parentState);
+            auto& item = *parent->getChildren()[0];
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 135.0f);
+            expectEquals(boxModel.getHeight(), 20.0f);
 
-        juce::ValueTree parentState{
-            "Component",
-            {
-                { "width", 222 },
-                { "height", 333 },
-            },
-            {
-                juce::ValueTree{ "Slider" },
-            },
-        };
-        auto parent = interpreter.interpret(parentState);
-        auto& item = *parent->getChildren()[0];
-        const auto& boxModel = jive::boxModel(item);
-        expectEquals(boxModel.getWidth(), 135.0f);
-        expectEquals(boxModel.getHeight(), 20.0f);
+            parentState.getChild(0).setProperty("width", 123.f, nullptr);
+            expectEquals(boxModel.getWidth(), 123.f);
+            expectEquals(item.getComponent()->getWidth(), 123);
 
-        parentState.getChild(0).setProperty("width", 123.f, nullptr);
-        expectEquals(boxModel.getWidth(), 123.f);
+            parentState.getChild(0).setProperty("height", 311.f, nullptr);
+            expectEquals(boxModel.getHeight(), 311.f);
+            expectEquals(item.getComponent()->getHeight(), 311);
+        }
 
-        parentState.getChild(0).setProperty("height", 311.f, nullptr);
-        expectEquals(boxModel.getHeight(), 311.f);
+        beginTest("auto size / stretches to fill its grid track");
+        {
+            auto parent = interpreter.interpret(jive::parseXML(R"(
+                <Component display="grid" width="300" height="100"
+                           grid-template-columns="100px 1fr" grid-template-rows="100px"
+                           align-items="centre">
+                    <Component width="100" height="40" />
+                    <Slider />
+                </Component>
+            )"));
+            const auto& slider = getSlider(*parent->getChildren()[1]);
+            expectEquals(slider.getBounds(), juce::Rectangle{ 100, 40, 200, 20 });
+            expect(slider.getSliderStyle() == juce::Slider::LinearHorizontal);
+        }
+
+        beginTest("auto size / can be given a size smaller than its default");
+        {
+            auto parent = interpreter.interpret(jive::parseXML(R"(
+                <Component display="grid" width="300" height="100"
+                           grid-template-columns="1fr" grid-template-rows="100px">
+                    <Slider width="100" height="10" />
+                </Component>
+            )"));
+            const auto& slider = getSlider(*parent->getChildren()[0]);
+            expectEquals(slider.getWidth(), 100);
+            expectEquals(slider.getHeight(), 10);
+        }
     }
 
     void testEvents()

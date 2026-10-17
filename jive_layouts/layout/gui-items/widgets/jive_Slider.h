@@ -8,6 +8,7 @@ namespace jive
         : public GuiItemDecorator
         , private juce::Slider::Listener
         , private juce::ValueTree::Listener
+        , private BoxModel::Listener
     {
     public:
         explicit Slider(std::unique_ptr<GuiItem> itemToDecorate);
@@ -23,13 +24,20 @@ namespace jive
         const juce::Slider& getSlider() const;
 
     protected:
-        Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight);
+        enum class DefaultSize
+        {
+            minimum,
+            fixed,
+        };
+
+        Slider(std::unique_ptr<GuiItem> itemToDecorate, juce::Point<float> defaultSize, DefaultSize defaultSizeKind);
 
         void updateStyle();
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
 
     private:
         void sliderValueChanged(juce::Slider* slider) override;
+        void boxModelChanged(BoxModel& boxModel) override;
 
         virtual juce::Slider::SliderStyle getStyleForOrientation(Orientation orientation);
 
@@ -43,6 +51,8 @@ namespace jive
         PassiveProperty<Orientation> orientation;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;
+        PassiveProperty<float> minWidth;
+        PassiveProperty<float> minHeight;
         PassiveProperty<double> sensitivity;
         PassiveProperty<bool> isInVelocityMode;
         PassiveProperty<double> velocitySensitivity;
