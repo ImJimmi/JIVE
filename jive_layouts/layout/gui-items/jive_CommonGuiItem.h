@@ -26,15 +26,20 @@ namespace jive
         void boxModelChanged(BoxModel& boxModel) override;
 
         void childrenChanged() override;
+        void localisedStringsChanged() override;
 
     private:
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        void updateProperty(const juce::Identifier& property);
+        void updateLocalisedStrings();
 
         PassiveProperty<juce::String> name;
         PassiveProperty<juce::String> title;
         PassiveProperty<juce::Identifier> id;
         PassiveProperty<juce::String> description;
         PassiveProperty<juce::String> tooltip;
+        PassiveProperty<juce::String> lang;
         PassiveProperty<bool> enabled;
         PassiveProperty<bool> accessible;
         PassiveProperty<bool> visibility;
@@ -50,6 +55,8 @@ namespace jive
         PassiveProperty<juce::MouseCursor::StandardCursorType> cursor;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;
+
+        std::unique_ptr<FileObserver> stringsFileObserver;
 
         const std::vector<std::pair<juce::Identifier, std::function<void()>>> propertyUpdaters;
 

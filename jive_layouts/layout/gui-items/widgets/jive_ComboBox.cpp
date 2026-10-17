@@ -4,9 +4,10 @@
 
 namespace jive
 {
-    ComboBox::Option::Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box)
+    ComboBox::Option::Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box, const GuiItem& ownerItem)
         : tree{ sourceTree }
         , comboBox{ box }
+        , owner{ ownerItem }
         , index{ itemIndex }
         , id{ index + 1 }
         , text{ tree, ids::text() }
@@ -21,10 +22,10 @@ namespace jive
         if (!enabled.exists())
             enabled = true;
 
-        comboBox.addItem(text, id);
+        comboBox.addItem(owner.translate(text), id);
 
         text.onValueChange = [this]() {
-            comboBox.changeItemText(id, text);
+            updateText();
         };
 
         selected.onValueChange = [this]() {
@@ -71,6 +72,11 @@ namespace jive
         selected = shouldBeSelected;
     }
 
+    void ComboBox::Option::updateText()
+    {
+        comboBox.changeItemText(id, owner.translate(text));
+    }
+
     bool ComboBox::Option::handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property)
     {
         if (changedTree != tree)
@@ -110,9 +116,9 @@ namespace jive
         getComboBox().setEditableText(editable);
 
         tooltip.onValueChange = [this]() {
-            getComboBox().setTooltip(tooltip);
+            getComboBox().setTooltip(translate(tooltip));
         };
-        getComboBox().setTooltip(tooltip);
+        getComboBox().setTooltip(translate(tooltip));
 
         selected.onValueChange = [this]() {
             getComboBox().setSelectedItemIndex(selected);
@@ -236,7 +242,7 @@ namespace jive
                 if (childState[ids::text()].toString().isEmpty())
                     continue;
 
-                options.add(std::make_unique<Option>(childState, options.size(), getComboBox()));
+                options.add(std::make_unique<Option>(childState, options.size(), getComboBox(), *this));
             }
             else if (childState.hasType(ids::headerType()))
             {
@@ -255,7 +261,7 @@ namespace jive
                 if (childState[ids::text()].toString().isEmpty())
                     continue;
 
-                getComboBox().addSectionHeading(childState[ids::text()].toString());
+                getComboBox().addSectionHeading(translate(childState[ids::text()].toString()));
             }
             else if (childState.hasType(ids::separatorType()))
             {
@@ -299,6 +305,39 @@ namespace jive
         {
             if (auto* containerParent = parentItem->getTopLevelDecorator().toType<ContainerItem>())
                 containerParent->updateIdealSize();
+        }
+    }
+
+    // Items are translated in place, because rebuilding them would deselect and
+    // reselect the current item, which reports a change.
+    void ComboBox::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+
+        for (auto* option : options)
+            option->updateText();
+
+        translateHeaders();
+        getComboBox().setTooltip(translate(tooltip));
+        updateMinimumSize();
+    }
+
+    void ComboBox::translateHeaders()
+    {
+        juce::StringArray headers;
+
+        for (const auto& childState : state)
+        {
+            if (childState.hasType(ids::headerType()) && childState[ids::text()].toString().isNotEmpty())
+                headers.add(translate(childState[ids::text()].toString()));
+        }
+
+        auto headerIndex = 0;
+
+        for (juce::PopupMenu::MenuItemIterator iterator{ *getComboBox().getRootMenu() }; iterator.next();)
+        {
+            if (iterator.getItem().isSectionHeader && headerIndex < headers.size())
+                iterator.getItem().text = headers[headerIndex++];
         }
     }
 

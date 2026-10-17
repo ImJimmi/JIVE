@@ -52,6 +52,13 @@ namespace jive
         [[nodiscard]] std::unique_ptr<GuiItem> stripAllDecorators();
 
     protected:
+        void localisedStringsChanged() override;
+        [[nodiscard]] const juce::LocalisedStrings* getLocalisedStrings() const override;
+
+        // Tells the whole item, and every descendant that translates with these
+        // strings, that they've changed.
+        void setLocalisedStrings(std::optional<juce::LocalisedStrings> strings);
+
         std::unique_ptr<GuiItem> item;
 
     private:

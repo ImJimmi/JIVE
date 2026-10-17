@@ -198,6 +198,44 @@ namespace jive
         return getParent() == nullptr;
     }
 
+    const juce::LocalisedStrings* GuiItem::findLocalisedStrings() const
+    {
+        for (const auto* ancestor = this; ancestor != nullptr; ancestor = ancestor->getParent())
+        {
+            if (const auto* strings = ancestor->getLocalisedStrings())
+                return strings;
+        }
+
+        return nullptr;
+    }
+
+    juce::String GuiItem::translate(const juce::String& text) const
+    {
+        if (const auto* strings = findLocalisedStrings())
+            return strings->translate(text);
+
+        return juce::translate(text);
+    }
+
+    const juce::LocalisedStrings* GuiItem::getLocalisedStrings() const
+    {
+        return localisedStrings.has_value() ? &*localisedStrings : nullptr;
+    }
+
+    // Children are notified first so that a nested Text has its new text by the
+    // time its parent appends it. Children with their own strings are skipped
+    // because they don't translate with this item's.
+    void GuiItem::notifyLocalisedStringsChanged()
+    {
+        for (auto* child : getChildren())
+        {
+            if (child->getLocalisedStrings() == nullptr)
+                child->notifyLocalisedStringsChanged();
+        }
+
+        localisedStringsChanged();
+    }
+
     bool GuiItem::isContainer() const
     {
         return true;

@@ -124,6 +124,28 @@ namespace jive
         item->layOutChildren();
     }
 
+    void GuiItemDecorator::localisedStringsChanged()
+    {
+        item->localisedStringsChanged();
+    }
+
+    const juce::LocalisedStrings* GuiItemDecorator::getLocalisedStrings() const
+    {
+        if (const auto* strings = GuiItem::getLocalisedStrings())
+            return strings;
+
+        return item->getLocalisedStrings();
+    }
+
+    void GuiItemDecorator::setLocalisedStrings(std::optional<juce::LocalisedStrings> strings)
+    {
+        if (!strings.has_value() && !localisedStrings.has_value())
+            return;
+
+        localisedStrings = std::move(strings);
+        getTopLevelDecorator().notifyLocalisedStringsChanged();
+    }
+
     [[nodiscard]] static std::unique_ptr<GuiItem> decorateWithDisplayBehaviour(std::unique_ptr<GuiItem> item)
     {
         const PassiveProperty<Display> display{ item->state, ids::display() };

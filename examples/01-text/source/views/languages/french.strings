@@ -1,0 +1,16 @@
+language: French
+countries: fr be ca ch lu
+
+"title" = "Texte"
+"introduction" = "Contrairement aux interfaces JUCE classiques, les éléments Text de JIVE sont dimensionnés automatiquement. L'interface s'adapte automatiquement à un nouveau texte ou à une autre police. Utilisez les options ci-dessous pour personnaliser la police de ce texte et la voir en action."
+"separate-sentence" = "Cette phrase est un élément Text distinct qui se place toujours juste sous le premier paragraphe, quelles que soient les options de police choisies."
+"options" = "Options"
+"font-size" = "Taille de police"
+"font-family" = "Famille de police"
+"font-styles" = "Styles de police"
+"bold" = "Gras"
+"italic" = "Italique"
+"underlined" = "Souligné"
+"kerning" = "Crénage"
+"scale" = "Échelle"
+"language" = "Langue"

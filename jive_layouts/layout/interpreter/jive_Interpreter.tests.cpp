@@ -669,6 +669,170 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
     },
 };
 
+[[nodiscard]] static juce::File createLocalisationTestDirectory()
+{
+    const auto directory = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                               .getParentDirectory()
+                               .getChildFile("localisation-tests/");
+    directory.deleteRecursively();
+    directory.createDirectory();
+
+    directory.getChildFile("french.strings").replaceWithText(R"(language: French
+countries: fr
+
+"greeting" = "Bonjour"
+"ok" = "D'accord"
+"fruit" = "Fruits"
+"apple" = "Pomme"
+"pick-a-fruit" = "Choisissez un fruit"
+"say-hello" = "Dire bonjour"
+)");
+    directory.getChildFile("german.strings").replaceWithText(R"(language: German
+countries: de
+
+"greeting" = "Hallo"
+"ok" = "OK"
+)");
+
+    return directory;
+}
+
+[[nodiscard]] static juce::String getDisplayedText(jive::GuiItem& root, const juce::Identifier& id)
+{
+    return dynamic_cast<jive::TextComponent&>(*jive::findItemWithID(root, id)->getComponent())
+        .getAttributedString()
+        .getText();
+}
+
+static jive::UnitTest localisedTextTest{
+    "jive",
+    "jive::Interpreter",
+    "Localisation: text is translated with the strings file named by the closest lang",
+    [](auto& test) {
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(createLocalisationTestDirectory());
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="200" lang="french.strings">
+                <Text id="greeting">greeting</Text>
+                <Button><Text id="button-text">ok</Text></Button>
+                <Text id="untranslated">Goodbye</Text>
+                <Text id="sentence">greeting<Text>ok</Text></Text>
+                <Component lang="german.strings">
+                    <Text id="german-greeting">greeting</Text>
+                </Component>
+                <Component lang="missing.strings">
+                    <Text id="missing-greeting">greeting</Text>
+                </Component>
+            </Component>
+        )"));
+
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Bonjour" });
+        test.expectEquals(getDisplayedText(*item, "button-text"), juce::String{ "D'accord" });
+        test.expectEquals(getDisplayedText(*item, "untranslated"), juce::String{ "Goodbye" });
+        test.expectEquals(getDisplayedText(*item, "sentence"), juce::String{ "BonjourD'accord" });
+        test.expectEquals(getDisplayedText(*item, "german-greeting"), juce::String{ "Hallo" });
+        test.expectEquals(getDisplayedText(*item, "missing-greeting"), juce::String{ "Bonjour" });
+        test.expectEquals(jive::findElementWithID(item->state, "greeting")["text"].toString(),
+                          juce::String{ "greeting" },
+                          "The tree should keep the untranslated text");
+    },
+};
+
+static jive::UnitTest changingLangTest{
+    "jive",
+    "jive::Interpreter",
+    "Localisation: changing lang translates text again",
+    [](auto& test) {
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(createLocalisationTestDirectory());
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="200" lang="french.strings">
+                <Component>
+                    <Text id="greeting">greeting</Text>
+                    <Text id="sentence">greeting<Text>ok</Text></Text>
+                </Component>
+            </Component>
+        )"));
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Bonjour" });
+
+        item->state.setProperty("lang", "german.strings", nullptr);
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hallo" });
+        test.expectEquals(getDisplayedText(*item, "sentence"), juce::String{ "HalloOK" });
+
+        item->state.removeProperty("lang", nullptr);
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "greeting" });
+    },
+};
+
+static jive::UnitTest localisedWidgetsTest{
+    "jive",
+    "jive::Interpreter",
+    "Localisation: combo box items, tooltips and titles are translated",
+    [](auto& test) {
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(createLocalisationTestDirectory());
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="200" lang="french.strings">
+                <ComboBox id="combo-box" tooltip="pick-a-fruit">
+                    <Header>fruit</Header>
+                    <Option>apple</Option>
+                </ComboBox>
+                <Button id="button" tooltip="say-hello" description="say-hello">ok</Button>
+            </Component>
+        )"));
+
+        auto& comboBox = dynamic_cast<juce::ComboBox&>(*jive::findItemWithID(*item, "combo-box")->getComponent());
+        const auto getHeaderText = [&comboBox] {
+            for (juce::PopupMenu::MenuItemIterator iterator{ *comboBox.getRootMenu() }; iterator.next();)
+            {
+                if (iterator.getItem().isSectionHeader)
+                    return iterator.getItem().text;
+            }
+
+            return juce::String{};
+        };
+        test.expectEquals(comboBox.getItemText(0), juce::String{ "Pomme" });
+        test.expectEquals(getHeaderText(), juce::String{ "Fruits" });
+        test.expectEquals(comboBox.getTooltip(), juce::String{ "Choisissez un fruit" });
+
+        auto& button = dynamic_cast<juce::Button&>(*jive::findItemWithID(*item, "button")->getComponent());
+        test.expectEquals(button.getTooltip(), juce::String{ "Dire bonjour" });
+        test.expectEquals(button.getHelpText(), juce::String{ "Dire bonjour" });
+        test.expectEquals(button.getDescription(), juce::String{ "Dire bonjour" });
+        test.expectEquals(button.getTitle(), juce::String{ "D'accord" });
+
+        item->state.removeProperty("lang", nullptr);
+        test.expectEquals(comboBox.getItemText(0), juce::String{ "apple" });
+        test.expectEquals(getHeaderText(), juce::String{ "fruit" });
+        test.expectEquals(comboBox.getTooltip(), juce::String{ "pick-a-fruit" });
+        test.expectEquals(button.getTooltip(), juce::String{ "say-hello" });
+        test.expectEquals(button.getTitle(), juce::String{ "ok" });
+    },
+};
+
+static jive::UnitTest stringsFileReloadTest{
+    "jive",
+    "jive::Interpreter",
+    "Localisation: editing a strings file translates text again",
+    [](auto& test) {
+        const auto directory = createLocalisationTestDirectory();
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(directory);
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="200" lang="french.strings">
+                <Text id="greeting">greeting</Text>
+            </Component>
+        )"));
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Bonjour" });
+
+        const auto file = directory.getChildFile("french.strings");
+        file.replaceWithText(R"("greeting" = "Salut")");
+        file.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Salut" });
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:

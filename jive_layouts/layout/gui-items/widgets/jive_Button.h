@@ -30,6 +30,7 @@ namespace jive
         void layOutChildren() override;
 
     protected:
+        void localisedStringsChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
 
     private:

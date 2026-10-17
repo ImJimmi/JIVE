@@ -430,6 +430,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& lang()
+    {
+        static const juce::Identifier identifier{ "lang" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& length()
     {
         static const juce::Identifier identifier{ "length" };

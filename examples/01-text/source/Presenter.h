@@ -41,7 +41,20 @@ namespace jive_examples::text
             fontKerning = bindControl<float>("font-kerning-slider", "value");
             fontScale = bindControl<float>("font-scale-slider", "value");
 
+            language = std::make_unique<jive::Property<int>>(jive::findElementWithID(window->state, "language-combo-box"),
+                                                             "selected");
+            language->onValueChange = [this]() {
+                applyLanguage();
+            };
+
             applyFontSettings();
+            applyLanguage();
+        }
+
+        void applyLanguage()
+        {
+            const auto option = jive::findElementWithID(window->state, "language-combo-box").getChild(language->get());
+            window->state.setProperty("lang", option["lang"], nullptr);
         }
 
         template <typename T>
@@ -116,6 +129,7 @@ namespace jive_examples::text
         std::unique_ptr<jive::Property<bool>> underlined;
         std::unique_ptr<jive::Property<float>> fontKerning;
         std::unique_ptr<jive::Property<float>> fontScale;
+        std::unique_ptr<jive::Property<int>> language;
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
         std::unique_ptr<melatonin::Inspector> inspector;
