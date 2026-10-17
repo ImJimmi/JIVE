@@ -13,9 +13,9 @@ namespace jive_examples::text
     {
     public:
         Presenter()
-            : window{ interpreter.interpret(juce::File{ JIVE_EXAMPLE_VIEWS_DIR }.getChildFile("Main.xml")) }
+            : window{ interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" }) }
         {
-            interpreter.onExternalSourceLoaded = [this](const juce::File&) {
+            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile&) {
                 bindControls();
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
@@ -41,11 +41,18 @@ namespace jive_examples::text
             fontKerning = bindControl<float>("font-kerning-slider", "value");
             fontScale = bindControl<float>("font-scale-slider", "value");
 
-            language = std::make_unique<jive::Property<int>>(jive::findElementWithID(window->state, "language-combo-box"),
-                                                             "selected");
-            language->onValueChange = [this]() {
+            const auto languageComboBox = jive::findElementWithID(window->state,
+                                                                  "language-combo-box");
+            selectedLanguageIndex = std::make_unique<jive::Property<int>>(languageComboBox,
+                                                                          "selected");
+            selectedLanguageIndex->onValueChange = [this]() {
                 applyLanguage();
             };
+
+            const auto languageExample = jive::findElementWithID(window->state,
+                                                                 "language-example");
+            languageExampleLang = std::make_unique<jive::Property<juce::String>>(languageExample,
+                                                                                 "lang");
 
             applyFontSettings();
             applyLanguage();
@@ -53,8 +60,12 @@ namespace jive_examples::text
 
         void applyLanguage()
         {
-            const auto option = jive::findElementWithID(window->state, "language-combo-box").getChild(language->get());
-            window->state.setProperty("lang", option["lang"], nullptr);
+            if (selectedLanguageIndex->get() == 0)
+                *languageExampleLang = "public/locales/english.strings";
+            else if (selectedLanguageIndex->get() == 1)
+                *languageExampleLang = "public/locales/german.strings";
+            else if (selectedLanguageIndex->get() == 2)
+                *languageExampleLang = "public/locales/french.strings";
         }
 
         template <typename T>
@@ -129,7 +140,9 @@ namespace jive_examples::text
         std::unique_ptr<jive::Property<bool>> underlined;
         std::unique_ptr<jive::Property<float>> fontKerning;
         std::unique_ptr<jive::Property<float>> fontScale;
-        std::unique_ptr<jive::Property<int>> language;
+
+        std::unique_ptr<jive::Property<int>> selectedLanguageIndex;
+        std::unique_ptr<jive::Property<juce::String>> languageExampleLang;
 
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
         std::unique_ptr<melatonin::Inspector> inspector;

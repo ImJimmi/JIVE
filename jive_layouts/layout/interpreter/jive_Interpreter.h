@@ -28,6 +28,8 @@ namespace jive
                                                          juce::AudioProcessor* pluginProcessor = nullptr);
         [[nodiscard]] std::unique_ptr<GuiItem> interpret(const juce::File& file,
                                                          juce::AudioProcessor* pluginProcessor = nullptr);
+        [[nodiscard]] std::unique_ptr<GuiItem> interpret(const SourceFile& file,
+                                                         juce::AudioProcessor* pluginProcessor = nullptr);
 
         void listenTo(GuiItem& item);
         void addSourceDirectory(const juce::File& directory);
@@ -53,7 +55,7 @@ namespace jive
             so any listeners attached to them need to be reassigned when this
             is called. The state tree is up to date by the time this is called.
         */
-        std::function<void(const juce::File&)> onExternalSourceLoaded = nullptr;
+        std::function<void(const SourceFile&)> onExternalSourceLoaded = nullptr;
 
     private:
         // ValueTree callbacks
@@ -78,7 +80,7 @@ namespace jive
         // File sources
         [[nodiscard]] juce::ValueTree loadExternalSources(juce::ValueTree tree);
         [[nodiscard]] juce::ValueTree parseFileToValueTree(const SourceFile&) const;
-        void onObservedFileChanged(const juce::File& file);
+        void onObservedFileChanged(const SourceFile& file);
         void observeFileForChanges(const SourceFile& file);
         void notifyExternalSourcesLoaded();
 
@@ -87,11 +89,13 @@ namespace jive
 
         juce::WeakReference<GuiItem> observedItem = nullptr;
         mutable juce::OwnedArray<FileObserver> fileObservers;
+        // An empty SourceFile is the root that relative paths are found in.
         SourceDirectories::ReferenceCountedPointer sourceDirectories = new SourceDirectories{
+            SourceFile{},
             juce::File::getCurrentWorkingDirectory(),
         };
         bool ignoreValueTreeChanges = false;
-        std::vector<juce::File> sourcesPendingNotification;
+        std::vector<SourceFile> sourcesPendingNotification;
         int interpretationsInProgress = 0;
 
         JUCE_LEAK_DETECTOR(Interpreter)

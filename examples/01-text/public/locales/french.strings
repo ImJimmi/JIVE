@@ -1,0 +1,5 @@
+language: French
+countries: fr be ca ch lu
+
+"language-example" = "« J'ai rencontré un voyageur venu d'une terre antique\nQui m'a dit : Deux vastes jambes de pierre sans tronc\nSe dressent dans le désert. Près d'elles, sur le sable,\nÀ demi enfoui, gît un visage brisé, dont le sourcil froncé,\nLa lèvre plissée et le rictus de froid commandement\nDisent que son sculpteur sut bien lire ces passions\nQui survivent encore, gravées sur ces choses sans vie,\nÀ la main qui les singea et au cœur qui les nourrit.\nEt sur le piédestal apparaissent ces mots :\n“Mon nom est Ozymandias, roi des rois :\nContemplez mes œuvres, ô Puissants, et désespérez !”\nRien d'autre ne demeure. Autour des débris\nDe cette ruine colossale, infinis et nus,\nLes sables solitaires et plats s'étendent au loin. »"
+"language-example-citation" = "— Percy Bysshe Shelley, « Ozymandias » (1818)"

@@ -16,27 +16,45 @@ namespace jive
         SourceDirectories& operator=(SourceDirectories&&) = default;
         ~SourceDirectories() = default;
 
-        template <typename... Files>
-        SourceDirectories(Files&&... files)
-            : directories{ std::forward<Files>(files)... }
+        template <typename... Directories>
+        SourceDirectories(Directories&&... directoriesToSearch)
+            : directories{ SourceFile{ std::forward<Directories>(directoriesToSearch) }... }
         {
         }
 
-        void add(const juce::File& file)
+        void add(const SourceFile& directory)
         {
-            directories.addIfNotAlreadyThere(file);
+            directories.addIfNotAlreadyThere(directory);
         }
 
-        void remove(const juce::File& file)
+        void add(const juce::File& directory)
         {
-            directories.removeFirstMatchingValue(file);
+            add(SourceFile{ directory });
         }
 
-        [[nodiscard]] SourceFile find(const juce::String& relativePath) const
+        void remove(const SourceFile& directory)
         {
+            directories.removeFirstMatchingValue(directory);
+        }
+
+        void remove(const juce::File& directory)
+        {
+            remove(SourceFile{ directory });
+        }
+
+        // Paths starting with "./" or "../" are relative to the file that
+        // refers to them. Other paths are looked for in each directory.
+        [[nodiscard]] SourceFile find(const juce::String& relativePath, const SourceFile& referrer = {}) const
+        {
+            if (relativePath.startsWith("./") || relativePath.startsWith("../"))
+            {
+                const auto file = referrer.getParentDirectory().getChildFile(relativePath);
+                return file.exists() ? file : SourceFile{};
+            }
+
             for (const auto& directory : directories)
             {
-                if (const SourceFile file{ directory.getChildFile(relativePath) }; file.exists())
+                if (const auto file = directory.getChildFile(relativePath); file.exists())
                     return file;
             }
 
@@ -59,6 +77,6 @@ namespace jive
         }
 
     private:
-        juce::Array<juce::File> directories;
+        juce::Array<SourceFile> directories;
     };
 } // namespace jive

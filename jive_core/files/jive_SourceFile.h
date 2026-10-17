@@ -1,25 +1,40 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
+#include <juce_data_structures/juce_data_structures.h>
 
 namespace jive
 {
-    // A view, style sheet or other file that JIVE reads. Files that were
-    // embedded with the jive_sources() CMake function are read from the binary,
-    // and everything else from disk.
+    // A view, style sheet or other file that JIVE reads. A relative path is
+    // found in the roots created by the jive_sources() CMake function, which
+    // may be embedded in the binary. An absolute path is read from disk.
     class SourceFile
     {
     public:
         SourceFile() = default;
+        explicit SourceFile(const juce::String& relativeOrAbsolutePath);
         explicit SourceFile(const juce::File& file);
 
-        [[nodiscard]] const juce::File& getFile() const;
+        [[nodiscard]] const juce::String& getPath() const;
+        [[nodiscard]] SourceFile getChildFile(const juce::String& relativePath) const;
+        [[nodiscard]] SourceFile getParentDirectory() const;
+
+        // Returns juce::File{} if the file is embedded, or can't be found.
+        [[nodiscard]] juce::File getFileOnDisk() const;
+
         [[nodiscard]] bool isEmbedded() const;
         [[nodiscard]] bool exists() const;
         [[nodiscard]] juce::String loadAsString() const;
         [[nodiscard]] juce::MemoryBlock loadAsData() const;
 
+        [[nodiscard]] bool operator==(const SourceFile& other) const;
+        [[nodiscard]] bool operator!=(const SourceFile& other) const;
+
     private:
-        juce::File file;
+        [[nodiscard]] bool isAbsolute() const;
+
+        juce::String path;
     };
+
+    // Returns the file the tree, or its closest ancestor, was parsed from.
+    [[nodiscard]] SourceFile findSourceFile(const juce::ValueTree& tree);
 } // namespace jive

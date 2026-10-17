@@ -47,8 +47,7 @@ function(jive_add_example TARGET)
     )
 
     target_compile_definitions(${TARGET}
-                               PRIVATE JIVE_EXAMPLE_VIEWS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/source/views"
-                                       JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>
+                               PRIVATE JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>
     )
 
     target_link_libraries(${TARGET}

@@ -1,0 +1,71 @@
+<Window
+    width="900"
+    height="700"
+    min-height="600"
+    min-width="800"
+    padding="25"
+    resizable="true"
+    lang="public/locales/english.strings"
+    style="public/styles/Styles.json"
+>
+    <Component id="content" max-width="1280" align-self="center">
+        <Text id="title" margin="0 0 25 0" align-self="center">title</Text>
+
+        <Text margin="0 0 5 0">introduction</Text>
+        <Text margin="0 0 5 0">separate-sentence</Text>
+
+        <Component display="grid" grid-template-columns="1fr auto" margin="30 15" gap="30" max-width="800px" align-self="center">
+            <Component max-width="400px">
+                <Text class="heading" margin="0 0 10 0">options</Text>
+
+                <Component display="grid" grid-template-columns="auto 1fr auto" gap="10 15" align-items="center">
+                    <Label>font-size</Label>
+                    <Slider id="font-size-slider" min="12" max="18" interval="0.1" value="14" />
+                    <Text id="font-size-label" class="value" accessible="false">14.0pt</Text>
+
+                    <Label>font-family</Label>
+                    <ComboBox id="font-family-combo-box" grid-column="2 / span 2" grid-row="2 / 3">
+                        <Option id="rubik-option">Rubik</Option>
+                        <Option id="helvetica-option">Helvetica</Option>
+                        <Option id="georgia-option">Georgia</Option>
+                    </ComboBox>
+
+                    <Label align-self="start" margin="1 0 0 0">font-styles</Label>
+                    <Component gap="15" grid-column="2 / span 2" grid-row="3 / 4">
+                        <Checkbox id="bold-checkbox" toggle-on-click="true">bold</Checkbox>
+                        <Checkbox id="italic-checkbox" toggle-on-click="true">italic</Checkbox>
+                        <Checkbox id="underlined-checkbox" toggle-on-click="true">underlined</Checkbox>
+                    </Component>
+
+                    <Label>kerning</Label>
+                    <Slider id="font-kerning-slider" min="-0.1" max="0.3" interval="0.01" value="0" />
+                    <Text id="font-kerning-label" class="value" accessible="false">0.00</Text>
+
+                    <Label>scale</Label>
+                    <Slider id="font-scale-slider" min="0.5" max="1.5" interval="0.01" value="1" />
+                    <Text id="font-scale-label" class="value" accessible="false">1.00x</Text>
+                </Component>
+            </Component>
+
+            <Component max-width="450px">
+                <Text class="heading" margin="0 0 10 0">localisation</Text>
+
+                <Text margin="0 0 20 0">localisation-description</Text>
+
+                <Component display="grid" grid-template-columns="auto 1fr auto" gap="10 15" align-items="center">
+                    <Label>language</Label>
+                    <ComboBox id="language-combo-box" grid-column="2 / span 2">
+                        <Option>English</Option>
+                        <Option>Deutsch</Option>
+                        <Option>Français</Option>
+                    </ComboBox>
+                </Component>
+
+                <Component id="language-example" lang="public/locales/english.strings" margin="20 10" padding="10 15 15 15">
+                    <Text word-wrap="by-word" margin="0 0 10 0">language-example</Text>
+                    <Text id="language-example-citation">language-example-citation</Text>
+                </Component>
+            </Component>
+        </Component>
+    </Component>
+</Window>
