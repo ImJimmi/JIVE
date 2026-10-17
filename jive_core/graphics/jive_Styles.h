@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jive_Fill.h"
+#include "jive_Icon.h"
 #include "jive_Shadow.h"
 
 #include <jive_core/algorithms/jive_Interpolate.h>
@@ -156,6 +157,7 @@ namespace jive
         StyleProperty<float> fontPointSize{ ids::fontSize() };
         StyleProperty<std::unordered_set<juce::Font::FontStyleFlags>> fontStyleFlags{ ids::fontStyles() };
         StyleProperty<Fill> foreground{ ids::foreground() };
+        StyleProperty<Icon> icon{ ids::icon() };
         StyleProperty<float> lineSpacing{ ids::lineSpacing() };
         StyleProperty<Shadow> shadow{ ids::shadow() };
         StyleProperty<Fill> stroke{ ids::stroke() };
@@ -183,6 +185,7 @@ namespace jive
             "font-size",
             "font-styles",
             "foreground",
+            "icon",
             "line-spacing",
             "shadow",
             "stroke",
@@ -226,6 +229,8 @@ namespace jive
                 return withFontStyleFlags(fromVar<std::unordered_set<juce::Font::FontStyleFlags>>(value));
             if (propertyName == foreground.id)
                 return withForeground(fromVar<Fill>(value));
+            if (propertyName == icon.id)
+                return withIcon(fromVar<Icon>(value));
             if (propertyName == lineSpacing.id)
                 return withLineSpacing(fromVar<float>(value));
             if (propertyName == shadow.id)
@@ -332,6 +337,12 @@ namespace jive
         [[nodiscard]] Styles& withForeground(const Fill& value)
         {
             foreground = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withIcon(const Icon& value)
+        {
+            icon = value;
             return *this;
         }
 
@@ -552,6 +563,7 @@ namespace jive
                                        styles.fontPointSize,
                                        styles.fontStyleFlags,
                                        styles.foreground,
+                                       styles.icon,
                                        styles.lineSpacing,
                                        styles.shadow,
                                        styles.stroke,
@@ -604,6 +616,7 @@ namespace jive
             function(fontPointSize);
             function(fontStyleFlags);
             function(foreground);
+            function(icon);
             function(lineSpacing);
             function(shadow);
             function(stroke);

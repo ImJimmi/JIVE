@@ -80,7 +80,6 @@ namespace jive
             if (!styles.shadow.hasValue())
             {
                 component.getProperties().remove(property);
-                component.getProperties().remove(ids::shadowBounds());
                 component.getProperties().remove(ids::shadowPath());
                 return;
             }
@@ -122,6 +121,17 @@ namespace jive
         // render the given component.
         [[nodiscard]] Styles findMostApplicableStyles(const juce::Component&) const;
 
+        // Finds the styles for the given combo box's popup. Style sheets style
+        // the popup through its stand-in, and anything they don't set falls
+        // back to the combo box's own styles.
+        [[nodiscard]] Styles findPopupStyles(const juce::ComboBox&) const;
+
+        // Finds the styles for an item in the given combo box's popup, which
+        // inherit from the popup's.
+        [[nodiscard]] Styles findPopupItemStyles(const juce::ComboBox&,
+                                                 const juce::PopupMenu::Item&,
+                                                 const InteractionState&) const;
+
         // Searches all the painters given to this object to find the one
         // (if any) that's most applicable to the given component.
         [[nodiscard]] std::optional<ComponentPainter> findMostApplicablePainter(const juce::Component&) const;
@@ -134,6 +144,14 @@ namespace jive
         // Returns the space that should be left clear at the left of the given
         // toggle button so its text doesn't overlap its check-box.
         [[nodiscard]] float getToggleButtonTextInset(const juce::ToggleButton&, const Styles&) const;
+
+        // Returns where the icon of the given combo box, the arrow that shows it
+        // can be opened, should be drawn. Positioned centre-right by default.
+        [[nodiscard]] juce::Rectangle<float> getComboBoxIconBounds(const juce::ComboBox&, const Styles&) const;
+
+        // Returns the smallest size the given combo box can be while still fitting
+        // the text of any of its items alongside its icon.
+        [[nodiscard]] juce::Rectangle<float> getIdealComboBoxSize(const juce::ComboBox&) const;
 
         // A generic component drawer - useful for drawing simple components
         // that just have a background, border, corner radius, etc.
@@ -177,9 +195,12 @@ namespace jive
         void drawPopupMenuBackgroundWithOptions(juce::Graphics&, int, int, const juce::PopupMenu::Options&) override;
         void drawPopupMenuItemWithOptions(juce::Graphics&, const juce::Rectangle<int>&, bool, const juce::PopupMenu::Item&, const juce::PopupMenu::Options&) override;
         void getIdealPopupMenuItemSizeWithOptions(const juce::String& text, bool isSeparator, int standardMenuItemHeight, int& idealWidth, int& idealHeight, const juce::PopupMenu::Options&) override;
+        int getPopupMenuBorderSizeWithOptions(const juce::PopupMenu::Options&) override;
+        void preparePopupMenuWindow(juce::Component&) override;
 
         // juce::ComboBox
         void drawComboBox(juce::Graphics&, int, int, bool, int, int, int, int, juce::ComboBox&) override;
+        juce::Font getComboBoxFont(juce::ComboBox&) override;
         juce::Label* createComboBoxTextBox(juce::ComboBox&) override;
         void positionComboBoxText(juce::ComboBox&, juce::Label&) override;
 

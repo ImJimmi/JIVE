@@ -1,12 +1,17 @@
 #pragma once
 
+#include <jive_core/values/jive_Identifiers.h>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive
 {
+    // Some components are highlighted on behalf of something else under the
+    // mouse, such as the stand-in for an item in a popup menu.
     [[nodiscard]] inline auto isMouseOverOrDragging(const juce::Component& component)
     {
         return component.isMouseOverOrDragging(true)
+            || static_cast<bool>(component.getProperties()[ids::highlighted()])
 #if JIVE_UNIT_TESTS
             || static_cast<bool>(component.getProperties()["jive::hover"])
 #endif

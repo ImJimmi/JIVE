@@ -207,8 +207,7 @@ namespace jive
                                                    const Styles& styles,
                                                    const InteractionState& interactionState,
                                                    const juce::Rectangle<float>& bounds,
-                                                   const Fill& defaultFill = juce::Colours::transparentBlack,
-                                                   const Fill& defaultSelectedFill = detail::getV4Colour(detail::V4Colour::highlightedFill));
+                                                   const Fill& defaultFill = juce::Colours::transparentBlack);
     [[nodiscard]] juce::FillType getBorderFill(const juce::PopupMenu::Item& item,
                                                const juce::PopupMenu::Options& options,
                                                const Styles& styles,

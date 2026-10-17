@@ -18,8 +18,6 @@ namespace jive
                                                          const Styles& styles);
     [[nodiscard]] juce::BorderSize<float> getBorderWidth(const juce::PopupMenu& popup,
                                                          const Styles& styles);
-    [[nodiscard]] juce::BorderSize<float> getBorderWidth(const juce::PopupMenu::Item& item,
-                                                         const Styles& styles);
     [[nodiscard]] juce::BorderSize<float> getBorderWidth(const juce::ComboBox& comboBox,
                                                          const Styles& styles);
     [[nodiscard]] juce::BorderSize<float> getBorderWidth(const juce::GroupComponent& group,

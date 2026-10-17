@@ -346,22 +346,9 @@ namespace jive
         juce::Path shape;
 
         if (component->getProperties().contains(ids::shadowPath()))
-        {
             shape.restoreFromString(component->getProperties()[ids::shadowPath()].toString());
-        }
         else
-        {
-            const auto boundsString = component
-                                          ->getProperties()
-                                          .getWithDefault(ids::shadowBounds(),
-                                                          component->getBounds()
-                                                              .withZeroOrigin()
-                                                              .toString())
-                                          .toString();
-            shape = getShape(borderRadius,
-                             juce::Rectangle<int>::fromString(boundsString)
-                                 .toFloat());
-        }
+            shape.addRectangle(component->getLocalBounds());
 
         const juce::Point blurRadiusOffset{
             static_cast<int>(std::ceil(shadow.getBlurRadius())),
@@ -416,12 +403,8 @@ namespace jive
             static_cast<int>(std::ceil(shadow.getBlurRadius())),
         };
 
-        auto bounds = juce::Rectangle<int>::fromString(component
-                                                           ->getProperties()
-                                                           .getWithDefault(ids::shadowBounds(),
-                                                                           component->getBounds().toString())
-                                                           .toString())
-                          .withPosition(component->getPosition() + shadow.getOffset())
+        auto bounds = component->getBounds()
+                          .translated(shadow.getOffset().x, shadow.getOffset().y)
                           .expanded(blurRadiusOffset.x, blurRadiusOffset.y);
 
         for (auto* parentComp = component->getParentComponent();
@@ -543,6 +526,37 @@ static jive::UnitTest shadowFollowsAncestorsTest{
         container.setBounds(container.getBounds().withWidth(80));
         target.setBounds(0, 0, 30, 30);
         test.expectEquals(shadow.getBounds(), juce::Rectangle{ 50, 30, 30, 30 });
+    },
+};
+
+static jive::UnitTest shadowPathsAreLocalTest{
+    "jive",
+    "jive::ShadowComponent",
+    "Shadow paths are in the attached component's own coordinates",
+    [](auto& test) {
+        juce::Component root;
+        root.setComponentID("root");
+        root.setSize(100, 50);
+
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(jive::StyleSelector{ "#root" },
+                              jive::Styles{}.withBackground(juce::Colours::black));
+
+        juce::Component target;
+        target.setBounds(40, 5, 30, 30);
+        juce::Path shape;
+        shape.addRectangle(0.0f, 10.0f, 10.0f, 10.0f);
+        target.getProperties().set(jive::ids::shadowPath(), shape.toString());
+        root.addAndMakeVisible(target);
+
+        jive::ShadowComponent shadow{ target };
+        shadow.setShadow(jive::Shadow{}
+                             .setColour(juce::Colours::red)
+                             .setOffset({ 2, 2 }));
+
+        const auto snapshot = root.createComponentSnapshot(root.getLocalBounds());
+        test.expect(snapshot.getPixelAt(51, 20) == juce::Colours::red);
+        test.expect(snapshot.getPixelAt(45, 20) != juce::Colours::red);
     },
 };
 #endif

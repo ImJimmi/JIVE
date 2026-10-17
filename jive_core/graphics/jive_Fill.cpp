@@ -560,26 +560,24 @@ namespace jive
         return defaultFill.toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
     }
 
+    // Unless they're given a background, items show the popup's, and
+    // highlighted ones are tinted with their text's colour to stand out from it.
     juce::FillType getBackgroundFill(const juce::PopupMenu::Item& item,
                                      const juce::PopupMenu::Options& options,
                                      const Styles& styles,
                                      const InteractionState& interactionState,
                                      const juce::Rectangle<float>& bounds,
-                                     const Fill& defaultFill,
-                                     const Fill& defaultSelectedFill)
+                                     const Fill& defaultFill)
     {
-        if (const auto* const target = options.getTopLevelTargetComponent())
-        {
-            const auto colourID = (interactionState.isHovered() && item.isEnabled) ? juce::PopupMenu::highlightedBackgroundColourId : -1;
-            return jive::findBackgroundFill(*target, styles, colourID)
-                .value_or(defaultFill)
-                .toJuceFillType(bounds);
-        }
+        if (auto fill = styles.find<Fill>("background"); fill.has_value())
+            return fill->toJuceFillType(bounds);
 
-        return styles
-            .find<Fill>("background")
-            .value_or(item.isTicked ? defaultSelectedFill : defaultFill)
-            .toJuceFillType(bounds);
+        if (!interactionState.isHovered() || !item.isEnabled)
+            return defaultFill.toJuceFillType(bounds);
+
+        auto fill = getForegroundFill(item, options, styles, InteractionState{}, bounds);
+        fill.setOpacity(fill.getOpacity() * 0.15f);
+        return fill;
     }
 
     juce::FillType getBorderFill(const juce::PopupMenu::Item&,
@@ -609,7 +607,11 @@ namespace jive
                                      const Fill& defaultSelectedFill)
     {
         if (auto fill = styles.find<Fill>("foreground"); fill.has_value())
-            return fill->toJuceFillType(bounds);
+        {
+            auto fillType = fill->toJuceFillType(bounds);
+            fillType.setOpacity(fillType.getOpacity() * (item.isEnabled ? 1.0f : 0.5f));
+            return fillType;
+        }
 
         if (const auto* const target = options.getTopLevelTargetComponent())
         {

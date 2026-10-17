@@ -3,7 +3,7 @@
 namespace jive
 {
     Spinner::Spinner(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 70.0f, 20.0f }
+        : Slider{ std::move(itemToDecorate), { 70.0f, 20.0f }, DefaultSize::fixed }
         , draggable{ state, ids::draggable() }
     {
         draggable.onValueChange = [this]() {

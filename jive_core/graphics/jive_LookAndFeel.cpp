@@ -9,6 +9,8 @@
 #include "jive_Shadow.h"
 #include "themes/jive_SteelTheme.h"
 
+#include <jive_core/components/widgets/jive_ComboBoxComponent.h>
+
 namespace jive
 {
     using namespace std::placeholders;
@@ -253,17 +255,18 @@ namespace jive
                                        bool)
     {
         const auto boxBounds = getToggleButtonCheckboxBounds(button, findMostApplicableStyles(button));
-        button.getProperties().set(ids::shadowBounds(), boxBounds.translated(button.getX(), button.getY()).toString());
 
         draw(g,
              button,
              [this, &g, &button, &boxBounds](const auto& styles) {
+                 const auto borderRadius = getBorderRadius(button, styles);
                  default_styles::drawRoundedRectangle(g,
                                                       boxBounds.toFloat(),
-                                                      getBorderRadius(button, styles),
+                                                      borderRadius,
                                                       getBorderWidth(button, styles),
                                                       getBackgroundFill(button, styles),
                                                       getBorderFill(button, styles));
+                 button.getProperties().set(ids::shadowPath(), getShape(borderRadius, boxBounds.toFloat()).toString());
 
                  if (button.getToggleState())
                  {
@@ -345,9 +348,7 @@ namespace jive
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
 
-        const auto styles = findMostApplicableStyles(comboBox);
-
-        default_styles::paintPopupMenu(g, *popup, options, bounds, styles);
+        default_styles::paintPopupMenu(g, *popup, options, bounds, findPopupStyles(comboBox));
     }
 
     void LookAndFeel::drawPopupMenuBackgroundWithOptions(juce::Graphics& g,
@@ -373,9 +374,15 @@ namespace jive
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
 
-        const auto styles = findMostApplicableStyles(comboBox);
-
-        default_styles::paintPopupMenuItem(g, item, *popup, options, comboBox, bounds, interactionState, styles);
+        default_styles::paintPopupMenuItem(g,
+                                           item,
+                                           *popup,
+                                           options,
+                                           comboBox,
+                                           bounds,
+                                           interactionState,
+                                           findPopupStyles(comboBox),
+                                           findPopupItemStyles(comboBox, item, interactionState));
     }
 
     void LookAndFeel::drawPopupMenuItemWithOptions(juce::Graphics& g,
@@ -399,6 +406,18 @@ namespace jive
         jassertfalse;
     }
 
+    // JUCE only says which item it's measuring by its text.
+    [[nodiscard]] static juce::PopupMenu::Item findPopupMenuItem(const juce::PopupMenu& menu, const juce::String& text)
+    {
+        for (juce::PopupMenu::MenuItemIterator iterator{ menu, true }; iterator.next();)
+        {
+            if (iterator.getItem().text == text)
+                return iterator.getItem();
+        }
+
+        return juce::PopupMenu::Item{ text };
+    }
+
     void LookAndFeel::getIdealPopupMenuItemSizeWithOptions(const juce::String& text,
                                                            bool isSeparator,
                                                            int standardMenuItemHeight,
@@ -413,26 +432,57 @@ namespace jive
         }
         else
         {
-            juce::Font font{ juce::FontOptions{} };
+            auto font = getPopupMenuFont();
+            auto textFont = font;
 
             if (auto* const comboBox = dynamic_cast<juce::ComboBox*>(options.getTopLevelTargetComponent());
                 comboBox != nullptr && comboBox->getRootMenu() != nullptr)
             {
-                juce::PopupMenu::Item dummyItem{ text };
-                const auto styles = findMostApplicableStyles(*comboBox);
-                font = getFont(dummyItem, *comboBox, styles);
-            }
-            else
-            {
-                font = getPopupMenuFont();
+                const auto item = findPopupMenuItem(*comboBox->getRootMenu(), text);
+                font = getFont(juce::PopupMenu::Item{}, *comboBox, findPopupStyles(*comboBox));
+                textFont = getFont(item, *comboBox, findPopupItemStyles(*comboBox, item, {}));
             }
 
-            idealHeight = static_cast<int>(std::ceil(font.getHeight() * 1.3f));
-            idealWidth = juce::GlyphArrangement::getStringWidthInt(font, text) + idealHeight * 2;
+            const auto size = default_styles::getIdealPopupMenuItemSize(text, font, textFont);
+            idealWidth = static_cast<int>(std::ceil(size.getWidth()));
+            idealHeight = static_cast<int>(std::ceil(size.getHeight()));
         }
     }
 
+    int LookAndFeel::getPopupMenuBorderSizeWithOptions(const juce::PopupMenu::Options& options)
+    {
+        if (const auto* const comboBox = dynamic_cast<juce::ComboBox*>(options.getTopLevelTargetComponent());
+            comboBox != nullptr && comboBox->getRootMenu() != nullptr)
+        {
+            const auto styles = findPopupStyles(*comboBox);
+            return default_styles::getPopupMenuBorderSize(*comboBox->getRootMenu(),
+                                                          styles,
+                                                          getFont(juce::PopupMenu::Item{}, *comboBox, styles));
+        }
+
+        return juce::LookAndFeel_V4::getPopupMenuBorderSizeWithOptions(options);
+    }
+
+    // JUCE makes popup windows opaque, which would leave the area outside of
+    // rounded corners unpainted.
+    void LookAndFeel::preparePopupMenuWindow(juce::Component& window)
+    {
+        if (juce::Desktop::canUseSemiTransparentWindows())
+            window.setOpaque(false);
+    }
+
     // juce::ComboBox
+    juce::Rectangle<float> LookAndFeel::getComboBoxIconBounds(const juce::ComboBox& comboBox,
+                                                              const Styles& styles) const
+    {
+        return default_styles::getComboBoxIconBounds(comboBox, styles);
+    }
+
+    juce::Rectangle<float> LookAndFeel::getIdealComboBoxSize(const juce::ComboBox& comboBox) const
+    {
+        return default_styles::getIdealComboBoxSize(comboBox, findMostApplicableStyles(comboBox));
+    }
+
     void LookAndFeel::drawComboBox(juce::Graphics& g,
                                    int,
                                    int,
@@ -450,6 +500,13 @@ namespace jive
              });
     }
 
+    // JUCE bases a combo box's font on its height, but here a combo box's height
+    // is based on its font.
+    juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox&)
+    {
+        return parseFont("");
+    }
+
     juce::Label* LookAndFeel::createComboBoxTextBox(juce::ComboBox& comboBox)
     {
         auto* label = juce::LookAndFeel_V4::createComboBoxTextBox(comboBox);
@@ -459,13 +516,10 @@ namespace jive
 
     void LookAndFeel::positionComboBoxText(juce::ComboBox& comboBox, juce::Label& label)
     {
-        const auto styles = findMostApplicableStyles(label);
-        const auto font = getFont(label, styles);
-        const auto labelInsetY = (static_cast<float>(comboBox.getHeight()) - font.getHeight()) / 2.0f;
-        const auto labelInsetX = labelInsetY * 1.5f;
-        label.setBounds(comboBox.getLocalBounds()
-                            .toFloat()
-                            .reduced(labelInsetX, labelInsetY)
+        const auto styles = findMostApplicableStyles(comboBox);
+        label.setFont(getFont(comboBox, styles));
+        label.setBounds(getBorderWidth(label, findMostApplicableStyles(label))
+                            .addedTo(default_styles::getComboBoxTextBounds(comboBox, styles))
                             .toNearestInt());
     }
 
@@ -547,15 +601,6 @@ namespace jive
                                                 const juce::Justification&,
                                                 juce::GroupComponent& group)
     {
-        const auto bounds = group.getBounds().toFloat();
-        group
-            .getProperties()
-            .set(ids::shadowBounds(),
-                 getGroupBounds(group,
-                                findMostApplicableStyles(group))
-                     .translated(bounds.getX(), bounds.getY())
-                     .toString());
-
         draw(g,
              group,
              [&g, &group](const auto& styles) {
@@ -602,7 +647,11 @@ namespace jive
         destination.fontPointSize = destination.fontPointSize.hasValue() ? destination.fontPointSize : source.fontPointSize;
         destination.lineSpacing = destination.lineSpacing.hasValue() ? destination.lineSpacing : source.lineSpacing;
 
-        if (source.fontStyleFlags.hasValue())
+        if (!destination.fontStyleFlags.hasValue())
+        {
+            destination.fontStyleFlags = source.fontStyleFlags;
+        }
+        else if (source.fontStyleFlags.hasValue())
         {
             for (const auto& entry : source.fontStyleFlags.get())
                 destination.fontStyleFlags.get().emplace(entry);
@@ -622,6 +671,7 @@ namespace jive
         destination.borderRadius = destination.borderRadius.hasValue() ? destination.borderRadius : source.borderRadius;
         destination.borderWidth = destination.borderWidth.hasValue() ? destination.borderWidth : source.borderWidth;
         destination.direction = destination.direction.hasValue() ? destination.direction : source.direction;
+        destination.icon = destination.icon.hasValue() ? destination.icon : source.icon;
         destination.shadow = destination.shadow.hasValue() ? destination.shadow : source.shadow;
         destination.textAlign = destination.textAlign.hasValue() ? destination.textAlign : source.textAlign;
         destination.thumb = destination.thumb.hasValue() ? destination.thumb : source.thumb;
@@ -823,6 +873,7 @@ namespace jive
         updateStyleProperty(destination.fontPointSize, source.fontPointSize, transitions);
         updateStyleProperty(destination.fontStyleFlags, source.fontStyleFlags, transitions);
         updateStyleProperty(destination.foreground, source.foreground, transitions);
+        updateStyleProperty(destination.icon, source.icon, transitions);
         updateStyleProperty(destination.lineSpacing, source.lineSpacing, transitions);
         updateStyleProperty(destination.shadow, source.shadow, transitions);
         updateStyleProperty(destination.stroke, source.stroke, transitions);
@@ -860,6 +911,35 @@ namespace jive
             transitioningComponents.removeAllInstancesOf(const_cast<juce::Component*>(&component));
 
         return entry.styles;
+    }
+
+    Styles LookAndFeel::findPopupStyles(const juce::ComboBox& comboBox) const
+    {
+        Styles styles;
+
+        if (const auto* comboBoxComponent = dynamic_cast<const ComboBoxComponent*>(&comboBox))
+            styles = findMostApplicableStyles(comboBoxComponent->getPopup());
+
+        mergeLeft(styles, findMostApplicableStyles(comboBox));
+        return styles;
+    }
+
+    Styles LookAndFeel::findPopupItemStyles(const juce::ComboBox& comboBox,
+                                            const juce::PopupMenu::Item& item,
+                                            const InteractionState& interactionState) const
+    {
+        if (const auto* comboBoxComponent = dynamic_cast<const ComboBoxComponent*>(&comboBox))
+        {
+            if (auto* standIn = comboBoxComponent->findItem(item.itemID))
+            {
+                standIn->setHighlighted(interactionState.isHovered());
+                return findMostApplicableStyles(*standIn);
+            }
+        }
+
+        Styles styles;
+        mergeLeft(styles, findPopupStyles(comboBox), true);
+        return styles;
     }
 
     void LookAndFeel::onVBlankUpdate()
@@ -916,6 +996,8 @@ public:
         }
 
         testResolvedStylesAreReused();
+        testComboBoxPopupFonts();
+        testShadowShapes();
     }
 
 private:
@@ -1049,6 +1131,190 @@ private:
 
             lookAndFeel.removeStyles(id);
             expect(!lookAndFeel.findMostApplicableStyles(child).accent.hasValue());
+        }
+    }
+
+    void testComboBoxPopupFonts()
+    {
+        beginTest("combo box popups / items use their combo box's font by default");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::ComboBox comboBox;
+            parent.addAndMakeVisible(comboBox);
+            comboBox.getProperties().set("font-size", 23.0f);
+
+            const auto styles = jive::Styles{}
+                                    .withFontFamily("Times New Roman")
+                                    .withFontStyleFlags({ juce::Font::bold });
+            const auto comboBoxFont = jive::getFont(comboBox, styles);
+            const auto itemFont = jive::getFont(juce::PopupMenu::Item{}, comboBox, styles);
+            expectEquals(itemFont.getTypefaceName(), comboBoxFont.getTypefaceName());
+            expectEquals(itemFont.getHeightInPoints(), comboBoxFont.getHeightInPoints());
+            expectEquals(itemFont.getStyleFlags(), comboBoxFont.getStyleFlags());
+        }
+
+        beginTest("combo box popups / item fonts can be overridden with popup-prefixed properties");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::ComboBox comboBox;
+            parent.addAndMakeVisible(comboBox);
+            comboBox.getProperties().set("popup.font-size", 30.0f);
+            comboBox.getProperties().set("popup.font-styles", "bold italic");
+
+            const auto styles = jive::Styles{}
+                                    .withFontFamily("Times New Roman")
+                                    .withFontStyleFlags({ juce::Font::bold });
+            const auto itemFont = jive::getFont(juce::PopupMenu::Item{}, comboBox, styles);
+            expectEquals(itemFont.getTypefaceName(), juce::String{ "Times New Roman" });
+            expectEquals(itemFont.getHeightInPoints(), 30.0f);
+            expectEquals(itemFont.getStyleFlags(), juce::Font::bold | juce::Font::italic);
+        }
+
+        beginTest("combo box popups / popups are styled through their stand-in, falling back to their combo box's styles");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            lookAndFeel.addStyles("ComboBox",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::red)
+                                      .withBorderWidth(juce::BorderSize{ 2.0f }));
+            lookAndFeel.addStyles("Popup", jive::Styles{}.withBackground(juce::Colours::blue));
+
+            const auto styles = lookAndFeel.findPopupStyles(comboBox);
+            expect(styles.background.get() == juce::Colours::blue);
+            expect(styles.borderWidth.get() == juce::BorderSize{ 2.0f });
+        }
+
+        beginTest("combo box popups / items are styled through their stand-ins, inheriting from their popup");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            jive::ComboBoxComponent::Item standIn{ 2 };
+            standIn.getProperties().set("class", "georgia");
+            comboBox.getPopup().addChildComponent(standIn);
+            lookAndFeel.addStyles("Popup",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::blue)
+                                      .withFontPointSize(30.0f));
+            lookAndFeel.addStyles(".georgia", jive::Styles{}.withFontFamily("Georgia"));
+
+            juce::PopupMenu::Item item{ "Two" };
+            item.itemID = 2;
+            const auto styles = lookAndFeel.findPopupItemStyles(comboBox, item, {});
+            expect(!styles.background.hasValue());
+
+            const auto font = jive::getFont(item, comboBox, styles);
+            expectEquals(font.getTypefaceName(), juce::String{ "Georgia" });
+            expectEquals(font.getHeightInPoints(), 30.0f);
+        }
+
+        beginTest("combo box popups / highlighted items are styled as hovered");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            jive::ComboBoxComponent::Item standIn{ 1 };
+            comboBox.getPopup().addChildComponent(standIn);
+            lookAndFeel.addStyles("Option:hover", jive::Styles{}.withBackground(juce::Colours::green));
+
+            juce::PopupMenu::Item item{ "One" };
+            item.itemID = 1;
+            expect(lookAndFeel.findPopupItemStyles(comboBox, item, jive::InteractionState::hover).background.get() == juce::Colours::green);
+            expect(!lookAndFeel.findPopupItemStyles(comboBox, item, {}).background.hasValue());
+        }
+
+        beginTest("combo box popups / items without stand-ins only inherit their popup's styles");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::ComboBox comboBox;
+            parent.addAndMakeVisible(comboBox);
+            lookAndFeel.addStyles("ComboBox",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::red)
+                                      .withFontFamily("Georgia"));
+
+            const auto styles = lookAndFeel.findPopupItemStyles(comboBox, juce::PopupMenu::Item{ "One" }, {});
+            expect(!styles.background.hasValue());
+            expectEquals(styles.fontFamily.get(), juce::String{ "Georgia" });
+        }
+
+        beginTest("combo box popups / items are measured with their own fonts");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            comboBox.addItem("One", 1);
+            comboBox.addItem("Two", 2);
+            jive::ComboBoxComponent::Item standIn{ 1 };
+            standIn.getProperties().set("class", "large");
+            comboBox.getPopup().addChildComponent(standIn);
+            lookAndFeel.addStyles(".large", jive::Styles{}.withFontPointSize(40.0f));
+
+            const auto options = juce::PopupMenu::Options{}.withTargetComponent(&comboBox);
+            auto largeWidth = 0;
+            auto largeHeight = 0;
+            lookAndFeel.getIdealPopupMenuItemSizeWithOptions("One", false, 0, largeWidth, largeHeight, options);
+            auto regularWidth = 0;
+            auto regularHeight = 0;
+            lookAndFeel.getIdealPopupMenuItemSizeWithOptions("Two", false, 0, regularWidth, regularHeight, options);
+
+            expectGreaterThan(largeWidth, regularWidth);
+            expectGreaterThan(largeHeight, regularHeight);
+        }
+    }
+
+    void testShadowShapes()
+    {
+        beginTest("shadows / check-boxes cast their shadow from their rounded box, in their own coordinates");
+        {
+            juce::Component parent;
+            parent.setSize(200, 100);
+            jive::LookAndFeel lookAndFeel{ parent };
+
+            juce::ToggleButton checkbox;
+            checkbox.setBounds(40, 30, 100, 30);
+            parent.addAndMakeVisible(checkbox);
+
+            juce::ignoreUnused(checkbox.createComponentSnapshot(checkbox.getLocalBounds()));
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(checkbox);
+            const auto boxBounds = lookAndFeel.getToggleButtonCheckboxBounds(checkbox, styles);
+            const auto radius = jive::getBorderRadius(checkbox, styles);
+            expect(radius.topLeft > 0.0f);
+            expectEquals(checkbox.getProperties()[jive::ids::shadowPath()].toString(),
+                         jive::getShape(radius, boxBounds.toFloat()).toString());
+        }
+
+        beginTest("shadows / group components cast their shadow from their rounded outline, in their own coordinates");
+        {
+            juce::Component parent;
+            parent.setSize(200, 100);
+            jive::LookAndFeel lookAndFeel{ parent };
+
+            juce::GroupComponent group{ {}, "Title" };
+            group.setBounds(40, 30, 100, 60);
+            parent.addAndMakeVisible(group);
+            lookAndFeel.addStyles(jive::StyleSelector{ "*" },
+                                  jive::Styles{}
+                                      .withBorderRadius(jive::BorderRadii<float>{ 5.0f })
+                                      .withShadow(jive::Shadow{}.setColour(juce::Colours::black)));
+
+            juce::ignoreUnused(group.createComponentSnapshot(group.getLocalBounds()));
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(group);
+            expectEquals(group.getProperties()[jive::ids::shadowPath()].toString(),
+                         jive::getShape(jive::getBorderRadius(group, styles),
+                                        jive::getGroupBounds(group, styles))
+                             .toString());
         }
     }
 };

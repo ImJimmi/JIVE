@@ -1,5 +1,7 @@
 #include "jive_BorderRadii.h"
 
+#include "jive_BorderWidth.h"
+
 #include <jive_core/graphics/jive_Styles.h>
 #include <jive_core/interface/jive_InteractionState.h>
 
@@ -49,12 +51,20 @@ namespace jive
             .value_or(BorderRadii{ 0.0f });
     }
 
+    // Items are rounded to match the inside of their popup's border.
     BorderRadii<float> getBorderRadius(const juce::PopupMenu::Item&,
+                                       const juce::PopupMenu& popup,
                                        const Styles& styles)
     {
-        return styles
-            .find<BorderRadii<float>>("border-radius")
-            .value_or(BorderRadii{ 0.0f });
+        const auto popupRadius = getBorderRadius(popup, styles);
+        const auto popupBorderWidth = getBorderWidth(popup, styles);
+
+        return BorderRadii{
+            juce::jmax(0.0f, popupRadius.topLeft - juce::jmax(popupBorderWidth.getTop(), popupBorderWidth.getLeft())),
+            juce::jmax(0.0f, popupRadius.topRight - juce::jmax(popupBorderWidth.getTop(), popupBorderWidth.getRight())),
+            juce::jmax(0.0f, popupRadius.bottomRight - juce::jmax(popupBorderWidth.getBottom(), popupBorderWidth.getRight())),
+            juce::jmax(0.0f, popupRadius.bottomLeft - juce::jmax(popupBorderWidth.getBottom(), popupBorderWidth.getLeft())),
+        };
     }
 
     BorderRadii<float> getBorderRadius(const juce::ComboBox& comboBox,

@@ -41,6 +41,8 @@ namespace jive
         addStandardComponent<juce::ProgressBar>(predicates, "ProgressBar");
         addStandardComponent<juce::TextEditor>(predicates, "TextEditor");
         addStandardComponent<juce::ScrollBar>(predicates, "ScrollBar");
+        addStandardComponent<ComboBoxComponent::Popup>(predicates, "Popup");
+        addStandardComponent<ComboBoxComponent::Item>(predicates, "Option");
 
         addSlider(predicates, "Knob", [](const juce::Slider& slider) {
             return slider.isRotary();

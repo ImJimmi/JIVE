@@ -33,6 +33,8 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
 
     private:
+        static constexpr auto defaultMinHeight = 20.0f;
+
         void buttonClicked(juce::Button* button) final;
         void componentParentHierarchyChanged(juce::Component& component) final;
 
@@ -41,7 +43,7 @@ namespace jive
         [[nodiscard]] const juce::ToggleButton* getCheckbox() const;
 
         void updateTriggerEvent();
-        void updateCheckboxTextInset();
+        void reserveSpaceForCheckbox();
 
         PassiveProperty<bool> toggleable;
         PassiveProperty<bool> toggled;
@@ -58,6 +60,7 @@ namespace jive
         PassiveProperty<juce::BorderSize<float>> padding;
 
         bool hasAutomaticPadding{ false };
+        bool hasAutomaticMinHeight{ false };
 
         Event onClick;
 

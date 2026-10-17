@@ -90,7 +90,6 @@ namespace jive
         juce::Component::SafePointer<juce::Component> parent;
         std::vector<juce::Component::SafePointer<juce::Component>> ancestors;
         Shadow shadow;
-        BorderRadii<float> borderRadius;
     };
 
     // Wraps a shadow component in a reference-counted object so it can be

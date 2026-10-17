@@ -211,7 +211,7 @@ namespace jive
         for (const auto& flag : styles.fontStyleFlags.getValueOr({}))
             fontStyleFlags.emplace(flag);
         for (const auto& flag : fontStyleFlags)
-            result.setStyleFlags(result.getStyleFlags() + flag);
+            result.setStyleFlags(result.getStyleFlags() | flag);
 
 #if JUCE_MAJOR_VERSION >= 8
         if (const auto ascent = fontAscentOverride; ascent.has_value())
@@ -245,16 +245,16 @@ namespace jive
                             .getLabelFont(*const_cast<juce::Label*>(&label)));
     }
 
+    // A combo box's items use its font, so only the "popup."-prefixed
+    // properties are applied on top of it.
     juce::Font getFont(const juce::PopupMenu::Item&,
                        const juce::Component& component,
                        const Styles& styles)
     {
-        auto baseFont = component.getLookAndFeel().getPopupMenuFont();
-
         if (const auto* comboBox = dynamic_cast<const juce::ComboBox*>(&component))
-            baseFont = findFont(*comboBox, styles, baseFont, "popup.");
+            return findFont(*comboBox, Styles{}, getFont(*comboBox, styles), "popup.");
 
-        return findFont(component, styles, baseFont, "popup.");
+        return findFont(component, styles, component.getLookAndFeel().getPopupMenuFont(), "popup.");
     }
 
     juce::Font getFont(const juce::ComboBox& comboBox,
