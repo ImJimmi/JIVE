@@ -1,0 +1,77 @@
+{
+  "$carbonBlack": "#16191C",
+  "$eerieBlack": "#1E2125",
+  "$lightCoral": "#E77674",
+  "$goldenApricot": "#D8924D",
+  "$oldGold": "#AFAF3F",
+  "$mossGreen": "#74B670",
+  "$skyBlue": "#70CDFF",
+  "$mayaBlue": "#60BDF5",
+  "$pictonBlue": "#4FADE4",
+  "$bluebell": "#3D9DD3",
+  "$brightLavender": "#BE89DD",
+  "$widgetShadow": "2px 2px 6px rgba(0, 0, 0, 0.25)",
+
+  "background": "$eerieBlack",
+  "foreground": "#E6E8EA",
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40,
+    "foreground": "$pictonBlue"
+  },
+  "Button": {
+    "background": "transparentWhite",
+    "border": "",
+    "fill": "white",
+    "foreground": "white",
+    "shadow": "",
+    ":hover": {
+      "background": "rgba(255, 255, 255, 0.05)"
+    },
+    ":checked": {
+      "background": "linear-gradient(-10deg, $mayaBlue, $pictonBlue, $bluebell)",
+      "fill": "black",
+      "foreground": "black",
+      "shadow": "$widgetShadow",
+      ":hover": {
+        "background": "linear-gradient(-10deg, $skyBlue, $mayaBlue, $pictonBlue)"
+      }
+    }
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14,
+    "foreground": "$pictonBlue"
+  },
+  ".value": {
+    "font-family": "Source Code Pro"
+  },
+  ".preview": {
+    "background": "$carbonBlack",
+    "border-radius": 15
+  },
+  ".box": {
+    "border-radius": 4
+  },
+  ".box-red": {
+    "background": "$lightCoral"
+  },
+  ".box-orange": {
+    "background": "$goldenApricot"
+  },
+  ".box-yellow": {
+    "background": "$oldGold"
+  },
+  ".box-green": {
+    "background": "$mossGreen"
+  },
+  ".box-blue": {
+    "background": "$pictonBlue"
+  },
+  ".box-purple": {
+    "background": "$brightLavender"
+  }
+}

@@ -1,0 +1,122 @@
+<Component>
+    <Text margin="0 0 25 0">All containers use the Flex layout by default, with 'flex-direction' set to 'column' so items are laid out in a natural top-to-bottom flow by default. Use the controls below to see the other Flex properties in action.</Text>
+
+    <Component display="grid" grid-template-columns="400px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Container</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr 35px" gap="10 15" align-items="center" margin="0 0 25 0">
+                <Label>Width</Label>
+                <Slider id="flex-width-slider" min="20" max="100" interval="1" value="100" />
+                <Text id="flex-width-label" class="value" accessible="false">100%</Text>
+
+                <Label>Direction</Label>
+                <Component flex-direction="row" justify-content="space-between" grid-column="2 / span 2" grid-row="2 / 3">
+                    <Component flex-direction="row" gap="2">
+                        <Button id="row-button" min-width="0" min-height="0" radio-group="1" toggle-on-click="true" toggled="true">
+                            <Component source="public/icons/arrow-small-right.svg" />
+                        </Button>
+                        <Button id="column-button" min-width="0" min-height="0" radio-group="1" toggle-on-click="true">
+                            <Component source="public/icons/arrow-small-down.svg" />
+                        </Button>
+                        <Button id="row-reverse-button" min-width="0" min-height="0" radio-group="1" toggle-on-click="true">
+                            <Component source="public/icons/arrow-small-left.svg" />
+                        </Button>
+                        <Button id="column-reverse-button" min-width="0" min-height="0" radio-group="1" toggle-on-click="true">
+                            <Component source="public/icons/arrow-small-up.svg" />
+                        </Button>
+                    </Component>
+                    <Text id="flex-direction-label" class="value" accessible="false">row</Text>
+                </Component>
+
+                <Label>Justify Content</Label>
+                <ComboBox id="justify-content-combo-box" grid-column="2 / span 2" grid-row="3 / 4">
+                    <Option>flex-start</Option>
+                    <Option>center</Option>
+                    <Option>flex-end</Option>
+                    <Option>space-between</Option>
+                    <Option>space-around</Option>
+                </ComboBox>
+
+                <Label>Align Items</Label>
+                <ComboBox id="align-items-combo-box" grid-column="2 / span 2" grid-row="4 / 5" selected="1">
+                    <Option>stretch</Option>
+                    <Option>flex-start</Option>
+                    <Option>center</Option>
+                    <Option>flex-end</Option>
+                </ComboBox>
+
+                <Label>Wrap</Label>
+                <ComboBox id="flex-wrap-combo-box" grid-column="2 / span 2" grid-row="5 / 6">
+                    <Option>nowrap</Option>
+                    <Option>wrap</Option>
+                    <Option>wrap-reverse</Option>
+                </ComboBox>
+
+                <Label>Align Content</Label>
+                <ComboBox id="align-content-combo-box" grid-column="2 / span 2" grid-row="6 / 7">
+                    <Option>stretch</Option>
+                    <Option>flex-start</Option>
+                    <Option>center</Option>
+                    <Option>flex-end</Option>
+                    <Option>space-between</Option>
+                    <Option>space-around</Option>
+                </ComboBox>
+
+                <Label>Gap</Label>
+                <Slider id="flex-gap-slider" min="0" max="20" interval="1" value="5" />
+                <Text id="flex-gap-label" class="value" accessible="false">5px</Text>
+            </Component>
+
+            <Text class="heading" margin="0 0 10 0">Items</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr auto" gap="10 15" align-items="center">
+                <Label>Box</Label>
+                <ComboBox id="flex-item-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                    <Option>Red</Option>
+                    <Option>Orange</Option>
+                    <Option>Yellow</Option>
+                    <Option>Green</Option>
+                    <Option>Blue</Option>
+                    <Option>Purple</Option>
+                </ComboBox>
+
+                <Label>Grow</Label>
+                <Slider id="flex-grow-slider" min="0" max="3" interval="1" value="0" />
+                <Text id="flex-grow-label" class="value" accessible="false">0</Text>
+
+                <Label>Shrink</Label>
+                <Slider id="flex-shrink-slider" min="0" max="3" interval="1" value="1" />
+                <Text id="flex-shrink-label" class="value" accessible="false">1</Text>
+
+                <Label>Basis</Label>
+                <Slider id="flex-basis-slider" min="0" max="200" interval="1" value="0" />
+                <Text id="flex-basis-label" class="value" accessible="false">0px</Text>
+
+                <Label>Order</Label>
+                <Slider id="order-slider" min="-5" max="5" interval="1" value="0" />
+                <Text id="order-label" class="value" accessible="false">0</Text>
+
+                <Label>Align Self</Label>
+                <ComboBox id="align-self-combo-box" grid-column="2 / span 2" grid-row="6 / 7">
+                    <Option>auto</Option>
+                    <Option>stretch</Option>
+                    <Option>flex-start</Option>
+                    <Option>center</Option>
+                    <Option>flex-end</Option>
+                </ComboBox>
+            </Component>
+        </Component>
+
+        <Component>
+            <Component id="flex-preview" class="preview" width="100%" flex-grow="1" padding="10" gap="5" flex-direction="row" align-items="flex-start">
+                <Component class="box box-red" min-width="35" min-height="35" />
+                <Component class="box box-orange" min-width="35" min-height="35" />
+                <Component class="box box-yellow" min-width="35" min-height="35" />
+                <Component class="box box-green" min-width="35" min-height="35" />
+                <Component class="box box-blue" min-width="35" min-height="35" />
+                <Component class="box box-purple" min-width="35" min-height="35" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

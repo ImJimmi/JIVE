@@ -1,0 +1,68 @@
+<Component>
+    <Text margin="0 0 25 0">Set 'display' to block to position children yourself, either by their top-left corner with x and y, or by their centre with centre-x and centre-y. Positions and sizes are in pixels or a percentage of the parent, so resize the window to see the difference.</Text>
+
+    <Component display="grid" grid-template-columns="400px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Items</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr 45px auto" gap="10 15" align-items="center">
+                <Label>Box</Label>
+                <ComboBox id="absolute-item-combo-box" grid-column="2 / span 3" grid-row="1 / 2">
+                    <Option>Red</Option>
+                    <Option>Orange</Option>
+                    <Option>Yellow</Option>
+                    <Option>Green</Option>
+                    <Option>Blue</Option>
+                    <Option>Purple</Option>
+                </ComboBox>
+
+                <Label>Anchor</Label>
+                <ComboBox id="anchor-combo-box" grid-column="2 / span 3" grid-row="2 / 3">
+                    <Option>top-left</Option>
+                    <Option>centre</Option>
+                </ComboBox>
+
+                <Label>X</Label>
+                <Slider id="x-slider" min="0" max="500" interval="1" value="0" />
+                <Text id="x-label" class="value" accessible="false" />
+                <Component flex-direction="row" gap="2">
+                    <Button id="x-px-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true" toggled="true">px</Button>
+                    <Button id="x-percent-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true">%</Button>
+                </Component>
+
+                <Label>Y</Label>
+                <Slider id="y-slider" min="0" max="500" interval="1" value="0" />
+                <Text id="y-label" class="value" accessible="false" />
+                <Component flex-direction="row" gap="2">
+                    <Button id="y-px-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true" toggled="true">px</Button>
+                    <Button id="y-percent-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true">%</Button>
+                </Component>
+
+                <Label>Width</Label>
+                <Slider id="width-slider" min="0" max="500" interval="1" value="0" />
+                <Text id="width-label" class="value" accessible="false" />
+                <Component flex-direction="row" gap="2">
+                    <Button id="width-px-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true" toggled="true">px</Button>
+                    <Button id="width-percent-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true">%</Button>
+                </Component>
+
+                <Label>Height</Label>
+                <Slider id="height-slider" min="0" max="500" interval="1" value="0" />
+                <Text id="height-label" class="value" accessible="false" />
+                <Component flex-direction="row" gap="2">
+                    <Button id="height-px-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true" toggled="true">px</Button>
+                    <Button id="height-percent-button" min-width="0" padding="2 8" radio-group="1" toggle-on-click="true">%</Button>
+                </Component>
+            </Component>
+        </Component>
+
+        <Component id="absolute-preview" class="preview" display="block">
+            <Component class="box box-red" x="20px" y="20px" width="60px" height="60px" />
+            <Component class="box box-orange" x="40%" y="20px" width="60px" height="60px" />
+            <Component class="box box-yellow" x="75%" y="20px" width="20%" height="60px" />
+            <Component class="box box-green" centre-x="50%" centre-y="50%" width="20%" height="20%" />
+            <Component class="box box-blue" x="20px" y="75%" width="60px" height="20%" />
+            <Component class="box box-purple" centre-x="80%" centre-y="80%" width="60px" height="60px" />
+        </Component>
+    </Component>
+</Component>

@@ -217,15 +217,19 @@ namespace jive
             flex.alignItems = juce::FlexBox::AlignItems::flexStart;
             flex.alignContent = juce::FlexBox::AlignContent::flexStart;
 
-            // Reversing a direction only changes where items are positioned, not
-            // the size of the content. When measuring the ideal size a reversed
-            // direction pushes items against the far edge of the constraints, so
-            // the measured extent becomes the constraints' size rather than the
-            // intrinsic content size. Normalise to the forward direction.
+            // Reversing a direction or wrap only changes where items are
+            // positioned, not the size of the content. When measuring the ideal
+            // size a reversed direction or wrap pushes items against the far edge
+            // of the constraints, so the measured extent becomes the constraints'
+            // size rather than the intrinsic content size. Normalise to the
+            // forward direction and wrap.
             if (flex.flexDirection == juce::FlexBox::Direction::rowReverse)
                 flex.flexDirection = juce::FlexBox::Direction::row;
             else if (flex.flexDirection == juce::FlexBox::Direction::columnReverse)
                 flex.flexDirection = juce::FlexBox::Direction::column;
+
+            if (flex.flexWrap == juce::FlexBox::Wrap::wrapReverse)
+                flex.flexWrap = juce::FlexBox::Wrap::wrap;
             break;
         default:
             jassertfalse;
@@ -310,6 +314,36 @@ private:
                                                   .toType<jive::FlexContainer>());
 
         expect(flexBox.flexWrap == juce::FlexBox::Wrap::wrapReverse);
+
+        beginTest("wrap / wrap-reverse doesn't change the ideal size");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "flex-direction", "row" },
+                        { "flex-wrap", "wrap-reverse" },
+                    },
+                    {
+                        juce::ValueTree{
+                            "Component",
+                            {
+                                { "width", 43 },
+                                { "height", 84 },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        auto parent = interpreter.interpret(parentState);
+        expectEquals(jive::boxModel(*parent->getChildren()[0]).getHeight(), 84.0f);
     }
 
     void testAlignContent()

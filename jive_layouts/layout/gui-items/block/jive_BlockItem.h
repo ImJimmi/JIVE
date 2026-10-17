@@ -17,8 +17,8 @@ namespace jive
     private:
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        int calculateX() const;
-        int calculateY() const;
+        int calculateX(float itemWidth) const;
+        int calculateY(float itemHeight) const;
 
         PassiveProperty<Length> x;
         PassiveProperty<Length> y;
