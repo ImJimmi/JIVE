@@ -1,6 +1,6 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
+#include "jive_SourceFile.h"
 
 namespace jive
 {
@@ -32,15 +32,15 @@ namespace jive
             directories.removeFirstMatchingValue(file);
         }
 
-        [[nodiscard]] auto find(const juce::String& relativePath) const
+        [[nodiscard]] SourceFile find(const juce::String& relativePath) const
         {
-            for (const auto& file : directories)
+            for (const auto& directory : directories)
             {
-                if (auto child = file.getChildFile(relativePath); child.existsAsFile())
-                    return child;
+                if (const SourceFile file{ directory.getChildFile(relativePath) }; file.exists())
+                    return file;
             }
 
-            return juce::File{};
+            return {};
         }
 
         [[nodiscard]] auto size() const

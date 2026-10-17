@@ -77,9 +77,9 @@ namespace jive
 
         // File sources
         [[nodiscard]] juce::ValueTree loadExternalSources(juce::ValueTree tree);
-        [[nodiscard]] juce::ValueTree parseFileToValueTree(const juce::File&) const;
+        [[nodiscard]] juce::ValueTree parseFileToValueTree(const SourceFile&) const;
         void onObservedFileChanged(const juce::File& file);
-        void observeFileForChanges(const juce::File& file);
+        void observeFileForChanges(const SourceFile& file);
         void notifyExternalSourcesLoaded();
 
         ComponentFactory componentFactory;

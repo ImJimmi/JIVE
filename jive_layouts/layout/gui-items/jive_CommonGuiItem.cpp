@@ -146,20 +146,24 @@ namespace jive
         const auto* sourceDirectories = dynamic_cast<SourceDirectories*>(state[ids::sourceDirectories()].getObject());
         const auto file = lang.exists() && sourceDirectories != nullptr
                             ? sourceDirectories->find(lang)
-                            : juce::File{};
+                            : SourceFile{};
 
-        if (!file.existsAsFile())
+        if (!file.exists())
         {
             setLocalisedStrings(std::nullopt);
             return;
         }
 
         const auto loadStrings = [this, file] {
-            setLocalisedStrings(juce::LocalisedStrings{ file, false });
+            setLocalisedStrings(juce::LocalisedStrings{ file.loadAsString(), false });
         };
-        stringsFileObserver = std::make_unique<FileObserver>(file);
-        stringsFileObserver->onFileModified = loadStrings;
         loadStrings();
+
+        if (file.isEmbedded())
+            return;
+
+        stringsFileObserver = std::make_unique<FileObserver>(file.getFile());
+        stringsFileObserver->onFileModified = loadStrings;
     }
 
     void CommonGuiItem::localisedStringsChanged()

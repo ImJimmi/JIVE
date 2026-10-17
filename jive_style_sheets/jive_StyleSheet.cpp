@@ -139,18 +139,23 @@ namespace jive
 
         if (sourceDirectories.get() != nullptr)
         {
-            if (auto file = sourceDirectories.get()->find(style.toString());
-                file.existsAsFile())
+            if (const auto file = sourceDirectories.get()->find(style.toString());
+                file.exists())
             {
                 const auto addStylesFromFile = [this, f = file]() {
-                    auto fileContents = parseJSON(f.loadFileAsString());
+                    auto fileContents = parseJSON(f.loadAsString());
 
                     if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
                         addStylesFrom(*object);
                 };
 
-                fileObserver = std::make_unique<FileObserver>(file);
-                fileObserver->onFileModified = addStylesFromFile;
+                fileObserver = file.isEmbedded()
+                                 ? nullptr
+                                 : std::make_unique<FileObserver>(file.getFile());
+
+                if (fileObserver != nullptr)
+                    fileObserver->onFileModified = addStylesFromFile;
+
                 addStylesFromFile();
             }
         }
@@ -248,8 +253,8 @@ namespace jive
         if (sourceDirectories == nullptr || value.toString().trimStart().startsWithChar('<'))
             return value;
 
-        if (const auto file = sourceDirectories->find(value.toString()); file.existsAsFile())
-            return file.getFullPathName();
+        if (const auto file = sourceDirectories->find(value.toString()); file.exists())
+            return file.getFile().getFullPathName();
 
         return value;
     }
@@ -895,6 +900,34 @@ private:
 
             file.deleteFile();
             directory.deleteRecursively();
+        }
+
+        beginTest("file-based styles / styles and icons are loaded from embedded files");
+        {
+            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                       .getChildFile("jive-embedded-style-sheet-tests");
+            directory.deleteRecursively();
+
+            const auto zip = jive::createZip({
+                { "styles.json", R"({ "background": "red", "icon": "chevron.svg" })" },
+                { "chevron.svg", R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0L10 10L20 0"/></svg>)" },
+            });
+            const jive::EmbeddedSources::Registration registration{ directory, zip.getData(), zip.getSize() };
+
+            juce::ComboBox comboBox;
+            juce::ValueTree state{
+                "ComboBox",
+                {
+                    { "jive::source-directories", new jive::SourceDirectories{ directory } },
+                    { "style", "styles.json" },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ comboBox };
+            auto sheet = jive::StyleSheet::create(comboBox, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
+            expect(styles.find<jive::Fill>("background").value_or(jive::Fill{}) == juce::Colours::red);
+            expect(styles.icon.hasValue() && !styles.icon.get().isEmpty());
         }
 
         beginTest("file-based styles / switching the referenced file applies the new file's styles");

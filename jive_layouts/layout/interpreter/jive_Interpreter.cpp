@@ -55,9 +55,9 @@ namespace jive
         return interpret(parseXML(xmlStringData, xmlStringDataSize), pluginProcessor);
     }
 
-    juce::ValueTree Interpreter::parseFileToValueTree(const juce::File& file) const
+    juce::ValueTree Interpreter::parseFileToValueTree(const SourceFile& file) const
     {
-        auto sourceTree = jive::parseXML(file.loadFileAsString());
+        auto sourceTree = jive::parseXML(file.loadAsString());
 
         return sourceTree;
     }
@@ -86,7 +86,7 @@ namespace jive
 
         for (auto* item : items)
         {
-            auto source = parseFileToValueTree(file);
+            auto source = parseFileToValueTree(SourceFile{ file });
 
             if (!source.isValid())
             {
@@ -172,27 +172,32 @@ namespace jive
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::File& file,
                                                     juce::AudioProcessor* pluginProcessor)
     {
+        const SourceFile sourceFile{ file };
         addSourceDirectory(file.getParentDirectory());
-        auto item = interpret(parseFileToValueTree(file), pluginProcessor);
+        auto item = interpret(parseFileToValueTree(sourceFile), pluginProcessor);
         listenTo(*item);
 
         item->state.setProperty(ids::topLevelSourceFile(), file.getFullPathName(), nullptr);
 
-        observeFileForChanges(file);
+        observeFileForChanges(sourceFile);
 
         return item;
     }
 
-    void Interpreter::observeFileForChanges(const juce::File& file)
+    // Embedded files can't change, so only files on disk are observed.
+    void Interpreter::observeFileForChanges(const SourceFile& file)
     {
+        if (file.isEmbedded())
+            return;
+
         for (auto* observer : fileObservers)
         {
-            if (observer->file == file)
+            if (observer->file == file.getFile())
                 return;
         }
 
-        auto* observer = fileObservers.add(std::make_unique<FileObserver>(file));
-        observer->onFileModified = [this, f = file]() {
+        auto* observer = fileObservers.add(std::make_unique<FileObserver>(file.getFile()));
+        observer->onFileModified = [this, f = file.getFile()]() {
             onObservedFileChanged(f);
         };
     }
@@ -439,9 +444,9 @@ namespace jive
         if (source.isEmpty())
             return tree;
 
-        auto file = sourceDirectories->find(source);
+        const auto file = sourceDirectories->find(source);
 
-        if (!file.existsAsFile())
+        if (!file.exists())
             return tree;
 
         const juce::ScopedValueSetter svs{ ignoreValueTreeChanges, true };
@@ -497,10 +502,10 @@ namespace jive
 
             if (std::find(std::begin(sourcesPendingNotification),
                           std::end(sourcesPendingNotification),
-                          file)
+                          file.getFile())
                 == std::end(sourcesPendingNotification))
             {
-                sourcesPendingNotification.push_back(file);
+                sourcesPendingNotification.push_back(file.getFile());
             }
 
             return destination;
