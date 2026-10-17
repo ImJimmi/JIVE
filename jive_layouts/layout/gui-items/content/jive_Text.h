@@ -26,6 +26,9 @@ namespace jive
         TextComponent& getTextComponent();
         const TextComponent& getTextComponent() const;
 
+    protected:
+        void localisedStringsChanged() override;
+
     private:
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
         void textFontChanged(TextComponent& text) final;

@@ -10,6 +10,7 @@ namespace jive
         , id{ state, ids::id() }
         , description{ state, ids::description() }
         , tooltip{ state, ids::tooltip() }
+        , lang{ state, ids::lang() }
         , enabled{ state, ids::enabled() }
         , accessible{ state, ids::accessible() }
         , visibility{ state, ids::visibility() }
@@ -30,16 +31,19 @@ namespace jive
                  getComponent()->setName(name);
              } },
             { title.id, [this] {
-                 getComponent()->setTitle(title);
+                 getComponent()->setTitle(translate(title));
              } },
             { id.id, [this] {
                  getComponent()->setComponentID(id.get().toString());
              } },
             { description.id, [this] {
-                 getComponent()->setDescription(description);
+                 getComponent()->setDescription(translate(description));
              } },
             { tooltip.id, [this] {
-                 getComponent()->setHelpText(tooltip);
+                 getComponent()->setHelpText(translate(tooltip));
+             } },
+            { lang.id, [this] {
+                 updateLocalisedStrings();
              } },
             { enabled.id, [this] {
                  getComponent()->setEnabled(enabled.getOr(true));
@@ -119,6 +123,11 @@ namespace jive
         if (opacity.handlePropertyChange(tree, property))
             return;
 
+        updateProperty(property);
+    }
+
+    void CommonGuiItem::updateProperty(const juce::Identifier& property)
+    {
         if (const auto updater = std::find_if(std::begin(propertyUpdaters),
                                               std::end(propertyUpdaters),
                                               [&property](const auto& entry) {
@@ -128,6 +137,37 @@ namespace jive
         {
             updater->second();
         }
+    }
+
+    void CommonGuiItem::updateLocalisedStrings()
+    {
+        stringsFileObserver = nullptr;
+
+        const auto* sourceDirectories = dynamic_cast<SourceDirectories*>(state[ids::sourceDirectories()].getObject());
+        const auto file = lang.exists() && sourceDirectories != nullptr
+                            ? sourceDirectories->find(lang)
+                            : juce::File{};
+
+        if (!file.existsAsFile())
+        {
+            setLocalisedStrings(std::nullopt);
+            return;
+        }
+
+        const auto loadStrings = [this, file] {
+            setLocalisedStrings(juce::LocalisedStrings{ file, false });
+        };
+        stringsFileObserver = std::make_unique<FileObserver>(file);
+        stringsFileObserver->onFileModified = loadStrings;
+        loadStrings();
+    }
+
+    void CommonGuiItem::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+
+        for (const auto& property : { title.id, description.id, tooltip.id })
+            updateProperty(property);
     }
 
     void CommonGuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,

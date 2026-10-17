@@ -51,6 +51,13 @@ namespace jive
             styleSheet = sheet;
         }
 
+        // Returns the strings of this item or of its closest ancestor with a
+        // "lang" file, or nullptr if there are none.
+        [[nodiscard]] const juce::LocalisedStrings* findLocalisedStrings() const;
+
+        // Falls back to JUCE's current mappings when there are no strings.
+        [[nodiscard]] juce::String translate(const juce::String& text) const;
+
 #if JIVE_IS_PLUGIN_PROJECT
         virtual void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager* = nullptr);
 #endif
@@ -60,6 +67,8 @@ namespace jive
     protected:
         virtual void layOutChildren() {}
         virtual void childrenChanged() {}
+        virtual void localisedStringsChanged() {}
+        [[nodiscard]] virtual const juce::LocalisedStrings* getLocalisedStrings() const;
 
         std::shared_ptr<juce::Component> component;
 
@@ -71,8 +80,10 @@ namespace jive
                 View::ReferenceCountedPointer sourceView);
 
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
+        void notifyLocalisedStringsChanged();
 
         StyleSheet::ReferenceCountedPointer styleSheet;
+        std::optional<juce::LocalisedStrings> localisedStrings;
 
         static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state);
 

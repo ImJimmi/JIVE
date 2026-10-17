@@ -14,9 +14,10 @@ namespace jive
         class Option
         {
         public:
-            Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box);
+            Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box, const GuiItem& ownerItem);
 
             void setSelected(bool shouldBeSelected);
+            void updateText();
             bool handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property);
 
         private:
@@ -24,6 +25,7 @@ namespace jive
 
             juce::ValueTree tree;
             juce::ComboBox& comboBox;
+            const GuiItem& owner;
             const int index;
             const int id;
             std::unique_ptr<ComboBoxComponent::Item> standIn;
@@ -52,6 +54,7 @@ namespace jive
         void updateItems();
 
     protected:
+        void localisedStringsChanged() override;
         void valueTreeChildAdded(juce::ValueTree& parent, juce::ValueTree& child) override;
         void valueTreeChildRemoved(juce::ValueTree& parent, juce::ValueTree& child, int index) override;
 
@@ -60,6 +63,7 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         void updateMinimumSize();
+        void translateHeaders();
 
         PassiveProperty<bool> editable;
         PassiveProperty<juce::String> tooltip;

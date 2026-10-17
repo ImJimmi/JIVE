@@ -92,14 +92,14 @@ namespace jive
         getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
 
         tooltip.onValueChange = [this]() {
-            getButton().setTooltip(tooltip);
+            getButton().setTooltip(translate(tooltip));
         };
-        getButton().setTooltip(tooltip);
+        getButton().setTooltip(translate(tooltip));
 
         text.onValueChange = [this]() {
-            getButton().setTitle(text);
+            getButton().setTitle(translate(text));
         };
-        getButton().setTitle(text);
+        getButton().setTitle(translate(text));
 
         onClick.onTrigger = [this]() {
             triggerClick(getButton());
@@ -153,6 +153,13 @@ namespace jive
     {
         reserveSpaceForCheckbox();
         GuiItemDecorator::layOutChildren();
+    }
+
+    void Button::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+        getButton().setTooltip(translate(tooltip));
+        getButton().setTitle(translate(text));
     }
 
     const juce::ToggleButton* Button::getCheckbox() const

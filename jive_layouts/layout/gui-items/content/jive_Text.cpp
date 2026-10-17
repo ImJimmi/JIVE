@@ -101,6 +101,12 @@ namespace jive
         updateTextComponent(false);
     }
 
+    void Text::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+        updateTextComponent();
+    }
+
     template <typename T>
     [[nodiscard]] static auto nextWholeNumberAbove(T value)
     {
@@ -115,7 +121,7 @@ namespace jive
 
     void Text::updateTextComponent(bool alwaysReflowParent)
     {
-        getTextComponent().setText(text.getOr(""));
+        getTextComponent().setText(translate(text.getOr("")));
         getTextComponent().setWordWrap(wordWrap.getOr(juce::AttributedString::WordWrap::byWord));
         getTextComponent().clearAttributes();
 
