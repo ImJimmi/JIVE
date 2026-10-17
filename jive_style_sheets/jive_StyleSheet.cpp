@@ -133,15 +133,18 @@ namespace jive
 
         if (style.get() != nullptr)
         {
+            styleFile = findSourceFile(state);
             addStylesFrom(*style.get());
             return;
         }
 
         if (sourceDirectories.get() != nullptr)
         {
-            if (const auto file = sourceDirectories.get()->find(style.toString());
+            if (const auto file = sourceDirectories.get()->find(style.toString(), findSourceFile(state));
                 file.exists())
             {
+                styleFile = file;
+
                 const auto addStylesFromFile = [this, f = file]() {
                     auto fileContents = parseJSON(f.loadAsString());
 
@@ -149,9 +152,10 @@ namespace jive
                         addStylesFrom(*object);
                 };
 
-                fileObserver = file.isEmbedded()
+                const auto fileOnDisk = file.getFileOnDisk();
+                fileObserver = fileOnDisk == juce::File{}
                                  ? nullptr
-                                 : std::make_unique<FileObserver>(file.getFile());
+                                 : std::make_unique<FileObserver>(fileOnDisk);
 
                 if (fileObserver != nullptr)
                     fileObserver->onFileModified = addStylesFromFile;
@@ -245,16 +249,18 @@ namespace jive
         return value;
     }
 
-    // An icon can be given as the name of a file, which is looked for in the
-    // same places as the style sheet itself.
+    // An icon can be given as the path of a file. A path starting with "./" or
+    // "../" is relative to the style sheet, and any other path is looked for
+    // in the same places as the style sheet itself.
     [[nodiscard]] static juce::var findIconFile(const juce::var& value,
-                                                const SourceDirectories* sourceDirectories)
+                                                const SourceDirectories* sourceDirectories,
+                                                const SourceFile& styleFile)
     {
         if (sourceDirectories == nullptr || value.toString().trimStart().startsWithChar('<'))
             return value;
 
-        if (const auto file = sourceDirectories->find(value.toString()); file.exists())
-            return file.getFile().getFullPathName();
+        if (const auto file = sourceDirectories->find(value.toString(), styleFile); file.exists())
+            return file.getPath();
 
         return value;
     }
@@ -262,7 +268,8 @@ namespace jive
     static void appendStyleProperties(Object& object,
                                       std::optional<Styles>& styles,
                                       const std::unordered_map<juce::String, juce::var>& tokens,
-                                      const SourceDirectories* sourceDirectories)
+                                      const SourceDirectories* sourceDirectories,
+                                      const SourceFile& styleFile)
     {
         for (const auto& propertyName : Styles::propertyNames)
         {
@@ -275,7 +282,7 @@ namespace jive
                 value = resolveTokens(value.toString(), tokens);
 
             if (propertyName == ids::icon().toString())
-                value = findIconFile(value, sourceDirectories);
+                value = findIconFile(value, sourceDirectories, styleFile);
 
             styles = styles
                          .value_or(Styles{})
@@ -286,7 +293,7 @@ namespace jive
     void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
-        appendStyleProperties(object, styles, tokens, sourceDirectories.get().get());
+        appendStyleProperties(object, styles, tokens, sourceDirectories.get().get(), styleFile);
 
         if (&object == style.get().get() && object.hasProperty(ids::transition()))
         {
@@ -321,7 +328,7 @@ namespace jive
         appendFromChild = [this, &appendFromChild](Object& child,
                                                    const juce::String& selector) {
             std::optional<Styles> styles;
-            appendStyleProperties(child, styles, tokens, sourceDirectories.get().get());
+            appendStyleProperties(child, styles, tokens, sourceDirectories.get().get(), styleFile);
 
             if (styles.has_value())
                 uuids[selector] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
@@ -904,21 +911,17 @@ private:
 
         beginTest("file-based styles / styles and icons are loaded from embedded files");
         {
-            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
-                                       .getChildFile("jive-embedded-style-sheet-tests");
-            directory.deleteRecursively();
-
             const auto zip = jive::createZip({
-                { "styles.json", R"({ "background": "red", "icon": "chevron.svg" })" },
-                { "chevron.svg", R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0L10 10L20 0"/></svg>)" },
+                { "styles/styles.json", R"({ "background": "red", "icon": "chevron.svg" })" },
+                { "styles/chevron.svg", R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0L10 10L20 0"/></svg>)" },
             });
-            const jive::EmbeddedSources::Registration registration{ directory, zip.getData(), zip.getSize() };
+            const jive::SourceRoot root{ zip.getData(), zip.getSize() };
 
             juce::ComboBox comboBox;
             juce::ValueTree state{
                 "ComboBox",
                 {
-                    { "jive::source-directories", new jive::SourceDirectories{ directory } },
+                    { "jive::source-directories", new jive::SourceDirectories{ jive::SourceFile{ "styles" } } },
                     { "style", "styles.json" },
                 },
             };
@@ -927,6 +930,30 @@ private:
 
             const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.find<jive::Fill>("background").value_or(jive::Fill{}) == juce::Colours::red);
+            expect(styles.icon.hasValue() && !styles.icon.get().isEmpty());
+        }
+
+        beginTest("file-based styles / paths starting with ./ or ../ are relative to the file they're in");
+        {
+            const auto zip = jive::createZip({
+                { "styles/styles.json", R"({ "icon": "./chevron.svg" })" },
+                { "styles/chevron.svg", R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0L10 10L20 0"/></svg>)" },
+            });
+            const jive::SourceRoot root{ zip.getData(), zip.getSize() };
+
+            juce::ComboBox comboBox;
+            juce::ValueTree state{
+                "ComboBox",
+                {
+                    { "jive::source-directories", new jive::SourceDirectories{ jive::SourceFile{} } },
+                    { "jive::source-file", "views/Main.xml" },
+                    { "style", "../styles/styles.json" },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ comboBox };
+            auto sheet = jive::StyleSheet::create(comboBox, state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.icon.hasValue() && !styles.icon.get().isEmpty());
         }
 

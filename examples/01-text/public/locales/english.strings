@@ -1,0 +1,20 @@
+language: English
+countries: gb us au ca nz ie
+
+"title" = "Text"
+"introduction" = "Unlike in stock JUCE UIs, Text elements in JIVE are automatically sized. The UI will automatically update to accommodate new text, or a different font. Use the settings below to customise the font used for this text to see it in action."
+"separate-sentence" = "This sentence is a separate Text element which always fits neatly below the first paragraph no matter what font options you choose."
+"options" = "Font Settings"
+"font-size" = "Font Size"
+"font-family" = "Font Family"
+"font-styles" = "Font Styles"
+"bold" = "Bold"
+"italic" = "Italic"
+"underlined" = "Underlined"
+"kerning" = "Kerning"
+"scale" = "Scale"
+"localisation" = "Localisation"
+"localisation-description" = "JIVE handles localisation for you through juce::LocalisedStrings. You can specify which .strings file an element and all its children should use, using the 'lang' property."
+"language" = "Language"
+"language-example" = "“I met a traveller from an antique land\nWho said: Two vast and trunkless legs of stone\nStand in the desart. Near them, on the sand,\nHalf sunk, a shattered visage lies, whose frown,\nAnd wrinkled lip, and sneer of cold command,\nTell that its sculptor well those passions read\nWhich yet survive, stamped on these lifeless things,\nThe hand that mocked them and the heart that fed:\nAnd on the pedestal these words appear:\n‘My name is Ozymandias, king of kings:\nLook on my works, ye Mighty, and despair!’\nNothing beside remains. Round the decay\nOf that colossal wreck, boundless and bare\nThe lone and level sands stretch far away.”"
+"language-example-citation" = "— Percy Bysshe Shelley, “Ozymandias” (1818)"

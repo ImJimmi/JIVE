@@ -140,7 +140,7 @@ examples/
 Follow the v2 pattern in `jive-demo/source/jive_demo/Presenter.h`:
 
 - A `Presenter` owns the UI's `juce::ValueTree` (the state tree), a `jive::Interpreter` and the resulting `std::unique_ptr<jive::GuiItem>`.
-- Call `interpreter.addSourceDirectory()` with the views directory. Then either interpret `Main.xml` directly (as `xml-views` does), or interpret a root `Window`/`Editor` tree that contains `<Component source="Main.xml"/>` (as `jive-demo` does).
+- List the views with `jive_sources()` in the example's `CMakeLists.txt`, then interpret `jive::SourceFile{ "source/views/Main.xml" }`. Paths are relative to the `CMakeLists.txt`, and are read from disk in Debug builds and from an embedded zip in other builds. `01-text` shows this.
 - Give an `id` to every element that C++ touches. Find elements on the state tree with `jive::findElementWithID()`, `findElementsWithClass()` and `findElementsWithText()`. Find GUI items with `jive::findItemWithID()`.
 - Create every binding in `interpreter.onExternalSourceLoaded`: `jive::Event`, `jive::Property`, parameter attachments, and inserted Views. Reloading a source file replaces its tree completely, so any binding to the old tree stops working. Live reloading is one of the features being shown off, so the C++ behaviour must keep working after the XML or JSON is edited.
 - Support `JIVE_ENABLE_MELATONIN_INSPECTOR` the same way the existing examples do.
@@ -163,7 +163,7 @@ It should:
 - Call `juce_add_gui_app()` or `juce_add_plugin()`. Plugins get `FORMATS Standalone VST3 AU`, `PLUGIN_MANUFACTURER_CODE "Jive"`, and their own fixed `PLUGIN_CODE` (see commit `8100d9b`).
 - Link `jive::compiler_and_linker_options`, `jive::jive_layouts`, `jive::jive_style_sheets` and the `juce::juce_recommended_*` flags. Plugins also link `juce::juce_audio_utils` and `juce::juce_audio_devices`.
 - Define these compile definitions:
-  - all examples: `JIVE_EXAMPLE_VIEWS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/source/views"` and `JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>`
+  - all examples: `JIVE_ENABLE_MELATONIN_INSPECTOR=$<BOOL:${JIVE_ENABLE_MELATONIN_INSPECTOR}>`
   - apps: `JUCE_APPLICATION_NAME` and `JUCE_APPLICATION_VERSION`
   - plugins: `JIVE_IS_PLUGIN_PROJECT=1` and `JUCE_VST3_CAN_REPLACE_VST2=0`
 - Add the melatonin inspector when `JIVE_ENABLE_MELATONIN_INSPECTOR` is on, and call `add_pluginval_tests()` for plugins when `JIVE_ENABLE_PLUGINVAL` is on.

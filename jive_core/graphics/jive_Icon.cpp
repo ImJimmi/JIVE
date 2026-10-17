@@ -9,11 +9,8 @@ namespace jive
         if (source.trimStart().startsWithChar('<'))
             return source;
 
-        if (juce::File::isAbsolutePath(source))
-        {
-            if (const SourceFile file{ juce::File{ source } }; file.getFile().hasFileExtension("svg"))
-                return file.loadAsString();
-        }
+        if (const SourceFile file{ source }; file.getPath().endsWithIgnoreCase(".svg"))
+            return file.loadAsString();
 
         return {};
     }
@@ -38,13 +35,10 @@ namespace jive
             return nullptr;
         }
 
-        if (juce::File::isAbsolutePath(source))
+        if (const SourceFile file{ source }; file.exists())
         {
-            if (const SourceFile file{ juce::File{ source } }; file.exists())
-            {
-                const auto data = file.loadAsData();
-                return juce::Drawable::createFromImageData(data.getData(), data.getSize());
-            }
+            const auto data = file.loadAsData();
+            return juce::Drawable::createFromImageData(data.getData(), data.getSize());
         }
 
         return nullptr;

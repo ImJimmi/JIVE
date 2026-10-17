@@ -59,16 +59,19 @@ namespace jive
     {
         auto sourceTree = jive::parseXML(file.loadAsString());
 
+        if (sourceTree.isValid())
+            sourceTree.setProperty(ids::sourceFile(), file.getPath(), nullptr);
+
         return sourceTree;
     }
 
-    static void findItemsWithSource(GuiItem* root, const juce::File& file, std::vector<GuiItem*>& results)
+    static void findItemsWithSource(GuiItem* root, const SourceFile& file, std::vector<GuiItem*>& results)
     {
         if (root == nullptr)
             return;
 
-        if (file.getFullPathName().contains(root->state.getProperty(ids::source(), "jive::no-source-found").toString())
-            || file.getFullPathName() == root->state.getProperty(ids::topLevelSourceFile(), "jive::no-source-found").toString())
+        if (file.getPath().contains(root->state.getProperty(ids::source(), "jive::no-source-found").toString())
+            || file.getPath() == root->state.getProperty(ids::topLevelSourceFile(), "jive::no-source-found").toString())
         {
             // Don't descend into an item that's about to be entirely replaced.
             results.push_back(root);
@@ -79,14 +82,14 @@ namespace jive
             findItemsWithSource(child, file, results);
     }
 
-    void Interpreter::onObservedFileChanged(const juce::File& file)
+    void Interpreter::onObservedFileChanged(const SourceFile& file)
     {
         std::vector<GuiItem*> items;
         findItemsWithSource(observedItem.get(), file, items);
 
         for (auto* item : items)
         {
-            auto source = parseFileToValueTree(SourceFile{ file });
+            auto source = parseFileToValueTree(file);
 
             if (!source.isValid())
             {
@@ -132,7 +135,7 @@ namespace jive
                 // top-level item need to be re-established - otherwise any
                 // further changes to this file (or its nested sources) would go
                 // unnoticed.
-                item->state.setProperty(ids::topLevelSourceFile(), file.getFullPathName(), nullptr);
+                item->state.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);
                 listenTo(*item);
 
                 sourcesPendingNotification.push_back(file);
@@ -169,17 +172,24 @@ namespace jive
         }
     }
 
+    // Paths without "./" or "../" are normally relative to the root, but in a
+    // file on disk they're also looked for next to that file.
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::File& file,
                                                     juce::AudioProcessor* pluginProcessor)
     {
-        const SourceFile sourceFile{ file };
         addSourceDirectory(file.getParentDirectory());
-        auto item = interpret(parseFileToValueTree(sourceFile), pluginProcessor);
+        return interpret(SourceFile{ file }, pluginProcessor);
+    }
+
+    std::unique_ptr<GuiItem> Interpreter::interpret(const SourceFile& file,
+                                                    juce::AudioProcessor* pluginProcessor)
+    {
+        auto item = interpret(parseFileToValueTree(file), pluginProcessor);
         listenTo(*item);
 
-        item->state.setProperty(ids::topLevelSourceFile(), file.getFullPathName(), nullptr);
+        item->state.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);
 
-        observeFileForChanges(sourceFile);
+        observeFileForChanges(file);
 
         return item;
     }
@@ -187,18 +197,20 @@ namespace jive
     // Embedded files can't change, so only files on disk are observed.
     void Interpreter::observeFileForChanges(const SourceFile& file)
     {
-        if (file.isEmbedded())
+        const auto fileOnDisk = file.getFileOnDisk();
+
+        if (fileOnDisk == juce::File{})
             return;
 
         for (auto* observer : fileObservers)
         {
-            if (observer->file == file.getFile())
+            if (observer->file == fileOnDisk)
                 return;
         }
 
-        auto* observer = fileObservers.add(std::make_unique<FileObserver>(file.getFile()));
-        observer->onFileModified = [this, f = file.getFile()]() {
-            onObservedFileChanged(f);
+        auto* observer = fileObservers.add(std::make_unique<FileObserver>(fileOnDisk));
+        observer->onFileModified = [this, file]() {
+            onObservedFileChanged(file);
         };
     }
 
@@ -444,7 +456,10 @@ namespace jive
         if (source.isEmpty())
             return tree;
 
-        const auto file = sourceDirectories->find(source);
+        // The source is written in the file that declares this element, but
+        // once it's been loaded, this element belongs to the source file.
+        const auto declaringTree = tree.getParent().isValid() ? tree.getParent() : tree;
+        const auto file = sourceDirectories->find(source, findSourceFile(declaringTree));
 
         if (!file.exists())
             return tree;
@@ -502,10 +517,10 @@ namespace jive
 
             if (std::find(std::begin(sourcesPendingNotification),
                           std::end(sourcesPendingNotification),
-                          file.getFile())
+                          file)
                 == std::end(sourcesPendingNotification))
             {
-                sourcesPendingNotification.push_back(file.getFile());
+                sourcesPendingNotification.push_back(file);
             }
 
             return destination;

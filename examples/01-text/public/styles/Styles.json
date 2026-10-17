@@ -1,0 +1,48 @@
+{
+  "background": "#1E2125",
+  "foreground": "#E6E8EA",
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40,
+    "foreground": "#4FADE4"
+  },
+  "#font-size-controls": {
+    "font-size": 14
+  },
+  "#rubik-option": {
+    "font-family": "Rubik"
+  },
+  "#helvetica-option": {
+    "font-family": "Helvetica"
+  },
+  "#georgia-option": {
+    "font-family": "Georgia"
+  },
+  "#bold-checkbox": {
+    "font-styles": "bold"
+  },
+  "#italic-checkbox": {
+    "font-styles": "italic"
+  },
+  "#underlined-checkbox": {
+    "font-styles": "underlined"
+  },
+  "#language-example": {
+    "background": "rgba(0, 0, 0, 0.25)"
+  },
+  "#language-example-citation": {
+    "text-align": "top-right",
+    "font-styles": "italic"
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14,
+    "foreground": "#4FADE4"
+  },
+  ".value": {
+    "font-family": "Source Code Pro"
+  }
+}

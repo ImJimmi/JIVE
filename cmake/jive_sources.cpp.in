@@ -1,11 +1,14 @@
-#if @JIVE_SOURCES_BUNDLED_MACRO@
-    #include <jive_core/jive_core.h>
+#include <jive_core/jive_core.h>
 
+#if @JIVE_SOURCES_BUNDLED_MACRO@
     #include "@JIVE_SOURCES_NAME@.h"
 
-static const jive::EmbeddedSources::Registration registration{
-    juce::File{ "@CMAKE_CURRENT_SOURCE_DIR@" },
+static const jive::SourceRoot sourceRoot{
     @JIVE_SOURCES_NAME@::sources_zip,
     static_cast<std::size_t>(@JIVE_SOURCES_NAME@::sources_zipSize),
+};
+#else
+static const jive::SourceRoot sourceRoot{
+    juce::File{ "@CMAKE_CURRENT_SOURCE_DIR@" },
 };
 #endif

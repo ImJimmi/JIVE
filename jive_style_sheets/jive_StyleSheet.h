@@ -51,6 +51,7 @@ namespace jive
         std::unordered_map<juce::String, StyleProperty> observedObjects;
 
         std::unique_ptr<FileObserver> fileObserver;
+        SourceFile styleFile;
         Property<SourceDirectories::ReferenceCountedPointer> sourceDirectories;
 
         std::unordered_map<juce::String, juce::var> tokens;

@@ -658,6 +658,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& sourceFile()
+    {
+        static const juce::Identifier identifier{ "jive::source-file" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& stops()
     {
         static const juce::Identifier identifier{ "stops" };

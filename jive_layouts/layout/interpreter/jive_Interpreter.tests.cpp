@@ -621,10 +621,10 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
         jive::Interpreter interpreter;
         interpreter.addSourceDirectory(cwd);
 
-        std::vector<juce::File> loadedSources;
+        std::vector<jive::SourceFile> loadedSources;
         juce::StringArray namesWhenNotified;
         juce::ValueTree root;
-        interpreter.onExternalSourceLoaded = [&](const juce::File& file) {
+        interpreter.onExternalSourceLoaded = [&](const jive::SourceFile& file) {
             loadedSources.push_back(file);
             namesWhenNotified.add(jive::findElementWithID(root, "content")["name"].toString());
         };
@@ -634,7 +634,7 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
         test.expectEquals(static_cast<int>(loadedSources.size()),
                           1,
                           "Loading a source file should notify listeners");
-        test.expect(loadedSources.size() == 1 && loadedSources[0] == heading,
+        test.expect(loadedSources.size() == 1 && loadedSources[0] == jive::SourceFile{ heading },
                     "Listeners should be told which file was loaded");
 
         loadedSources.clear();
@@ -654,7 +654,7 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
         test.expectEquals(static_cast<int>(loadedSources.size()),
                           1,
                           "Pointing an element at a different source should notify listeners");
-        test.expect(loadedSources.size() == 1 && loadedSources[0] == footer,
+        test.expect(loadedSources.size() == 1 && loadedSources[0] == jive::SourceFile{ footer },
                     "Listeners should be told about the newly referenced file");
 
         loadedSources.clear();
@@ -664,7 +664,7 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
-        test.expect(std::find(loadedSources.begin(), loadedSources.end(), mainView) != loadedSources.end(),
+        test.expect(std::find(loadedSources.begin(), loadedSources.end(), jive::SourceFile{ mainView }) != loadedSources.end(),
                     "Changing the top-level source file should notify listeners");
     },
 };
@@ -699,7 +699,12 @@ countries: de
 
 [[nodiscard]] static juce::String getDisplayedText(jive::GuiItem& root, const juce::Identifier& id)
 {
-    return dynamic_cast<jive::TextComponent&>(*jive::findItemWithID(root, id)->getComponent())
+    const auto* item = jive::findItemWithID(root, id);
+
+    if (item == nullptr)
+        return "<no item with ID " + id.toString() + ">";
+
+    return dynamic_cast<const jive::TextComponent&>(*item->getComponent())
         .getAttributedString()
         .getText();
 }
@@ -838,26 +843,20 @@ static jive::UnitTest embeddedSourcesTest{
     "jive::Interpreter",
     "Embedded sources: views, nested sources and strings files are read from embedded zips",
     [](auto& test) {
-        const auto root = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
-                              .getParentDirectory()
-                              .getChildFile("embedded-sources-tests/");
-        root.deleteRecursively();
-
         const auto zip = jive::createZip({
             { "views/Main.xml", R"(
-                <Component width="200" height="200" lang="languages/english.strings">
-                    <Component source="Child.xml"/>
+                <Component width="200" height="200" lang="views/languages/english.strings">
+                    <Component source="views/Child.xml"/>
                 </Component>
             )" },
             { "views/Child.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
             { "views/languages/english.strings", R"("greeting" = "Hello")" },
         });
-        const jive::EmbeddedSources::Registration registration{ root, zip.getData(), zip.getSize() };
+        const jive::SourceRoot root{ zip.getData(), zip.getSize() };
 
-        const auto mainView = root.getChildFile("views/Main.xml");
-        test.expect(!mainView.exists(), "Nothing should be read from disk");
+        const jive::SourceFile mainView{ "views/Main.xml" };
 
-        if (!jive::SourceFile{ mainView }.exists())
+        if (!mainView.exists())
         {
             test.expect(false, "The main view should be embedded");
             return;
@@ -865,6 +864,85 @@ static jive::UnitTest embeddedSourcesTest{
 
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(mainView);
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hello" });
+    },
+};
+
+static jive::UnitTest relativeSourceReloadTest{
+    "jive",
+    "jive::Interpreter",
+    "Relative sources: views found in a directory root are reloaded when they change",
+    [](auto& test) {
+        const auto directory = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                                   .getParentDirectory()
+                                   .getChildFile("relative-sources-tests/");
+        directory.deleteRecursively();
+        directory.getChildFile("views").createDirectory();
+
+        const auto mainView = directory.getChildFile("views/Main.xml");
+        mainView.replaceWithText(R"(<Window width="200" height="200"><Component source="views/Child.xml"/></Window>)");
+        const auto childView = directory.getChildFile("views/Child.xml");
+        childView.replaceWithText(R"(<Component><Text id="greeting">Hello</Text></Component>)");
+
+        const jive::SourceRoot root{ directory };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(jive::SourceFile{ "views/Main.xml" });
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hello" });
+
+        childView.replaceWithText(R"(<Component><Text id="greeting">Goodbye</Text></Component>)");
+        childView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Goodbye" });
+
+        mainView.replaceWithText(R"(<Window width="200" height="200"><Text id="greeting">Reloaded</Text></Window>)");
+        mainView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(20.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Reloaded" });
+
+        directory.deleteRecursively();
+    },
+};
+
+static jive::UnitTest rootRelativeSourcesTest{
+    "jive",
+    "jive::Interpreter",
+    "Relative sources: paths in a view are relative to the root, not to the view",
+    [](auto& test) {
+        const auto zip = jive::createZip({
+            { "views/Main.xml", R"(
+                <Component width="200" height="200">
+                    <Component source="Child.xml"/>
+                </Component>
+            )" },
+            { "views/Child.xml", R"(<Component><Text id="greeting">Hello</Text></Component>)" },
+        });
+        const jive::SourceRoot root{ zip.getData(), zip.getSize() };
+
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(jive::SourceFile{ "views/Main.xml" });
+        test.expect(jive::findItemWithID(*item, "greeting") == nullptr);
+    },
+};
+
+static jive::UnitTest fileRelativeSourcesTest{
+    "jive",
+    "jive::Interpreter",
+    "Relative sources: paths starting with ./ or ../ are relative to the file they're in",
+    [](auto& test) {
+        const auto zip = jive::createZip({
+            { "views/Main.xml", R"(
+                <Component width="200" height="200" lang="../locales/english.strings">
+                    <Component source="./partials/Child.xml"/>
+                </Component>
+            )" },
+            { "views/partials/Child.xml", R"(<Component><Component source="./Grandchild.xml"/></Component>)" },
+            { "views/partials/Grandchild.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
+            { "locales/english.strings", R"("greeting" = "Hello")" },
+        });
+        const jive::SourceRoot root{ zip.getData(), zip.getSize() };
+
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(jive::SourceFile{ "views/Main.xml" });
         test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hello" });
     },
 };

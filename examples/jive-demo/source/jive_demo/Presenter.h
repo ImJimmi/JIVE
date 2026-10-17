@@ -29,7 +29,7 @@ namespace jive_demo
             }
         {
             interpreter.addSourceDirectory(juce::File{ JIVE_DEMO_VIEWS_SOURCE_DIRECTORY });
-            interpreter.onExternalSourceLoaded = [this](const juce::File&) {
+            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile&) {
                 // A reloaded source file is swapped in as a brand-new tree, so
                 // anything listening to the old one needs reassigning.
                 if (window != nullptr)

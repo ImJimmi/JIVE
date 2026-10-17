@@ -9,7 +9,5 @@ jive_add_example(jive-01-text
 )
 
 jive_sources(jive-01-text
-             SOURCES "source/views/*.xml"
-                     "source/views/*.json"
-                     "source/views/*.strings"
+             SOURCES "public/*"
 )
