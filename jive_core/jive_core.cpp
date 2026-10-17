@@ -11,6 +11,8 @@
 #include "components/widgets/jive_ImageComponent.cpp"
 #include "components/widgets/jive_NormalisedProgressBar.cpp"
 #include "components/widgets/jive_TextComponent.cpp"
+#include "files/jive_EmbeddedSources.cpp"
+#include "files/jive_SourceFile.cpp"
 #include "geometry/jive_BorderRadii.cpp"
 #include "geometry/jive_BorderWidth.cpp"
 #include "geometry/jive_BoxModel.cpp"

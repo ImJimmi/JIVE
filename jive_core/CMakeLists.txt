@@ -34,7 +34,11 @@ target_sources(jive_core
                       components/widgets/jive_NormalisedProgressBar.h
                       components/widgets/jive_TextComponent.cpp
                       components/widgets/jive_TextComponent.h
+                      files/jive_EmbeddedSources.cpp
+                      files/jive_EmbeddedSources.h
                       files/jive_FileObserver.h
+                      files/jive_SourceFile.cpp
+                      files/jive_SourceFile.h
                       geometry/jive_BorderRadii.cpp
                       geometry/jive_BorderRadii.h
                       geometry/jive_BorderWidth.cpp
@@ -84,6 +88,7 @@ target_sources(jive_core
                       logging/jive_ScopeIndentedLogger.h
                       logging/jive_StringStreams.cpp
                       logging/jive_StringStreams.h
+                      testing/jive_TestZip.h
                       testing/jive_UnitTest.h
                       time/jive_TimeParser.h
                       time/jive_TimeParser.h

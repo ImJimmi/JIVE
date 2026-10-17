@@ -21,6 +21,7 @@ option(JIVE_ENABLE_PROJUCER_PROJECTS "Add Projucer targets?" OFF)
 
 include(cmake/jive_code_coverage.cmake)
 include(cmake/jive_compiler_and_linker_options.cmake)
+include(cmake/jive_sources.cmake)
 
 if (JIVE_BUILD_BENCHMARKS
     OR JIVE_BUILD_TEST_RUNNER

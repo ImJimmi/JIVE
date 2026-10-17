@@ -833,6 +833,42 @@ static jive::UnitTest stringsFileReloadTest{
     },
 };
 
+static jive::UnitTest embeddedSourcesTest{
+    "jive",
+    "jive::Interpreter",
+    "Embedded sources: views, nested sources and strings files are read from embedded zips",
+    [](auto& test) {
+        const auto root = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                              .getParentDirectory()
+                              .getChildFile("embedded-sources-tests/");
+        root.deleteRecursively();
+
+        const auto zip = jive::createZip({
+            { "views/Main.xml", R"(
+                <Component width="200" height="200" lang="languages/english.strings">
+                    <Component source="Child.xml"/>
+                </Component>
+            )" },
+            { "views/Child.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
+            { "views/languages/english.strings", R"("greeting" = "Hello")" },
+        });
+        const jive::EmbeddedSources::Registration registration{ root, zip.getData(), zip.getSize() };
+
+        const auto mainView = root.getChildFile("views/Main.xml");
+        test.expect(!mainView.exists(), "Nothing should be read from disk");
+
+        if (!jive::SourceFile{ mainView }.exists())
+        {
+            test.expect(false, "The main view should be embedded");
+            return;
+        }
+
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(mainView);
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hello" });
+    },
+};
+
 class ViewRendererUnitTest : public juce::UnitTest
 {
 public:

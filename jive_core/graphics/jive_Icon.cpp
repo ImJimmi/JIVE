@@ -1,5 +1,7 @@
 #include "jive_Icon.h"
 
+#include <jive_core/files/jive_SourceFile.h>
+
 namespace jive
 {
     [[nodiscard]] static juce::String loadSVG(const juce::String& source)
@@ -9,8 +11,8 @@ namespace jive
 
         if (juce::File::isAbsolutePath(source))
         {
-            if (const juce::File file{ source }; file.hasFileExtension("svg"))
-                return file.loadFileAsString();
+            if (const SourceFile file{ juce::File{ source } }; file.getFile().hasFileExtension("svg"))
+                return file.loadAsString();
         }
 
         return {};
@@ -38,8 +40,11 @@ namespace jive
 
         if (juce::File::isAbsolutePath(source))
         {
-            if (const juce::File file{ source }; file.existsAsFile())
-                return juce::Drawable::createFromImageFile(file);
+            if (const SourceFile file{ juce::File{ source } }; file.exists())
+            {
+                const auto data = file.loadAsData();
+                return juce::Drawable::createFromImageData(data.getData(), data.getSize());
+            }
         }
 
         return nullptr;
