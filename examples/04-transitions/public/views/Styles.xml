@@ -1,0 +1,45 @@
+<Component>
+    <Text margin="0 0 25 0">Style properties transition when a style sheet lists them in its "transition", and anything that restyles a component starts one: a state such as :hover, a class or ID changing, or a value set from C++. The card's preview has its own style sheet, public/styles/Card.json. Pick a property and the values to transition between: the start goes in the #card rule and the end in its :hover state, so hovering over the card transitions from one to the other.</Text>
+
+    <Component display="grid" grid-template-columns="420px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">transition</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr 150px" gap="10 15" align-items="center">
+                <Label>Property</Label>
+                <ComboBox id="style-property-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                    <Option>background</Option>
+                    <Option>border</Option>
+                    <Option>border-width</Option>
+                    <Option>border-radius</Option>
+                    <Option>shadow</Option>
+                    <Option>foreground</Option>
+                    <Option>fill</Option>
+                </ComboBox>
+
+                <Label>Start</Label>
+                <Slider id="start-slider" min="0" max="360" interval="1" />
+                <Text id="start-label" class="value" accessible="false" />
+
+                <Label>End</Label>
+                <Slider id="end-slider" min="0" max="360" interval="1" />
+                <Text id="end-label" class="value" accessible="false" />
+            </Component>
+        </Component>
+
+        <Component gap="20">
+            <Component id="card-preview" class="preview" style="public/styles/Card.json" flex-grow="1" justify-content="center" align-items="center">
+                <Button id="card" width="240" height="110" gap="10" justify-content="center" align-items="center">
+                    <svg viewBox="0 0 36 36" width="36" height="36">
+                        <path d="M18 3l4.35 9.9 10.65 1.05-8.1 7.2 2.4 10.5L18 26.1l-9.3 5.55 2.4-10.5L3 13.95l10.65-1.05z" />
+                    </svg>
+                    <Text id="card-title">Hover me</Text>
+                </Button>
+            </Component>
+
+            <Component class="code" padding="15">
+                <Text id="card-sheet" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

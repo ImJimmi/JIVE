@@ -534,6 +534,57 @@ private:
             expectEquals(value.get(), 200.0);
             expectEquals(value.getTransition()->calculateCurrent<double>(), 200.0);
         }
+        beginTest("transitions / changing the transition takes effect");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+
+            state.setProperty("transition", "value 4s", nullptr);
+            value = 100.0;
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.calculateCurrent(), 25.0);
+        }
+        beginTest("transitions / changing the transition part-way carries on from the current value");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+            value = 100.0;
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+
+            state.setProperty("transition", "value 1s", nullptr);
+            expectEquals(value.calculateCurrent(), 50.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+            expectEquals(value.calculateCurrent(), 75.0);
+        }
+        beginTest("transitions / removing the transition stops changes from animating");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+
+            state.removeProperty("transition", nullptr);
+            value = 100.0;
+            expect(value.getTransition() == nullptr);
+            expectEquals(value.calculateCurrent(), 100.0);
+        }
     }
 };
 
