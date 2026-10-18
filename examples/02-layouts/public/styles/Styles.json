@@ -32,12 +32,12 @@
       "background": "rgba(255, 255, 255, 0.05)"
     },
     ":checked": {
-      "background": "linear-gradient(-10deg, $mayaBlue, $pictonBlue, $bluebell)",
+      "background": "linear-gradient(170deg, $mayaBlue, $pictonBlue, $bluebell)",
       "fill": "black",
       "foreground": "black",
       "shadow": "$widgetShadow",
       ":hover": {
-        "background": "linear-gradient(-10deg, $skyBlue, $mayaBlue, $pictonBlue)"
+        "background": "linear-gradient(170deg, $skyBlue, $mayaBlue, $pictonBlue)"
       }
     }
   },
