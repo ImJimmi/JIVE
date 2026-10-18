@@ -1,0 +1,65 @@
+<Component>
+    <Text margin="0 0 25 0">A selector decides which components a rule applies to: every component of a type, everything with a class, the one with an ID, or a combination. One rule can restyle any number of components, where JUCE needs a setColour() call, or a LookAndFeel, for each one. Pick a selector to change which components the #matches rule highlights.</Text>
+
+    <Component display="grid" grid-template-columns="380px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Selector</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr" gap="8 15" align-items="center">
+                <Button class="selector" toggle-on-click="true" padding="4 12">Button</Button>
+                <Text>Every component of a type</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">.primary</Button>
+                <Text>Components with a class</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">#save</Button>
+                <Text>The component with an ID</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">Button.primary</Button>
+                <Text>Components matching every part</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">#toolbar Button</Button>
+                <Text>Anywhere inside another</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">#list &gt; .item</Button>
+                <Text>Directly inside another</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">#save, .item</Button>
+                <Text>Any selector in a list</Text>
+
+                <Button class="selector" toggle-on-click="true" padding="4 12">*</Button>
+                <Text>Every component</Text>
+            </Component>
+        </Component>
+
+        <Component gap="20">
+            <Component id="matches" class="preview mock" flex-grow="1" display="grid" grid-template-columns="auto 1fr" gap="20" padding="25" align-content="center" align-items="center">
+                <Text>#toolbar</Text>
+                <Component id="toolbar" flex-direction="row" gap="10">
+                    <Button id="save" class="primary" padding="4 12">Button#save.primary</Button>
+                    <Button padding="4 12">Button</Button>
+                </Component>
+
+                <Text>#list</Text>
+                <Component id="list" flex-direction="row" flex-wrap="wrap" gap="10" align-items="center">
+                    <Component class="item" padding="5 10">
+                        <Text>.item</Text>
+                    </Component>
+                    <Component class="item primary" padding="5 10">
+                        <Text>.item.primary</Text>
+                    </Component>
+                    <Button padding="4 12">Button</Button>
+                    <Component class="nest" padding="6">
+                        <Component class="item" padding="5 10">
+                            <Text>.item</Text>
+                        </Component>
+                    </Component>
+                </Component>
+            </Component>
+
+            <Component class="code" padding="15">
+                <Text class="rule" rule="#matches" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

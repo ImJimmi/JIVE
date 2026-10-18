@@ -81,17 +81,9 @@ namespace jive
         ~Property() override
         {
             observeTransition(nullptr);
+            observeObject(nullptr);
             removeThisAsListener(source);
             removeThisAsListener(listenerTarget);
-
-            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
-            {
-                if (std::holds_alternative<juce::ValueTree>(source))
-                {
-                    Source object = get();
-                    removeThisAsListener(object);
-                }
-            }
         }
 
         [[nodiscard]] ValueType get() const
@@ -651,19 +643,17 @@ namespace jive
             if constexpr (responsiveness == Responsiveness::respondToChanges)
                 addThisAsListener(listenerTarget);
 
-            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
-            {
-                if (std::holds_alternative<juce::ValueTree>(source))
-                {
-                    Source object = get();
-                    addThisAsListener(object);
-                }
-            }
+            observeHeldObject();
 
+            // A string that doesn't parse, such as the path of a style sheet
+            // that hasn't been loaded yet, is left for whatever reads it.
             if constexpr (autoParseStrings)
             {
                 if (auto value = getVar(source, id); value.isString())
-                    set(get());
+                {
+                    if (const auto parsed = get(); parsed != nullptr)
+                        set(parsed);
+                }
             }
 
             if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
@@ -681,8 +671,35 @@ namespace jive
 
         void valueChanged()
         {
+            observeHeldObject();
+
             if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
                 updateTransition();
+        }
+
+        // The tree's object can be replaced, so the one being listened to has
+        // to follow whichever object the tree currently holds.
+        void observeHeldObject()
+        {
+            if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
+            {
+                if (std::holds_alternative<juce::ValueTree>(source))
+                    observeObject(get());
+            }
+        }
+
+        void observeObject(Object::ReferenceCountedPointer object)
+        {
+            if (observedObject == object)
+                return;
+
+            if (observedObject != nullptr)
+                observedObject->removeListener(*this);
+
+            observedObject = object;
+
+            if (object != nullptr)
+                object->addListener(*this);
         }
 
         void updateTransition()
@@ -733,6 +750,7 @@ namespace jive
         juce::Identifier transitionSourceID;
         Transition* currentTransition = nullptr;
         Transition* observedTransition = nullptr;
+        Object::ReferenceCountedPointer observedObject;
     };
 
     template <typename ValueType,

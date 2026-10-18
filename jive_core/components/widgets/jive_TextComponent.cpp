@@ -106,7 +106,7 @@ namespace jive
             if (cachedFont.has_value())
                 attributedString.setFont(*cachedFont);
 
-            const auto foreground = getForegroundFill(*this, styles);
+            const auto foreground = getForegroundFill(*this, styles, detail::getV4Colour(detail::V4Colour::defaultText));
 
             if (foreground.isColour())
                 attributedString.setColour(foreground.colour);
@@ -317,6 +317,7 @@ public:
         testLayoutsMatchFreshLayouts();
         testLayoutsAreReusedAcrossWidths();
         testLayoutsFollowChanges();
+        testDefaultForeground();
     }
 
 private:
@@ -474,6 +475,18 @@ private:
                               jive::Styles{}.withFontPointSize(40.0f));
         text.sendLookAndFeelChange();
         expectGreaterThan(text.getTextLayout(60.0f).getHeight(), heightBefore * 2.0f);
+    }
+
+    void testDefaultForeground()
+    {
+        beginTest("defaults to JUCE's text colour when nothing styles it");
+
+        jive::TextComponent text;
+        jive::LookAndFeel lookAndFeel{ text };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        text.setText("Text");
+
+        expect(text.getAttributedString().getAttribute(0).colour == jive::detail::getV4Colour(jive::detail::V4Colour::defaultText));
     }
 };
 

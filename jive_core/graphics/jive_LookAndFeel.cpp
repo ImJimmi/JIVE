@@ -7,7 +7,10 @@
 #include "default-styles/jive_DefaultScrollBarStyles.h"
 #include "default-styles/jive_DefaultSliderStyles.h"
 #include "jive_Shadow.h"
+#include "themes/jive_HighContrastTheme.h"
+#include "themes/jive_MaterialTheme.h"
 #include "themes/jive_SteelTheme.h"
+#include "themes/jive_SynthwaveTheme.h"
 
 #include <jive_core/components/widgets/jive_ComboBoxComponent.h>
 
@@ -223,11 +226,31 @@ namespace jive
 
     void LookAndFeel::applyTheme(Theme theme)
     {
-        clearPainters();
-        clearStyles();
+        for (const auto& uuid : std::exchange(themeStyles, {}))
+            removeStyles(uuid);
 
-        if (theme == Theme::steel)
+        const auto numStylersBeforeTheme = std::size(stylers);
+
+        switch (theme)
+        {
+        case Theme::juce:
+            break;
+        case Theme::steel:
             themes::applySteel(*this);
+            break;
+        case Theme::material:
+            themes::applyMaterial(*this);
+            break;
+        case Theme::synthwave:
+            themes::applySynthwave(*this);
+            break;
+        case Theme::highContrast:
+            themes::applyHighContrast(*this);
+            break;
+        }
+
+        for (auto i = numStylersBeforeTheme; i < std::size(stylers); i++)
+            themeStyles.push_back(stylers[i].id);
     }
 
     juce::Rectangle<int> LookAndFeel::getToggleButtonCheckboxBounds(const juce::ToggleButton& button,
@@ -913,33 +936,48 @@ namespace jive
         return entry.styles;
     }
 
+    // Popups are painted from hidden stand-ins, so nothing repaints a popup
+    // while their styles transition. A popup only repaints an item when its
+    // highlight changes, so a transition would leave the colours it started
+    // from on screen, such as the previous theme's after a theme change.
+    [[nodiscard]] static Styles withoutTransitions(Styles styles)
+    {
+        styles.transitions = nullptr;
+        return styles;
+    }
+
     Styles LookAndFeel::findPopupStyles(const juce::ComboBox& comboBox) const
     {
+        const juce::ScopedValueSetter ignoringInteractions{ ignoreInteractions, true };
         Styles styles;
 
         if (const auto* comboBoxComponent = dynamic_cast<const ComboBoxComponent*>(&comboBox))
             styles = findMostApplicableStyles(comboBoxComponent->getPopup());
 
-        mergeLeft(styles, findMostApplicableStyles(comboBox));
-        return styles;
+        // The combo box's cached styles are the ones it's painted with, so
+        // resolving it at rest here mustn't replace them.
+        mergeLeft(styles, buildStyles(stylers, comboBox));
+        return withoutTransitions(styles);
     }
 
     Styles LookAndFeel::findPopupItemStyles(const juce::ComboBox& comboBox,
                                             const juce::PopupMenu::Item& item,
                                             const InteractionState& interactionState) const
     {
+        const juce::ScopedValueSetter ignoringInteractions{ ignoreInteractions, true };
+
         if (const auto* comboBoxComponent = dynamic_cast<const ComboBoxComponent*>(&comboBox))
         {
             if (auto* standIn = comboBoxComponent->findItem(item.itemID))
             {
                 standIn->setHighlighted(interactionState.isHovered());
-                return findMostApplicableStyles(*standIn);
+                return withoutTransitions(findMostApplicableStyles(*standIn));
             }
         }
 
         Styles styles;
         mergeLeft(styles, findPopupStyles(comboBox), true);
-        return styles;
+        return withoutTransitions(styles);
     }
 
     void LookAndFeel::onVBlankUpdate()
@@ -956,6 +994,31 @@ namespace jive
         transitioningComponents.removeAllInstancesOf(nullptr);
     }
 } // namespace jive
+
+namespace juce
+{
+    const Array<var> VariantConverter<jive::Theme>::options = {
+        "juce",
+        "steel",
+        "material",
+        "synthwave",
+        "high-contrast",
+    };
+
+    jive::Theme VariantConverter<jive::Theme>::fromVar(const var& v)
+    {
+        if (const auto index = options.indexOf(v); index >= 0)
+            return static_cast<jive::Theme>(index);
+
+        jassertfalse;
+        return jive::Theme::steel;
+    }
+
+    var VariantConverter<jive::Theme>::toVar(const jive::Theme& theme)
+    {
+        return options[static_cast<int>(theme)];
+    }
+} // namespace juce
 
 #if JIVE_UNIT_TESTS
 class LookAndFeelTest : public juce::UnitTest
@@ -998,6 +1061,7 @@ public:
         testResolvedStylesAreReused();
         testComboBoxPopupFonts();
         testShadowShapes();
+        testThemes();
     }
 
 private:
@@ -1189,6 +1253,52 @@ private:
             expect(styles.borderWidth.get() == juce::BorderSize{ 2.0f });
         }
 
+        beginTest("combo box popups / popups and items don't transition, as nothing repaints them while they would");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            jive::ComboBoxComponent::Item standIn{ 1 };
+            comboBox.getPopup().addChildComponent(standIn);
+            juce::PopupMenu::Item item{ "One" };
+            item.itemID = 1;
+
+            juce::ignoreUnused(lookAndFeel.findPopupStyles(comboBox),
+                               lookAndFeel.findPopupItemStyles(comboBox, item, {}));
+            lookAndFeel.applyTheme(jive::Theme::material);
+
+            const auto foreground = jive::parseColour(jive::themes::material::onSurface);
+            expect(lookAndFeel.findPopupStyles(comboBox).find<jive::Fill>("foreground").value() == foreground);
+            expect(lookAndFeel.findPopupItemStyles(comboBox, item, {}).find<jive::Fill>("foreground").value() == foreground);
+        }
+
+        beginTest("combo box popups / popups and items are styled as though their combo box were at rest");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            jive::ComboBoxComponent comboBox;
+            parent.addAndMakeVisible(comboBox);
+            jive::ComboBoxComponent::Item standIn{ 1 };
+            comboBox.getPopup().addChildComponent(standIn);
+            juce::PopupMenu::Item item{ "One" };
+            item.itemID = 1;
+            lookAndFeel.addStyles("ComboBox",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::red)
+                                      .withForeground(juce::Colours::red));
+            lookAndFeel.addStyles("ComboBox:hover:active",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::blue)
+                                      .withForeground(juce::Colours::blue));
+            comboBox.getProperties().set("jive::hover", true);
+            comboBox.getProperties().set("jive::active", true);
+
+            expect(lookAndFeel.findPopupStyles(comboBox).background.get() == juce::Colours::red);
+            expect(lookAndFeel.findPopupItemStyles(comboBox, item, {}).foreground.get() == juce::Colours::red);
+            expect(lookAndFeel.findMostApplicableStyles(comboBox).background.get() == juce::Colours::blue);
+        }
+
         beginTest("combo box popups / items are styled through their stand-ins, inheriting from their popup");
         {
             juce::Component parent;
@@ -1317,6 +1427,114 @@ private:
                              .toString());
         }
     }
+
+    // Theme changes transition, so this settles them before reading the
+    // background.
+    static auto settledBackground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
+    {
+        juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(component));
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+
+        return lookAndFeel
+            .findMostApplicableStyles(component)
+            .find<jive::Fill>("background")
+            .value_or(jive::Fill{});
+    }
+
+    void testThemes()
+    {
+        beginTest("themes / are named like any other keyword value");
+        {
+            expect(juce::VariantConverter<jive::Theme>::fromVar("material") == jive::Theme::material);
+            expect(juce::VariantConverter<jive::Theme>::fromVar("high-contrast") == jive::Theme::highContrast);
+            expectEquals(juce::VariantConverter<jive::Theme>::toVar(jive::Theme::synthwave).toString(), juce::String{ "synthwave" });
+        }
+
+        beginTest("themes / applying a theme replaces the previous theme's styles");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::TextButton button;
+            parent.addAndMakeVisible(button);
+            expect(settledBackground(lookAndFeel, button) == jive::parseColour(jive::themes::steel::raisinBlack));
+
+            lookAndFeel.applyTheme(jive::Theme::material);
+            expect(settledBackground(lookAndFeel, button) == jive::parseColour(jive::themes::material::secondaryContainer));
+        }
+
+        beginTest("themes / applying a theme keeps styles that didn't come from a theme");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            juce::TextButton button;
+            button.setComponentID("kept");
+            parent.addAndMakeVisible(button);
+            lookAndFeel.addStyles("#kept", jive::Styles{}.withBackground(juce::Colours::red));
+
+            lookAndFeel.applyTheme(jive::Theme::synthwave);
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+        }
+
+        beginTest("themes / every theme styles windows, text and widgets");
+        {
+            for (const auto theme : { jive::Theme::steel, jive::Theme::material, jive::Theme::synthwave, jive::Theme::highContrast })
+            {
+                juce::Component parent;
+                jive::LookAndFeel lookAndFeel{ parent };
+                lookAndFeel.applyTheme(theme);
+
+                juce::TextButton button;
+                juce::ToggleButton checkbox;
+                juce::Slider slider;
+                juce::ComboBox comboBox;
+                parent.addAndMakeVisible(button);
+                parent.addAndMakeVisible(checkbox);
+                parent.addAndMakeVisible(slider);
+                parent.addAndMakeVisible(comboBox);
+
+                for (const auto* component : std::initializer_list<const juce::Component*>{ &button, &checkbox, &slider, &comboBox })
+                {
+                    const auto styles = lookAndFeel.findMostApplicableStyles(*component);
+                    expect(styles.background.hasValue());
+                    expect(styles.foreground.hasValue());
+                    expect(styles.fontFamily.hasValue());
+                }
+
+                expect(lookAndFeel.findMostApplicableStyles(slider).thumb.hasValue());
+                expect(lookAndFeel.findMostApplicableStyles(slider).track.hasValue());
+            }
+        }
+
+        beginTest("themes / material is flat, with no borders or shadows");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            lookAndFeel.applyTheme(jive::Theme::material);
+
+            juce::TextButton button;
+            juce::ToggleButton checkbox;
+            juce::Slider slider;
+            juce::ComboBox comboBox;
+            juce::ProgressBar progressBar{ progress };
+            parent.addAndMakeVisible(button);
+            parent.addAndMakeVisible(checkbox);
+            parent.addAndMakeVisible(slider);
+            parent.addAndMakeVisible(comboBox);
+            parent.addAndMakeVisible(progressBar);
+
+            button.setToggleState(true, juce::dontSendNotification);
+            checkbox.setToggleState(true, juce::dontSendNotification);
+
+            for (const auto* component : std::initializer_list<const juce::Component*>{ &button, &checkbox, &slider, &comboBox, &progressBar })
+            {
+                const auto styles = lookAndFeel.findMostApplicableStyles(*component);
+                expect(!styles.shadow.hasValue());
+                expect(styles.borderWidth.hasValue() && styles.borderWidth.get().isEmpty());
+            }
+        }
+    }
+
+    double progress = 0.5;
 };
 
 static LookAndFeelTest lookAndFeelTest;

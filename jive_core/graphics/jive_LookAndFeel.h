@@ -17,6 +17,9 @@ namespace jive
     {
         juce,
         steel,
+        material,
+        synthwave,
+        highContrast,
     };
 
     // Allows for custom styles and renderers to be specified for chosen
@@ -109,8 +112,9 @@ namespace jive
             updateShadow<ComponentType>(component, findMostApplicableStyles(component));
         }
 
-        // Removes all existing styles and painters and sets up predefined ones
-        // according to the given Theme.
+        // Replaces the styles of the previously applied theme with those of the
+        // given one. Styles and painters added in any other way, such as by
+        // style sheets, are kept.
         void applyTheme(Theme theme);
 
         // Uses all the styles and predicates given to this object using
@@ -296,6 +300,7 @@ namespace jive
 
         std::vector<Painter<ComponentPainter>> painters;
         std::vector<Styler> stylers;
+        std::vector<juce::Uuid> themeStyles;
         std::uint64_t stylersVersion = 0;
         mutable std::vector<ComponentStylesCache> stylesCache;
 
@@ -312,3 +317,17 @@ namespace jive
         void paint(juce::Graphics&) override;
     };
 } // namespace jive
+
+namespace juce
+{
+    template <>
+    class VariantConverter<jive::Theme>
+    {
+    public:
+        static jive::Theme fromVar(const var& v);
+        static var toVar(const jive::Theme& theme);
+
+    private:
+        static const Array<var> options;
+    };
+} // namespace juce

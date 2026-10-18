@@ -112,6 +112,9 @@ namespace jive
         setContentNonOwned(getComponent().get(),
                            resizeWindowWhenComponentSizeChanges);
 
+        if (state.hasProperty(ids::theme()))
+            applyTheme();
+
         const auto& boxModel = toType<CommonGuiItem>()->boxModel;
         const auto windowWidth = juce::roundToInt(boxModel.getWidth());
         const auto windowHeight = juce::roundToInt(boxModel.getHeight());
@@ -125,6 +128,7 @@ namespace jive
 
         component = item->getComponent();
         component->setLookAndFeel(&jiveLookAndFeel);
+        applyTheme();
 
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
         setContentNonOwned(getComponent().get(),
@@ -143,8 +147,17 @@ namespace jive
         getComponent()->setLookAndFeel(nullptr);
     }
 
+    void Window::applyTheme()
+    {
+        jiveLookAndFeel.applyTheme(fromVar<Theme>(state.getProperty(ids::theme(), toVar(Theme::steel))));
+        getComponent()->sendLookAndFeelChange();
+    }
+
     void Window::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
     {
+        if (tree == state && property == ids::theme())
+            applyTheme();
+
         forwardPropertyChange(tree,
                               property,
                               hasShadow,
@@ -166,6 +179,9 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/graphics/themes/jive_MaterialTheme.h>
+    #include <jive_core/graphics/themes/jive_SteelTheme.h>
+    #include <jive_core/graphics/themes/jive_SynthwaveTheme.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class WindowTest : public juce::UnitTest
@@ -187,6 +203,7 @@ public:
         testMinimised();
         testName();
         testTitleBarHeight();
+        testTheme();
     }
 
 private:
@@ -516,6 +533,69 @@ private:
             auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
                                 .toType<jive::Window>();
             expectEquals(window.getTitleBarHeight(), 100);
+        }
+    }
+
+    // Theme changes transition, so this settles them before reading the
+    // background.
+    static auto settledBackground(const juce::Component& component)
+    {
+        const auto& lookAndFeel = dynamic_cast<const jive::LookAndFeel&>(component.getLookAndFeel());
+        juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(component));
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+
+        return lookAndFeel
+            .findMostApplicableStyles(component)
+            .find<jive::Fill>("background")
+            .value_or(jive::Fill{});
+    }
+
+    void testTheme()
+    {
+        beginTest("theme");
+
+        {
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            expect(settledBackground(*item->getComponent()) == jive::parseColour(jive::themes::steel::inkBlack));
+
+            tree.setProperty("theme", "material", nullptr);
+            expect(settledBackground(*item->getComponent()) == jive::parseColour(jive::themes::material::surface));
+        }
+        {
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "theme", "synthwave" },
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            expect(settledBackground(*item->getComponent()) == jive::Fill{ jive::themes::synthwave::duskGradient });
+        }
+        {
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "theme", "juce" },
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                .toType<jive::Window>();
+            expect(window.getBackgroundColour() == jive::detail::getV4Colour(jive::detail::V4Colour::windowBackground));
         }
     }
 };

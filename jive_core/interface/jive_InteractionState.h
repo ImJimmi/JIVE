@@ -6,10 +6,20 @@
 
 namespace jive
 {
+    // Popups are painted at different times, such as when they open while
+    // their combo box is pressed and when an item is highlighted after the
+    // mouse has moved into them. So that every part of a popup looks the same,
+    // it's styled while this is set, which ignores everything interacting with
+    // the components behind it.
+    inline thread_local auto ignoreInteractions = false;
+
     // Some components are highlighted on behalf of something else under the
     // mouse, such as the stand-in for an item in a popup menu.
     [[nodiscard]] inline auto isMouseOverOrDragging(const juce::Component& component)
     {
+        if (ignoreInteractions)
+            return static_cast<bool>(component.getProperties()[ids::highlighted()]);
+
         return component.isMouseOverOrDragging(true)
             || static_cast<bool>(component.getProperties()[ids::highlighted()])
 #if JIVE_UNIT_TESTS
@@ -20,6 +30,9 @@ namespace jive
 
     [[nodiscard]] inline auto isMouseDown(const juce::Component& component)
     {
+        if (ignoreInteractions)
+            return false;
+
         return component.isMouseButtonDown(true)
 #if JIVE_UNIT_TESTS
             || static_cast<bool>(component.getProperties()["jive::active"])
@@ -29,6 +42,9 @@ namespace jive
 
     [[nodiscard]] inline auto hasKeyboardFocus(const juce::Component& component)
     {
+        if (ignoreInteractions)
+            return false;
+
         return component.hasKeyboardFocus(false)
 #if JIVE_UNIT_TESTS
             || static_cast<bool>(component.getProperties()["jive::focus"])

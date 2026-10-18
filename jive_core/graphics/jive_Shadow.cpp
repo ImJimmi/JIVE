@@ -312,6 +312,11 @@ namespace jive
             .setSpreadRadius(numbers.size() > 3 ? numbers[3] : 0.0f);
     }
 
+    [[nodiscard]] static int calculateMargin(const Shadow& shadow)
+    {
+        return static_cast<int>(std::ceil(shadow.getBlurRadius() + shadow.getSpreadRadius()));
+    }
+
     ShadowComponent::ShadowComponent(juce::Component& componentToAttachTo)
         : component{ &componentToAttachTo }
     {
@@ -350,11 +355,8 @@ namespace jive
         else
             shape.addRectangle(component->getLocalBounds());
 
-        const juce::Point blurRadiusOffset{
-            static_cast<int>(std::ceil(shadow.getBlurRadius())),
-            static_cast<int>(std::ceil(shadow.getBlurRadius())),
-        };
-        shape.applyTransform(juce::AffineTransform::translation(blurRadiusOffset));
+        const auto margin = static_cast<float>(calculateMargin(shadow));
+        shape.applyTransform(juce::AffineTransform::translation(margin, margin));
 
         auto offsetShape = shape;
         offsetShape.applyTransform(juce::AffineTransform::translation(-shadow.getOffset()));
@@ -398,14 +400,9 @@ namespace jive
         if (component == nullptr || parent == nullptr)
             return;
 
-        const juce::Point blurRadiusOffset{
-            static_cast<int>(std::ceil(shadow.getBlurRadius())),
-            static_cast<int>(std::ceil(shadow.getBlurRadius())),
-        };
-
         auto bounds = component->getBounds()
                           .translated(shadow.getOffset().x, shadow.getOffset().y)
-                          .expanded(blurRadiusOffset.x, blurRadiusOffset.y);
+                          .expanded(calculateMargin(shadow));
 
         for (auto* parentComp = component->getParentComponent();
              parentComp != nullptr;
@@ -557,6 +554,37 @@ static jive::UnitTest shadowPathsAreLocalTest{
         const auto snapshot = root.createComponentSnapshot(root.getLocalBounds());
         test.expect(snapshot.getPixelAt(51, 20) == juce::Colours::red);
         test.expect(snapshot.getPixelAt(45, 20) != juce::Colours::red);
+    },
+};
+
+static jive::UnitTest shadowIncludesSpreadTest{
+    "jive",
+    "jive::ShadowComponent",
+    "Bounds include the spread radius",
+    [](auto& test) {
+        juce::Component root;
+        root.setComponentID("root");
+        root.setSize(100, 100);
+
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(jive::StyleSelector{ "#root" },
+                              jive::Styles{}.withBackground(juce::Colours::black));
+
+        juce::Component target;
+        target.setBounds(40, 40, 20, 20);
+        root.addAndMakeVisible(target);
+
+        jive::ShadowComponent shadow{ target };
+        shadow.setShadow(jive::Shadow{}
+                             .setColour(juce::Colours::red)
+                             .setBlurRadius(2.0f)
+                             .setSpreadRadius(5.0f));
+
+        test.expectEquals(shadow.getBounds(), juce::Rectangle{ 33, 33, 34, 34 });
+
+        const auto snapshot = root.createComponentSnapshot(root.getLocalBounds());
+        test.expect(snapshot.getPixelAt(62, 50) == juce::Colours::red);
+        test.expect(snapshot.getPixelAt(50, 37) == juce::Colours::red);
     },
 };
 #endif

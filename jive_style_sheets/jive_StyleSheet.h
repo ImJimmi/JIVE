@@ -29,6 +29,7 @@ namespace jive
 
         void clear();
         void stylePropertyChanged();
+        void loadFile(const SourceFile& file);
         void updateLineSpacing();
         void addStylesFrom(Object& object);
         void addTokensFrom(Object& object);
@@ -51,6 +52,7 @@ namespace jive
         std::unordered_map<juce::String, StyleProperty> observedObjects;
 
         std::unique_ptr<FileObserver> fileObserver;
+        Object::ReferenceCountedPointer parsedFile;
         SourceFile styleFile;
         Property<SourceDirectories::ReferenceCountedPointer> sourceDirectories;
 

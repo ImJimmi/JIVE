@@ -1,0 +1,40 @@
+<Component>
+    <Text margin="0 0 25 0">Tokens are named values, defined once with "$name" and usable by any rule in the same style sheet, even inside values such as gradients and shadows. The box below has a style sheet of its own, public/styles/Tokens.json, so changing its tokens from C++ restyles everything inside it and nothing else. In JUCE, the same change means calling setColour() on every component, or building a new LookAndFeel.</Text>
+
+    <Component display="grid" grid-template-columns="380px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Tokens.json</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr 40px" gap="10 15" align-items="center">
+                <Label>$accent</Label>
+                <ComboBox id="accent-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                    <Option>#4FADE4</Option>
+                    <Option>#E77674</Option>
+                    <Option>#D8924D</Option>
+                    <Option>#AFAF3F</Option>
+                    <Option>#74B670</Option>
+                    <Option>#BE89DD</Option>
+                </ComboBox>
+
+                <Label>$radius</Label>
+                <Slider id="radius-slider" min="0" max="16" interval="1" value="6" />
+                <Text id="radius-label" class="value" accessible="false">6</Text>
+            </Component>
+        </Component>
+
+        <Component gap="20">
+            <Component id="tokens" class="preview" style="public/styles/Tokens.json" flex-grow="1" flex-direction="row" flex-wrap="wrap" gap="15" padding="25" justify-content="center" align-items="center" align-content="center">
+                <Button class="toggle" toggle-on-click="true" toggled="true" padding="4 12">Toggle</Button>
+                <Button padding="4 12">Button</Button>
+                <Checkbox toggle-on-click="true" toggled="true">Checkbox</Checkbox>
+                <ComboBox width="130" selected="0">
+                    <Option>ComboBox</Option>
+                </ComboBox>
+            </Component>
+
+            <Component class="code" padding="15">
+                <Text class="rule" sheet="tokens" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

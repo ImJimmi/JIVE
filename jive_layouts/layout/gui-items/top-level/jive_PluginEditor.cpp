@@ -17,10 +17,17 @@ namespace jive
             setSize(mainComponent->getWidth(), mainComponent->getHeight());
             mainComponent->setLookAndFeel(&jiveLookAndFeel);
         }
+
+        state.addListener(this);
+
+        if (state.hasProperty(ids::theme()))
+            applyTheme();
     }
 
     PluginEditor::~PluginEditor()
     {
+        state.removeListener(this);
+
         if (auto comp = getComponent())
         {
             comp->setLookAndFeel(nullptr);
@@ -32,6 +39,7 @@ namespace jive
     {
         item = std::move(newItem);
         state = item->state;
+        applyTheme();
     }
 
     void PluginEditor::resized()
@@ -48,6 +56,21 @@ namespace jive
 
         if (wasResized)
             setSize(getComponent()->getWidth(), getComponent()->getHeight());
+    }
+
+    void PluginEditor::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (tree == state && property == ids::theme())
+            applyTheme();
+    }
+
+    // Editors have no theme unless they're given one.
+    void PluginEditor::applyTheme()
+    {
+        jiveLookAndFeel.applyTheme(fromVar<Theme>(state.getProperty(ids::theme(), toVar(Theme::juce))));
+
+        if (auto comp = getComponent())
+            comp->sendLookAndFeelChange();
     }
 } // namespace jive
 #endif

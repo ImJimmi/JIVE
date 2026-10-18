@@ -700,6 +700,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& theme()
+    {
+        static const juce::Identifier identifier{ "theme" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& thumb()
     {
         static const juce::Identifier identifier{ "thumb" };

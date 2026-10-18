@@ -1,0 +1,19 @@
+<Component>
+    <Text margin="0 0 25 0">Nested objects whose names start with a colon style a component's states: :hover, :active, :focus, :checked and :disabled. States can nest as well, so ":hover": { ":active": … } only applies while the mouse is pressed on the button. In JUCE, drawButtonBackground() is told whether the button is highlighted or down, and every other state is yours to check and paint.</Text>
+
+    <Component display="grid" grid-template-columns="380px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Button</Text>
+
+            <Component class="preview" padding="40" align-items="center" margin="0 0 20 0">
+                <Button id="state-button" toggle-on-click="true" focusable="true" padding="8 20">Hover, press and click me</Button>
+            </Component>
+
+            <Checkbox id="enabled-checkbox" toggle-on-click="true" toggled="true">enabled</Checkbox>
+        </Component>
+
+        <Component class="code" padding="15">
+            <Text class="rule" rule="#state-button" />
+        </Component>
+    </Component>
+</Component>

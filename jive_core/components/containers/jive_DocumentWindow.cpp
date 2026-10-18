@@ -1,11 +1,13 @@
 #include "jive_DocumentWindow.h"
 
+#include <jive_core/graphics/jive_Fill.h>
+
 namespace jive
 {
     DocumentWindow::DocumentWindow()
         : juce::DocumentWindow{
             "",
-            juce::Colour{ 0xFF4A412A },
+            detail::getV4Colour(detail::V4Colour::windowBackground),
             DocumentWindow::allButtons,
         }
         , onCloseButtonPressed{

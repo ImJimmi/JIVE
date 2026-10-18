@@ -10,6 +10,7 @@ namespace jive
         : public jive::TopLevelGuiItem
         , public juce::AudioProcessorEditor
         , private juce::ComponentListener
+        , private juce::ValueTree::Listener
     {
     public:
         PluginEditor(std::unique_ptr<GuiItem> itemToDecorate,
@@ -21,6 +22,8 @@ namespace jive
 
     private:
         void componentMovedOrResized(juce::Component&, bool, bool) final;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+        void applyTheme();
 
         LookAndFeel jiveLookAndFeel;
 
