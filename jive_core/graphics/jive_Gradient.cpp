@@ -149,90 +149,58 @@ namespace jive
         return colour == other.colour && length == other.length;
     }
 
+    [[nodiscard]] static float toAngle(SideOrCorner sideOrCorner, const juce::Rectangle<float>& bounds)
+    {
+        // https://drafts.csswg.org/css-images-3/#linear-gradient-syntax
+        const auto cornerAngle = std::atan2(bounds.getHeight(), bounds.getWidth());
+
+        switch (sideOrCorner)
+        {
+        case SideOrCorner::topLeft:
+            return -cornerAngle;
+        case SideOrCorner::top:
+            return 0.0f;
+        case SideOrCorner::topRight:
+            return cornerAngle;
+        case SideOrCorner::right:
+            return juce::MathConstants<float>::halfPi;
+        case SideOrCorner::bottomRight:
+            return juce::MathConstants<float>::pi - cornerAngle;
+        case SideOrCorner::bottom:
+            return juce::MathConstants<float>::pi;
+        case SideOrCorner::bottomLeft:
+            return juce::MathConstants<float>::pi + cornerAngle;
+        case SideOrCorner::left:
+            return -juce::MathConstants<float>::halfPi;
+        }
+
+        jassertfalse;
+        return 0.0f;
+    }
+
     juce::ColourGradient Gradient::toJuceColourGradient(const juce::Rectangle<float>& bounds) const
     {
-        const juce::Line top{ bounds.getTopLeft(), bounds.getTopRight() };
-        const juce::Line right{ bounds.getTopRight(), bounds.getBottomRight() };
-        const juce::Line bottom{ bounds.getBottomLeft(), bounds.getBottomRight() };
-        const juce::Line left{ bounds.getTopLeft(), bounds.getBottomLeft() };
-        const auto angleToTopLeft = bounds.getCentre().getAngleToPoint(bounds.getTopLeft());
-        const auto angleToTopRight = bounds.getCentre().getAngleToPoint(bounds.getTopRight());
-        const auto angleToBottomRight = bounds.getCentre().getAngleToPoint(bounds.getBottomRight());
-        const auto angleToBottomLeft = bounds.getCentre().getAngleToPoint(bounds.getBottomLeft());
-
         juce::ColourGradient result;
 
         if (variant == Variant::linear)
         {
             result.isRadial = false;
 
-            if (std::holds_alternative<float>(linearAngle))
-            {
-                const auto angle = std::get<float>(linearAngle);
-                const juce::Line line{
-                    bounds.getCentre().getPointOnCircumference(1'000'000.0f, angle),
-                    bounds.getCentre().getPointOnCircumference(1'000'000.0f, angle + juce::MathConstants<float>::pi),
-                };
+            const auto angle = std::visit(Visitor{
+                                              [](float radians) {
+                                                  return radians;
+                                              },
+                                              [&bounds](SideOrCorner sideOrCorner) {
+                                                  return toAngle(sideOrCorner, bounds);
+                                              },
+                                          },
+                                          linearAngle);
+            const auto halfLength = (std::abs(bounds.getWidth() * std::sin(angle))
+                                     + std::abs(bounds.getHeight() * std::cos(angle)))
+                                  / 2.0f;
 
-                if (angle > angleToTopLeft && angle <= angleToTopRight)
-                {
-                    result.point1 = line.getIntersection(top);
-                    result.point2 = line.getIntersection(bottom);
-                }
-                else if (angle > angleToTopRight && angle <= angleToBottomRight)
-                {
-                    result.point1 = line.getIntersection(right);
-                    result.point2 = line.getIntersection(left);
-                }
-                else if (angle > angleToBottomLeft && angle <= angleToBottomRight)
-                {
-                    result.point1 = line.getIntersection(bottom);
-                    result.point2 = line.getIntersection(top);
-                }
-                else
-                {
-                    result.point1 = line.getIntersection(left);
-                    result.point2 = line.getIntersection(right);
-                }
-            }
-            else
-            {
-                switch (std::get<SideOrCorner>(linearAngle))
-                {
-                case SideOrCorner::topLeft:
-                    result.point1 = bounds.getBottomRight();
-                    result.point2 = bounds.getTopLeft();
-                    break;
-                case SideOrCorner::top:
-                    result.point1 = bottom.getPointAlongLineProportionally(0.5f);
-                    result.point2 = top.getPointAlongLineProportionally(0.5f);
-                    break;
-                case SideOrCorner::topRight:
-                    result.point1 = bounds.getBottomLeft();
-                    result.point2 = bounds.getTopRight();
-                    break;
-                case SideOrCorner::right:
-                    result.point1 = left.getPointAlongLineProportionally(0.5f);
-                    result.point2 = right.getPointAlongLineProportionally(0.5f);
-                    break;
-                case SideOrCorner::bottomRight:
-                    result.point1 = bounds.getTopLeft();
-                    result.point2 = bounds.getBottomRight();
-                    break;
-                case SideOrCorner::bottom:
-                    result.point1 = top.getPointAlongLineProportionally(0.5f);
-                    result.point2 = bottom.getPointAlongLineProportionally(0.5f);
-                    break;
-                case SideOrCorner::bottomLeft:
-                    result.point1 = bounds.getTopRight();
-                    result.point2 = bounds.getBottomLeft();
-                    break;
-                case SideOrCorner::left:
-                    result.point1 = right.getPointAlongLineProportionally(0.5f);
-                    result.point2 = left.getPointAlongLineProportionally(0.5f);
-                    break;
-                }
-            }
+            result.point1 = bounds.getCentre().getPointOnCircumference(halfLength, angle + juce::MathConstants<float>::pi);
+            result.point2 = bounds.getCentre().getPointOnCircumference(halfLength, angle);
         }
         else
         {
@@ -674,3 +642,62 @@ namespace juce
         return gradient;
     }
 } // namespace juce
+
+#if JIVE_UNIT_TESTS
+    #include <jive_core/testing/jive_UnitTest.h>
+
+static void expectEndPoints(jive::UnitTest& test,
+                            const juce::String& direction,
+                            juce::Point<float> start,
+                            juce::Point<float> end)
+{
+    const auto gradient = jive::Gradient::fromString("linear-gradient(" + direction + ", red, blue)")
+                              ->toJuceColourGradient({ 200.0f, 100.0f });
+
+    test.expect(gradient.point1.getDistanceFrom(start) < 0.01f,
+                direction + " starts at " + gradient.point1.toString());
+    test.expect(gradient.point2.getDistanceFrom(end) < 0.01f,
+                direction + " ends at " + gradient.point2.toString());
+}
+
+static jive::UnitTest linearGradientAnglesTest{
+    "jive",
+    "jive::Gradient",
+    "Linear gradient angles point clockwise from the top towards the last colour",
+    [](auto& test) {
+        expectEndPoints(test, "0deg", { 100.0f, 100.0f }, { 100.0f, 0.0f });
+        expectEndPoints(test, "90deg", { 0.0f, 50.0f }, { 200.0f, 50.0f });
+        expectEndPoints(test, "180deg", { 100.0f, 0.0f }, { 100.0f, 100.0f });
+        expectEndPoints(test, "270deg", { 200.0f, 50.0f }, { 0.0f, 50.0f });
+        expectEndPoints(test, "-90deg", { 200.0f, 50.0f }, { 0.0f, 50.0f });
+        expectEndPoints(test, "450deg", { 0.0f, 50.0f }, { 200.0f, 50.0f });
+        expectEndPoints(test, "0.5turn", { 100.0f, 0.0f }, { 100.0f, 100.0f });
+    },
+};
+
+static jive::UnitTest linearGradientLengthTest{
+    "jive",
+    "jive::Gradient",
+    "Linear gradients reach the first and last colours at the corners nearest their ends",
+    [](auto& test) {
+        expectEndPoints(test, "45deg", { 25.0f, 125.0f }, { 175.0f, -25.0f });
+        expectEndPoints(test, "-45deg", { 175.0f, 125.0f }, { 25.0f, -25.0f });
+    },
+};
+
+static jive::UnitTest linearGradientKeywordsTest{
+    "jive",
+    "jive::Gradient",
+    "Linear gradient keywords point at the given side, or into the given corner",
+    [](auto& test) {
+        expectEndPoints(test, "to top", { 100.0f, 100.0f }, { 100.0f, 0.0f });
+        expectEndPoints(test, "to right", { 0.0f, 50.0f }, { 200.0f, 50.0f });
+        expectEndPoints(test, "to bottom", { 100.0f, 0.0f }, { 100.0f, 100.0f });
+        expectEndPoints(test, "to left", { 200.0f, 50.0f }, { 0.0f, 50.0f });
+        expectEndPoints(test, "to top right", { 60.0f, 130.0f }, { 140.0f, -30.0f });
+        expectEndPoints(test, "to bottom right", { 60.0f, -30.0f }, { 140.0f, 130.0f });
+        expectEndPoints(test, "to bottom left", { 140.0f, -30.0f }, { 60.0f, 130.0f });
+        expectEndPoints(test, "to top left", { 140.0f, 130.0f }, { 60.0f, -30.0f });
+    },
+};
+#endif

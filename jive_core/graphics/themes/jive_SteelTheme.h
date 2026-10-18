@@ -20,7 +20,7 @@ namespace jive::themes
         static constexpr auto pictonBlueActive = "#3092CB";
         static constexpr auto azure = "#E6F9FF";
 
-        static constexpr auto charcoalGunmetalGradient = "linear-gradient(-7.5deg, #3F4B5D, #2C3542)";
+        static constexpr auto charcoalGunmetalGradient = "linear-gradient(172.5deg, #3F4B5D, #2C3542)";
         static constexpr auto pictonSphereGradient = "radial-gradient(at 30% 30%, #AED5EC 0%, #4FADE4 30%, #4392C0 60%, #214960 100%)";
         static constexpr auto widgetShadow = "2px 2px 6px rgba(0, 0, 0, 0.25)";
 
@@ -155,6 +155,6 @@ namespace jive::themes
                           .withBorderFill(steel::charcoalGunmetalGradient)
                           .withBorderRadius(100)
                           .withShadow(steel::widgetShadow)
-                          .withTrack("linear-gradient(270deg, #20A26E, #26C485, #3EE2A0)"));
+                          .withTrack("linear-gradient(90deg, #20A26E, #26C485, #3EE2A0)"));
     }
 } // namespace jive::themes
