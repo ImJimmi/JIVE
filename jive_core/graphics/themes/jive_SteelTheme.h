@@ -6,7 +6,7 @@ namespace jive::themes
 {
     namespace steel
     {
-        static constexpr auto eerieBlack = "#1E2125";
+        static constexpr auto inkBlack = "#0D1821";
         static constexpr auto raisinBlack = "#22262D";
         static constexpr auto raisinBlackHover = "#262D36";
         static constexpr auto raisinBlackActive = "#1E2227";
@@ -53,7 +53,7 @@ namespace jive::themes
         // Top-level components
         laf.addStyles(StyleSelector::makeSystemStyleSelector("Editor, Window"),
                       jive::Styles{}
-                          .withBackground(steel::eerieBlack)
+                          .withBackground(steel::inkBlack)
                           .withBorderRadius(0)
                           .withBorderWidth(juce::BorderSize<float>{}));
 

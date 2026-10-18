@@ -1,0 +1,100 @@
+{
+  "$accent": "#4FADE4",
+  "$coral": "#E77674",
+  "$apricot": "#D8924D",
+  "$moss": "#74B670",
+  "$tint": "rgba(127, 127, 127, 0.12)",
+  "$line": "rgba(127, 127, 127, 0.35)",
+  "$hover": "rgba(127, 127, 127, 0.25)",
+  "$pressed": "rgba(127, 127, 127, 0.4)",
+  "$muted": "rgba(127, 127, 127, 0.7)",
+
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14
+  },
+  ".value, .selector, .mock": {
+    "font-family": "Source Code Pro"
+  },
+  ".preview, .code": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 1
+  },
+  ".code": {
+    "font-family": "Source Code Pro",
+    "font-size": 12
+  },
+
+  "#card": {
+    "background": "linear-gradient(135deg, skyblue, blueviolet)",
+    "border": "white",
+    "border-width": 2,
+    "border-radius": 16,
+    "shadow": "5px 5px 30px rgba(0, 0, 0, 0.666)",
+    "foreground": "#16191C",
+    "fill": "#16191C"
+  },
+  "#card-title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 18
+  },
+
+  "#matches": {
+    "#toolbar Button": {
+      "background": "$accent",
+      "foreground": "black"
+    }
+  },
+  "#list .item, #list .nest": {
+    "border": "$line",
+    "border-width": 1
+  },
+
+  "#specificity": {
+    "#save": {
+      "background": "$moss"
+    },
+    ".primary": {
+      "background": "$apricot"
+    },
+    "Button": {
+      "background": "$coral",
+      "foreground": "black"
+    }
+  },
+
+  "#state-button": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 2,
+    "shadow": "",
+    ":hover": {
+      "background": "$hover",
+      ":active": {
+        "background": "$pressed"
+      }
+    },
+    ":focus": {
+      "shadow": "0 0 10px $accent"
+    },
+    ":checked": {
+      "border": "$accent",
+      "foreground": "$accent",
+      ":disabled": {
+        "border": "$line",
+        "foreground": "$muted"
+      }
+    },
+    ":disabled": {
+      "foreground": "$muted"
+    }
+  }
+}

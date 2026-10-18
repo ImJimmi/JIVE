@@ -17,6 +17,7 @@ namespace jive
 
     private:
         int getStyleFlags() const;
+        void applyTheme();
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         LookAndFeel jiveLookAndFeel{ *getComponent() };

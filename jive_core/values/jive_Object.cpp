@@ -76,8 +76,36 @@ namespace jive
     {
     }
 
+    static void replaceDynamicObjectsWithJiveObjects(juce::var& value, Object* parent = nullptr)
+    {
+        if (auto* dynamicObject = value.getDynamicObject();
+            dynamicObject != nullptr && dynamic_cast<Object*>(dynamicObject) == nullptr)
+        {
+            value = new Object{ *dynamicObject, parent };
+        }
+
+        if (auto* array = value.getArray())
+        {
+            for (auto& element : *array)
+                replaceDynamicObjectsWithJiveObjects(element);
+        }
+    }
+
+    // Nested objects are converted before the internal listener is created so
+    // that it can pass their changes on to this object's listeners.
+    [[nodiscard]] static juce::DynamicObject withNestedJiveObjects(const juce::DynamicObject& source, Object* parent)
+    {
+        juce::DynamicObject result{ source };
+
+        for (auto i = 0; i < result.getProperties().size(); i++)
+            replaceDynamicObjectsWithJiveObjects(*result.getProperties().getVarPointerAt(i), parent);
+
+        return result;
+    }
+
     Object::Object(const juce::DynamicObject& other, Object* par)
-        : juce::DynamicObject{ other }
+        : juce::DynamicObject{ withNestedJiveObjects(other, this) }
+        , internalListener{ std::make_unique<InternalListener>(*this) }
         , parent{ par }
     {
     }
@@ -171,28 +199,6 @@ namespace jive
     const juce::var& Object::operator[](const juce::Identifier& name) const noexcept
     {
         return getProperties()[name];
-    }
-
-    static void replaceDynamicObjectsWithJiveObjects(juce::var& value, Object* parent = nullptr)
-    {
-        if (auto* dynamicObject = value.getDynamicObject())
-        {
-            Object::ReferenceCountedPointer object = new Object{
-                std::move(*dynamicObject),
-                parent,
-            };
-
-            for (auto i = 0; i < object->getProperties().size(); i++)
-                replaceDynamicObjectsWithJiveObjects(*object->getProperties().getVarPointerAt(i), object.get());
-
-            value = object.get();
-        }
-
-        if (auto* array = value.getArray())
-        {
-            for (auto& element : *array)
-                replaceDynamicObjectsWithJiveObjects(element);
-        }
     }
 
     juce::var parseJSON(const juce::String& jsonString)
@@ -336,6 +342,36 @@ private:
 
         nested->setProperty("number", 2738);
         expect(listenerCalled);
+
+        beginTest("JSON parsing / changes to nested objects reach the parsed object's listeners");
+        {
+            auto root = juce::VariantConverter<jive::Object::ReferenceCountedPointer>::fromVar(jive::parseJSON(R"(
+                {
+                    "nested": {
+                        "deeper": {
+                            "number": 1,
+                        },
+                    },
+                }
+            )"));
+
+            Listener rootListener;
+            root->addListener(rootListener);
+
+            auto numCalls = 0;
+            rootListener.onPropertyChange = [&numCalls] {
+                numCalls++;
+            };
+
+            auto* nestedObject = dynamic_cast<jive::Object*>(root->getProperty("nested").getDynamicObject());
+            nestedObject->setProperty("number", 2);
+            expectEquals(numCalls, 1);
+
+            auto* deeperObject = dynamic_cast<jive::Object*>(nestedObject->getProperty("deeper").getDynamicObject());
+            deeperObject->setProperty("number", 2);
+            expectEquals(numCalls, 2);
+            expect(deeperObject->getRoot() == root.get());
+        }
     }
 
     void testInitialiserListConstruction()

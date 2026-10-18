@@ -1,0 +1,73 @@
+<Component>
+    <Text margin="0 0 25 0">Colours can be hex, rgb(), hsl() or named, any colour can be swapped for a linear or radial gradient, and shadows use CSS's box-shadow syntax. The controls edit the #card rule in Styles.json, which is everything the card needs; its text and icon inherit the foreground and fill. In JUCE, this card would be a paint() override full of ColourGradient, Path and DropShadow calls.</Text>
+
+    <Component display="grid" grid-template-columns="420px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">#card</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr 40px" gap="10 15" align-items="center">
+                <Label>background</Label>
+                <ComboBox id="background-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                    <Option>linear-gradient(135deg, skyblue, blueviolet)</Option>
+                    <Option>#4FADE4</Option>
+                    <Option>rgb(116, 182, 112)</Option>
+                    <Option>hsl(280, 55%, 70%)</Option>
+                    <Option>cornflowerblue</Option>
+                    <Option>radial-gradient(skyblue, steelblue)</Option>
+                </ComboBox>
+
+                <Label>border</Label>
+                <ComboBox id="border-combo-box" grid-column="2 / span 2" grid-row="2 / 3">
+                    <Option>white</Option>
+                    <Option>#11E859</Option>
+                    <Option>rgba(255, 255, 255, 0.4)</Option>
+                    <Option>linear-gradient(90deg, yellow, red, purple)</Option>
+                </ComboBox>
+
+                <Label>border-width</Label>
+                <Slider id="border-width-slider" min="0" max="10" interval="1" value="2" />
+                <Text id="border-width-label" class="value" accessible="false">2px</Text>
+
+                <Label>border-radius</Label>
+                <Slider id="border-radius-slider" min="0" max="70" interval="1" value="16" />
+                <Text id="border-radius-label" class="value" accessible="false">16px</Text>
+
+                <Label>shadow</Label>
+                <ComboBox id="shadow-combo-box" grid-column="2 / span 2" grid-row="5 / 6">
+                    <Option>5px 5px 30px rgba(0, 0, 0, 0.666)</Option>
+                    <Option>0px 10px 15px 15px hotpink</Option>
+                    <Option>0 0 20px #4FADE4</Option>
+                </ComboBox>
+
+                <Label>foreground</Label>
+                <ComboBox id="foreground-combo-box" grid-column="2 / span 2" grid-row="6 / 7">
+                    <Option>white</Option>
+                    <Option>#16191C</Option>
+                    <Option>rgba(255, 255, 255, 0.6)</Option>
+                </ComboBox>
+
+                <Label>fill</Label>
+                <ComboBox id="fill-combo-box" grid-column="2 / span 2" grid-row="7 / 8">
+                    <Option>white</Option>
+                    <Option>#16191C</Option>
+                    <Option>gold</Option>
+                </ComboBox>
+            </Component>
+        </Component>
+
+        <Component gap="20">
+            <Component class="preview" flex-grow="1" justify-content="center" align-items="center">
+                <Component id="card" width="240" height="140" gap="10" justify-content="center" align-items="center">
+                    <svg viewBox="0 0 36 36" width="36" height="36">
+                        <path d="M18 3l4.35 9.9 10.65 1.05-8.1 7.2 2.4 10.5L18 26.1l-9.3 5.55 2.4-10.5L3 13.95l10.65-1.05z" />
+                    </svg>
+                    <Text id="card-title">Card</Text>
+                </Component>
+            </Component>
+
+            <Component class="code" padding="15">
+                <Text class="rule" rule="#card" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

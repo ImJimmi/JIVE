@@ -1,0 +1,39 @@
+<Window
+    width="1000"
+    height="780"
+    min-height="720"
+    min-width="900"
+    padding="25"
+    resizable="true"
+    theme="steel"
+    style="public/styles/Styles.json"
+>
+    <Component id="content" max-width="1280" align-self="center" flex-grow="1">
+        <Component display="grid" grid-template-columns="1fr auto 1fr" align-items="center" margin="0 0 25 0">
+            <Component />
+            <Text id="title">Style Sheets</Text>
+            <Component flex-direction="row" justify-content="flex-end" align-items="center" gap="10">
+                <Label>Theme</Label>
+
+                <ComboBox id="theme-combo-box">
+                    <Option>Steel</Option>
+                    <Option>Material</Option>
+                    <Option>Synthwave</Option>
+                    <Option>High-contrast</Option>
+                    <Option>JUCE</Option>
+                </ComboBox>
+            </Component>
+        </Component>
+
+        <Text margin="0 0 25 0">In JUCE, the way a component looks is written in C++: LookAndFeel overrides, setColour() calls and paint() code, all recompiled for every tweak. JIVE describes it in JSON instead. This window starts from one of JIVE's built-in themes, which you can switch at the top right, and public/styles/Styles.json adds to it. In Debug builds, saving that file restyles the window straight away.</Text>
+
+        <Component flex-direction="row" gap="10" margin="0 0 25 0" align-self="center">
+            <Button id="properties-tab" radio-group="1" toggle-on-click="true" toggled="true" padding="4 12">Properties</Button>
+            <Button id="selectors-tab" radio-group="1" toggle-on-click="true" padding="4 12">Selectors</Button>
+            <Button id="states-tab" radio-group="1" toggle-on-click="true" padding="4 12">States</Button>
+            <Button id="tokens-tab" radio-group="1" toggle-on-click="true" padding="4 12">Tokens</Button>
+        </Component>
+
+        <Component id="page" source="public/views/Properties.xml" flex-grow="1" />
+    </Component>
+</Window>

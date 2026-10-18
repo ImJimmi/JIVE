@@ -125,16 +125,26 @@ namespace jive
 
     void StyleSheet::stylePropertyChanged()
     {
+        const auto object = style.get();
+
+        if (object == nullptr || object != parsedFile)
+        {
+            fileObserver = nullptr;
+            parsedFile = nullptr;
+        }
+
         if (!style.exists())
         {
             clear();
             return;
         }
 
-        if (style.get() != nullptr)
+        if (object != nullptr)
         {
-            styleFile = findSourceFile(state);
-            addStylesFrom(*style.get());
+            if (parsedFile == nullptr)
+                styleFile = findSourceFile(state);
+
+            addStylesFrom(*object);
             return;
         }
 
@@ -143,25 +153,33 @@ namespace jive
             if (const auto file = sourceDirectories.get()->find(style.toString(), findSourceFile(state));
                 file.exists())
             {
-                styleFile = file;
-
-                const auto addStylesFromFile = [this, f = file]() {
-                    auto fileContents = parseJSON(f.loadAsString());
-
-                    if (auto* object = dynamic_cast<Object*>(fileContents.getObject()))
-                        addStylesFrom(*object);
-                };
-
                 const auto fileOnDisk = file.getFileOnDisk();
                 fileObserver = fileOnDisk == juce::File{}
                                  ? nullptr
                                  : std::make_unique<FileObserver>(fileOnDisk);
 
                 if (fileObserver != nullptr)
-                    fileObserver->onFileModified = addStylesFromFile;
+                {
+                    fileObserver->onFileModified = [this, file] {
+                        loadFile(file);
+                    };
+                }
 
-                addStylesFromFile();
+                loadFile(file);
             }
+        }
+    }
+
+    // The file's path is replaced by its parsed object so that C++ can
+    // change the sheet at runtime, for example to set a token's value.
+    void StyleSheet::loadFile(const SourceFile& file)
+    {
+        if (const auto object = fromVar<Object::ReferenceCountedPointer>(parseJSON(file.loadAsString()));
+            object != nullptr)
+        {
+            styleFile = file;
+            parsedFile = object;
+            style.set(object);
         }
     }
 
@@ -1048,6 +1066,135 @@ private:
             file.deleteFile();
             directory.deleteRecursively();
         }
+
+        testFileBasedStyleObjects();
+    }
+
+    static auto settledBackground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
+    {
+        juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(component));
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+
+        return lookAndFeel
+            .findMostApplicableStyles(component)
+            .find<jive::Fill>("background")
+            .value_or(jive::Fill{});
+    }
+
+    static void modify(juce::File& file, const juce::String& newContent)
+    {
+        const auto previousModificationTime = file.getLastModificationTime();
+        file.replaceWithText(newContent);
+        file.setLastModificationTime(previousModificationTime + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+    }
+
+    void testFileBasedStyleObjects()
+    {
+        auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                             .getChildFile("jive-style-sheet-tests");
+        directory.createDirectory();
+        auto file = directory.getChildFile("object.json");
+
+        juce::TextButton button;
+        button.setSize(100, 25);
+        jive::LookAndFeel lookAndFeel{ button };
+
+        const auto createStyleSheet = [&directory, &button](juce::ValueTree& state) {
+            state = juce::ValueTree{
+                "Button",
+                {
+                    { "jive::source-directories", new jive::SourceDirectories{ directory } },
+                    { "style", "object.json" },
+                },
+            };
+            return jive::StyleSheet::create(button, state);
+        };
+
+        beginTest("file-based styles / once loaded, the style property holds the file's parsed object");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            const auto object = juce::VariantConverter<jive::Object::ReferenceCountedPointer>::fromVar(state["style"]);
+            expect(object != nullptr);
+            expectEquals(object->getProperty("background").toString(), juce::String{ "red" });
+            expect(lookAndFeel.findMostApplicableStyles(button).find<jive::Fill>("background").value() == juce::Colours::red);
+        }
+
+        beginTest("file-based styles / changing the loaded object's properties updates the styles");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            styleSheet.get()->setProperty("background", "blue");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+        }
+
+        beginTest("file-based styles / changing a token in the loaded object updates the styles that use it");
+        {
+            file.replaceWithText(R"({ "$colour": "red", "Button": { "background": "$colour" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            styleSheet.get()->setProperty("$colour", "green");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::green);
+        }
+
+        beginTest("file-based styles / hot-reloading swaps in the file's new object and keeps watching the file");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            const auto original = styleSheet.get();
+
+            auto numChanges = 0;
+            styleSheet.onValueChange = [&numChanges] {
+                numChanges++;
+            };
+
+            modify(file, R"({ "background": "blue" })");
+            expect(styleSheet.get() != original);
+            expectGreaterThan(numChanges, 0);
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+
+            styleSheet.get()->setProperty("background", "green");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::green);
+
+            modify(file, R"({ "background": "yellow" })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::yellow);
+        }
+
+        beginTest("file-based styles / replacing the loaded object stops watching the file");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            state.setProperty("style", new jive::Object{ { "background", "blue" } }, nullptr);
+            modify(file, R"({ "background": "yellow" })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+        }
+
+        beginTest("file-based styles / removing the style property stops watching the file");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            state.removeProperty("style", nullptr);
+            modify(file, R"({ "background": "yellow" })");
+            expect(!state.hasProperty("style"));
+            expect(!(settledBackground(lookAndFeel, button) == juce::Colours::yellow));
+        }
+
+        file.deleteFile();
+        directory.deleteRecursively();
     }
 
     void testIcons()

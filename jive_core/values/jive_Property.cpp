@@ -18,6 +18,7 @@ public:
         testObservations();
         testFunctionalProperties();
         testDynamicObjectSource();
+        testObjectValues();
         testTransitions();
     }
 
@@ -375,6 +376,95 @@ private:
                          static_cast<int>(state["object"]["value"])
                              + static_cast<int>(state["object"]["inner"]["value"])
                              + static_cast<int>(state["object"]["inner"]["leaf"]["value"]));
+        }
+    }
+
+    void testObjectValues()
+    {
+        beginTest("object values / changing the object's properties calls onValueChange");
+        {
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State", { { "object", object.get() } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / changing the properties of an object that replaced the original calls onValueChange");
+        {
+            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State", { { "object", original.get() } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            state.setProperty("object", replacement.get(), nullptr);
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            replacement->setProperty("value", 2);
+            expect(callbackCalled);
+
+            callbackCalled = false;
+            original->setProperty("value", 2);
+            expect(!callbackCalled);
+        }
+
+        beginTest("object values / an object that's set after the property is created is observed");
+        {
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State" };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            state.setProperty("object", object.get(), nullptr);
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / a string that isn't an object is left as it is");
+        {
+            juce::ValueTree state{ "State", { { "object", "styles.json" } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            expectEquals(state["object"].toString(), juce::String{ "styles.json" });
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            state.setProperty("object", object.get(), nullptr);
+            expect(property.get() == object);
+
+            callbackCalled = false;
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / an object outliving the property can still be changed");
+        {
+            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State", { { "object", original.get() } } };
+
+            {
+                jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+                state.setProperty("object", new jive::Object{}, nullptr);
+            }
+
+            original->setProperty("value", 2);
+            expectEquals(static_cast<int>(original->getProperty("value")), 2);
         }
     }
 
