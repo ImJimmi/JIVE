@@ -1,0 +1,23 @@
+<Window
+    width="1000"
+    height="780"
+    min-height="720"
+    min-width="900"
+    padding="25"
+    resizable="true"
+    style="public/styles/Styles.json"
+>
+    <Component id="content" max-width="1280" align-self="center" flex-grow="1">
+        <Text id="title" margin="0 0 25 0" align-self="center">Transitions</Text>
+
+        <Text margin="0 0 25 0">In JUCE, an animation is C++ code: you build a juce::Animator, keep it updated with a VBlankAnimatorUpdater, and apply every value it calls back with yourself. JIVE borrows CSS's transition syntax instead. List the properties that should animate, each with a duration, an easing curve and an optional delay, and any change to them animates on its own, whether it comes from C++, a :hover state or a file saved while the app runs.</Text>
+
+        <Component flex-direction="row" gap="10" margin="0 0 25 0" align-self="center">
+            <Button id="timing-tab" radio-group="1" toggle-on-click="true" toggled="true" padding="4 12">Timing</Button>
+            <Button id="layout-tab" radio-group="1" toggle-on-click="true" padding="4 12">Layout</Button>
+            <Button id="styles-tab" radio-group="1" toggle-on-click="true" padding="4 12">Styles</Button>
+        </Component>
+
+        <Component id="page" source="public/views/Timing.xml" flex-grow="1" />
+    </Component>
+</Window>

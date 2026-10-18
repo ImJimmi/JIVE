@@ -1,0 +1,50 @@
+<Component>
+    <Text margin="0 0 25 0">Layout attributes transition the same way. Each element in the preview lists its transitions in public/views/Layout.xml, and Animate only sets the chosen attribute from C++. A transition starts from the attribute's current value, so give it a starting value in the XML, even one that matches the default.</Text>
+
+    <Component display="grid" grid-template-columns="380px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+        <Component>
+            <Text class="heading" margin="0 0 10 0">Attribute</Text>
+
+            <Component display="grid" grid-template-columns="auto 1fr" gap="10 15" align-items="center" margin="0 0 25 0">
+                <Label>Property</Label>
+                <ComboBox id="property-combo-box">
+                    <Option>flex-grow</Option>
+                    <Option>flex-basis</Option>
+                    <Option>gap</Option>
+                    <Option>padding</Option>
+                    <Option>opacity</Option>
+                    <Option>border-width</Option>
+                    <Option>grid-template-columns</Option>
+                    <Option>width</Option>
+                    <Option>height</Option>
+                </ComboBox>
+
+                <Label>Value</Label>
+                <Text id="value-label" class="value" accessible="false" />
+            </Component>
+
+            <Button id="animate-button" toggle-on-click="true" padding="4 12" align-self="flex-start">Animate</Button>
+        </Component>
+
+        <Component class="preview" padding="20" gap="10">
+            <Text class="heading">Flex</Text>
+            <Component id="flex-sample" class="sample" flex-direction="row" align-items="center" height="110" gap="10" padding="10" transition="gap 600ms ease-in-out, padding 600ms ease-in-out">
+                <Component class="box box-red" height="60" flex-grow="1" />
+                <Component id="flex-box" class="box box-orange" height="60" flex-grow="1" flex-basis="60" opacity="1" border-width="0" transition="flex-grow 600ms ease-in-out, flex-basis 600ms ease-in-out, opacity 600ms ease-in-out, border-width 600ms ease-in-out" />
+                <Component class="box box-green" height="60" flex-grow="1" />
+            </Component>
+
+            <Text class="heading" margin="10 0 0 0">Grid</Text>
+            <Component id="grid-sample" class="sample" display="grid" grid-template-columns="1fr 1fr 1fr" grid-template-rows="60px" gap="10" padding="10" transition="grid-template-columns 600ms ease-in-out">
+                <Component class="box box-blue" />
+                <Component class="box box-purple" />
+                <Component class="box box-red" />
+            </Component>
+
+            <Text class="heading" margin="10 0 0 0">Absolute</Text>
+            <Component class="sample" display="block" flex-grow="1" min-height="110">
+                <Component id="absolute-box" class="box box-yellow" centre-x="50%" centre-y="50%" width="60" height="40" transition="width 600ms ease-in-out, height 600ms ease-in-out" />
+            </Component>
+        </Component>
+    </Component>
+</Component>

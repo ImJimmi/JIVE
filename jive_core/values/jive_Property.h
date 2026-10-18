@@ -217,7 +217,8 @@ namespace jive
                                                      Responsiveness::ignoreChanges>;
 
                 const TransitionsProperty transitions{ source, ids::transition() };
-                currentTransition = (*transitions.get())[transitionSourceID.toString()];
+                currentTransitions = transitions.get();
+                currentTransition = (*currentTransitions)[transitionSourceID.toString()];
             }
 
             if (currentTransition != nullptr && currentTransition->source.isVoid())
@@ -287,8 +288,8 @@ namespace jive
         {
             if (property != id)
             {
-                if (property == ids::transition())
-                    currentTransition = getTransition();
+                if (property == ids::transition() && isSource(treeWhosePropertyChanged))
+                    transitionsChanged();
 
                 return;
             }
@@ -732,6 +733,38 @@ namespace jive
             }
         }
 
+        // A new transition carries on from wherever the previous one had got
+        // to, so changing the timing part-way doesn't make the value jump.
+        void transitionsChanged()
+        {
+            const auto previousTransitions = currentTransitions;
+            const auto* previous = currentTransition;
+
+            observeTransition(nullptr);
+            currentTransition = nullptr;
+            currentTransitions = nullptr;
+
+            auto* transition = getTransition();
+
+            if (transition != nullptr
+                && previous != nullptr
+                && transition != previous
+                && previous->calculateProgress() < 1.0)
+            {
+                transition->source = toVar(previous->template calculateCurrent<ValueType>());
+                transition->target = previous->target;
+                transition->commencement = now();
+            }
+
+            observeTransition(transition);
+        }
+
+        [[nodiscard]] bool isSource(const juce::ValueTree& tree) const
+        {
+            return std::holds_alternative<juce::ValueTree>(source)
+                && std::get<juce::ValueTree>(source) == tree;
+        }
+
         void observeTransition(Transition* transition)
         {
             if (observedTransition == transition)
@@ -748,6 +781,7 @@ namespace jive
 
         Source listenerTarget;
         juce::Identifier transitionSourceID;
+        Transitions::ReferenceCountedPointer currentTransitions;
         Transition* currentTransition = nullptr;
         Transition* observedTransition = nullptr;
         Object::ReferenceCountedPointer observedObject;
