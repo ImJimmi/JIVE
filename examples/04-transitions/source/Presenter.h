@@ -1,37 +1,29 @@
 #pragma once
 
-#include <BinaryData.h>
 #include <jive_layouts/jive_layouts.h>
 
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-    #include <melatonin_inspector/melatonin_inspector.h>
-#endif
+#include <shared/Inspector.h>
+#include <shared/Presenter.h>
+#include <shared/Theme.h>
 
 namespace jive_examples::transitions
 {
-    class Presenter
+    class Presenter : public BasePresenter
     {
     public:
         Presenter()
-            : window{ interpreter.interpret(mainView) }
         {
+            window = interpreter.interpret(mainView);
             interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
                 if (file == mainView)
-                    bindTabs();
+                    bindWindow();
 
                 bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-                inspector->setRoot(*window->getComponent());
-#endif
+                inspector.inspect(*window->getComponent());
             };
-            bindTabs();
+            bindWindow();
             bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
-            inspector->setVisible(true);
-#endif
+            inspector.inspect(*window->getComponent());
         }
 
     private:
@@ -72,8 +64,10 @@ namespace jive_examples::transitions
             }
         };
 
-        void bindTabs()
+        void bindWindow()
         {
+            theme = bindThemeComboBox(window->state);
+
             tabs.clear();
 
             for (const auto& [tab, view] : pages)
@@ -100,7 +94,7 @@ namespace jive_examples::transitions
         // swapped for the slider's.
         void bindTiming()
         {
-            onValueChange("duration-slider", "value", [this](int duration) {
+            onValueChange(values, "duration-slider", "value", [this](int duration) {
                 const auto lanes = jive::findElementsWithClass(window->state, "lane");
                 const auto runners = jive::findElementsWithClass(window->state, "runner");
 
@@ -126,7 +120,7 @@ namespace jive_examples::transitions
 
         void bindLayout()
         {
-            onValueChange("property-combo-box", "selected", [this](int) {
+            onValueChange(values, "property-combo-box", "selected", [this](int) {
                 setProperty("animate-button", "toggled", false);
 
                 for (const auto& animation : animations)
@@ -179,14 +173,14 @@ namespace jive_examples::transitions
                 showStyles();
             };
 
-            onValueChange("style-property-combo-box", "selected", [this](int selected) {
+            onValueChange(values, "style-property-combo-box", "selected", [this](int selected) {
                 const auto option = jive::findElementWithID(window->state, "style-property-combo-box").getChild(selected);
                 transitionStyle(option["text"].toString());
             });
-            onValueChange("start-slider", "value", [this](int value) {
+            onValueChange(values, "start-slider", "value", [this](int value) {
                 setStyle(findRule(findCardStyleSheet(), "#card"), value);
             });
-            onValueChange("end-slider", "value", [this](int value) {
+            onValueChange(values, "end-slider", "value", [this](int value) {
                 setStyle(findRule(findRule(findCardStyleSheet(), "#card"), ":hover"), value);
             });
 
@@ -277,76 +271,6 @@ namespace jive_examples::transitions
             return dynamic_cast<jive::Object*>(parent->getProperty(selector).getDynamicObject());
         }
 
-        [[nodiscard]] int indexOfOption(const juce::String& comboBoxID, const juce::var& text) const
-        {
-            const auto comboBox = jive::findElementWithID(window->state, comboBoxID);
-
-            for (auto i = 0; i < comboBox.getNumChildren(); i++)
-            {
-                if (comboBox.getChild(i)["text"] == text)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
-                       const juce::String& buttonID,
-                       std::function<void(bool)> callback)
-        {
-            onToggled(bindings, jive::findElementWithID(window->state, buttonID), std::move(callback));
-        }
-
-        void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
-                       const juce::ValueTree& button,
-                       std::function<void(bool)> callback)
-        {
-            if (!button.isValid())
-                return;
-
-            auto& toggled = *bindings.emplace_back(std::make_unique<jive::Property<bool>>(button, "toggled"));
-            toggled.onValueChange = [&toggled, callback] {
-                callback(toggled.get());
-            };
-
-            callback(toggled.get());
-        }
-
-        void onValueChange(const juce::String& controlID,
-                           const juce::Identifier& property,
-                           std::function<void(int)> callback)
-        {
-            const auto control = jive::findElementWithID(window->state, controlID);
-
-            if (!control.isValid())
-                return;
-
-            auto& value = *values.emplace_back(std::make_unique<jive::Property<int>>(control, property));
-            value.onValueChange = [&value, callback] {
-                callback(value.get());
-            };
-
-            callback(value.get());
-        }
-
-        void setProperty(const juce::String& id, const juce::Identifier& property, const juce::var& value)
-        {
-            jive::findElementWithID(window->state, id).setProperty(property, value, nullptr);
-        }
-
-        [[nodiscard]] static juce::Typeface::Ptr registerFont(const char* data, int size)
-        {
-            return juce::Typeface::createSystemTypefaceFor(data, static_cast<std::size_t>(size));
-        }
-
-        // Fonts can only be found by their family names while these are alive,
-        // so they're declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts{
-            registerFont(binary_data::rubik_ttf, binary_data::rubik_ttfSize),
-            registerFont(binary_data::rubikmonoone_ttf, binary_data::rubikmonoone_ttfSize),
-            registerFont(binary_data::sourcecodepro_ttf, binary_data::sourcecodepro_ttfSize),
-        };
-
         const jive::SourceFile mainView{ "public/views/Main.xml" };
         const std::array<std::pair<juce::String, juce::String>, 3> pages{ {
             { "timing-tab", "public/views/Timing.xml" },
@@ -375,15 +299,11 @@ namespace jive_examples::transitions
         } };
         const juce::String defaultTiming{ "600ms ease-in-out" };
 
-        jive::Interpreter interpreter;
-        std::unique_ptr<jive::GuiItem> window;
+        std::unique_ptr<jive::Property<int>> theme;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> cardStyleSheet;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;
         std::vector<std::unique_ptr<jive::Property<bool>>> toggles;
         std::vector<std::unique_ptr<jive::Property<int>>> values;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-        std::unique_ptr<melatonin::Inspector> inspector;
-#endif
+        Inspector inspector;
     };
 } // namespace jive_examples::transitions

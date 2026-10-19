@@ -1,37 +1,29 @@
 #pragma once
 
-#include <BinaryData.h>
 #include <jive_layouts/jive_layouts.h>
 
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-    #include <melatonin_inspector/melatonin_inspector.h>
-#endif
+#include <shared/Inspector.h>
+#include <shared/Presenter.h>
+#include <shared/Theme.h>
 
 namespace jive_examples::style_sheets
 {
-    class Presenter
+    class Presenter : public BasePresenter
     {
     public:
         Presenter()
-            : window{ interpreter.interpret(mainView) }
         {
+            window = interpreter.interpret(mainView);
             interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
                 if (file == mainView)
                     bindWindow();
 
                 bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-                inspector->setRoot(*window->getComponent());
-#endif
+                inspector.inspect(*window->getComponent());
             };
             bindWindow();
             bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
-            inspector->setVisible(true);
-#endif
+            inspector.inspect(*window->getComponent());
         }
 
     private:
@@ -61,20 +53,7 @@ namespace jive_examples::style_sheets
                 });
             }
 
-            auto themes = jive::findElementWithID(window->state, "theme-combo-box");
-            themes.setProperty("selected", 0, nullptr);
-            theme = std::make_unique<jive::Property<int>>(themes, "selected");
-            theme->onValueChange = [this, themes] {
-                if (theme->get() < 0)
-                {
-                    jassertfalse;
-                    return;
-                }
-
-                window->state.setProperty("theme",
-                                          themes.getChild(theme->get())["text"].toString().toLowerCase(),
-                                          nullptr);
-            };
+            theme = bindThemeComboBox(window->state);
         }
 
         // Once loaded, an element's style property holds its parsed style
@@ -151,7 +130,7 @@ namespace jive_examples::style_sheets
 
             if (element.hasType("ComboBox"))
             {
-                element.setProperty("selected", indexOfOption(element, value), nullptr);
+                element.setProperty("selected", indexOfOption(control.id, value), nullptr);
                 return;
             }
 
@@ -294,61 +273,10 @@ namespace jive_examples::style_sheets
                 rule->setProperty(control.property, value);
         }
 
-        [[nodiscard]] static int indexOfOption(const juce::ValueTree& comboBox, const juce::var& text)
-        {
-            for (auto i = 0; i < comboBox.getNumChildren(); i++)
-            {
-                if (comboBox.getChild(i)["text"] == text)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
-                       const juce::String& buttonID,
-                       std::function<void(bool)> callback)
-        {
-            onToggled(bindings, jive::findElementWithID(window->state, buttonID), std::move(callback));
-        }
-
-        void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
-                       const juce::ValueTree& button,
-                       std::function<void(bool)> callback)
-        {
-            if (!button.isValid())
-                return;
-
-            auto& toggled = *bindings.emplace_back(std::make_unique<jive::Property<bool>>(button, "toggled"));
-            toggled.onValueChange = [&toggled, callback] {
-                callback(toggled.get());
-            };
-
-            callback(toggled.get());
-        }
-
         [[nodiscard]] bool isToggled(const juce::String& buttonID) const
         {
             return jive::findElementWithID(window->state, buttonID)["toggled"];
         }
-
-        void setProperty(const juce::String& id, const juce::Identifier& property, const juce::var& value)
-        {
-            jive::findElementWithID(window->state, id).setProperty(property, value, nullptr);
-        }
-
-        [[nodiscard]] static juce::Typeface::Ptr registerFont(const char* data, int size)
-        {
-            return juce::Typeface::createSystemTypefaceFor(data, static_cast<std::size_t>(size));
-        }
-
-        // Fonts can only be found by their family names while these are alive,
-        // so they're declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts{
-            registerFont(binary_data::rubik_ttf, binary_data::rubik_ttfSize),
-            registerFont(binary_data::rubikmonoone_ttf, binary_data::rubikmonoone_ttfSize),
-            registerFont(binary_data::sourcecodepro_ttf, binary_data::sourcecodepro_ttfSize),
-        };
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
         const std::array<std::pair<juce::String, juce::String>, 5> pages{ {
@@ -370,8 +298,6 @@ namespace jive_examples::style_sheets
             { "radius-slider", "tokens", {}, "$radius" },
         } };
 
-        jive::Interpreter interpreter;
-        std::unique_ptr<jive::GuiItem> window;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> windowStyleSheet;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> pageStyleSheet;
         std::unique_ptr<jive::Property<int>> theme;
@@ -379,9 +305,6 @@ namespace jive_examples::style_sheets
         std::vector<std::unique_ptr<jive::Property<bool>>> toggles;
         std::vector<std::unique_ptr<jive::Property<int>>> values;
         juce::StringArray launchedComboBoxes;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-        std::unique_ptr<melatonin::Inspector> inspector;
-#endif
+        Inspector inspector;
     };
 } // namespace jive_examples::style_sheets

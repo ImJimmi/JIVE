@@ -1,33 +1,5 @@
 #include "Presenter.h"
 
-namespace jive_examples::layouts
-{
-    class Application : public juce::JUCEApplication
-    {
-    public:
-        const juce::String getApplicationName() final
-        {
-            return JUCE_APPLICATION_NAME;
-        }
+#include <shared/Application.h>
 
-        const juce::String getApplicationVersion() final
-        {
-            return JUCE_APPLICATION_VERSION;
-        }
-
-        void initialise(const juce::String&) final
-        {
-            presenter = std::make_unique<Presenter>();
-        }
-
-        void shutdown() final
-        {
-            presenter = nullptr;
-        }
-
-    private:
-        std::unique_ptr<Presenter> presenter;
-    };
-} // namespace jive_examples::layouts
-
-START_JUCE_APPLICATION(jive_examples::layouts::Application)
+START_JUCE_APPLICATION(jive_examples::Application<jive_examples::layouts::Presenter>)

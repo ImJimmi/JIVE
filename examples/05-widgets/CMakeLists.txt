@@ -8,11 +8,4 @@ jive_add_example(jive-05-widgets
                          source/SegmentedSlider.h
                          source/XYPad.h
                          source/XYPadItem.h
-                 RESOURCES ../resources/rubik.ttf
-                           ../resources/rubik-mono-one.ttf
-                           ../resources/source-code-pro.ttf
-)
-
-jive_sources(jive-05-widgets
-             SOURCES "public/*"
 )
