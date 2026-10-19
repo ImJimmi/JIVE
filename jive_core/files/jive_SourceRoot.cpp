@@ -1,5 +1,7 @@
 #include "jive_SourceRoot.h"
 
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
+
 namespace jive
 {
     // Roots are usually static objects, so this can't be a global that might
@@ -48,11 +50,22 @@ namespace jive
     // A ZipFile only reads an entry while it's alive, so the entry is passed
     // to the callback rather than returned.
     template <typename Callback>
-    static bool withZipEntry(const void* zipData, std::size_t zipSize, const juce::String& relativePath, Callback&& callback)
+    static bool withZipEntry(const void* zipData,
+                             std::size_t zipSize,
+                             const juce::String& relativePath,
+                             Callback&& callback)
     {
-        juce::ZipFile zipFile{ new juce::MemoryInputStream{ zipData, zipSize, false }, true };
+        juce::ZipFile zipFile{
+#if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 13)
+            std::make_unique<juce::MemoryInputStream>(zipData, zipSize, false),
+#else
+            new juce::MemoryInputStream{ zipData, zipSize, false },
+            true,
+#endif
+        };
 
-        if (const auto index = zipFile.getIndexOfFileName(relativePath, !juce::File::areFileNamesCaseSensitive());
+        if (const auto index = zipFile.getIndexOfFileName(relativePath,
+                                                          !juce::File::areFileNamesCaseSensitive());
             index >= 0)
         {
             callback(zipFile, index);

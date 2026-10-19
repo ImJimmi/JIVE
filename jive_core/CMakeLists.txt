@@ -61,6 +61,7 @@ target_sources(jive_core
                       graphics/default-styles/jive_DefaultSliderStyles.h
                       graphics/jive_ComponentTypePredicates.cpp
                       graphics/jive_ComponentTypePredicates.h
+                      graphics/jive_CurrentColour.h
                       graphics/jive_Fill.cpp
                       graphics/jive_Fill.h
                       graphics/jive_FontUtilities.cpp

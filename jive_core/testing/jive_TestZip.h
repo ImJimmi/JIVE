@@ -1,5 +1,6 @@
 #pragma once
 
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
 #include <juce_core/juce_core.h>
 
 namespace jive
@@ -11,10 +12,16 @@ namespace jive
 
         for (const auto& [path, contents] : files)
         {
-            builder.addEntry(new juce::MemoryInputStream{ contents.toRawUTF8(), contents.getNumBytesAsUTF8(), true },
-                             9,
-                             path,
-                             juce::Time::getCurrentTime());
+            builder.addEntry(
+#if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 13)
+                std::make_unique<juce::MemoryInputStream>
+#else
+                new juce::MemoryInputStream
+#endif
+                (contents.toRawUTF8(), contents.getNumBytesAsUTF8(), true),
+                9,
+                path,
+                juce::Time::getCurrentTime());
         }
 
         juce::MemoryBlock zip;

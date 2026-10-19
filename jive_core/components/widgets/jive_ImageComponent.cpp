@@ -1,5 +1,7 @@
 #include "jive_ImageComponent.h"
 
+#include <jive_core/graphics/jive_CurrentColour.h>
+
 namespace jive
 {
     ImageComponent::ImageComponent()
@@ -7,23 +9,91 @@ namespace jive
         setInterceptsMouseClicks(false, false);
     }
 
-    static void hideTransparentChildren(juce::DrawableComposite& composite)
+    template <typename Composite, typename Callback>
+    static void forEachChild(Composite& composite, Callback&& callback)
     {
+#if JIVE_JUCE_9
+        for (auto i = 0; i < composite.getNumChildren(); i++)
+            callback(composite.getChild(i));
+#else
         for (auto* child : composite.getChildren())
         {
-            if (auto* shape = dynamic_cast<juce::DrawableShape*>(child))
+            if (auto* drawable = dynamic_cast<juce::Drawable*>(child))
+                callback(*drawable);
+        }
+#endif
+    }
+
+    [[nodiscard]] static juce::AffineTransform getTransform(const juce::Drawable& drawable)
+    {
+#if JIVE_JUCE_9
+        return drawable.getDrawableTransform();
+#else
+        return drawable.getTransform();
+#endif
+    }
+
+    // Since JUCE 9, drawables aren't components so can't be hidden. Scaling
+    // one down to nothing stops it drawing anything instead.
+    static void hide(juce::Drawable& drawable)
+    {
+#if JIVE_JUCE_9
+        drawable.setDrawableTransform(juce::AffineTransform::scale(0.0f));
+#else
+        drawable.setVisible(false);
+#endif
+    }
+
+    [[nodiscard]] static bool isHidden(const juce::Drawable& drawable)
+    {
+#if JIVE_JUCE_9
+        return getTransform(drawable).isSingularity();
+#else
+        return !drawable.isVisible();
+#endif
+    }
+
+    static void hideTransparentChildren(juce::DrawableComposite& composite)
+    {
+        forEachChild(composite, [](juce::Drawable& child) {
+            if (auto* shape = dynamic_cast<juce::DrawableShape*>(&child))
             {
                 if (shape->getFill().isInvisible()
                     && (shape->getStrokeFill().isInvisible()
                         || juce::approximatelyEqual(shape->getStrokeType().getStrokeThickness(), 0.0f)))
                 {
-                    shape->setVisible(false);
+                    hide(*shape);
                 }
             }
-            else if (auto* compositeChild = dynamic_cast<juce::DrawableComposite*>(child))
+            else if (auto* compositeChild = dynamic_cast<juce::DrawableComposite*>(&child))
             {
                 hideTransparentChildren(*compositeChild);
             }
+        });
+    }
+
+    [[nodiscard]] static bool isCurrentColourStandIn(const juce::FillType& fill)
+    {
+        return fill.isColour() && fill.colour == getCurrentColourStandIn();
+    }
+
+    static void findShapesUsingCurrentColour(juce::Drawable& drawable,
+                                             std::vector<juce::DrawableShape*>& fills,
+                                             std::vector<juce::DrawableShape*>& strokes)
+    {
+        if (auto* shape = dynamic_cast<juce::DrawableShape*>(&drawable))
+        {
+            if (isCurrentColourStandIn(shape->getFill()))
+                fills.push_back(shape);
+
+            if (isCurrentColourStandIn(shape->getStrokeFill()))
+                strokes.push_back(shape);
+        }
+        else if (auto* composite = dynamic_cast<juce::DrawableComposite*>(&drawable))
+        {
+            forEachChild(*composite, [&fills, &strokes](juce::Drawable& child) {
+                findShapesUsingCurrentColour(child, fills, strokes);
+            });
         }
     }
 
@@ -31,12 +101,31 @@ namespace jive
                                      juce::Rectangle<float> intrinsicBoundsToUse,
                                      juce::Rectangle<float> viewBoxToUse)
     {
+#if JIVE_JUCE_9
+        // A drawable component stops listening to its drawable when it's
+        // destroyed, so has to go before the drawable does.
+        drawableComponent.reset();
+#endif
+
         drawable = std::move(d);
         intrinsicBounds = intrinsicBoundsToUse;
         viewBox = viewBoxToUse;
 
+        currentColourFills.clear();
+        currentColourStrokes.clear();
+
         if (drawable != nullptr)
+            findShapesUsingCurrentColour(*drawable, currentColourFills, currentColourStrokes);
+
+        if (drawable != nullptr)
+        {
+#if JIVE_JUCE_9
+            drawableComponent = std::make_unique<juce::DrawableComponent>(*drawable);
+            addAndMakeVisible(*drawableComponent);
+#else
             addAndMakeVisible(*drawable);
+#endif
+        }
 
         if (auto* composite = dynamic_cast<juce::DrawableComposite*>(drawable.get()))
             hideTransparentChildren(*composite);
@@ -44,39 +133,41 @@ namespace jive
         resized();
     }
 
+    // Shapes are drawn in their own coordinates (since JUCE 9, an SVG's
+    // shapes each have their own transform), so gradients are laid out over
+    // the element's bounds as seen from each one.
     static void setStyles(juce::Drawable& drawable,
-                          const std::optional<juce::FillType>& fill,
-                          const std::optional<juce::FillType>& stroke)
+                          juce::Rectangle<float> bounds,
+                          const std::optional<Fill>& fill,
+                          const std::optional<Fill>& stroke)
     {
-        if (!drawable.isVisible())
+        if (isHidden(drawable))
             return;
+
+        const auto localBounds = bounds.transformedBy(getTransform(drawable).inverted());
 
         if (auto* shape = dynamic_cast<juce::DrawableShape*>(&drawable))
         {
             if (fill.has_value())
-                shape->setFill(*fill);
+                shape->setFill(fill->toJuceFillType(localBounds));
 
             if (stroke.has_value())
-                shape->setStrokeFill(*stroke);
+                shape->setStrokeFill(stroke->toJuceFillType(localBounds));
 
             return;
         }
 
         if (auto* composite = dynamic_cast<juce::DrawableComposite*>(&drawable))
         {
-            for (auto* child : composite->getChildren())
-            {
-                if (auto* drawableChild = dynamic_cast<juce::Drawable*>(child))
-                {
-                    setStyles(*drawableChild, fill, stroke);
-                }
-            }
+            forEachChild(*composite, [&](juce::Drawable& child) {
+                setStyles(child, localBounds, fill, stroke);
+            });
         }
     }
 
     static juce::Path getVisibleOutline(const juce::Drawable& drawable)
     {
-        if (!drawable.isVisible())
+        if (isHidden(drawable))
             return {};
 
         if (const auto* shape = dynamic_cast<const juce::DrawableShape*>(&drawable))
@@ -84,13 +175,14 @@ namespace jive
 
         juce::Path outline;
 
-        for (auto* child : drawable.getChildren())
+        if (const auto* composite = dynamic_cast<const juce::DrawableComposite*>(&drawable))
         {
-            if (const auto* drawableChild = dynamic_cast<const juce::Drawable*>(child))
-                outline.addPath(getVisibleOutline(*drawableChild));
+            forEachChild(*composite, [&outline](const juce::Drawable& child) {
+                outline.addPath(getVisibleOutline(child));
+            });
         }
 
-        outline.applyTransform(drawable.getTransform());
+        outline.applyTransform(getTransform(drawable));
         return outline;
     }
 
@@ -106,21 +198,20 @@ namespace jive
 
         const auto styles = laf->findMostApplicableStyles(*this);
 
-        // Shapes are drawn in the drawable's own coordinates (an SVG's
-        // view-box), so gradients are laid out over the element's bounds as
-        // seen from there.
-        const auto bounds = getLocalBounds()
-                                .toFloat()
-                                .transformedBy(drawable->getTransform().inverted());
-        const auto toFillType = [&bounds](const std::optional<Fill>& fill) -> std::optional<juce::FillType> {
-            if (!fill.has_value())
-                return std::nullopt;
+        // As in CSS, currentColor is the foreground colour.
+        const auto foreground = getForegroundFill(*this, styles, detail::getV4Colour(detail::V4Colour::defaultText));
+        const auto currentColour = foreground.isGradient() ? foreground.gradient->getColour(0) : foreground.colour;
 
-            return fill->toJuceFillType(bounds);
-        };
+        for (auto* shape : currentColourFills)
+            shape->setFill(currentColour);
+
+        for (auto* shape : currentColourStrokes)
+            shape->setStrokeFill(currentColour);
+
         setStyles(*drawable,
-                  styles.fill.hasValue() ? toFillType(findFill(*this, styles)) : std::nullopt,
-                  styles.stroke.hasValue() ? toFillType(findStroke(*this, styles)) : std::nullopt);
+                  getLocalBounds().toFloat(),
+                  styles.fill.hasValue() ? findFill(*this, styles) : std::nullopt,
+                  styles.stroke.hasValue() ? findStroke(*this, styles) : std::nullopt);
 
         if (styles.shadow.hasValue())
             getProperties().set(ids::shadowPath(), getVisibleOutline(*drawable).toString());
@@ -142,14 +233,24 @@ namespace jive
         {
             if (!viewBox.isEmpty() && !getLocalBounds().isEmpty())
             {
-                composite->setBoundingBox(juce::RectanglePlacement{ juce::RectanglePlacement::centred }
-                                              .appliedTo(viewBox, getLocalBounds().toFloat()));
+                // Since JUCE 9, the content area is the SVG's width and height,
+                // with its view-box fitted inside, rather than the view-box.
+                const juce::RectanglePlacement centred{ juce::RectanglePlacement::centred };
+                const auto contentArea = composite->getContentArea();
+                const auto viewBoxInContentArea = centred.appliedTo(viewBox, contentArea);
+                composite->setBoundingBox(contentArea.transformedBy(centred.getTransformToFit(viewBoxInContentArea,
+                                                                                              getLocalBounds().toFloat())));
             }
 
             return;
         }
 
-        drawable->setBounds(getLocalBounds());
+#if JIVE_JUCE_9
+        drawableComponent
+#else
+        drawable
+#endif
+            ->setBounds(getLocalBounds());
     }
 
     float ImageComponent::getMinimumRequiredWidth() const

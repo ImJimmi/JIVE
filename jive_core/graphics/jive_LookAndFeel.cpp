@@ -1005,6 +1005,37 @@ namespace jive
                 || entry == std::end(stylesCache)
                 || !entry->styles.hasTransitionsInProgress();
         });
+
+        addAndRemoveShadows();
+    }
+
+    void LookAndFeel::addAndRemoveShadows()
+    {
+        for (const auto& component : std::exchange(componentsAwaitingShadowChanges, {}))
+        {
+            if (component == nullptr)
+                continue;
+
+            const auto styles = findMostApplicableStyles(*component);
+            auto& properties = component->getProperties();
+
+            if (!styles.shadow.hasValue())
+            {
+                properties.remove(ids::attachedShadowComponent());
+                properties.remove(ids::shadowPath());
+                continue;
+            }
+
+            if (!properties.contains(ids::attachedShadowComponent()))
+            {
+                properties.set(ids::attachedShadowComponent(),
+                               new ReferenceCountedShadowComponent{
+                                   std::make_unique<ShadowComponent>(*component),
+                               });
+            }
+
+            updateShadow<juce::Component>(*component, styles);
+        }
     }
 } // namespace jive
 
@@ -1094,6 +1125,7 @@ public:
         testResolvedStylesAreReused();
         testComboBoxPopupFonts();
         testShadowShapes();
+        testShadowsWaitForTheNextFrame();
         testValueDirections();
         testThemes();
     }
@@ -1459,6 +1491,46 @@ private:
                          jive::getShape(jive::getBorderRadius(group, styles),
                                         jive::getGroupBounds(group, styles))
                              .toString());
+        }
+    }
+
+    // A component's shadow is a child of one of its ancestors, which may be
+    // painting its children when the component asks for the shadow.
+    void testShadowsWaitForTheNextFrame()
+    {
+        juce::Component parent;
+        parent.setComponentID("parent");
+        parent.setSize(200, 100);
+        jive::LookAndFeel lookAndFeel{ parent };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("#parent", jive::Styles{}.withBackground(juce::Colours::black));
+
+        juce::TextButton button;
+        button.setComponentID("button");
+        button.setBounds(40, 30, 100, 30);
+        parent.addAndMakeVisible(button);
+
+        beginTest("shadows / painting a component adds its shadow on the next frame");
+        {
+            const auto shadowStyles = lookAndFeel.addStyles("#button",
+                                                            jive::Styles{}.withShadow(jive::Shadow{}.setColour(juce::Colours::black)));
+
+            juce::ignoreUnused(parent.createComponentSnapshot(parent.getLocalBounds()));
+            expectEquals(parent.getNumChildComponents(), 1);
+
+            lookAndFeel.simulateVBlank();
+            expectEquals(parent.getNumChildComponents(), 2);
+
+            lookAndFeel.removeStyles(shadowStyles);
+        }
+
+        beginTest("shadows / painting a component that no longer has a shadow removes it on the next frame");
+        {
+            juce::ignoreUnused(parent.createComponentSnapshot(parent.getLocalBounds()));
+            expectEquals(parent.getNumChildComponents(), 2);
+
+            lookAndFeel.simulateVBlank();
+            expectEquals(parent.getNumChildComponents(), 1);
         }
     }
 

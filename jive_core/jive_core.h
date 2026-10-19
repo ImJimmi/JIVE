@@ -51,6 +51,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "geometry/jive_Length.h"
 #include "geometry/jive_Orientation.h"
 #include "graphics/jive_ComponentTypePredicates.h"
+#include "graphics/jive_CurrentColour.h"
 #include "graphics/jive_Fill.h"
 #include "graphics/jive_FontUtilities.h"
 #include "graphics/jive_Gradient.h"

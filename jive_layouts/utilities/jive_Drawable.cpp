@@ -40,21 +40,10 @@ namespace jive
         return dynamic_cast<juce::DrawableImage*>(drawable.get()) != nullptr;
     }
 
-    Drawable::Drawable(const juce::String& svgString)
-    {
-        *this = svgString;
-    }
-
+#if JUCE_VERSION < JIVE_JUCE_VERSION(9, 0, 0)
     Drawable::Drawable(const juce::XmlElement& svgElement)
     {
         *this = svgElement;
-    }
-
-    Drawable& Drawable::operator=(const juce::String& svgString)
-    {
-        svgSource = svgString;
-        *this = *juce::parseXML(svgString);
-        return *this;
     }
 
     Drawable& Drawable::operator=(const juce::XmlElement& svgElement)
@@ -63,6 +52,25 @@ namespace jive
             svgSource = svgElement.toString();
 
         drawable = juce::Drawable::createFromSVG(svgElement);
+        return *this;
+    }
+#endif
+
+    Drawable::Drawable(const juce::String& svgString)
+    {
+        *this = svgString;
+    }
+
+    Drawable& Drawable::operator=(const juce::String& svgString)
+    {
+        svgSource = svgString;
+
+#if JIVE_JUCE_9
+        drawable = juce::Drawable::createFromSVGString(svgString);
+#else
+        *this = *juce::parseXML(svgString);
+#endif
+
         return *this;
     }
 
