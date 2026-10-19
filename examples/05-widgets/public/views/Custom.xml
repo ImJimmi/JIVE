@@ -1,0 +1,30 @@
+<Component>
+    <Text margin="0 0 25 0">When a widget needs to look different from anything a style sheet can do, C++ can take over its drawing and leave everything else as it was. When no widget does the job, C++ can register a component of your own as a new element. Either way, the XML uses them like any other element.</Text>
+
+    <Component flex-direction="row" gap="30" flex-grow="1">
+        <Component class="preview" padding="25" gap="15" flex-grow="1" flex-basis="0">
+            <Text class="heading">Custom design</Text>
+            <Text>jive::LookAndFeel::addPainter() draws every Slider.segmented with a C++ function. They're still Sliders, attached to the gain and pan parameters, and the theme still picks their colours.</Text>
+
+            <Component flex-grow="1" justify-content="center">
+                <Component display="grid" grid-template-columns="auto 1fr 70px" gap="20 15" align-items="center">
+                    <Label>Gain</Label>
+                    <Slider class="segmented" parameter="gain" />
+                    <Text class="value" parameter="gain" accessible="false" />
+
+                    <Label>Pan</Label>
+                    <Slider class="segmented" parameter="pan" />
+                    <Text class="value" parameter="pan" accessible="false" />
+                </Component>
+            </Component>
+        </Component>
+
+        <Component class="preview" padding="25" gap="15" flex-grow="1" flex-basis="0">
+            <Text class="heading">Custom component</Text>
+            <Text>XYPad is a juce::Component, added to the interpreter's ComponentFactory so views can use &lt;XYPad&gt;. A decorator keeps its x-value and y-value attributes in sync and triggers on-change, and a type predicate lets style sheets select it by name.</Text>
+
+            <XYPad id="pad" x-value="0.5" y-value="0.5" flex-grow="1" />
+            <Text id="pad-label" class="value">x 0.50, y 0.50</Text>
+        </Component>
+    </Component>
+</Component>

@@ -7,6 +7,7 @@
 #include "components/canvases/jive_BackgroundCanvas.cpp"
 #include "components/canvases/jive_Canvas.cpp"
 #include "components/containers/jive_DocumentWindow.cpp"
+#include "components/utilities/jive_PaintBeforeShowing.cpp"
 #include "components/widgets/jive_ComboBoxComponent.cpp"
 #include "components/widgets/jive_ImageComponent.cpp"
 #include "components/widgets/jive_NormalisedProgressBar.cpp"

@@ -85,7 +85,6 @@ namespace jive
         visibility.onValueChange = [this]() {
             setVisible(visibility.getOr(true));
         };
-        setVisible(visibility.getOr(true));
 
         name.onValueChange = [this]() {
             setName(name.getOr(JUCE_APPLICATION_NAME));
@@ -119,6 +118,13 @@ namespace jive
         const auto windowWidth = juce::roundToInt(boxModel.getWidth());
         const auto windowHeight = juce::roundToInt(boxModel.getHeight());
         centreWithSize(windowWidth, windowHeight);
+
+        // Shown once the code that created the window has finished setting it
+        // up, so that its first frame is complete.
+        juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<Window>{ this }] {
+            if (safeThis != nullptr)
+                safeThis->setVisible(safeThis->visibility.getOr(true));
+        });
     }
 
     void Window::replaceDecoratedItem(std::unique_ptr<GuiItem> newItem)
@@ -204,6 +210,7 @@ public:
         testName();
         testTitleBarHeight();
         testTheme();
+        testShownOnceCreated();
     }
 
 private:
@@ -597,6 +604,42 @@ private:
                                 .toType<jive::Window>();
             expect(window.getBackgroundColour() == jive::detail::getV4Colour(jive::detail::V4Colour::windowBackground));
         }
+    }
+
+    void testShownOnceCreated()
+    {
+        beginTest("a window isn't shown until the code that created it has finished, and is painted, fully laid out, as it's shown");
+
+        struct PaintCounter : public juce::Component
+        {
+            void paint(juce::Graphics&) final
+            {
+                if (numPaints++ == 0)
+                    sizeWhenFirstPainted = getLocalBounds();
+            }
+
+            int numPaints = 0;
+            juce::Rectangle<int> sizeWhenFirstPainted;
+        };
+
+        jive::Interpreter interpreter;
+        std::shared_ptr<PaintCounter> paintCounter;
+        interpreter.getComponentFactory().set("PaintCounter", [&paintCounter] {
+            paintCounter = std::make_shared<PaintCounter>();
+            return paintCounter;
+        });
+        const auto item = interpreter.interpret(jive::parseXML(R"(
+            <Window width="100" height="100">
+                <PaintCounter width="40" height="30" />
+            </Window>
+        )"));
+        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                            .toType<jive::Window>();
+        expect(!window.isVisible());
+
+        window.setVisible(true);
+        expectGreaterThan(paintCounter->numPaints, 0);
+        expectEquals(paintCounter->sizeWhenFirstPainted, juce::Rectangle<int>{ 40, 30 });
     }
 };
 

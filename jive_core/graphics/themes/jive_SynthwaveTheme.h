@@ -93,8 +93,20 @@ namespace jive::themes
                           .withBackground(synthwave::sunsetGradientActive)
                           .withBorderFill(synthwave::sunsetGradientActive));
 
+        // Hyperlinks
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink"),
+                      jive::Styles{}
+                          .withFontStyleFlags({ juce::Font::underlined })
+                          .withForeground(synthwave::neonCyan));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover"),
+                      jive::Styles{}
+                          .withForeground(synthwave::neonCyanHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover:active"),
+                      jive::Styles{}
+                          .withForeground(synthwave::neonCyanActive));
+
         // Sliders
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider, Knob"),
                       jive::Styles{}
                           .withBackground(synthwave::indigo)
                           .withBorderFill(synthwave::neonGradient)

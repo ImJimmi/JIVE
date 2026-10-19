@@ -99,8 +99,20 @@ namespace jive::themes
                       jive::Styles{}
                           .withBackground(material::primaryPressed));
 
+        // Hyperlinks
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink"),
+                      jive::Styles{}
+                          .withFontStyleFlags({ juce::Font::underlined })
+                          .withForeground(material::primary));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover"),
+                      jive::Styles{}
+                          .withForeground(material::primaryHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover:active"),
+                      jive::Styles{}
+                          .withForeground(material::primaryPressed));
+
         // Sliders
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider, Knob"),
                       jive::Styles{}
                           .withBackground(material::secondaryContainer)
                           .withThumb(material::primary)

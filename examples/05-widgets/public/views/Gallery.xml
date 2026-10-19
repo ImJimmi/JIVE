@@ -1,0 +1,82 @@
+<Component>
+    <Text margin="0 0 25 0">Widgets in JIVE have a default minimum size and will adapt to their content to ensure they're always displayed correctly. Their colours, fonts, and other basic styles can be controlled with style sheets. Try changing the theme in the top-right of the window to see how they change.</Text>
+
+    <Component class="preview" padding="25" flex-grow="1" justify-content="center">
+        <Component display="grid" grid-template-columns="auto auto 1fr" gap="12 30" align-items="center">
+            <Label>Button</Label>
+            <Component flex-direction="row">
+                <Button id="count-button" padding="4 12">Click me</Button>
+            </Component>
+            <Text id="count-label">Clicked 0 times</Text>
+
+            <Label>Toggle button</Label>
+            <Component flex-direction="row">
+                <Button id="light-button" toggle-on-click="true" padding="4 12">Light</Button>
+            </Component>
+            <Component grid-column="3 / 4" grid-row="2 / 4" align-items="flex-start">
+                <svg id="light" class="icon" viewBox="0 0 36 36" width="40" height="40">
+                    <path d="M18 3a11 11 0 0 0-6.6 19.8c.9.7 1.6 1.8 1.6 3V27h10v-1.2c0-1.2.7-2.3 1.6-3A11 11 0 0 0 18 3z" />
+                    <path d="M13 29h10v1.5a2.5 2.5 0 0 1-2.5 2.5h-5a2.5 2.5 0 0 1-2.5-2.5z" />
+                </svg>
+            </Component>
+
+            <Label>Checkbox</Label>
+            <Component flex-direction="row">
+                <Checkbox id="light-checkbox" toggle-on-click="true">Light</Checkbox>
+            </Component>
+
+            <Label>Radio buttons</Label>
+            <Component flex-direction="row" gap="6">
+                <Button id="left-button" radio-group="1" toggle-on-click="true" toggled="true" padding="4 12">Left</Button>
+                <Button id="centre-button" radio-group="1" toggle-on-click="true" padding="4 12">Centre</Button>
+                <Button id="right-button" radio-group="1" toggle-on-click="true" padding="4 12">Right</Button>
+            </Component>
+            <Component id="alignment" class="preview" grid-column="3 / 4" grid-row="4 / 6" padding="10 15" justify-content="center" align-items="flex-start">
+                <Text>The quick brown fox</Text>
+            </Component>
+
+            <Label>ComboBox</Label>
+            <Component flex-direction="row">
+                <ComboBox id="alignment-combo-box" selected="0">
+                    <Option>Left</Option>
+                    <Option>Centre</Option>
+                    <Option>Right</Option>
+                </ComboBox>
+            </Component>
+
+            <Label>Slider</Label>
+            <Component flex-direction="row" align-items="center" gap="20">
+                <Slider id="level-slider" min="0" max="100" interval="1" value="60" flex-grow="1" />
+                <Slider id="level-fader" orientation="vertical" min="0" max="100" interval="1" value="60" width="20" height="60" />
+            </Component>
+            <Component />
+
+            <Label>Knob</Label>
+            <Component flex-direction="row">
+                <Knob id="level-knob" min="0" max="100" interval="1" value="60" width="50" height="50" />
+            </Component>
+            <Component />
+
+            <Label>ProgressBar</Label>
+            <ProgressBar id="level-bar" value="0.6" />
+            <Text id="level-label" class="value">60%</Text>
+
+            <Label>Spinner</Label>
+            <Component flex-direction="row">
+                <Spinner id="rating-spinner" min="0" max="5" interval="1" value="3" />
+            </Component>
+            <Component id="rating" flex-direction="row" gap="4">
+                <Image class="icon on" source="public/images/star.svg" width="22" height="22" />
+                <Image class="icon on" source="public/images/star.svg" width="22" height="22" />
+                <Image class="icon on" source="public/images/star.svg" width="22" height="22" />
+                <Image class="icon" source="public/images/star.svg" width="22" height="22" />
+                <Image class="icon" source="public/images/star.svg" width="22" height="22" />
+            </Component>
+
+            <Label>Hyperlink</Label>
+            <Component flex-direction="row">
+                <Hyperlink url="https://github.com/ImJimmi/JIVE">github.com/ImJimmi/JIVE</Hyperlink>
+            </Component>
+        </Component>
+    </Component>
+</Component>

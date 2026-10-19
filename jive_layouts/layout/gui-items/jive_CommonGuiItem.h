@@ -58,6 +58,11 @@ namespace jive
 
         std::unique_ptr<FileObserver> stringsFileObserver;
 
+        // What the style sheet was last created for. The look-and-feel is only
+        // compared, as JUCE asserts if one is deleted while weakly referenced.
+        juce::Component::SafePointer<juce::Component> styledParent;
+        const juce::LookAndFeel* styledLookAndFeel = nullptr;
+
         const std::vector<std::pair<juce::Identifier, std::function<void()>>> propertyUpdaters;
 
         JUCE_LEAK_DETECTOR(CommonGuiItem)

@@ -26,6 +26,8 @@ target_sources(jive_core
                       components/containers/jive_DocumentWindow.cpp
                       components/containers/jive_DocumentWindow.h
                       components/utilities/jive_HierarchyTraversal.h
+                      components/utilities/jive_PaintBeforeShowing.cpp
+                      components/utilities/jive_PaintBeforeShowing.h
                       components/widgets/jive_ComboBoxComponent.cpp
                       components/widgets/jive_ComboBoxComponent.h
                       components/widgets/jive_ImageComponent.cpp

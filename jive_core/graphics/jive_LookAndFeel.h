@@ -234,6 +234,11 @@ namespace jive
         {
             onVBlankUpdate();
         }
+
+        [[nodiscard]] int getNumTransitioningComponents() const
+        {
+            return transitioningComponents.size();
+        }
 #endif
 
     private:

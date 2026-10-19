@@ -10,36 +10,49 @@ namespace jive
     {
         jassert(pluginProcessor != nullptr);
 
-        if (auto mainComponent = getComponent())
-        {
-            mainComponent->addComponentListener(this);
-            addAndMakeVisible(*mainComponent);
-            setSize(mainComponent->getWidth(), mainComponent->getHeight());
-            mainComponent->setLookAndFeel(&jiveLookAndFeel);
-        }
-
+        showMainComponent();
         state.addListener(this);
-
-        if (state.hasProperty(ids::theme()))
-            applyTheme();
+        applyTheme();
     }
 
     PluginEditor::~PluginEditor()
     {
         state.removeListener(this);
-
-        if (auto comp = getComponent())
-        {
-            comp->setLookAndFeel(nullptr);
-            comp->removeComponentListener(this);
-        }
+        hideMainComponent();
     }
 
     void PluginEditor::replaceDecoratedItem(std::unique_ptr<GuiItem> newItem)
     {
+        hideMainComponent();
+
         item = std::move(newItem);
         state = item->state;
+        component = item->getComponent();
+
+        showMainComponent();
         applyTheme();
+    }
+
+    void PluginEditor::showMainComponent()
+    {
+        // The look-and-feel is set first, because the main component's style
+        // sheet is created when it's added, and only for a JIVE look-and-feel.
+        if (auto mainComponent = getComponent())
+        {
+            mainComponent->setLookAndFeel(&jiveLookAndFeel);
+            mainComponent->addComponentListener(this);
+            addAndMakeVisible(*mainComponent);
+            setSize(mainComponent->getWidth(), mainComponent->getHeight());
+        }
+    }
+
+    void PluginEditor::hideMainComponent()
+    {
+        if (auto mainComponent = getComponent())
+        {
+            mainComponent->setLookAndFeel(nullptr);
+            mainComponent->removeComponentListener(this);
+        }
     }
 
     void PluginEditor::resized()

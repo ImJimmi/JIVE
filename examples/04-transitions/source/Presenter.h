@@ -165,9 +165,8 @@ namespace jive_examples::transitions
             return nullptr;
         }
 
-        // The card's style sheet only exists once its preview has been added
-        // to the window, which happens after the page is bound, so the
-        // controls are shown once it loads.
+        // Saving Card.json swaps in a newly parsed style sheet, which the
+        // controls then show.
         void bindStyles()
         {
             const auto preview = jive::findElementWithID(window->state, "card-preview");

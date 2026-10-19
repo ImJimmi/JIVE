@@ -12,9 +12,6 @@ namespace jive::themes
         static constexpr auto raisinBlackActive = "#1E2227";
         static constexpr auto charcoal = "#3F4B5D";
         static constexpr auto gunmetal = "#2C3542";
-        static constexpr auto emeraldGreen = "#26C485";
-        static constexpr auto emeraldGreenHover = "#3EE2A0";
-        static constexpr auto emeraldGreenActive = "#20A26E";
         static constexpr auto pictonBlue = "#4FADE4";
         static constexpr auto pictonBlueHover = "#6FC4F5";
         static constexpr auto pictonBlueActive = "#3092CB";
@@ -22,6 +19,7 @@ namespace jive::themes
 
         static constexpr auto charcoalGunmetalGradient = "linear-gradient(172.5deg, #3F4B5D, #2C3542)";
         static constexpr auto pictonSphereGradient = "radial-gradient(at 30% 30%, #AED5EC 0%, #4FADE4 30%, #4392C0 60%, #214960 100%)";
+        static constexpr auto pictonLeftToRightGradient = "linear-gradient(90 deg, #3092CB, #4FADE4, #6FC4F5)";
         static constexpr auto widgetShadow = "2px 2px 6px rgba(0, 0, 0, 0.25)";
 
         static const juce::BorderSize borderWidth{ 2.0f };
@@ -91,20 +89,32 @@ namespace jive::themes
 
         laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked"),
                       jive::Styles{}
-                          .withBackground(steel::emeraldGreen)
-                          .withBorderFill(steel::emeraldGreen)
+                          .withBackground(steel::pictonBlue)
+                          .withBorderFill(steel::pictonBlue)
                           .withForeground(steel::raisinBlack));
         laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:hover"),
                       jive::Styles{}
-                          .withBackground(steel::emeraldGreenHover)
-                          .withBorderFill(steel::emeraldGreenHover));
+                          .withBackground(steel::pictonBlueHover)
+                          .withBorderFill(steel::pictonBlueHover));
         laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:active"),
                       jive::Styles{}
-                          .withBackground(steel::emeraldGreenActive)
-                          .withBorderFill(steel::emeraldGreenActive));
+                          .withBackground(steel::pictonBlueActive)
+                          .withBorderFill(steel::pictonBlueActive));
+
+        // Hyperlinks
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink"),
+                      jive::Styles{}
+                          .withFontStyleFlags({ juce::Font::underlined })
+                          .withForeground(steel::pictonBlue));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover"),
+                      jive::Styles{}
+                          .withForeground(steel::pictonBlueHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover:active"),
+                      jive::Styles{}
+                          .withForeground(steel::pictonBlueActive));
 
         // Sliders
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider, Knob"),
                       jive::Styles{}
                           .withBackground(steel::raisinBlack)
                           .withBorderFill(steel::charcoalGunmetalGradient)
@@ -155,6 +165,6 @@ namespace jive::themes
                           .withBorderFill(steel::charcoalGunmetalGradient)
                           .withBorderRadius(100)
                           .withShadow(steel::widgetShadow)
-                          .withTrack("linear-gradient(90deg, #20A26E, #26C485, #3EE2A0)"));
+                          .withTrack(steel::pictonLeftToRightGradient));
     }
 } // namespace jive::themes

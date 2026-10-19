@@ -87,8 +87,20 @@ namespace jive::themes
                           .withBackground(high_contrast::yellowActive)
                           .withBorderFill(high_contrast::yellowActive));
 
+        // Hyperlinks
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink"),
+                      jive::Styles{}
+                          .withFontStyleFlags({ juce::Font::underlined })
+                          .withForeground(high_contrast::yellow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover"),
+                      jive::Styles{}
+                          .withForeground(high_contrast::yellowHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover:active"),
+                      jive::Styles{}
+                          .withForeground(high_contrast::yellowActive));
+
         // Sliders
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Slider, Knob"),
                       jive::Styles{}
                           .withBackground(high_contrast::grey)
                           .withBorderFill(high_contrast::white)

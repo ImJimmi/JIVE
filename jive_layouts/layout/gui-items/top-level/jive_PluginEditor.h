@@ -23,9 +23,17 @@ namespace jive
     private:
         void componentMovedOrResized(juce::Component&, bool, bool) final;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+        void showMainComponent();
+        void hideMainComponent();
         void applyTheme();
 
-        LookAndFeel jiveLookAndFeel;
+        // Attached to the editor itself, which outlives every main component a
+        // reload swaps in, so that transitions keep being repainted.
+        LookAndFeel jiveLookAndFeel{ *this };
+
+        // The host shows the editor's window, so this paints the editor when
+        // whichever window it's in is about to be shown.
+        PaintBeforeShowing paintBeforeShowing{ *this };
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
     };

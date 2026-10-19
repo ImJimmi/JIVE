@@ -22,8 +22,8 @@ namespace jive::default_styles
 
             const auto progress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
             g.reduceClipRegion((slider.isHorizontal()
-                                    ? bounds.withRight(bounds.proportionOfWidth(1.0f - progress))
-                                    : bounds.withTop(bounds.proportionOfHeight(1.0f - progress)))
+                                    ? bounds.withWidth(bounds.proportionOfWidth(progress))
+                                    : bounds.withTop(bounds.getBottom() - bounds.proportionOfHeight(progress)))
                                    .toNearestInt());
             drawRoundedRectangle(g,
                                  bounds,
@@ -100,7 +100,7 @@ namespace jive::default_styles
                 : bounds.getCentreX(),
             slider.isHorizontal()
                 ? bounds.getCentreY()
-                : bounds.getY() + bounds.proportionOfHeight(progress)
+                : bounds.getBottom() - bounds.proportionOfHeight(progress)
         };
 
         if (isTwoVal || isThreeVal)
@@ -111,7 +111,7 @@ namespace jive::default_styles
                     : bounds.getCentreX(),
                 slider.isHorizontal()
                     ? bounds.getCentreY()
-                    : bounds.getY() + bounds.proportionOfHeight(minProgress)
+                    : bounds.getBottom() - bounds.proportionOfHeight(minProgress)
             };
             maxPoint = {
                 slider.isHorizontal()
@@ -119,7 +119,7 @@ namespace jive::default_styles
                     : bounds.getCentreX(),
                 slider.isHorizontal()
                     ? bounds.getCentreY()
-                    : bounds.getY() + bounds.proportionOfHeight(maxProgress)
+                    : bounds.getBottom() - bounds.proportionOfHeight(maxProgress)
             };
         }
         else

@@ -83,16 +83,39 @@ function(jive_sources TARGET)
     )
 
     # The registration is compiled into the target itself because the linker
-    # would drop it from a static library, as nothing refers to it.
-    target_sources(${TARGET}
-                   PRIVATE "${JIVE_SOURCES_REGISTRATION}"
-    )
+    # would drop it from a static library, as nothing refers to it. A JUCE
+    # plugin's target is the static library its formats share, so the
+    # registration goes into each format instead.
+    get_target_property(JIVE_SOURCES_IS_PLUGIN ${TARGET} JUCE_IS_PLUGIN)
 
-    target_compile_definitions(${TARGET}
-                               PRIVATE ${JIVE_SOURCES_BUNDLED_MACRO}=$<BOOL:${ARG_BUNDLE_SOURCES}>
-    )
+    if (JIVE_SOURCES_IS_PLUGIN)
+        set(JIVE_SOURCES_TARGETS)
+        get_target_property(JIVE_SOURCES_FORMATS ${TARGET} JUCE_FORMATS)
 
-    target_link_libraries(${TARGET}
-                          PRIVATE ${JIVE_SOURCES_NAME}
-    )
+        foreach (JIVE_SOURCES_FORMAT IN LISTS JIVE_SOURCES_FORMATS)
+            if (TARGET ${TARGET}_${JIVE_SOURCES_FORMAT})
+                list(APPEND JIVE_SOURCES_TARGETS ${TARGET}_${JIVE_SOURCES_FORMAT})
+            endif ()
+        endforeach ()
+    else ()
+        set(JIVE_SOURCES_TARGETS ${TARGET})
+    endif ()
+
+    foreach (JIVE_SOURCES_TARGET IN LISTS JIVE_SOURCES_TARGETS)
+        target_sources(${JIVE_SOURCES_TARGET}
+                       PRIVATE "${JIVE_SOURCES_REGISTRATION}"
+        )
+
+        target_include_directories(${JIVE_SOURCES_TARGET}
+                                   PRIVATE $<TARGET_PROPERTY:jive::jive_core,INTERFACE_INCLUDE_DIRECTORIES>
+        )
+
+        target_compile_definitions(${JIVE_SOURCES_TARGET}
+                                   PRIVATE ${JIVE_SOURCES_BUNDLED_MACRO}=$<BOOL:${ARG_BUNDLE_SOURCES}>
+        )
+
+        target_link_libraries(${JIVE_SOURCES_TARGET}
+                              PRIVATE ${JIVE_SOURCES_NAME}
+        )
+    endforeach ()
 endfunction()
