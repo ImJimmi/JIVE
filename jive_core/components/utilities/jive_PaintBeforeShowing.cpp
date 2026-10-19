@@ -1,5 +1,7 @@
 #include "jive_PaintBeforeShowing.h"
 
+#include <jive_core/graphics/jive_LookAndFeel.h>
+
 namespace jive
 {
     PaintBeforeShowing::PaintBeforeShowing(juce::Component& component)
@@ -15,6 +17,22 @@ namespace jive
     {
     }
 
+    [[nodiscard]] static juce::Array<LookAndFeel*> findLookAndFeels(const juce::Component& component)
+    {
+        juce::Array<LookAndFeel*> lookAndFeels;
+
+        if (auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&component.getLookAndFeel()))
+            lookAndFeels.add(lookAndFeel);
+
+        for (const auto* child : component.getChildren())
+        {
+            for (auto* lookAndFeel : findLookAndFeels(*child))
+                lookAndFeels.addIfNotAlreadyThere(lookAndFeel);
+        }
+
+        return lookAndFeels;
+    }
+
     // JUCE notifies visibility listeners before it shows the native window.
     void PaintBeforeShowing::componentVisibilityChanged()
     {
@@ -25,11 +43,15 @@ namespace jive
 
         if (auto* peer = component->getPeer())
         {
-            // Painting creates some components, such as shadows, which are
-            // added behind components that have already been painted. Painting
-            // off-screen first means they're all in the window's first frame.
+            // Painting asks for some components, such as shadows, which are
+            // only added on the next frame. Painting off-screen and adding
+            // them first means they're all in the window's first frame.
             auto& window = peer->getComponent();
             juce::ignoreUnused(window.createComponentSnapshot(window.getLocalBounds()));
+
+            for (auto* lookAndFeel : findLookAndFeels(window))
+                lookAndFeel->addAndRemoveShadows();
+
             peer->performAnyPendingRepaintsNow();
         }
     }
@@ -55,16 +77,23 @@ public:
             expectGreaterThan(window.content.numPaints, 0);
         }
 
-        beginTest("the first frame includes components that painting creates, such as shadows");
+        beginTest("the first frame includes the shadows that painting asks for");
         {
             Window window;
-            ShadowCreator creator;
-            window.addAndMakeVisible(creator);
-            creator.setBounds(50, 50, 20, 20);
-            jive::PaintBeforeShowing paintBeforeShowing{ creator };
+            jive::LookAndFeel lookAndFeel{ window };
+            lookAndFeel.applyTheme(jive::Theme::juce);
+            window.content.setComponentID("content");
+            lookAndFeel.addStyles("#content", jive::Styles{}.withBackground(juce::Colours::black));
+            lookAndFeel.addStyles("#button", jive::Styles{}.withShadow(jive::Shadow{}.setColour(juce::Colours::black)));
+
+            juce::TextButton button;
+            button.setComponentID("button");
+            window.content.addAndMakeVisible(button);
+            button.setBounds(50, 50, 20, 20);
+            jive::PaintBeforeShowing paintBeforeShowing{ button };
 
             window.setVisible(true);
-            expectGreaterThan(creator.shadow.numPaints, 0);
+            expectEquals(window.content.getNumChildComponents(), 2);
         }
     }
 
@@ -96,22 +125,6 @@ private:
         }
 
         PaintCounter content;
-    };
-
-    // Like a jive::ShadowComponent, adds a component behind itself the first
-    // time it's painted.
-    struct ShadowCreator : public juce::Component
-    {
-        void paint(juce::Graphics&) final
-        {
-            if (shadow.getParentComponent() != nullptr)
-                return;
-
-            getParentComponent()->addAndMakeVisible(shadow, 0);
-            shadow.setBounds(getBounds().expanded(5));
-        }
-
-        PaintCounter shadow;
     };
 };
 

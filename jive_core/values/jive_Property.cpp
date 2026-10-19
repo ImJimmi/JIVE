@@ -398,8 +398,10 @@ private:
 
         beginTest("object values / changing the properties of an object that replaced the original calls onValueChange");
         {
+            // Since JUCE 9, objects with the same properties compare equal, so
+            // setting one over an equal original would leave the original.
             jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
-            jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 1 } };
+            jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 3 } };
             juce::ValueTree state{ "State", { { "object", original.get() } } };
             jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
             state.setProperty("object", replacement.get(), nullptr);

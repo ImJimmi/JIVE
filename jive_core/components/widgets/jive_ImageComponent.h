@@ -1,5 +1,6 @@
 #pragma once
 
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
 #include <jive_core/graphics/jive_LookAndFeel.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -22,7 +23,15 @@ namespace jive
 
     private:
         std::unique_ptr<juce::Drawable> drawable;
+
+#if JIVE_JUCE_9
+        std::unique_ptr<juce::DrawableComponent> drawableComponent;
+#endif
+
         juce::Rectangle<float> intrinsicBounds;
         juce::Rectangle<float> viewBox;
+
+        std::vector<juce::DrawableShape*> currentColourFills;
+        std::vector<juce::DrawableShape*> currentColourStrokes;
     };
 } // namespace jive

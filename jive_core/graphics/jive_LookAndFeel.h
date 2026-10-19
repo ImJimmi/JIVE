@@ -75,33 +75,24 @@ namespace jive
 
         // Updates the shadow component (if any) associated with the given
         // component using the styles provided.
+        // A shadow component is a child of one of the component's ancestors,
+        // which may be painting its children, so adding or removing one is
+        // left until the next frame.
         template <typename ComponentType>
         void updateShadow(std::remove_const_t<ComponentType>& component, const Styles& styles) const
         {
-            const auto& property = ids::attachedShadowComponent();
+            auto* shadowComponent = dynamic_cast<ReferenceCountedShadowComponent*>(component
+                                                                                       .getProperties()[ids::attachedShadowComponent()]
+                                                                                       .getObject());
 
-            if (!styles.shadow.hasValue())
+            if (styles.shadow.hasValue() != (shadowComponent != nullptr))
             {
-                component.getProperties().remove(property);
-                component.getProperties().remove(ids::shadowPath());
+                componentsAwaitingShadowChanges.addIfNotAlreadyThere(&component);
                 return;
             }
 
-            if (!component.getProperties().contains(property))
-            {
-                component
-                    .getProperties()
-                    .set(property,
-                         new ReferenceCountedShadowComponent{
-                             std::make_unique<ShadowComponent>(component),
-                         });
-            }
-
-            auto& shadowComp = *dynamic_cast<ReferenceCountedShadowComponent*>(component
-                                                                                   .getProperties()[property]
-                                                                                   .getObject())
-                                    ->shadow;
-            shadowComp.setShadow(styles.find<Shadow>("shadow").value());
+            if (shadowComponent != nullptr)
+                shadowComponent->shadow->setShadow(styles.find<Shadow>("shadow").value());
         }
 
         // Updates the shadow component (if any) associated with the given
@@ -111,6 +102,10 @@ namespace jive
         {
             updateShadow<ComponentType>(component, findMostApplicableStyles(component));
         }
+
+        // Adds and removes the shadow components that updating shadows has
+        // left until the next frame. Call this to have them before then.
+        void addAndRemoveShadows();
 
         // Replaces the styles of the previously applied theme with those of the
         // given one. Styles and painters added in any other way, such as by
@@ -311,6 +306,7 @@ namespace jive
 
         juce::VBlankAttachment vBlank;
         mutable juce::Array<juce::Component::SafePointer<juce::Component>> transitioningComponents;
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> componentsAwaitingShadowChanges;
     };
 
     // A custom Caret component which is drawn by its look-and-feel, rather

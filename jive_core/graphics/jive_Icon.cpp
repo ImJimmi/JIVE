@@ -1,5 +1,8 @@
 #include "jive_Icon.h"
 
+#include "jive_CurrentColour.h"
+
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
 #include <jive_core/files/jive_SourceFile.h>
 
 namespace jive
@@ -15,24 +18,21 @@ namespace jive
         return {};
     }
 
-    // JUCE draws an SVG's currentColor as transparent, so it's swapped for a
-    // stand-in that's replaced by the actual colour whenever the icon's drawn.
-    [[nodiscard]] static juce::Colour getCurrentColourStandIn()
-    {
-        return juce::Colour{ 0xff010203 };
-    }
-
     [[nodiscard]] static std::unique_ptr<juce::Drawable> createDrawable(const juce::String& source,
                                                                         const juce::String& svg)
     {
         if (svg.isNotEmpty())
         {
-            const auto standIn = "#" + getCurrentColourStandIn().toDisplayString(false);
+            const auto stringWithReplacedColour = replaceCurrentColourWithStandIn(svg);
 
-            if (const auto xml = juce::parseXML(svg.replace("currentColor", standIn, true)))
+#if JIVE_JUCE_9
+            return juce::Drawable::createFromSVGString(stringWithReplacedColour);
+#else
+            if (const auto xml = juce::parseXML(stringWithReplacedColour))
                 return juce::Drawable::createFromSVG(*xml);
 
             return nullptr;
+#endif
         }
 
         if (const SourceFile file{ source }; file.exists())
@@ -107,8 +107,14 @@ namespace jive
 
         if (auto* composite = dynamic_cast<juce::DrawableComposite*>(&drawable))
         {
+#if JIVE_JUCE_9
+            for (auto i = 0; i < composite->getNumChildren(); i++)
+            {
+                auto* child = &composite->getChild(i);
+#else
             for (auto* child : composite->getChildren())
             {
+#endif
                 if (auto* drawableChild = dynamic_cast<juce::Drawable*>(child))
                     tint(*drawableChild, fill, stroke);
             }
