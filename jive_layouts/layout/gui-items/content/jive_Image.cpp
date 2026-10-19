@@ -189,6 +189,7 @@ namespace jive
         const auto drawable = getDrawable();
         std::unique_ptr<juce::Drawable> result;
         juce::Rectangle<float> intrinsicBounds;
+        juce::Rectangle<float> viewBox;
 
         if (drawable.isImage())
             result = std::make_unique<juce::DrawableImage>(static_cast<juce::Image>(drawable));
@@ -198,9 +199,10 @@ namespace jive
             const auto xml = juce::parseXML(static_cast<juce::String>(drawable));
             result = juce::Drawable::createFromSVG(*xml);
             intrinsicBounds = getIntrinsicBounds(*xml);
+            viewBox = getViewBox(*xml);
         }
 
-        getImageComponent().setDrawable(std::move(result), intrinsicBounds);
+        getImageComponent().setDrawable(std::move(result), intrinsicBounds, viewBox);
 
         idealWidth = juce::String{ calculateRequiredWidth() } + "px";
         idealHeight = juce::String{ calculateRequiredHeight() } + "px";
@@ -229,6 +231,108 @@ public:
         testSVGFillInherited();
         testSVGContentStaysPutWhenResized();
         testInlineSVGAutoSize();
+        testSVGViewBoxScaledToFit();
+        testSVGGradientFillSpansElement();
+        testSVGShadowFollowsShapes();
+    }
+
+    void testSVGGradientFillSpansElement()
+    {
+        beginTest("svg / a gradient fill spans the element, whatever the size of its view-box");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#tinted",
+                              jive::Styles{}
+                                  .withFill(jive::fromVar<jive::Fill>("linear-gradient(to right, #FF0000, #0000FF)")));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg id="tinted" viewBox="0 0 10 10" width="100" height="100">
+                    <rect width="10" height="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectGreaterThan(snapshot.getPixelAt(5, 50).getRed(), snapshot.getPixelAt(5, 50).getBlue());
+        expectGreaterThan(snapshot.getPixelAt(95, 50).getBlue(), snapshot.getPixelAt(95, 50).getRed());
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGShadowFollowsShapes()
+    {
+        beginTest("svg / a shadow is cast from the outline of its shapes, rather than its bounds");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#backdrop",
+                              jive::Styles{}
+                                  .withBackground(juce::Colours::white));
+        lookAndFeel.addStyles("#glowing",
+                              jive::Styles{}
+                                  .withFill(juce::Colours::blue)
+                                  .withShadow(jive::fromVar<jive::Shadow>("0 0 0 5px #FF0000")));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component id="backdrop" width="100" height="100">
+                <svg id="glowing" viewBox="0 0 10 10" width="50" height="50">
+                    <rect x="4" y="4" width="2" height="2" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        // The image sets its shadow up while painting, so the shadow is only
+        // drawn from the second paint onwards.
+        juce::ignoreUnused(parentComponent->createComponentSnapshot(parentComponent->getLocalBounds()));
+        const auto snapshot = parentComponent->createComponentSnapshot(parentComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(25, 25), juce::Colours::blue);
+        expectEquals(snapshot.getPixelAt(17, 25), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(5, 5), juce::Colours::white);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGViewBoxScaledToFit()
+    {
+        beginTest("svg / a view-box is scaled to fit the element, keeping its aspect ratio");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 200 100" width="100" height="100">
+                    <rect x="100" y="0" width="100" height="100" fill="blue" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(75, 50), juce::Colours::blue);
+        expect(snapshot.getPixelAt(25, 50) != juce::Colours::blue);
+        expect(snapshot.getPixelAt(75, 10) != juce::Colours::blue);
+        expect(snapshot.getPixelAt(75, 90) != juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
     }
 
     void testInlineSVGAutoSize()

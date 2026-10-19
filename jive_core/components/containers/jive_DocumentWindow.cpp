@@ -16,9 +16,6 @@ namespace jive
             },
         }
     {
-#if !JIVE_UNIT_TESTS
-        setVisible(true);
-#endif
     }
 
     void DocumentWindow::closeButtonPressed()

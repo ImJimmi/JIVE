@@ -80,6 +80,6 @@ namespace jive
                            : fillableBounds.getY() + fillableBounds.proportionOfHeight(1.0 - progressEnd);
         return fillableBounds.getAspectRatio() > 1.0f
                  ? fillableBounds.withLeft(start).withRight(end)
-                 : fillableBounds.withTop(start).withBottom(end);
+                 : fillableBounds.withTop(end).withBottom(start);
     }
 } // namespace jive

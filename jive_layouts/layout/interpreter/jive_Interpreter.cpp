@@ -268,10 +268,7 @@ namespace jive
             }
         }
 
-        const auto index = parentTree.indexOf(tree);
-
-        if (auto newChild = interpretInternal(tree, parentItem))
-            parentItem->insertChild(std::move(newChild), index);
+        insertInterpretedChild(*parentItem, tree, parentTree.indexOf(tree));
     }
 
     void Interpreter::valueTreeChildAdded(juce::ValueTree& parentTree,
@@ -288,10 +285,20 @@ namespace jive
             return;
         }
 
-        const auto indexInParent = parentTree.indexOf(childWhichHasBeenAdded);
+        insertInterpretedChild(*parentItem, childWhichHasBeenAdded, parentTree.indexOf(childWhichHasBeenAdded));
+    }
 
-        if (auto newChild = interpretInternal(childWhichHasBeenAdded, parentItem))
-            parentItem->insertChild(std::move(newChild), indexInParent);
+    // Listeners are told about the files that were read in only once the new
+    // item is in place, so that they can find it.
+    void Interpreter::insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index)
+    {
+        interpretationsInProgress++;
+
+        if (auto newChild = interpretInternal(tree, &parentItem))
+            parentItem.insertChild(std::move(newChild), index);
+
+        if (--interpretationsInProgress == 0)
+            notifyExternalSourcesLoaded();
     }
 
     void Interpreter::valueTreeChildRemoved(juce::ValueTree& parentTree,

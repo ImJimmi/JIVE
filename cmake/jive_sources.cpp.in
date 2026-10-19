@@ -1,4 +1,4 @@
-#include <jive_core/jive_core.h>
+#include <jive_core/files/jive_SourceRoot.h>
 
 #if @JIVE_SOURCES_BUNDLED_MACRO@
     #include "@JIVE_SOURCES_NAME@.h"

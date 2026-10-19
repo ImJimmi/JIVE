@@ -682,6 +682,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& styleFile()
+    {
+        static const juce::Identifier identifier{ "jive::style-file" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& text()
     {
         static const juce::Identifier identifier{ "text" };

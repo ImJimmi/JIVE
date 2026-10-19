@@ -77,6 +77,7 @@ namespace jive
              } },
             { classes.id, [this] {
                  getComponent()->getProperties().set(ids::classes(), classes.get());
+                 getComponent()->repaint();
              } },
             { cursor.id, [this] {
                  getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
@@ -281,6 +282,16 @@ namespace jive
                 getComponent()->setAccessible(accessible.getOr(true));
         }
 
+        // JUCE also reports changes that don't move the component, such as its
+        // window being shown, and a new sheet would restyle it for nothing.
+        if (getComponent()->getParentComponent() == styledParent
+            && &getComponent()->getLookAndFeel() == styledLookAndFeel)
+        {
+            return;
+        }
+
+        styledParent = getComponent()->getParentComponent();
+        styledLookAndFeel = &getComponent()->getLookAndFeel();
         setStyleSheet(StyleSheet::create(*getComponent(), state));
     }
 
@@ -339,6 +350,8 @@ public:
         testEnablement();
         testOpacity();
         testCursor();
+        testClass();
+        testParentHierarchy();
     }
 
 private:
@@ -994,6 +1007,59 @@ private:
             auto item = interpreter.interpret(state);
             expect(item->getComponent()->getMouseCursor() == juce::MouseCursor::WaitCursor);
         }
+    }
+
+    void testClass()
+    {
+        beginTest("class / changing it repaints the component, so styles for the new class show");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(".on",
+                              jive::Styles{}
+                                  .withBackground(juce::Colours::red));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <Component width="20" height="20" />
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        // A buffered component only repaints the areas that have been
+        // invalidated, so a snapshot shows whether a repaint was requested.
+        auto& child = *parent->getChildren()[0];
+        child.getComponent()->setBufferedToImage(true);
+        expect(parentComponent->createComponentSnapshot({ 20, 20 }).getPixelAt(10, 10) != juce::Colours::red);
+
+        child.state.setProperty("class", "on", nullptr);
+        expectEquals(parentComponent->createComponentSnapshot({ 20, 20 }).getPixelAt(10, 10), juce::Colours::red);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testParentHierarchy()
+    {
+        beginTest("parent hierarchy / a change that doesn't move the component, such as its window being shown, doesn't restyle it");
+
+        jive::Interpreter interpreter;
+        auto window = interpreter.interpret(jive::parseXML(R"(
+            <Window width="100" height="100">
+                <Spinner />
+            </Window>
+        )"));
+
+        // A slider recreates its buttons whenever it's restyled.
+        auto& spinner = *window->getChildren()[0]->getComponent();
+        const juce::Component::SafePointer<juce::Component> button{ spinner.getChildComponent(0) };
+        expect(button != nullptr);
+
+        window->getComponent()->getTopLevelComponent()->setVisible(true);
+        expect(button != nullptr);
     }
 };
 

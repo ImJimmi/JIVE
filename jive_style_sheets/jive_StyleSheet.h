@@ -29,6 +29,7 @@ namespace jive
 
         void clear();
         void stylePropertyChanged();
+        void watch(const SourceFile& file);
         void loadFile(const SourceFile& file);
         void updateLineSpacing();
         void addStylesFrom(Object& object);

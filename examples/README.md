@@ -17,7 +17,7 @@ Once the examples exist, rewrite this file as a user-facing index to them.
 | 02  | `02-layouts`           | App    | Flexbox, grid and absolute positioning                                     |
 | 03  | `03-style-sheets`      | App    | Every style-sheet rule, from simple to complex                             |
 | 04  | `04-transitions`       | App    | Every property that can be transitioned                                    |
-| 05  | `05-widgets`           | Plugin | Every widget type, customising their designs, handling their changes in C++ |
+| 05  | `05-widgets`           | Plugin | Every widget type, and custom widgets                                      |
 | 06  | `06-custom-components` | Plugin | Writing a `jive::View` for an existing third-party component               |
 
 Each example is one window or editor and should be readable in one sitting: a `Main.xml`, a `Styles.json`, a few files pulled in with `source="..."` only where that helps, and as little C++ as possible.
@@ -93,10 +93,10 @@ Widget-specific properties (`accent`, `thumb`, `track`) belong in 05.
   - `Image` and inline `<svg>`
 
   Check the interpreter and `ComponentFactory` for any element missing from this list.
-- Customising designs: put a default-styled instance next to a restyled one. Use the widget style properties (`background`, `foreground`, `border`, `border-radius`, `shadow`, `accent`, `thumb`, `track`, `fill`) and interaction states.
-- Handling changes in C++: show both approaches and when to use each.
-  1. **Plugin parameters.** Use `GuiItem::attachToParameter(param, &undoManager)`, backed by a `juce::AudioProcessorValueTreeState`. It works on `Slider`/`Knob`, `Button`/`Checkbox`, `ComboBox`, and `Text` (as a value readout).
-  2. **State that only the UI uses.** Use `jive::Event` (`on-click`, `on-change`) and `jive::Property<T>` on `value`, `toggled` and `selected`. Examples: a slider driving a progress bar, or a checkbox enabling a button.
+- The first page shows every widget doing a small, realistic job, such as a button with a click count beside it. Widgets that edit the same kind of value are linked, such as a toggle button and a checkbox switching one light. Restyling widgets is left to 03-style-sheets.
+- The second page shows custom widgets:
+  1. **A custom design.** `jive::LookAndFeel::addPainter()` draws every `Slider.segmented` with a C++ function. They stay Sliders, attached to plugin parameters with `GuiItem::attachToParameter()`, and the theme still picks their colours.
+  2. **A custom component.** An `XYPad` `juce::Component` is added to the interpreter's `ComponentFactory` so views can use `<XYPad>`. A decorator added with `Interpreter::addDecorator()` keeps its `x-value` and `y-value` attributes in sync and triggers `on-change`, and a `ComponentTypePredicates` predicate lets style sheets select it by name.
 - Plugin setup:
   - The XML's top-level element is `<Editor>`.
   - Interpret it with `interpreter.interpret(file, this)` and `dynamic_cast` the result to `juce::AudioProcessorEditor`; `gain-plugin/source/Processor.h` shows how.

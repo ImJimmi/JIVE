@@ -991,7 +991,20 @@ namespace jive
                 component->repaint();
         }
 
-        transitioningComponents.removeAllInstancesOf(nullptr);
+        // Painting usually takes a component off the list once its transitions
+        // have finished, but not every component resolves its own styles when
+        // it's painted, such as a spinner, whose buttons do the painting.
+        transitioningComponents.removeIf([this](const auto& component) {
+            const auto entry = std::find_if(std::begin(stylesCache),
+                                            std::end(stylesCache),
+                                            [&component](const auto& cacheEntry) {
+                                                return cacheEntry.component.getComponent() == component.getComponent();
+                                            });
+
+            return component == nullptr
+                || entry == std::end(stylesCache)
+                || !entry->styles.hasTransitionsInProgress();
+        });
     }
 } // namespace jive
 
@@ -1058,9 +1071,30 @@ public:
             expect(true);
         }
 
+        beginTest("vblank / stops repainting a component once its transitions finish, even if it never resolves its styles again");
+        {
+            juce::Component parent;
+            parent.setSize(100, 100);
+            jive::LookAndFeel lookAndFeel{ parent };
+
+            // A spinner is like this: its buttons paint, but it doesn't.
+            juce::TextButton child;
+            child.setBounds(0, 0, 50, 25);
+            parent.addAndMakeVisible(child);
+            juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(child));
+
+            lookAndFeel.simulateVBlank();
+            expectEquals(lookAndFeel.getNumTransitioningComponents(), 1);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            lookAndFeel.simulateVBlank();
+            expectEquals(lookAndFeel.getNumTransitioningComponents(), 0);
+        }
+
         testResolvedStylesAreReused();
         testComboBoxPopupFonts();
         testShadowShapes();
+        testValueDirections();
         testThemes();
     }
 
@@ -1428,16 +1462,109 @@ private:
         }
     }
 
+    void testValueDirections()
+    {
+        beginTest("value directions / vertical sliders have their minimum at the bottom");
+        {
+            juce::Component parent;
+            parent.setSize(100, 200);
+            jive::LookAndFeel lookAndFeel{ parent };
+            lookAndFeel.applyTheme(jive::Theme::juce);
+
+            juce::Slider slider{ juce::Slider::LinearVertical, juce::Slider::NoTextBox };
+            slider.setComponentID("slider");
+            slider.setBounds(0, 0, 30, 150);
+            parent.addAndMakeVisible(slider);
+            lookAndFeel.addStyles("#slider",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::blue)
+                                      .withTrack(juce::Colours::green)
+                                      .withThumb(juce::Colours::red));
+
+            slider.setValue(slider.getMinimum());
+            auto snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
+            expect(snapshot.getPixelAt(15, 138) == juce::Colours::red);
+            expect(snapshot.getPixelAt(15, 12) == juce::Colours::blue);
+
+            slider.setValue(slider.getMaximum());
+            snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
+            expect(snapshot.getPixelAt(15, 12) == juce::Colours::red);
+            expect(snapshot.getPixelAt(15, 75) == juce::Colours::green);
+        }
+
+        beginTest("value directions / bar sliders fill from their minimum");
+        {
+            juce::Component parent;
+            parent.setSize(200, 200);
+            jive::LookAndFeel lookAndFeel{ parent };
+            lookAndFeel.applyTheme(jive::Theme::juce);
+
+            juce::Slider slider{ juce::Slider::LinearBar, juce::Slider::NoTextBox };
+            slider.setComponentID("slider");
+            slider.setBounds(0, 0, 100, 20);
+            slider.setRange(0.0, 1.0);
+            slider.setValue(0.25);
+            parent.addAndMakeVisible(slider);
+            lookAndFeel.addStyles("#slider",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::blue)
+                                      .withTrack(juce::Colours::green));
+
+            auto snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
+            expect(snapshot.getPixelAt(10, 10) == juce::Colours::green);
+            expect(snapshot.getPixelAt(50, 10) == juce::Colours::blue);
+
+            slider.setSliderStyle(juce::Slider::LinearBarVertical);
+            slider.setBounds(0, 0, 20, 100);
+            snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
+            expect(snapshot.getPixelAt(10, 90) == juce::Colours::green);
+            expect(snapshot.getPixelAt(10, 50) == juce::Colours::blue);
+        }
+
+        beginTest("value directions / vertical progress bars fill from the bottom");
+        {
+            juce::Component parent;
+            parent.setSize(100, 200);
+            jive::LookAndFeel lookAndFeel{ parent };
+            lookAndFeel.applyTheme(jive::Theme::juce);
+
+            juce::ProgressBar progressBar{ progress, juce::ProgressBar::Style::linear };
+            progressBar.setComponentID("progress-bar");
+            progressBar.setPercentageDisplay(false);
+            progressBar.setBounds(0, 0, 20, 100);
+            parent.addAndMakeVisible(progressBar);
+            lookAndFeel.addStyles("#progress-bar",
+                                  jive::Styles{}
+                                      .withBackground(juce::Colours::blue)
+                                      .withTrack(juce::Colours::green));
+
+            const auto snapshot = progressBar.createComponentSnapshot(progressBar.getLocalBounds());
+            expect(snapshot.getPixelAt(10, 75) == juce::Colours::green);
+            expect(snapshot.getPixelAt(10, 25) == juce::Colours::blue);
+        }
+    }
+
     // Theme changes transition, so this settles them before reading the
     // background.
-    static auto settledBackground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
+    static auto settledStyles(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
     {
         juce::ignoreUnused(lookAndFeel.findMostApplicableStyles(component));
         jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
 
-        return lookAndFeel
-            .findMostApplicableStyles(component)
+        return lookAndFeel.findMostApplicableStyles(component);
+    }
+
+    static auto settledBackground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
+    {
+        return settledStyles(lookAndFeel, component)
             .find<jive::Fill>("background")
+            .value_or(jive::Fill{});
+    }
+
+    static auto settledForeground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
+    {
+        return settledStyles(lookAndFeel, component)
+            .find<jive::Fill>("foreground")
             .value_or(jive::Fill{});
     }
 
@@ -1486,13 +1613,15 @@ private:
                 juce::TextButton button;
                 juce::ToggleButton checkbox;
                 juce::Slider slider;
+                juce::Slider knob{ juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox };
                 juce::ComboBox comboBox;
                 parent.addAndMakeVisible(button);
                 parent.addAndMakeVisible(checkbox);
                 parent.addAndMakeVisible(slider);
+                parent.addAndMakeVisible(knob);
                 parent.addAndMakeVisible(comboBox);
 
-                for (const auto* component : std::initializer_list<const juce::Component*>{ &button, &checkbox, &slider, &comboBox })
+                for (const auto* component : std::initializer_list<const juce::Component*>{ &button, &checkbox, &slider, &knob, &comboBox })
                 {
                     const auto styles = lookAndFeel.findMostApplicableStyles(*component);
                     expect(styles.background.hasValue());
@@ -1500,9 +1629,59 @@ private:
                     expect(styles.fontFamily.hasValue());
                 }
 
-                expect(lookAndFeel.findMostApplicableStyles(slider).thumb.hasValue());
-                expect(lookAndFeel.findMostApplicableStyles(slider).track.hasValue());
+                for (const auto* component : std::initializer_list<const juce::Component*>{ &slider, &knob })
+                {
+                    expect(lookAndFeel.findMostApplicableStyles(*component).thumb.hasValue());
+                    expect(lookAndFeel.findMostApplicableStyles(*component).track.hasValue());
+                }
             }
+        }
+
+        beginTest("themes / every theme underlines hyperlinks in an accent colour that changes on hover and press");
+        {
+            for (const auto theme : { jive::Theme::steel, jive::Theme::material, jive::Theme::synthwave, jive::Theme::highContrast })
+            {
+                juce::Component parent;
+                jive::LookAndFeel lookAndFeel{ parent };
+                lookAndFeel.applyTheme(theme);
+
+                juce::HyperlinkButton hyperlink;
+                jive::TextComponent text;
+                parent.addAndMakeVisible(hyperlink);
+                hyperlink.addAndMakeVisible(text);
+
+                const auto styles = settledStyles(lookAndFeel, text);
+                expect(styles.fontStyleFlags.hasValue() && styles.fontStyleFlags.get().count(juce::Font::underlined) > 0);
+
+                const auto atRest = settledForeground(lookAndFeel, text);
+                expect(atRest != settledForeground(lookAndFeel, parent));
+
+                hyperlink.getProperties().set("jive::hover", true);
+                const auto hovered = settledForeground(lookAndFeel, text);
+                expect(hovered != atRest);
+
+                hyperlink.getProperties().set("jive::active", true);
+                const auto pressed = settledForeground(lookAndFeel, text);
+                expect(pressed != hovered);
+                expect(pressed != atRest);
+            }
+        }
+
+        beginTest("themes / synthwave's button text colour doesn't apply to checkboxes or hyperlinks");
+        {
+            juce::Component parent;
+            jive::LookAndFeel lookAndFeel{ parent };
+            lookAndFeel.applyTheme(jive::Theme::synthwave);
+
+            juce::ToggleButton checkbox;
+            juce::HyperlinkButton hyperlink;
+            jive::TextComponent text;
+            parent.addAndMakeVisible(checkbox);
+            parent.addAndMakeVisible(hyperlink);
+            hyperlink.addAndMakeVisible(text);
+
+            expect(settledForeground(lookAndFeel, checkbox) == jive::parseColour(jive::themes::synthwave::haze));
+            expect(settledForeground(lookAndFeel, text) == jive::parseColour(jive::themes::synthwave::neonCyan));
         }
 
         beginTest("themes / material is flat, with no borders or shadows");

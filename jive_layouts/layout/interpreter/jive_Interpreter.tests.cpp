@@ -669,6 +669,64 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
     },
 };
 
+static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
+    "jive",
+    "jive::Interpreter",
+    "External sources' items are in place by the time listeners are notified",
+    [](auto& test) {
+        // Listeners use the items as well as the tree, for example to attach
+        // them to plugin parameters.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-items-tests/");
+        cwd.deleteRecursively();
+
+        auto first = cwd.getChildFile("first.xml");
+        first.create();
+        first.replaceWithText(R"(<Component><Component id="inner"/></Component>)");
+
+        auto second = cwd.getChildFile("second.xml");
+        second.create();
+        second.replaceWithText(R"(<Component><Component id="inner"/></Component>)");
+
+        auto mainView = cwd.getChildFile("main.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component id="content" source="first.xml"/>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+
+        std::unique_ptr<jive::GuiItem> item;
+        juce::StringArray itemsWhenNotified;
+        interpreter.onExternalSourceLoaded = [&](const jive::SourceFile&) {
+            if (item == nullptr)
+                return;
+
+            auto* inner = jive::findItemWithID(*item, "inner");
+            const auto isInPlace = inner != nullptr && inner->state == jive::findElementWithID(item->state, "inner");
+            itemsWhenNotified.add(isInPlace ? "in place" : "missing");
+        };
+
+        item = interpreter.interpret(mainView);
+
+        jive::findElementWithID(item->state, "content").setProperty("source", "second.xml", nullptr);
+        test.expectEquals(itemsWhenNotified.joinIntoString(","),
+                          juce::String{ "in place" },
+                          "Pointing an element at a different source");
+
+        itemsWhenNotified.clear();
+        second.replaceWithText(R"(<Component><Component id="inner" name="updated"/></Component>)");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(itemsWhenNotified.joinIntoString(","),
+                          juce::String{ "in place" },
+                          "Changing the source file on disk");
+    },
+};
+
 [[nodiscard]] static juce::File createLocalisationTestDirectory()
 {
     const auto directory = juce::File::getSpecialLocation(juce::File::currentApplicationFile)

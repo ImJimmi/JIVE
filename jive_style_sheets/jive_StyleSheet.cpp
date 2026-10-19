@@ -22,6 +22,15 @@ namespace jive
         , lineSpacing{ state, ids::lineSpacing() }
         , sourceDirectories{ state, ids::sourceDirectories() }
     {
+        // Sheets are recreated whenever their component is re-parented, so a
+        // new sheet carries on watching the file a previous one loaded.
+        if (state.hasProperty(ids::styleFile()))
+        {
+            styleFile = SourceFile{ state[ids::styleFile()].toString() };
+            parsedFile = style.get();
+            watch(styleFile);
+        }
+
         style.onValueChange = [this] {
             stylePropertyChanged();
         };
@@ -131,6 +140,7 @@ namespace jive
         {
             fileObserver = nullptr;
             parsedFile = nullptr;
+            state.removeProperty(ids::styleFile(), nullptr);
         }
 
         if (!style.exists())
@@ -153,20 +163,24 @@ namespace jive
             if (const auto file = sourceDirectories.get()->find(style.toString(), findSourceFile(state));
                 file.exists())
             {
-                const auto fileOnDisk = file.getFileOnDisk();
-                fileObserver = fileOnDisk == juce::File{}
-                                 ? nullptr
-                                 : std::make_unique<FileObserver>(fileOnDisk);
-
-                if (fileObserver != nullptr)
-                {
-                    fileObserver->onFileModified = [this, file] {
-                        loadFile(file);
-                    };
-                }
-
+                watch(file);
                 loadFile(file);
             }
+        }
+    }
+
+    void StyleSheet::watch(const SourceFile& file)
+    {
+        const auto fileOnDisk = file.getFileOnDisk();
+        fileObserver = fileOnDisk == juce::File{}
+                         ? nullptr
+                         : std::make_unique<FileObserver>(fileOnDisk);
+
+        if (fileObserver != nullptr)
+        {
+            fileObserver->onFileModified = [this, file] {
+                loadFile(file);
+            };
         }
     }
 
@@ -179,6 +193,7 @@ namespace jive
         {
             styleFile = file;
             parsedFile = object;
+            state.setProperty(ids::styleFile(), file.getPath(), nullptr);
             style.set(object);
         }
     }
@@ -1168,6 +1183,33 @@ private:
 
             modify(file, R"({ "background": "yellow" })");
             expect(settledBackground(lookAndFeel, button) == juce::Colours::yellow);
+        }
+
+        beginTest("file-based styles / a style sheet recreated after the file has loaded keeps watching it");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            sheet = jive::StyleSheet::create(button, state);
+            modify(file, R"({ "background": "blue" })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+
+            sheet = jive::StyleSheet::create(button, state);
+            modify(file, R"({ "background": "yellow" })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::yellow);
+        }
+
+        beginTest("file-based styles / a style sheet recreated after the loaded object was replaced doesn't watch the file");
+        {
+            file.replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            state.setProperty("style", new jive::Object{ { "background", "blue" } }, nullptr);
+            sheet = jive::StyleSheet::create(button, state);
+            modify(file, R"({ "background": "yellow" })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
         }
 
         beginTest("file-based styles / replacing the loaded object stops watching the file");
