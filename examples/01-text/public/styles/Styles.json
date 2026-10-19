@@ -1,9 +1,4 @@
 {
-  "background": "#1E2125",
-  "foreground": "#E6E8EA",
-  "font-family": "Rubik",
-  "font-size": 14,
-
   "#title": {
     "font-family": "Rubik Mono One",
     "font-size": 40,

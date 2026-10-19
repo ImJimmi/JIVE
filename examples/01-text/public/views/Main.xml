@@ -5,11 +5,26 @@
     min-width="800"
     padding="25"
     resizable="true"
+    theme="steel"
     lang="public/locales/english.strings"
     style="public/styles/Styles.json"
 >
     <Component id="content" max-width="1280" align-self="center">
-        <Text id="title" margin="0 0 25 0" align-self="center">title</Text>
+        <Component display="grid" grid-template-columns="1fr auto 1fr" align-items="center" margin="0 0 25 0">
+            <Component />
+            <Text id="title">title</Text>
+            <Component flex-direction="row" justify-content="flex-end" align-items="center" gap="10">
+                <Label>theme</Label>
+
+                <ComboBox id="theme-combo-box">
+                    <Option>Steel</Option>
+                    <Option>Material</Option>
+                    <Option>Synthwave</Option>
+                    <Option>High-contrast</Option>
+                    <Option>JUCE</Option>
+                </ComboBox>
+            </Component>
+        </Component>
 
         <Text margin="0 0 5 0">introduction</Text>
         <Text margin="0 0 5 0">separate-sentence</Text>

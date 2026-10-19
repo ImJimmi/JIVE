@@ -1,42 +1,36 @@
 #pragma once
 
-#include <BinaryData.h>
 #include <jive_layouts/jive_layouts.h>
 
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-    #include <melatonin_inspector/melatonin_inspector.h>
-#endif
+#include <shared/Inspector.h>
+#include <shared/Presenter.h>
+#include <shared/Theme.h>
 
 namespace jive_examples::layouts
 {
-    class Presenter
+    class Presenter : public BasePresenter
     {
     public:
         Presenter()
-            : window{ interpreter.interpret(mainView) }
         {
+            window = interpreter.interpret(mainView);
             interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
                 if (file == mainView)
-                    bindTabs();
+                    bindWindow();
 
                 bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-                inspector->setRoot(*window->getComponent());
-#endif
+                inspector.inspect(*window->getComponent());
             };
-            bindTabs();
+            bindWindow();
             bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = std::make_unique<melatonin::Inspector>(*window->getComponent(), false);
-            inspector->setVisible(true);
-#endif
+            inspector.inspect(*window->getComponent());
         }
 
     private:
-        void bindTabs()
+        void bindWindow()
         {
+            theme = bindThemeComboBox(window->state);
+
             tabs.clear();
 
             for (const auto& [tab, view] : pages)
@@ -81,7 +75,7 @@ namespace jive_examples::layouts
             bindSlider("flex-basis-slider", "flex-basis-label", flexItem, "flex-basis", "{}px");
             bindSlider("order-slider", "order-label", flexItem, "order");
             bindComboBox("align-self-combo-box", flexItem, "align-self");
-            onValueChange("flex-item-combo-box", "selected", [this, flexItem](int) {
+            onValueChange(values, "flex-item-combo-box", "selected", [this, flexItem](int) {
                 showFlexItem(flexItem());
             });
         }
@@ -109,7 +103,7 @@ namespace jive_examples::layouts
             const auto gridItem = selectedItem("grid-item-combo-box", "grid-preview");
             bindSlider("column-span-slider", "column-span-label", gridItem, "grid-column", "auto / span {}");
             bindSlider("row-span-slider", "row-span-label", gridItem, "grid-row", "auto / span {}");
-            onValueChange("grid-item-combo-box", "selected", [this, gridItem](int) {
+            onValueChange(values, "grid-item-combo-box", "selected", [this, gridItem](int) {
                 showGridItem(gridItem());
             });
         }
@@ -148,16 +142,16 @@ namespace jive_examples::layouts
 
             // Shown before anything else is bound so the controls' initial
             // values don't overwrite the box's own.
-            onValueChange("absolute-item-combo-box", "selected", [this, absoluteItem](int) {
+            onValueChange(values, "absolute-item-combo-box", "selected", [this, absoluteItem](int) {
                 showAbsoluteItem(absoluteItem());
             });
-            onValueChange("anchor-combo-box", "selected", [this, absoluteItem](int selected) {
+            onValueChange(values, "anchor-combo-box", "selected", [this, absoluteItem](int selected) {
                 anchor(absoluteItem(), selected == 1);
             });
 
             for (const auto& length : lengths)
             {
-                onValueChange(length.id("-slider"), "value", [this, length, absoluteItem](int value) {
+                onValueChange(values, length.id("-slider"), "value", [this, length, absoluteItem](int value) {
                     auto item = absoluteItem();
                     const auto property = length.propertyOf(item);
                     item.setProperty(property, withUnit(value, isPercentage(item[property])), nullptr);
@@ -260,7 +254,7 @@ namespace jive_examples::layouts
                           std::function<juce::ValueTree()> target,
                           const juce::Identifier& property)
         {
-            onValueChange(comboBoxID, "selected", [this, comboBoxID, target, property](int selected) {
+            onValueChange(values, comboBoxID, "selected", [this, comboBoxID, target, property](int selected) {
                 const auto option = jive::findElementWithID(window->state, comboBoxID).getChild(selected);
                 target().setProperty(property, option["text"], nullptr);
             });
@@ -281,7 +275,7 @@ namespace jive_examples::layouts
                         const juce::Identifier& property,
                         const juce::String& format = "{}")
         {
-            onValueChange(sliderID, "value", [this, labelID, target, property, format](int value) {
+            onValueChange(values, sliderID, "value", [this, labelID, target, property, format](int value) {
                 const auto text = format.replace("{}", juce::String{ value });
                 target().setProperty(property, text, nullptr);
                 setProperty(labelID, "text", text);
@@ -292,41 +286,10 @@ namespace jive_examples::layouts
                          const juce::String& buttonID,
                          std::function<void()> callback)
         {
-            const auto button = jive::findElementWithID(window->state, buttonID);
-
-            if (!button.isValid())
-                return;
-
-            auto& toggled = *bindings.emplace_back(std::make_unique<jive::Property<bool>>(button, "toggled"));
-            toggled.onValueChange = [&toggled, callback] {
-                if (toggled.get())
+            onToggled(bindings, buttonID, [callback](bool toggled) {
+                if (toggled)
                     callback();
-            };
-
-            if (toggled.get())
-                callback();
-        }
-
-        void onValueChange(const juce::String& controlID,
-                           const juce::Identifier& property,
-                           std::function<void(int)> callback)
-        {
-            const auto control = jive::findElementWithID(window->state, controlID);
-
-            if (!control.isValid())
-                return;
-
-            auto& value = *values.emplace_back(std::make_unique<jive::Property<int>>(control, property));
-            value.onValueChange = [&value, callback] {
-                callback(value.get());
-            };
-
-            callback(value.get());
-        }
-
-        void setProperty(const juce::String& id, const juce::Identifier& property, const juce::var& value)
-        {
-            jive::findElementWithID(window->state, id).setProperty(property, value, nullptr);
+            });
         }
 
         [[nodiscard]] std::function<juce::ValueTree()> elementWithID(const juce::String& id) const
@@ -345,32 +308,6 @@ namespace jive_examples::layouts
             };
         }
 
-        [[nodiscard]] int indexOfOption(const juce::String& comboBoxID, const juce::var& text) const
-        {
-            const auto comboBox = jive::findElementWithID(window->state, comboBoxID);
-
-            for (auto i = 0; i < comboBox.getNumChildren(); i++)
-            {
-                if (comboBox.getChild(i)["text"] == text)
-                    return i;
-            }
-
-            return 0;
-        }
-
-        [[nodiscard]] static juce::Typeface::Ptr registerFont(const char* data, int size)
-        {
-            return juce::Typeface::createSystemTypefaceFor(data, static_cast<std::size_t>(size));
-        }
-
-        // Fonts can only be found by their family names while these are alive,
-        // so they're declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts{
-            registerFont(binary_data::rubik_ttf, binary_data::rubik_ttfSize),
-            registerFont(binary_data::rubikmonoone_ttf, binary_data::rubikmonoone_ttfSize),
-            registerFont(binary_data::sourcecodepro_ttf, binary_data::sourcecodepro_ttfSize),
-        };
-
         const jive::SourceFile mainView{ "public/views/Main.xml" };
         const std::array<std::pair<juce::String, juce::String>, 3> pages{ {
             { "flex-tab", "public/views/Flex.xml" },
@@ -384,14 +321,10 @@ namespace jive_examples::layouts
             { "height", {}, false },
         } };
 
-        jive::Interpreter interpreter;
-        std::unique_ptr<jive::GuiItem> window;
+        std::unique_ptr<jive::Property<int>> theme;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;
         std::vector<std::unique_ptr<jive::Property<bool>>> toggles;
         std::vector<std::unique_ptr<jive::Property<int>>> values;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-        std::unique_ptr<melatonin::Inspector> inspector;
-#endif
+        Inspector inspector;
     };
 } // namespace jive_examples::layouts

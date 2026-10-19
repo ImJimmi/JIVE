@@ -3,7 +3,7 @@ include_guard()
 function(jive_add_example TARGET)
     set(OPTIONS APP PLUGIN)
     set(ONE_VALUE_ARGS PRODUCT_NAME PLUGIN_CODE)
-    set(MULTI_VALUE_ARGS SOURCES RESOURCES)
+    set(MULTI_VALUE_ARGS SOURCES)
     cmake_parse_arguments(EXAMPLE "${OPTIONS}" "${ONE_VALUE_ARGS}" "${MULTI_VALUE_ARGS}" ${ARGN})
 
     if ("${EXAMPLE_APP}" STREQUAL "${EXAMPLE_PLUGIN}")
@@ -51,7 +51,8 @@ function(jive_add_example TARGET)
     )
 
     target_link_libraries(${TARGET}
-                          PRIVATE jive::compiler_and_linker_options
+                          PRIVATE examples-shared-lib
+                                  jive::compiler_and_linker_options
                                   jive::jive_layouts
                                   jive::jive_style_sheets
                                   juce::juce_recommended_config_flags
@@ -59,18 +60,9 @@ function(jive_add_example TARGET)
                                   juce::juce_recommended_warning_flags
     )
 
-    if (EXAMPLE_RESOURCES)
-        juce_add_binary_data(${TARGET}-resources
-                             NAMESPACE
-                             "binary_data"
-                             SOURCES
-                             ${EXAMPLE_RESOURCES}
-        )
-
-        target_link_libraries(${TARGET}
-                              PRIVATE ${TARGET}-resources
-        )
-    endif ()
+    jive_sources(${TARGET}
+                 SOURCES "public/*"
+    )
 
     if (JIVE_ENABLE_MELATONIN_INSPECTOR)
         add_melatonin_inspector(${TARGET})

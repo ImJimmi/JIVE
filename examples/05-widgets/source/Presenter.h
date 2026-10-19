@@ -3,12 +3,11 @@
 #include "SegmentedSlider.h"
 #include "XYPadItem.h"
 
-#include <BinaryData.h>
 #include <jive_layouts/jive_layouts.h>
 
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-    #include <melatonin_inspector/melatonin_inspector.h>
-#endif
+#include <shared/Fonts.h>
+#include <shared/Inspector.h>
+#include <shared/Theme.h>
 
 namespace jive_examples::widgets
 {
@@ -40,10 +39,7 @@ namespace jive_examples::widgets
                     bindEditor();
 
                 bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-                inspector->setRoot(*editor->getComponent());
-#endif
+                inspector.inspect(*editor->getComponent());
             };
         }
 
@@ -62,11 +58,7 @@ namespace jive_examples::widgets
             pluginEditor->addComponentListener(this);
             bindEditor();
             bindPage();
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = std::make_unique<melatonin::Inspector>(*editor->getComponent(), false);
-            inspector->setVisible(true);
-#endif
+            inspector.inspect(*editor->getComponent());
 
             return pluginEditor;
         }
@@ -77,9 +69,7 @@ namespace jive_examples::widgets
         // otherwise load a page into the half-deleted editor and rebind it.
         void componentBeingDeleted(juce::Component&) final
         {
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-            inspector = nullptr;
-#endif
+            inspector.close();
             theme = nullptr;
             tabs.clear();
             toggles.clear();
@@ -100,20 +90,7 @@ namespace jive_examples::widgets
                 });
             }
 
-            auto themes = jive::findElementWithID(editor->state, "theme-combo-box");
-            themes.setProperty("selected", 0, nullptr);
-            theme = std::make_unique<jive::Property<int>>(themes, "selected");
-            theme->onValueChange = [this, themes] {
-                if (theme->get() < 0)
-                {
-                    jassertfalse;
-                    return;
-                }
-
-                editor->state.setProperty("theme",
-                                          themes.getChild(theme->get())["text"].toString().toLowerCase(),
-                                          nullptr);
-            };
+            theme = bindThemeComboBox(editor->state);
         }
 
         void bindPage()
@@ -278,18 +255,8 @@ namespace jive_examples::widgets
             jive::findElementWithID(editor->state, id).setProperty(property, value, nullptr);
         }
 
-        [[nodiscard]] static juce::Typeface::Ptr registerFont(const char* data, int size)
-        {
-            return juce::Typeface::createSystemTypefaceFor(data, static_cast<std::size_t>(size));
-        }
-
-        // Fonts can only be found by their family names while these are alive,
-        // so they're declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts{
-            registerFont(binary_data::rubik_ttf, binary_data::rubik_ttfSize),
-            registerFont(binary_data::rubikmonoone_ttf, binary_data::rubikmonoone_ttfSize),
-            registerFont(binary_data::sourcecodepro_ttf, binary_data::sourcecodepro_ttfSize),
-        };
+        // Declared before anything that gets interpreted.
+        const std::array<juce::Typeface::Ptr, 3> fonts = registerFonts();
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
         const std::array<std::pair<juce::String, juce::String>, 2> pages{ {
@@ -319,9 +286,6 @@ namespace jive_examples::widgets
         std::vector<std::unique_ptr<jive::Property<int>>> values;
         std::vector<std::unique_ptr<jive::Event>> events;
         int clicks = 0;
-
-#if JIVE_ENABLE_MELATONIN_INSPECTOR
-        std::unique_ptr<melatonin::Inspector> inspector;
-#endif
+        Inspector inspector;
     };
 } // namespace jive_examples::widgets
