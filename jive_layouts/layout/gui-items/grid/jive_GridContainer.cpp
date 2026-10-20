@@ -1312,7 +1312,18 @@ private:
 
         container.state.getChild(0).setProperty("text", "hello world lorum ipsum dolor etc...", nullptr);
         expectEquals(boxModel.getContentBounds().getWidth(), static_cast<float>(state["width"]));
-        expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), std::ceil(font.getHeight() * 2.0f));
+
+        // Lines aren't always exactly the font's height apart (JUCE 7 adds
+        // leading between them), so the expected height comes from a layout.
+        const auto& wrappedText = *container.getChildren()[0]->getComponent();
+        juce::TextLayout wrappedLayout;
+        wrappedLayout.createLayout(dynamic_cast<jive::GuiItemDecorator*>(container.getChildren()[0])
+                                       ->toType<jive::Text>()
+                                       ->getTextComponent()
+                                       .getAttributedString(),
+                                   static_cast<float>(wrappedText.getWidth()));
+        expectEquals(wrappedLayout.getNumLines(), 2);
+        expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), std::ceil(wrappedLayout.getHeight()));
     }
 };
 

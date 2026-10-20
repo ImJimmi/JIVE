@@ -481,7 +481,7 @@ namespace jive
                 property = &fontExtraKerningFactor;
             else if (styleName == "line-spacing")
                 property = &lineSpacing;
-#if JUCE_MAJOR_VERSION
+#if JUCE_MAJOR_VERSION >= 8
             else if (styleName == "font-ascent-override")
                 property = &fontAscentOverride;
             else if (styleName == "font-descent-override")

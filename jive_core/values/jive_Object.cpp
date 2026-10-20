@@ -138,6 +138,12 @@ namespace jive
     }
 
     #if JUCE_VERSION < JIVE_JUCE_VERSION(8, 0, 2)
+    void Object::removeProperty(const juce::Identifier& propertyName)
+    {
+        if (DynamicObject::getProperties().remove(propertyName))
+            listeners.call(&Listener::propertyChanged, *this, propertyName);
+    }
+
     const juce::NamedValueSet& Object::getProperties() const
     {
         return dynamic_cast<juce::DynamicObject*>(const_cast<Object*>(this))->getProperties();

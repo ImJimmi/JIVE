@@ -9,7 +9,7 @@ namespace jive
     public:
         using Predicate = std::function<bool(const juce::Component&, const juce::String&)>;
 
-        JUCE_DECLARE_SINGLETON_INLINE(ComponentTypePredicates, false)
+        JUCE_DECLARE_SINGLETON(ComponentTypePredicates, false)
 
         ComponentTypePredicates();
         ~ComponentTypePredicates();

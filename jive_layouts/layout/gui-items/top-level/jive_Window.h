@@ -20,7 +20,9 @@ namespace jive
         void applyTheme();
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        LookAndFeel jiveLookAndFeel{ *getComponent() };
+        // Attached to the window itself, which outlives every component a
+        // reload swaps in, so that transitions keep being repainted.
+        LookAndFeel jiveLookAndFeel{ *this };
 
         PassiveProperty<bool> hasShadow;
         PassiveProperty<bool> isNative;

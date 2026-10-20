@@ -323,7 +323,11 @@ namespace juce
 
         static var toVar(const Image& image)
         {
+#if JUCE_MAJOR_VERSION >= 8
             return var{ image.getPixelData().get() };
+#else
+            return var{ image.getPixelData() };
+#endif
         }
     };
 

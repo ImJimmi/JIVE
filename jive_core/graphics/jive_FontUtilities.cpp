@@ -42,6 +42,8 @@ namespace jive
             },
 #else
             juce::Font::getDefaultSansSerifFontName(),
+            0.0f,
+            getDefaultFontStyle(),
 #endif
         }
             .withPointHeight(getDefaultFontSize());

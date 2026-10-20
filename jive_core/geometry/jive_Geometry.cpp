@@ -39,7 +39,7 @@ namespace jive
                                                     borderRadius.topRight + 10.0f));
 
         auto bounds = juce::Rectangle{
-            juce::GlyphArrangement::getStringWidthInt(font, group.getText()),
+            static_cast<int>(std::ceil(calculateStringWidth(group.getText(), font))),
             static_cast<int>(std::ceil(font.getHeight())),
         }
                           .toFloat();

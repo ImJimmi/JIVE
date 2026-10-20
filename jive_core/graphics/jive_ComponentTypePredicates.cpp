@@ -72,4 +72,6 @@ namespace jive
     {
         clearSingletonInstance();
     }
+
+    JUCE_IMPLEMENT_SINGLETON(ComponentTypePredicates)
 } // namespace jive

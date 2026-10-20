@@ -830,7 +830,16 @@ private:
             juce::TextLayout layout;
             layout.createLayout(attributedString, static_cast<float>(textComponent.getWidth()));
 
-            expectLessOrEqual(static_cast<int>(std::ceil(layout.getWidth())), textComponent.getWidth());
+            // JUCE 7 counts the space a line wraps on in the line's width, so
+            // each line's visible text is measured on its own.
+            for (auto i = 0; i < layout.getNumLines(); i++)
+            {
+                const auto range = layout.getLine(i).stringRange;
+                juce::TextLayout lineLayout;
+                lineLayout.createLayout(juce::AttributedString{ lorumIpsumSentence.substring(range.getStart(), range.getEnd()).trimEnd() },
+                                        static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+                expectLessOrEqual(static_cast<int>(std::ceil(lineLayout.getWidth())), textComponent.getWidth());
+            }
             expectEquals(textComponent.getHeight(), static_cast<int>(std::ceil(layout.getHeight())));
         }
     }

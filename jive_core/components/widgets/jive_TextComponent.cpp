@@ -351,7 +351,12 @@ private:
         jive::TextComponent text;
         text.setText("Wrapping text");
 
-        const auto lineHeight = static_cast<int>(std::ceil(juce::Font{ juce::FontOptions{} }.getHeight()));
+        const juce::Font defaultFont{
+    #if JUCE_MAJOR_VERSION >= 8
+            juce::FontOptions{},
+    #endif
+        };
+        const auto lineHeight = static_cast<int>(std::ceil(defaultFont.getHeight()));
         const auto secondLineTop = lineHeight + 2;
         const auto secondLineBottom = lineHeight * 2;
 

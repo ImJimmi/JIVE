@@ -35,6 +35,7 @@ namespace jive
 #else
         void setProperty(const juce::Identifier& propertyName,
                          const juce::var& newValue) override;
+        void removeProperty(const juce::Identifier& propertyName) override;
         const juce::NamedValueSet& getProperties() const;
 #endif
 
