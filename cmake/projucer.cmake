@@ -39,7 +39,7 @@ execute_process(
     COMMAND_ERROR_IS_FATAL ANY
 )
 
-function(add_projucer_target JUCER_FILE)
+function(add_projucer_target TARGET JUCER_FILE)
     if (NOT APPLE)
         message(WARNING "Projucer builds only currently implemented on macOS")
         return()
@@ -48,19 +48,16 @@ function(add_projucer_target JUCER_FILE)
     find_program(XCODEBUILD_COMMAND xcodebuild REQUIRED)
 
     get_filename_component(WORKING_DIRECTORY ${JUCER_FILE} DIRECTORY)
-    get_filename_component(FILENAME ${JUCER_FILE} NAME_WLE)
 
     execute_process(
         COMMAND ${PROJUCER_COMMAND} --resave ${JUCER_FILE}
         COMMAND_ERROR_IS_FATAL ANY
     )
 
-    add_custom_target(${FILENAME}_jucer ALL
+    add_custom_target(${TARGET} ALL
         COMMAND ${XCODEBUILD_COMMAND}
-            -project ${FILENAME}.xcodeproj
-            -scheme "${FILENAME} - App"
+            -alltargets
             -configuration Debug
-            -derivedDataPath xcode-derived
         WORKING_DIRECTORY ${WORKING_DIRECTORY}/Builds/MacOSX
         COMMENT "Building Xcode project"
     )

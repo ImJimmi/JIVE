@@ -69,12 +69,12 @@ namespace jive
 
     void ComboBoxComponent::updateCachedStyles()
     {
-        auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
+        auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
 
-        if (lookAndFeel == nullptr)
+        if (laf == nullptr)
             return;
 
-        const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+        const auto styles = laf->findMostApplicableStyles(*this);
         const auto newFont = getFont(*this, styles);
         const auto newIcon = styles.icon.getValueOr({});
         const auto newBorderWidth = getBorderWidth(*this, styles);

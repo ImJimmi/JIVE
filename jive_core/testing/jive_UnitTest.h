@@ -7,11 +7,11 @@ namespace jive
     class UnitTest : public juce::UnitTest
     {
     public:
-        UnitTest(const juce::String& category,
+        UnitTest(const juce::String& categoryName,
                  const juce::String& unitName,
                  const juce::String& testName,
                  std::function<void(UnitTest&)> test)
-            : juce::UnitTest{ unitName, category }
+            : juce::UnitTest{ unitName, categoryName }
             , runName{ testName }
             , run{ test }
         {

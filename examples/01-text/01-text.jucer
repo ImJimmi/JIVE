@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="XDVP0u" name="JIVE Text" projectType="guiapp" useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" version="2.0.0" companyName="JIVE" companyWebsite="https://github.com/ImJimmi/JIVE" includeBinaryInJuceHeader="0" binaryDataNamespace="shared_resources" headerPath="../../../shared" defines='JIVE_ENABLE_MELATONIN_INSPECTOR=0&#10;JUCE_DISABLE_JUCE_VERSION_PRINTING=1&#10;JUCE_APPLICATION_NAME="JIVE\ Text"&#10;JUCE_APPLICATION_VERSION="2.0.0"'>
+  <MAINGROUP id="nEdP2Y" name="JIVE Text">
+    <GROUP id="FfjcuG" name="public">
+      <GROUP id="nepBfJ" name="locales">
+        <FILE id="oOQHnj" name="english.strings" compile="0" resource="0" file="public/locales/english.strings"/>
+        <FILE id="dck99h" name="french.strings" compile="0" resource="0" file="public/locales/french.strings"/>
+        <FILE id="VVrDAr" name="german.strings" compile="0" resource="0" file="public/locales/german.strings"/>
+      </GROUP>
+      <GROUP id="XYnXRC" name="styles">
+        <FILE id="6TUfuZ" name="Styles.json" compile="0" resource="0" file="public/styles/Styles.json"/>
+      </GROUP>
+      <GROUP id="4YnfTL" name="views">
+        <FILE id="LdGnDn" name="Main.xml" compile="0" resource="0" file="public/views/Main.xml"/>
+      </GROUP>
+    </GROUP>
+    <GROUP id="D9uktK" name="source">
+      <FILE id="M8if7c" name="Presenter.h" compile="0" resource="0" file="source/Presenter.h"/>
+      <FILE id="xgmRfz" name="main.cpp" compile="1" resource="0" file="source/main.cpp"/>
+    </GROUP>
+    <GROUP id="S2maJU" name="shared">
+      <FILE id="z5IOGz" name="Application.h" compile="0" resource="0" file="../shared/shared/Application.h"/>
+      <FILE id="NiRkzz" name="Fonts.h" compile="0" resource="0" file="../shared/shared/Fonts.h"/>
+      <FILE id="nVPlsZ" name="Inspector.h" compile="0" resource="0" file="../shared/shared/Inspector.h"/>
+      <FILE id="EwDAD1" name="Presenter.h" compile="0" resource="0" file="../shared/shared/Presenter.h"/>
+      <FILE id="Cpnb2b" name="Theme.h" compile="0" resource="0" file="../shared/shared/Theme.h"/>
+    </GROUP>
+    <GROUP id="HmeUXO" name="resources">
+      <FILE id="RIJj3w" name="rubik-mono-one.ttf" compile="0" resource="1" file="../resources/rubik-mono-one.ttf"/>
+      <FILE id="ldhO62" name="rubik.ttf" compile="0" resource="1" file="../resources/rubik.ttf"/>
+      <FILE id="4OlDHX" name="source-code-pro.ttf" compile="0" resource="1" file="../resources/source-code-pro.ttf"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_USE_CURL="0"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraDefs="JIVE_SOURCE_ROOT=&quot;$(PROJECT_DIR)/../..&quot;">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" macOSDeploymentTarget="12.0"/>
+        <CONFIGURATION isDebug="0" name="Release" macOSDeploymentTarget="12.0"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="jive_core" path="../.."/>
+        <MODULEPATH id="jive_layouts" path="../.."/>
+        <MODULEPATH id="jive_style_sheets" path="../.."/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="jive_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_layouts" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="jive_style_sheets" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+</JUCERPROJECT>

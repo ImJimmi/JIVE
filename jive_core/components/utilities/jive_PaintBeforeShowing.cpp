@@ -4,8 +4,8 @@
 
 namespace jive
 {
-    PaintBeforeShowing::PaintBeforeShowing(juce::Component& component)
-        : juce::ComponentMovementWatcher{ &component }
+    PaintBeforeShowing::PaintBeforeShowing(juce::Component& componentToWatch)
+        : juce::ComponentMovementWatcher{ &componentToWatch }
     {
     }
 
@@ -36,12 +36,12 @@ namespace jive
     // JUCE notifies visibility listeners before it shows the native window.
     void PaintBeforeShowing::componentVisibilityChanged()
     {
-        auto* component = getComponent();
+        auto* watchedComponent = getComponent();
 
-        if (component == nullptr || !component->isShowing())
+        if (watchedComponent == nullptr || !watchedComponent->isShowing())
             return;
 
-        if (auto* peer = component->getPeer())
+        if (auto* peer = watchedComponent->getPeer())
         {
             // Painting asks for some components, such as shadows, which are
             // only added on the next frame. Painting off-screen and adding

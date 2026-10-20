@@ -1,3 +1,0 @@
-<Window style="styles.json" width="600" height="400" align-items="centre" justify-content="centre">
-    <Component source="heading.xml" align-items="centre" />
-</Window>

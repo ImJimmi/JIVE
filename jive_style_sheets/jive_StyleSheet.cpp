@@ -1701,7 +1701,7 @@ private:
             expect(background.has_value());
             const auto gradient = background->getJiveGradient();
             expect(gradient.has_value());
-            expectEquals((int) gradient->stops.size(), 3);
+            expectEquals((int)gradient->stops.size(), 3);
             expect(gradient->stops[0].colour == juce::Colours::red);
             expect(gradient->stops[1].colour == juce::Colours::lime);
             expect(gradient->stops[2].colour == juce::Colours::blue);
@@ -1732,7 +1732,7 @@ private:
             expect(background.has_value());
             const auto gradient = background->getJiveGradient();
             expect(gradient.has_value());
-            expectEquals((int) gradient->stops.size(), 2);
+            expectEquals((int)gradient->stops.size(), 2);
             expect(gradient->stops[0].colour == juce::Colours::lime);
             expect(gradient->stops[1].colour == juce::Colours::red);
         }

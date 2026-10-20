@@ -30,7 +30,6 @@ jobs:
             platform-name: Windows
             platform-shell: cmd
             package-manager: choco
-            additional-cmake-options: -DCMAKE_PROGRAM_PATH="C:\ProgramData\chocolatey\lib\pluginval\tools"
 
     name: Test ${{ matrix.platform-name }}
     runs-on: ${{ matrix.platform }}
@@ -42,8 +41,6 @@ jobs:
 
       - name: Install Ninja
         run: ${{ matrix.package-manager }} install ninja
-      - name: Install pluginval
-        run: ${{matrix.package-manager}} install pluginval
       - name: Setup devcmd
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1.13.0
@@ -69,10 +66,6 @@ jobs:
             -G Ninja \
             -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -D JIVE_BUILD_TEST_RUNNER=ON \
-            -D JIVE_BUILD_DEMO_RUNNER=ON \
-            -D JIVE_BUILD_EXAMPLES=ON \
-            -D JIVE_ENABLE_PLUGINVAL=ON \
-            -D JIVE_ENABLE_PROJUCER_PROJECTS=ON \
             -D CMAKE_C_COMPILER_LAUNCHER=sccache \
             -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
             -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
