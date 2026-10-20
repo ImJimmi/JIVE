@@ -17,7 +17,7 @@ namespace jive_examples::widgets
         const auto& slider = dynamic_cast<const juce::Slider&>(component);
         const auto range = slider.getNormalisableRange();
         const auto [low, high] = std::minmax({
-            range.convertTo0to1(juce::jlimit(range.start, range.end, 0.0)),
+            range.convertTo0to1(std::clamp(0.0, range.start, range.end)),
             range.convertTo0to1(slider.getValue()),
         });
         const auto bounds = slider
@@ -25,10 +25,10 @@ namespace jive_examples::widgets
                                 .getSliderLayout(const_cast<juce::Slider&>(slider))
                                 .sliderBounds.toFloat();
         const auto length = slider.isHorizontal() ? bounds.getWidth() : bounds.getHeight();
-        const auto numSegments = juce::jmax(1, static_cast<int>(length / segmentPitch));
+        const auto numSegments = std::max(1, static_cast<int>(length / segmentPitch));
         const auto segmentLength = length / static_cast<float>(numSegments);
 
-        for (auto i = 0; i < numSegments; i++)
+        for (auto i = 0; i < numSegments; ++i)
         {
             const auto offset = segmentLength * static_cast<float>(i);
             const auto segment = slider.isHorizontal()

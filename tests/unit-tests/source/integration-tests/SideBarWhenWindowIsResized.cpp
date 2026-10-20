@@ -9,7 +9,7 @@ struct SideBarWhenWindowIsResized : public juce::UnitTest
 
     void runTest() final
     {
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Window width="800" height="500">
                 <Component flex-direction="row" height="100%">
                     <Component id="side-bar" padding="15">
@@ -66,7 +66,7 @@ struct SideBarWhenWindowIsResized : public juce::UnitTest
         auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item).toType<jive::Window>();
         auto& sideBar = *item->getChildren()[0]->getChildren()[0];
 
-        const auto overlaps = [&sideBar]() {
+        const auto overlaps = [&sideBar] {
             auto previousBottom = 0;
 
             for (auto* child : sideBar.getChildren())
@@ -84,13 +84,13 @@ struct SideBarWhenWindowIsResized : public juce::UnitTest
         const auto idealWidth = sideBar.getComponent()->getWidth();
         auto everOverlapped = false;
 
-        for (auto width = window.getWidth(); width >= 1; width--)
+        for (auto width = window.getWidth(); width >= 1; --width)
         {
             window.setSize(width, windowHeight);
             everOverlapped |= overlaps();
         }
 
-        for (auto width = 1; width <= 1000; width++)
+        for (auto width = 1; width <= 1000; ++width)
         {
             window.setSize(width, windowHeight);
             everOverlapped |= overlaps();

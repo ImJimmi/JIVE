@@ -5,7 +5,7 @@
 namespace jive
 {
     ComboBox::Option::Option(juce::ValueTree sourceTree, int itemIndex, juce::ComboBox& box, const GuiItem& ownerItem)
-        : tree{ sourceTree }
+        : tree{ std::move(sourceTree) }
         , comboBox{ box }
         , owner{ ownerItem }
         , index{ itemIndex }
@@ -24,11 +24,11 @@ namespace jive
 
         comboBox.addItem(owner.translate(text), id);
 
-        text.onValueChange = [this]() {
+        text.onValueChange = [this] {
             updateText();
         };
 
-        selected.onValueChange = [this]() {
+        selected.onValueChange = [this] {
             if (selected)
             {
                 comboBox.setSelectedItemIndex(index);
@@ -47,7 +47,7 @@ namespace jive
             wasSelected = true;
         }
 
-        enabled.onValueChange = [this]() {
+        enabled.onValueChange = [this] {
             comboBox.setItemEnabled(id, enabled);
         };
         comboBox.setItemEnabled(id, enabled);
@@ -57,10 +57,10 @@ namespace jive
             standIn = std::make_unique<ComboBoxComponent::Item>(id);
             comboBoxComponent->getPopup().addChildComponent(*standIn);
 
-            componentID.onValueChange = [this]() {
+            componentID.onValueChange = [this] {
                 updateStandIn();
             };
-            classes.onValueChange = [this]() {
+            classes.onValueChange = [this] {
                 updateStandIn();
             };
             updateStandIn();
@@ -77,12 +77,12 @@ namespace jive
         comboBox.changeItemText(id, owner.translate(text));
     }
 
-    bool ComboBox::Option::handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property)
+    bool ComboBox::Option::handlePropertyChange(juce::ValueTree& changedTree, juce::Identifier property)
     {
         if (changedTree != tree)
             return false;
 
-        forwardPropertyChange(changedTree, property, text, enabled, selected, componentID, classes);
+        forwardPropertyChange(changedTree, std::move(property), text, enabled, selected, componentID, classes);
         return true;
     }
 
@@ -110,17 +110,17 @@ namespace jive
         if (!focusable.exists())
             focusable = true;
 
-        editable.onValueChange = [this]() {
+        editable.onValueChange = [this] {
             getComboBox().setEditableText(editable);
         };
         getComboBox().setEditableText(editable);
 
-        tooltip.onValueChange = [this]() {
+        tooltip.onValueChange = [this] {
             getComboBox().setTooltip(translate(tooltip));
         };
         getComboBox().setTooltip(translate(tooltip));
 
-        selected.onValueChange = [this]() {
+        selected.onValueChange = [this] {
             getComboBox().setSelectedItemIndex(selected);
 
             auto currentlySelectedOption = state.getChildWithProperty(ids::selected(), true);
@@ -371,6 +371,8 @@ namespace jive
     #include <jive_core/graphics/jive_FontUtilities.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
+    #include <utility>
+
 class ComboBoxTest : public juce::UnitTest
 {
 public:
@@ -434,7 +436,7 @@ private:
         beginTest("size / fits its longest option alongside its icon");
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(jive::parseXML(R"(
@@ -455,9 +457,9 @@ private:
         beginTest("size / grows to fit longer options");
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
-            auto tree = jive::parseXML(R"(
+            const auto tree = jive::parseXML(R"(
                 <Component width="400" height="200" align-items="flex-start">
                     <ComboBox>
                         <Option>One</Option>
@@ -484,7 +486,7 @@ private:
         beginTest("size / follows changes to its font");
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
             auto tree = jive::parseXML(R"(
                 <Component width="400" height="200" align-items="flex-start">
@@ -511,9 +513,9 @@ private:
         beginTest("size / leaves room for a custom icon");
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
-            auto tree = jive::parseXML(R"(
+            const auto tree = jive::parseXML(R"(
                 <Component width="400" height="200" align-items="flex-start">
                     <ComboBox>
                         <Option>Option</Option>
@@ -572,16 +574,16 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expect(!comboBox.isTextEditable());
 
             tree.setProperty("editable", true, nullptr);
             expect(comboBox.isTextEditable());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "ComboBox",
                 {
                     { "width", 222 },
@@ -591,9 +593,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expect(comboBox.isTextEditable());
         }
     }
@@ -621,7 +623,7 @@ private:
             expectEquals(comboBox.getTooltip(), juce::String{ "246" });
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "ComboBox",
                 {
                     { "width", 222 },
@@ -652,9 +654,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expectEquals(comboBox.getNumItems(), 0);
 
             tree.appendChild(juce::ValueTree{
@@ -701,7 +703,7 @@ private:
             expectEquals(comboBox.getSelectedId(), 0);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "ComboBox",
                 {
                     { "width", 222 },
@@ -726,9 +728,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expectEquals(comboBox.getNumItems(), 2);
             expectEquals(comboBox.getItemText(0), juce::String{ "One" });
             expectEquals(comboBox.getItemText(1), juce::String{ "Two" });
@@ -747,9 +749,9 @@ private:
                     <Option>Two</Option>
                 </ComboBox>
             )"));
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expectEquals(comboBox.getNumItems(), 2);
             expectEquals(comboBox.getItemText(0), juce::String{ "One" });
             expectEquals(comboBox.getItemText(1), juce::String{ "Two" });
@@ -772,7 +774,7 @@ private:
 
             auto foundSectionHeader = false;
 
-            if (auto* rootMenu = comboBox.getRootMenu())
+            if (const auto* rootMenu = comboBox.getRootMenu())
             {
                 for (juce::PopupMenu::MenuItemIterator iterator{ *rootMenu }; iterator.next();)
                 {
@@ -796,7 +798,7 @@ private:
                     <Option>Two</Option>
                 </ComboBox>
             )"));
-            auto& comboBox = dynamic_cast<const jive::ComboBoxComponent&>(getComboBox(*item));
+            const auto& comboBox = dynamic_cast<const jive::ComboBoxComponent&>(getComboBox(*item));
             expectEquals(comboBox.getPopup().getNumChildComponents(), 2);
             expect(comboBox.findItem(1) != nullptr && comboBox.findItem(2) != nullptr);
             expectEquals(comboBox.findItem(1)->getComponentID(), juce::String{ "first" });
@@ -817,7 +819,7 @@ private:
     {
         juce::StringArray headings;
 
-        if (auto* rootMenu = comboBox.getRootMenu())
+        if (const auto* rootMenu = comboBox.getRootMenu())
         {
             for (juce::PopupMenu::MenuItemIterator iterator{ *rootMenu }; iterator.next();)
             {
@@ -927,7 +929,7 @@ private:
             expect(!tree.getChild(4)["selected"]);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "ComboBox",
                 {
                     { "width", 222 },
@@ -941,9 +943,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                 .toType<jive::ComboBox>()
-                                 ->getComboBox();
+            const auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                       .toType<jive::ComboBox>()
+                                       ->getComboBox();
             expectEquals(comboBox.getSelectedItemIndex(), 1);
         }
     }
@@ -952,7 +954,7 @@ private:
     {
         beginTest("events");
 
-        juce::ValueTree tree{
+        const juce::ValueTree tree{
             "ComboBox",
             {
                 { "width", 222 },
@@ -980,7 +982,7 @@ private:
         auto& comboBox = dynamic_cast<jive::GuiItemDecorator&>(*item)
                              .toType<jive::ComboBox>()
                              ->getComboBox();
-        jive::Event onChange{ tree, "on-change" };
+        const jive::Event onChange{ tree, "on-change" };
         expectEquals(onChange.getAssumedTriggerCount(), 0);
 
         comboBox.setSelectedId(2, juce::sendNotificationSync);

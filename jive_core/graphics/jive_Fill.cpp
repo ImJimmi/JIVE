@@ -10,7 +10,7 @@
 
 namespace jive
 {
-    Fill::Fill(const juce::Colour& colour)
+    Fill::Fill(juce::Colour colour)
         : fill{ juce::FillType{ colour } }
     {
     }
@@ -59,7 +59,7 @@ namespace jive
         return std::nullopt;
     }
 
-    juce::FillType Fill::toJuceFillType(const juce::Rectangle<float>& bounds) const
+    juce::FillType Fill::toJuceFillType(juce::Rectangle<float> bounds) const
     {
         if (std::holds_alternative<juce::FillType>(fill))
             return std::get<juce::FillType>(fill);
@@ -67,7 +67,7 @@ namespace jive
         return juce::FillType{ std::get<Gradient>(fill).toJuceColourGradient(bounds) };
     }
 
-    Fill& Fill::operator=(const juce::Colour& colour)
+    Fill& Fill::operator=(juce::Colour colour)
     {
         fill = juce::FillType{ colour };
         return *this;
@@ -107,7 +107,7 @@ namespace jive
         return !(*this == other);
     }
 
-    bool Fill::operator==(const juce::Colour& colour) const
+    bool Fill::operator==(juce::Colour colour) const
     {
         return *this == juce::FillType{ colour };
     }
@@ -366,7 +366,7 @@ namespace jive
 
     juce::FillType getThumbFill(const juce::Slider& slider,
                                 const Styles& styles,
-                                const juce::Rectangle<float>& thumbBounds,
+                                juce::Rectangle<float> thumbBounds,
                                 const Fill& defaultFill)
     {
         return jive::findThumbFill(slider, styles, juce::Slider::thumbColourId)
@@ -566,7 +566,7 @@ namespace jive
                                      const juce::PopupMenu::Options& options,
                                      const Styles& styles,
                                      const InteractionState& interactionState,
-                                     const juce::Rectangle<float>& bounds,
+                                     juce::Rectangle<float> bounds,
                                      const Fill& defaultFill)
     {
         if (auto fill = styles.find<Fill>("background"); fill.has_value())
@@ -583,7 +583,7 @@ namespace jive
     juce::FillType getBorderFill(const juce::PopupMenu::Item&,
                                  const juce::PopupMenu::Options& options,
                                  const Styles& styles,
-                                 const juce::Rectangle<float>& bounds,
+                                 juce::Rectangle<float> bounds,
                                  const Fill& defaultFill)
     {
         if (auto fill = styles.find<Fill>("border"); fill.has_value())
@@ -602,7 +602,7 @@ namespace jive
                                      const juce::PopupMenu::Options& options,
                                      const Styles& styles,
                                      const InteractionState& interactionState,
-                                     const juce::Rectangle<float>& bounds,
+                                     juce::Rectangle<float> bounds,
                                      const Fill& defaultFill,
                                      const Fill& defaultSelectedFill)
     {

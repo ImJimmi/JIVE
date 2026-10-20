@@ -10,7 +10,7 @@ namespace jive
         , private juce::ValueTree::Listener
     {
     public:
-        ~StyleSheet();
+        ~StyleSheet() override;
 
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<StyleSheet>;
 

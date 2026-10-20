@@ -44,7 +44,9 @@ namespace jive
 
         std::unordered_map<juce::String, Transition> transitions;
         const Timer transitionsUpdater{
-            std::bind(&Transitions::updateTransitions, this),
+            [this](juce::Time) {
+                updateTransitions();
+            },
             juce::RelativeTime::seconds(1.0 / 60.0),
         };
     };
@@ -66,7 +68,7 @@ namespace juce
             return nullptr;
         }
 
-        static var toVar(jive::Transitions::ReferenceCountedPointer transitions)
+        static var toVar(const jive::Transitions::ReferenceCountedPointer& transitions)
         {
             return var{ transitions.get() };
         }

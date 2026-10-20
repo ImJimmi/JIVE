@@ -19,8 +19,5 @@ namespace juce
     public:
         static jive::Orientation fromVar(const var& v);
         static var toVar(const jive::Orientation& orientation);
-
-    private:
-        static const Array<var> options;
     };
 } // namespace juce

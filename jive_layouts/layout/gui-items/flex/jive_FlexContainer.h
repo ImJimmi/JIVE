@@ -13,7 +13,7 @@ namespace jive
 
         void layOutChildren() override;
 
-        operator juce::FlexBox();
+        explicit operator juce::FlexBox();
 
     protected:
         juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;

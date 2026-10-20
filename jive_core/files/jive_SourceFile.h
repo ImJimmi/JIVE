@@ -24,7 +24,7 @@ namespace jive
         [[nodiscard]] bool isEmbedded() const;
         [[nodiscard]] bool exists() const;
         [[nodiscard]] juce::String loadAsString() const;
-        [[nodiscard]] juce::MemoryBlock loadAsData() const;
+        [[nodiscard]] std::vector<std::byte> loadAsData() const;
 
         [[nodiscard]] bool operator==(const SourceFile& other) const;
         [[nodiscard]] bool operator!=(const SourceFile& other) const;
@@ -38,3 +38,15 @@ namespace jive
     // Returns the file the tree, or its closest ancestor, was parsed from.
     [[nodiscard]] SourceFile findSourceFile(const juce::ValueTree& tree);
 } // namespace jive
+
+namespace std
+{
+    template <>
+    struct hash<jive::SourceFile>
+    {
+        [[nodiscard]] std::size_t operator()(const jive::SourceFile& file) const noexcept
+        {
+            return std::hash<juce::String>{}(file.getPath());
+        }
+    };
+} // namespace std

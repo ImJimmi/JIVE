@@ -18,7 +18,7 @@ namespace jive::default_styles
                              juce::Colours::transparentBlack);
 
         {
-            juce::Graphics::ScopedSaveState sss{ g };
+            const juce::Graphics::ScopedSaveState sss{ g };
 
             const auto progress = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
             g.reduceClipRegion((slider.isHorizontal()
@@ -176,15 +176,15 @@ namespace jive::default_styles
                                 .getSliderLayout(*const_cast<juce::Slider*>(&slider))
                                 .sliderBounds.toFloat()
                                 .reduced(10);
-        const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        const auto radius = std::min(bounds.getWidth(), bounds.getHeight()) / 2.0f;
         const auto rotaryParams = slider.getRotaryParameters();
         const auto sliderPos = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
-        const auto toAngle = rotaryParams.startAngleRadians + sliderPos * (rotaryParams.endAngleRadians - rotaryParams.startAngleRadians);
+        const auto toAngle = rotaryParams.startAngleRadians + (sliderPos * (rotaryParams.endAngleRadians - rotaryParams.startAngleRadians));
         const auto thumbWidth = static_cast<float>(slider
                                                        .getLookAndFeel()
                                                        .getSliderThumbRadius(*const_cast<juce::Slider*>(&slider)));
         const auto trackWidth = thumbWidth * 0.6f;
-        const auto arcRadius = radius - trackWidth * 0.5f;
+        const auto arcRadius = radius - (trackWidth * 0.5f);
 
         juce::Path backgroundArc;
         backgroundArc.addCentredArc(bounds.getCentreX(),
@@ -222,9 +222,9 @@ namespace jive::default_styles
                          juce::PathStrokeType::rounded,
                      });
 
-        juce::Point<float> thumbPoint{
-            bounds.getCentreX() + arcRadius * std::cos(toAngle - juce::MathConstants<float>::halfPi),
-            bounds.getCentreY() + arcRadius * std::sin(toAngle - juce::MathConstants<float>::halfPi),
+        const juce::Point<float> thumbPoint{
+            bounds.getCentreX() + (arcRadius * std::cos(toAngle - juce::MathConstants<float>::halfPi)),
+            bounds.getCentreY() + (arcRadius * std::sin(toAngle - juce::MathConstants<float>::halfPi)),
         };
 
         const auto thumb = juce::Rectangle{ thumbWidth, thumbWidth }.withCentre(thumbPoint);

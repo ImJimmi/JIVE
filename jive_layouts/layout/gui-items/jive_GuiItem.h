@@ -4,8 +4,11 @@
 
 #include <jive_style_sheets/jive_style_sheets.h>
 
+#include <utility>
+
 #if JIVE_IS_PLUGIN_PROJECT
     #include <juce_audio_processors/juce_audio_processors.h>
+
 #endif
 
 namespace jive
@@ -20,15 +23,15 @@ namespace jive
                 const juce::ValueTree& sourceState,
                 GuiItem* parent = nullptr);
         GuiItem(std::unique_ptr<juce::Component> component,
-                View::ReferenceCountedPointer sourceView,
+                const View::ReferenceCountedPointer& sourceView,
                 GuiItem* parent = nullptr);
 
         GuiItem(const GuiItem& other);
         virtual ~GuiItem();
 
-        [[nodiscard]] const std::shared_ptr<const juce::Component> getComponent() const;
+        [[nodiscard]] std::shared_ptr<const juce::Component> getComponent() const;
         [[nodiscard]] std::shared_ptr<juce::Component> getComponent();
-        [[nodiscard]] const View::ReferenceCountedPointer getView() const;
+        [[nodiscard]] View::ReferenceCountedPointer getView() const;
         [[nodiscard]] View::ReferenceCountedPointer getView();
 
         virtual void insertChild(std::unique_ptr<GuiItem> child, int index);
@@ -48,7 +51,7 @@ namespace jive
 
         void setStyleSheet(StyleSheet::ReferenceCountedPointer sheet)
         {
-            styleSheet = sheet;
+            styleSheet = std::move(sheet);
         }
 
         // Returns the strings of this item or of its closest ancestor with a
@@ -77,7 +80,7 @@ namespace jive
 
         GuiItem(std::shared_ptr<juce::Component> component,
                 GuiItem* parent,
-                View::ReferenceCountedPointer sourceView);
+                const View::ReferenceCountedPointer& sourceView);
 
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
         void notifyLocalisedStringsChanged();
@@ -100,5 +103,5 @@ namespace jive
     [[nodiscard]] BoxModel& boxModel(GuiItem& decoratedItem);
     [[nodiscard]] const BoxModel& boxModel(const GuiItem& decoratedItem);
 
-    [[nodiscard]] GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id);
+    [[nodiscard]] GuiItem* findItemWithID(GuiItem& root, juce::Identifier id);
 } // namespace jive

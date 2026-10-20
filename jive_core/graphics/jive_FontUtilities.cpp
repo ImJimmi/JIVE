@@ -117,7 +117,7 @@ namespace jive
         const auto fontSize = tokens[numTokens - 2].getFloatValue();
         int styleFlags = juce::Font::plain;
 
-        for (auto i = 0; i < numTokens - 2; i++)
+        for (auto i = 0; i < numTokens - 2; ++i)
             styleFlags += namedFontStyles.find(tokens[i])->second;
 
         return makeFont(fontFamily, 0.0f, styleFlags)
@@ -230,7 +230,7 @@ namespace jive
 
     juce::Font getFont(const juce::Component& component,
                        const Styles& styles,
-                       juce::Font defaultFont)
+                       const juce::Font& defaultFont)
     {
         return findFont(component, styles, defaultFont);
     }

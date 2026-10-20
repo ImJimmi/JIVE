@@ -9,12 +9,12 @@ namespace jive
         static constexpr auto relativeControlPointOffsetForNearPerfectEllipse = 0.552f;
 
         borderWidth.subtractFrom(bounds);
-        const auto maxRadius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        const auto maxRadius = std::min(bounds.getWidth(), bounds.getHeight()) / 2.0f;
 
-        radii.topLeft = juce::jlimit(0.0f, maxRadius, radii.topLeft - juce::jmax(borderWidth.getTop(), borderWidth.getLeft()));
-        radii.topRight = juce::jlimit(0.0f, maxRadius, radii.topRight - juce::jmax(borderWidth.getTop(), borderWidth.getRight()));
-        radii.bottomRight = juce::jlimit(0.0f, maxRadius, radii.bottomRight - juce::jmax(borderWidth.getBottom(), borderWidth.getRight()));
-        radii.bottomLeft = juce::jlimit(0.0f, maxRadius, radii.bottomLeft - juce::jmax(borderWidth.getBottom(), borderWidth.getLeft()));
+        radii.topLeft = std::clamp(radii.topLeft - std::max(borderWidth.getTop(), borderWidth.getLeft()), 0.0f, maxRadius);
+        radii.topRight = std::clamp(radii.topRight - std::max(borderWidth.getTop(), borderWidth.getRight()), 0.0f, maxRadius);
+        radii.bottomRight = std::clamp(radii.bottomRight - std::max(borderWidth.getBottom(), borderWidth.getRight()), 0.0f, maxRadius);
+        radii.bottomLeft = std::clamp(radii.bottomLeft - std::max(borderWidth.getBottom(), borderWidth.getLeft()), 0.0f, maxRadius);
 
         CubicBezier topLeft;
         topLeft.start = bounds.getTopLeft().translated(0.0f, radii.topLeft);

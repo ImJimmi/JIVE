@@ -16,7 +16,7 @@ namespace jive
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , border{ state, ids::borderWidth() }
     {
-        border.onValueChange = [this]() {
+        border.onValueChange = [this] {
             getLabel().setBorderSize(toNearestInt(border));
         };
         getLabel().setBorderSize(toNearestInt(border));
@@ -107,19 +107,19 @@ private:
             },
         };
         auto item = interpreter.interpret(tree);
-        auto& label = getLabel(*item);
+        const auto& label = getLabel(*item);
 
-        expect(label.getBorderSize().getTop() == 0);
-        expect(label.getBorderSize().getRight() == 0);
-        expect(label.getBorderSize().getBottom() == 0);
-        expect(label.getBorderSize().getLeft() == 0);
+        expectEquals(label.getBorderSize().getTop(), 0);
+        expectEquals(label.getBorderSize().getRight(), 0);
+        expectEquals(label.getBorderSize().getBottom(), 0);
+        expectEquals(label.getBorderSize().getLeft(), 0);
 
         tree.setProperty("border-width", "5 10 20 40", nullptr);
 
-        expect(label.getBorderSize().getTop() == 5);
-        expect(label.getBorderSize().getRight() == 10);
-        expect(label.getBorderSize().getBottom() == 20);
-        expect(label.getBorderSize().getLeft() == 40);
+        expectEquals(label.getBorderSize().getTop(), 5);
+        expectEquals(label.getBorderSize().getRight(), 10);
+        expectEquals(label.getBorderSize().getBottom(), 20);
+        expectEquals(label.getBorderSize().getLeft(), 40);
     }
 };
 

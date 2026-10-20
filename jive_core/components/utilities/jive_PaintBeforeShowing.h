@@ -18,6 +18,6 @@ namespace jive
         void componentPeerChanged() final;
         void componentVisibilityChanged() final;
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PaintBeforeShowing)
+        JUCE_LEAK_DETECTOR(PaintBeforeShowing)
     };
 } // namespace jive

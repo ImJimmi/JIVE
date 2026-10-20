@@ -6,7 +6,7 @@
 namespace jive
 {
     juce::ValueTree find(const juce::ValueTree& root,
-                         std::function<bool(const juce::ValueTree&)> predicate)
+                         const std::function<bool(const juce::ValueTree&)>& predicate)
     {
         if (predicate == nullptr)
             return {};
@@ -20,7 +20,7 @@ namespace jive
                 return child;
         }
 
-        for (auto child : root)
+        for (const auto child : root)
         {
             if (auto result = find(child, predicate);
                 result != juce::ValueTree{})
@@ -33,7 +33,7 @@ namespace jive
     }
 
     std::vector<juce::ValueTree> findAll(const juce::ValueTree& root,
-                                         std::function<bool(const juce::ValueTree&)> predicate)
+                                         const std::function<bool(const juce::ValueTree&)>& predicate)
     {
         if (predicate == nullptr)
             return {};
@@ -43,7 +43,7 @@ namespace jive
         if (predicate(root))
             result.emplace_back(root);
 
-        for (auto child : root)
+        for (const auto child : root)
         {
             auto others = findAll(child, predicate);
             result.insert(std::end(result), std::begin(others), std::end(others));
@@ -53,7 +53,7 @@ namespace jive
     }
 
     juce::ValueTree findElementWithID(const juce::ValueTree& root,
-                                      const juce::Identifier& id)
+                                      juce::Identifier id)
     {
         return find(root,
                     [id](const auto& element) {
@@ -83,7 +83,7 @@ namespace jive
         for (const auto& root : roots)
         {
             auto others = findAll(root, [&text](const auto& tree) {
-                auto child = tree.getChildWithName(ids::textType());
+                const auto child = tree.getChildWithName(ids::textType());
                 return child.isValid() && child[ids::text()].toString() == text;
             });
             result.insert(std::end(result), std::begin(others), std::end(others));
@@ -115,7 +115,7 @@ private:
     {
         beginTest("jive::find()");
 
-        juce::ValueTree root{
+        const juce::ValueTree root{
             "Root",
             {},
             {
@@ -165,7 +165,7 @@ private:
     {
         beginTest("jive::findElementWithID()");
 
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Foo",
             {
                 { "id", "foo" },

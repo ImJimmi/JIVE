@@ -31,7 +31,7 @@ namespace jive::default_styles
             g.drawFittedText(group.getText(),
                              titleBounds.toNearestInt(),
                              juce::Justification::centred,
-                             juce::jmax(1, static_cast<int>(titleBounds.getHeight() / font.getHeight())),
+                             std::max(1, static_cast<int>(titleBounds.getHeight() / font.getHeight())),
                              2.0f / 3.0f);
 
             g.excludeClipRegion(titleBounds.expanded(5.0f).toNearestInt());

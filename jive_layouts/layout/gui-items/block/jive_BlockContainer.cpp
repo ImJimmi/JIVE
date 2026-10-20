@@ -18,9 +18,9 @@ namespace jive
         JIVE_TRACE();
         GuiItemDecorator::layOutChildren();
 
-        for (auto child : getChildren())
+        for (auto* child : getChildren())
         {
-            auto& blockItem = *dynamic_cast<GuiItemDecorator&>(*child).toType<BlockItem>();
+            const auto& blockItem = *dynamic_cast<GuiItemDecorator&>(*child).toType<BlockItem>();
             child->getComponent()->setBounds(blockItem.calculateBounds());
         }
     }

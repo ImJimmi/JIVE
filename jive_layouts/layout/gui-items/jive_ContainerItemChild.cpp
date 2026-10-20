@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include "jive_ContainerItem.h"
 
 #include "jive_CommonGuiItem.h"
@@ -60,7 +62,7 @@ namespace jive
                                                     juce::Rectangle<float> parentContentBounds,
                                                     LayoutStrategy strategy) const
         {
-            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<std::uint16_t>::max();
 
             if (!width.isAuto())
             {
@@ -110,7 +112,7 @@ namespace jive
                                                       juce::Rectangle<float> parentContentBounds,
                                                       LayoutStrategy strategy) const
         {
-            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<std::uint16_t>::max();
 
             if (!width.isAuto())
             {
@@ -143,7 +145,7 @@ namespace jive
                 {
                     juce::var args[] = {
                         strategy == LayoutStrategy::dummy
-                            ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
+                            ? std::min(idealWidth.get(), parentContentBounds.getWidth())
                             : juce::jmax(item.width, item.minWidth),
                     };
                     const auto idealHeightAbsolute = static_cast<float>(calculateHeight({ property, args, 1 }));

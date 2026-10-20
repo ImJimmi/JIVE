@@ -14,10 +14,10 @@ namespace jive
         if (!focusable.exists())
             focusable = true;
 
-        value.onValueChange = [this]() {
-            getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
+        value.onValueChange = [this] {
+            getProgressBar().setValue(std::clamp(value.get(), 0.0, 1.0));
         };
-        getProgressBar().setValue(juce::jlimit(0.0, 1.0, value.get()));
+        getProgressBar().setValue(std::clamp(value.get(), 0.0, 1.0));
 
         getProgressBar().setPercentageDisplay(false);
 
@@ -93,7 +93,7 @@ private:
                 },
             };
             auto item = interpreter.interpret(tree);
-            auto& bar = getProgressBar(*item);
+            const auto& bar = getProgressBar(*item);
             expectEquals(bar.getValue(), 0.0);
 
             tree.setProperty("value", 0.7481, nullptr);
@@ -106,7 +106,7 @@ private:
             expectEquals(bar.getValue(), 1.0);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "ProgressBar",
                 {
                     { "width", 222 },
@@ -115,7 +115,7 @@ private:
                 },
             };
             auto item = interpreter.interpret(tree);
-            auto& bar = getProgressBar(*item);
+            const auto& bar = getProgressBar(*item);
             expectEquals(bar.getValue(), 0.463);
         }
     }
@@ -124,7 +124,7 @@ private:
     {
         beginTest("default size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 999 },

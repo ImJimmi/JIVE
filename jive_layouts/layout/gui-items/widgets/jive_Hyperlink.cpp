@@ -6,7 +6,7 @@ namespace jive
         : Button(std::move(itemToDecorate))
         , url{ state, ids::url() }
     {
-        url.onValueChange = [this]() {
+        url.onValueChange = [this] {
             getHyperlink().setURL(url);
         };
         getHyperlink().setURL(url);
@@ -88,14 +88,14 @@ private:
                 },
             };
             auto item = interpreter.interpret(tree);
-            auto& hyperlink = getLink(*item);
+            const auto& hyperlink = getLink(*item);
             expect(hyperlink.getURL().isEmpty());
 
             tree.setProperty("url", "example.com", nullptr);
             expect(hyperlink.getURL() == juce::URL{ "example.com" });
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Hyperlink",
                 {
                     { "width", 222 },
@@ -104,7 +104,7 @@ private:
                 },
             };
             auto item = interpreter.interpret(tree);
-            auto& hyperlink = getLink(*item);
+            const auto& hyperlink = getLink(*item);
             expect(hyperlink.getURL() == juce::URL{ "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" });
         }
     }

@@ -8,8 +8,8 @@ namespace jive
     {
     public:
         StyleSelector() = delete;
-        StyleSelector(const juce::String& selector, juce::Component* root = nullptr);
-        StyleSelector(const char* selector, juce::Component* root = nullptr);
+        StyleSelector(const juce::String& selector, juce::Component* root = nullptr); // NOLINT
+        StyleSelector(const char* selector, juce::Component* root = nullptr);         // NOLINT
         StyleSelector(const StyleSelector& other) = default;
         StyleSelector(StyleSelector&& other) = default;
         StyleSelector& operator=(const StyleSelector& other) = default;

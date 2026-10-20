@@ -26,7 +26,7 @@ public:
         auto elapsed = 0.0;
 
         {
-            juce::ScopedTimeMeasurement timer{ elapsed };
+            const juce::ScopedTimeMeasurement timer{ elapsed };
             runTestsInCategory("jive");
         }
 
@@ -75,9 +75,9 @@ private:
     {
         auto numFailures = 0;
 
-        for (auto i = 0; i < getNumResults(); i++)
+        for (auto i = 0; i < getNumResults(); ++i)
         {
-            if (auto* result = getResult(i))
+            if (const auto* result = getResult(i))
                 numFailures += result->failures;
         }
 

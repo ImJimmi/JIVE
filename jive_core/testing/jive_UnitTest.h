@@ -2,6 +2,8 @@
 
 #include <juce_core/juce_core.h>
 
+#include <utility>
+
 namespace jive
 {
     class UnitTest : public juce::UnitTest
@@ -13,7 +15,7 @@ namespace jive
                  std::function<void(UnitTest&)> test)
             : juce::UnitTest{ unitName, categoryName }
             , runName{ testName }
-            , run{ test }
+            , run{ std::move(test) }
         {
         }
 

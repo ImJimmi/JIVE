@@ -4,6 +4,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <cstdint>
+
 namespace juce
 {
     template <typename T>
@@ -27,21 +29,21 @@ namespace juce
         {
             if (v == "centred-left")
                 return Justification::centredLeft;
-            else if (v == "top-left")
+            if (v == "top-left")
                 return Justification::topLeft;
-            else if (v == "centred-top")
+            if (v == "centred-top")
                 return Justification::centredTop;
-            else if (v == "top-right")
+            if (v == "top-right")
                 return Justification::topRight;
-            else if (v == "centred-right")
+            if (v == "centred-right")
                 return Justification::centredRight;
-            else if (v == "bottom-right")
+            if (v == "bottom-right")
                 return Justification::bottomRight;
-            else if (v == "centred-bottom")
+            if (v == "centred-bottom")
                 return Justification::centredBottom;
-            else if (v == "bottom-left")
+            if (v == "bottom-left")
                 return Justification::bottomLeft;
-            else if (v == "centred")
+            if (v == "centred")
                 return Justification::centred;
 
             return Justification::centred;
@@ -51,21 +53,21 @@ namespace juce
         {
             if (justification == Justification::centredLeft)
                 return "centred-left";
-            else if (justification == Justification::topLeft)
+            if (justification == Justification::topLeft)
                 return "top-left";
-            else if (justification == Justification::centredTop)
+            if (justification == Justification::centredTop)
                 return "centred-top";
-            else if (justification == Justification::topRight)
+            if (justification == Justification::topRight)
                 return "top-right";
-            else if (justification == Justification::centredRight)
+            if (justification == Justification::centredRight)
                 return "centred-right";
-            else if (justification == Justification::bottomRight)
+            if (justification == Justification::bottomRight)
                 return "bottom-right";
-            else if (justification == Justification::centredBottom)
+            if (justification == Justification::centredBottom)
                 return "centred-bottom";
-            else if (justification == Justification::bottomLeft)
+            if (justification == Justification::bottomLeft)
                 return "bottom-left";
-            else if (justification == Justification::centred)
+            if (justification == Justification::centred)
                 return "centred";
 
             return {};
@@ -179,7 +181,7 @@ namespace juce
             "up-left",
             "up-right",
             "down-left",
-            "down-right"
+            "down-right",
         };
     };
 
@@ -190,7 +192,7 @@ namespace juce
         {
             if (v.isArray())
             {
-                auto& varArray = *v.getArray();
+                const auto& varArray = *v.getArray();
                 Array<T> result;
 
                 for (const auto& value : varArray)
@@ -241,7 +243,7 @@ namespace juce
         {
             if (v.isArray())
             {
-                auto& varArray = *v.getArray();
+                const auto& varArray = *v.getArray();
                 StringArray result;
 
                 for (const auto& value : varArray)
@@ -299,11 +301,11 @@ namespace juce
         {
             StringArray tokens;
 
-            if (flags & DocumentWindow::closeButton)
+            if ((flags & DocumentWindow::closeButton) != 0)
                 tokens.add("close");
-            if (flags & DocumentWindow::minimiseButton)
+            if ((flags & DocumentWindow::minimiseButton) != 0)
                 tokens.add("minimise");
-            if (flags & DocumentWindow::maximiseButton)
+            if ((flags & DocumentWindow::maximiseButton) != 0)
                 tokens.add("maximise");
 
             return tokens.joinIntoString(" ");
@@ -345,11 +347,11 @@ namespace juce
 
         static var toVar(const RectanglePlacement& placement)
         {
-            auto stringFlagPair = std::find_if(std::begin(map),
-                                               std::end(map),
-                                               [&placement](const auto& pair) {
-                                                   return placement.testFlags(pair.second);
-                                               });
+            const auto stringFlagPair = std::find_if(std::begin(map),
+                                                     std::end(map),
+                                                     [&placement](const auto& pair) {
+                                                         return placement.testFlags(pair.second);
+                                                     });
             jassert(stringFlagPair != std::end(map));
 
             return stringFlagPair->first;
@@ -382,12 +384,12 @@ namespace juce
                 return jive::parseColour(v.toString());
 
             if (v.isInt() || v.isInt64())
-                return Colour{ static_cast<uint32>(static_cast<int64>(v)) };
+                return Colour{ static_cast<std::uint32_t>(static_cast<std::int64_t>(v)) };
 
             return Colour{};
         }
 
-        static var toVar(const Colour& colour)
+        static var toVar(Colour colour)
         {
             return colour.toString();
         }
@@ -418,7 +420,7 @@ namespace juce
             }
         }
 
-        static var toVar(const Point<Arithmetic>& point)
+        static var toVar(Point<Arithmetic> point)
         {
             return point.toString();
         }
@@ -440,7 +442,7 @@ namespace juce
             };
         }
 
-        static var toVar(const Rectangle<Arithmetic>& rectangle)
+        static var toVar(Rectangle<Arithmetic> rectangle)
         {
             return rectangle.toString();
         }
@@ -527,11 +529,11 @@ namespace juce
         {
             juce::StringArray result;
 
-            if (flags & juce::Font::italic)
+            if ((flags & juce::Font::italic) != 0)
                 result.add("italic");
-            if (flags & juce::Font::bold)
+            if ((flags & juce::Font::bold) != 0)
                 result.add("bold");
-            if (flags & juce::Font::underlined)
+            if ((flags & juce::Font::underlined) != 0)
                 result.add("underlined");
 
             if (result.isEmpty())

@@ -14,7 +14,7 @@ namespace jive
 
     [[nodiscard]] juce::Font getFont(const juce::Component& component,
                                      const Styles& styles,
-                                     juce::Font defaultFont = parseFont(""));
+                                     const juce::Font& defaultFont = parseFont(""));
     [[nodiscard]] juce::Font getFont(const juce::Label& label,
                                      const Styles& styles);
     [[nodiscard]] juce::Font getFont(const juce::PopupMenu::Item& item,

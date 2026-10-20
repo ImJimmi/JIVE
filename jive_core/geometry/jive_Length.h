@@ -28,18 +28,17 @@ namespace jive
         }
 
         template <typename Arithmetic>
-        Length(Arithmetic absoluteValue)
+        Length(Arithmetic absoluteValue) // NOLINT
             : value{ absoluteValue }
-            , unit{ Unit::absolute }
         {
         }
 
-        Length(const juce::String& text)
+        Length(const juce::String& text) // NOLINT
         {
             *this = fromString(text);
         }
 
-        Length(const char* text)
+        Length(const char* text) // NOLINT
             : Length{ juce::String{ text } }
         {
         }

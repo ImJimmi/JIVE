@@ -60,10 +60,10 @@ namespace jive
         const auto popupBorderWidth = getBorderWidth(popup, styles);
 
         return BorderRadii{
-            juce::jmax(0.0f, popupRadius.topLeft - juce::jmax(popupBorderWidth.getTop(), popupBorderWidth.getLeft())),
-            juce::jmax(0.0f, popupRadius.topRight - juce::jmax(popupBorderWidth.getTop(), popupBorderWidth.getRight())),
-            juce::jmax(0.0f, popupRadius.bottomRight - juce::jmax(popupBorderWidth.getBottom(), popupBorderWidth.getRight())),
-            juce::jmax(0.0f, popupRadius.bottomLeft - juce::jmax(popupBorderWidth.getBottom(), popupBorderWidth.getLeft())),
+            std::max(0.0f, popupRadius.topLeft - std::max(popupBorderWidth.getTop(), popupBorderWidth.getLeft())),
+            std::max(0.0f, popupRadius.topRight - std::max(popupBorderWidth.getTop(), popupBorderWidth.getRight())),
+            std::max(0.0f, popupRadius.bottomRight - std::max(popupBorderWidth.getBottom(), popupBorderWidth.getRight())),
+            std::max(0.0f, popupRadius.bottomLeft - std::max(popupBorderWidth.getBottom(), popupBorderWidth.getLeft())),
         };
     }
 
@@ -93,7 +93,7 @@ namespace jive
     {
         return findBorderRadius(bar, styles)
             .value_or(BorderRadii{
-                static_cast<float>(juce::jmin(bar.getWidth(), bar.getHeight())) / 2.0f,
+                static_cast<float>(std::min(bar.getWidth(), bar.getHeight())) / 2.0f,
             });
     }
 } // namespace jive

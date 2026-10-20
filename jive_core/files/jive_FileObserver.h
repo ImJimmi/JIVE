@@ -4,44 +4,58 @@
 
 namespace jive
 {
-    class FileObserver : public juce::Timer
+    class FileObserver
     {
     public:
         explicit FileObserver(const juce::File& f)
             : file{ f }
             , lastModificationTime{ file.getLastModificationTime() }
         {
-            observers.add(this);
-            startTimerHz(10);
+            observers.emplace_back(this);
+            fileCheckCallback.startTimerHz(10);
         }
+
+        JUCE_DECLARE_NON_COPYABLE(FileObserver)
+        JUCE_DECLARE_NON_MOVEABLE(FileObserver)
 
         ~FileObserver()
         {
-            observers.removeAllInstancesOf(this);
+            observers.erase(std::remove(std::begin(observers),
+                                        std::end(observers),
+                                        this),
+                            std::end(observers));
         }
 
         static void triggerAllTimerCallbacks()
         {
             for (auto* observer : observers)
-                observer->timerCallback();
+                observer->checkFile();
         }
 
         const juce::File file;
         std::function<void()> onFileModified = nullptr;
 
     private:
-        void timerCallback() final
+        void checkFile()
         {
-            if (file.getLastModificationTime() != lastModificationTime)
-            {
-                lastModificationTime = file.getLastModificationTime();
+            if (file.getLastModificationTime() == lastModificationTime)
+                return;
 
-                if (onFileModified)
-                    onFileModified();
-            }
+            lastModificationTime = file.getLastModificationTime();
+
+            if (onFileModified != nullptr)
+                onFileModified();
         }
 
+        juce::TimedCallback fileCheckCallback{
+            [this] {
+                checkFile();
+            },
+        };
+
         juce::Time lastModificationTime;
-        static inline juce::Array<FileObserver*> observers;
+
+        // NOLINTNEXTLINE(juce-plugin-global-state)
+        static inline std::vector<FileObserver*> observers;
     };
 } // namespace jive

@@ -9,10 +9,13 @@ namespace jive
     public:
         using Predicate = std::function<bool(const juce::Component&, const juce::String&)>;
 
+        // NOLINTNEXTLINE(juce-plugin-global-state)
         JUCE_DECLARE_SINGLETON_INLINE(ComponentTypePredicates, false)
 
         ComponentTypePredicates();
-        ~ComponentTypePredicates();
+        JUCE_DECLARE_NON_COPYABLE(ComponentTypePredicates)
+        JUCE_DECLARE_NON_MOVEABLE(ComponentTypePredicates)
+        ~ComponentTypePredicates() override;
 
         static auto addPredicate(const Predicate& predicate)
         {
@@ -24,15 +27,12 @@ namespace jive
         [[nodiscard]] static auto check(const juce::Component& component,
                                         const juce::String& typeName)
         {
-            for (const auto& [uuid, hasMatchingType] : getInstance()->predicates)
-            {
-                juce::ignoreUnused(uuid);
-
-                if (hasMatchingType(component, typeName))
-                    return true;
-            }
-
-            return false;
+            auto& predicates = getInstance()->predicates;
+            return std::any_of(std::begin(predicates),
+                               std::end(predicates),
+                               [&component, &typeName](auto&& entry) {
+                                   return entry.second(component, typeName);
+                               });
         }
 
     private:

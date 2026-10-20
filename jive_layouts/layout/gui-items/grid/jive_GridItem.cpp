@@ -12,7 +12,7 @@ namespace jive
         , gridArea{ state, ids::gridArea() }
         , idealWidth{ state, ids::idealWidth() }
     {
-        const auto updateParentLayout = [this]() {
+        const auto updateParentLayout = [this] {
             cachedItems.clear();
 
             if (auto* parentDecorator = dynamic_cast<GuiItemDecorator*>(getParent()))
@@ -119,13 +119,15 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
-static bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
+    #include <cstdint>
+
+static bool compare(const juce::GridItem::Property& a, const juce::GridItem::Property& b)
 {
     return a.getName() == b.getName() && a.getNumber() == b.getNumber();
 }
 
-static bool compare(juce::GridItem::StartAndEndProperty a,
-                    juce::GridItem::StartAndEndProperty b)
+static bool compare(const juce::GridItem::StartAndEndProperty& a,
+                    const juce::GridItem::StartAndEndProperty& b)
 {
     return compare(a.start, b.start) && compare(a.end, b.end);
 }
@@ -177,12 +179,12 @@ private:
             </Component>
         )");
         auto root = interpreter.interpret(state);
-        auto numIdealHeightCalculations = std::make_shared<int>(0);
+        const auto numIdealHeightCalculations = std::make_shared<int>(0);
         auto text = state.getChild(0);
         const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
         text.setProperty("jive::ideal-height",
                          juce::var{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
-                             (*numIdealHeightCalculations)++;
+                             ++(*numIdealHeightCalculations);
                              return calculateIdealHeight(args);
                          } },
                          nullptr);
@@ -200,7 +202,7 @@ private:
         beginTest("component");
 
         jive::Interpreter interpreter;
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "width", 222 },
@@ -225,7 +227,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -251,7 +253,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -282,7 +284,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -332,7 +334,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -363,7 +365,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -413,7 +415,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -444,7 +446,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -470,7 +472,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -502,7 +504,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -528,7 +530,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -559,7 +561,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -586,7 +588,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -618,7 +620,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -636,15 +638,15 @@ private:
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
             expectEquals<float>(gridItem.width, juce::GridItem::notAssigned);
 
-            state.getChild(0).setProperty("width", 112.f, nullptr);
+            state.getChild(0).setProperty("width", 112.0f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                            .toType<jive::GridItem>()
                            ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.width, 112.f);
+            expectEquals(gridItem.width, 112.0f);
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -675,7 +677,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -691,7 +693,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expect(gridItem.minWidth == 0.f);
+            expect(juce::approximatelyEqual(gridItem.minWidth, 0.0f));
 
             state.getChild(0).setProperty("min-width", 493.6f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -701,7 +703,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -732,7 +734,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -748,7 +750,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxWidth, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+            expectEquals(gridItem.maxWidth, static_cast<float>(std::numeric_limits<std::uint16_t>::max()));
 
             state.getChild(0).setProperty("max-width", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -758,7 +760,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -770,7 +772,7 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
-                            { "max-width", 986.f },
+                            { "max-width", 986.0f },
                         },
                     },
                 },
@@ -780,7 +782,7 @@ private:
             const auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                       .toType<jive::GridItem>()
                                       ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxWidth, 986.f);
+            expectEquals(gridItem.maxWidth, 986.0f);
         }
     }
 
@@ -790,7 +792,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -808,15 +810,15 @@ private:
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
             expectEquals(gridItem.height, static_cast<float>(juce::GridItem::notAssigned));
 
-            state.getChild(0).setProperty("height", 112.f, nullptr);
+            state.getChild(0).setProperty("height", 112.0f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                            .toType<jive::GridItem>()
                            ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.height, 112.f);
+            expectEquals(gridItem.height, 112.0f);
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -847,7 +849,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -863,7 +865,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.minHeight, 0.f);
+            expectEquals(gridItem.minHeight, 0.0f);
 
             state.getChild(0).setProperty("min-height", 493.6f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -873,7 +875,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -904,7 +906,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -920,7 +922,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxHeight, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+            expectEquals(gridItem.maxHeight, static_cast<float>(std::numeric_limits<std::uint16_t>::max()));
 
             state.getChild(0).setProperty("max-height", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -930,7 +932,7 @@ private:
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -941,7 +943,7 @@ private:
                     juce::ValueTree{
                         "Component",
                         {
-                            { "max-height", 986.f },
+                            { "max-height", 986.0f },
                         },
                     },
                 },
@@ -951,7 +953,7 @@ private:
             const auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                       .toType<jive::GridItem>()
                                       ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expect(gridItem.maxHeight == 986.f);
+            expect(juce::approximatelyEqual(gridItem.maxHeight, 986.0f));
         }
     }
 
@@ -961,7 +963,7 @@ private:
 
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -983,11 +985,11 @@ private:
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                            .toType<jive::GridItem>()
                            ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expect(compare(gridItem.margin, juce::GridItem::Margin{ 10.f, 20.f, 4.f, 13.67f }));
+            expect(compare(gridItem.margin, juce::GridItem::Margin{ 10.0f, 20.0f, 4.0f, 13.67f }));
         }
         {
             jive::Interpreter interpreter;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -1008,7 +1010,7 @@ private:
             const auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                       .toType<jive::GridItem>()
                                       ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expect(compare(gridItem.margin, juce::GridItem::Margin{ 45.f }));
+            expect(compare(gridItem.margin, juce::GridItem::Margin{ 45.0f }));
         }
     }
 };

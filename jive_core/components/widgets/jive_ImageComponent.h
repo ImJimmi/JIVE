@@ -33,5 +33,7 @@ namespace jive
 
         std::vector<juce::DrawableShape*> currentColourFills;
         std::vector<juce::DrawableShape*> currentColourStrokes;
+
+        JUCE_LEAK_DETECTOR(ImageComponent)
     };
 } // namespace jive

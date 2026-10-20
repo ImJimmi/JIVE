@@ -14,7 +14,7 @@ namespace jive
         enum class TriggerEvent
         {
             mouseUp,
-            mouseDown
+            mouseDown,
         };
 
         explicit Button(std::unique_ptr<GuiItem> itemToDecorate);

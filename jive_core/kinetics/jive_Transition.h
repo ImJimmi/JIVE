@@ -12,6 +12,8 @@ namespace jive
     public:
         struct Listener
         {
+            JUCE_DECLARE_NON_COPYABLE(Listener)
+            JUCE_DECLARE_NON_MOVEABLE(Listener)
             virtual ~Listener() = default;
 
             virtual void transitionProgressed(const juce::String& propertyName,
@@ -22,6 +24,9 @@ namespace jive
 
         Transition(const Transition& other);
         Transition& operator=(const Transition& other);
+
+        JUCE_DECLARE_NON_MOVEABLE(Transition)
+        ~Transition() = default;
 
         [[nodiscard]] double calculateProgress(juce::Time commencementTime) const;
         [[nodiscard]] double calculateProgress() const;

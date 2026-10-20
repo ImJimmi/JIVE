@@ -18,8 +18,8 @@ namespace jive
 
         explicit Drawable(const juce::Image& image);
         Drawable& operator=(const juce::Image& image);
-        operator juce::Image() const;
-        bool isImage() const;
+        explicit operator juce::Image() const;
+        [[nodiscard]] bool isImage() const;
 
 #if JUCE_VERSION < JIVE_JUCE_VERSION(9, 0, 0)
         explicit Drawable(const juce::XmlElement& svgElement);
@@ -28,10 +28,10 @@ namespace jive
 
         explicit Drawable(const juce::String& svgString);
         Drawable& operator=(const juce::String& svgString);
-        operator juce::String() const;
-        bool isSVG() const;
+        explicit operator juce::String() const;
+        [[nodiscard]] bool isSVG() const;
 
-        bool isEmpty() const;
+        [[nodiscard]] bool isEmpty() const;
 
     private:
         std::unique_ptr<juce::Drawable> drawable;

@@ -8,6 +8,7 @@ namespace jive_examples::widgets
     // and y values go from 0 to 1, with y = 0 at the bottom. It draws itself
     // from the style sheet: its box like any element's, and the crosshair and
     // puck from its track and thumb styles.
+    // NOLINTNEXTLINE(juce-missing-accessibility-handler)
     class XYPad : public juce::Component
     {
     public:
@@ -19,8 +20,8 @@ namespace jive_examples::widgets
         void setValue(juce::Point<float> newValue, juce::NotificationType notification = juce::sendNotificationSync)
         {
             newValue = {
-                juce::jlimit(0.0f, 1.0f, newValue.x),
-                juce::jlimit(0.0f, 1.0f, newValue.y),
+                std::clamp(newValue.x, 0.0f, 1.0f),
+                std::clamp(newValue.y, 0.0f, 1.0f),
             };
 
             if (newValue == value)
@@ -35,7 +36,7 @@ namespace jive_examples::widgets
 
         void paint(juce::Graphics& g) final
         {
-            auto* laf = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
+            const auto* laf = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
 
             if (laf == nullptr)
                 return;
@@ -85,10 +86,12 @@ namespace jive_examples::widgets
 
             setValue({
                 position.x / area.getWidth(),
-                1.0f - position.y / area.getHeight(),
+                1.0f - (position.y / area.getHeight()),
             });
         }
 
         juce::Point<float> value{ 0.5f, 0.5f };
+
+        JUCE_LEAK_DETECTOR(XYPad)
     };
 } // namespace jive_examples::widgets

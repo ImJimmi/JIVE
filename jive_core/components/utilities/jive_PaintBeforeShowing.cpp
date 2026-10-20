@@ -36,7 +36,7 @@ namespace jive
     // JUCE notifies visibility listeners before it shows the native window.
     void PaintBeforeShowing::componentVisibilityChanged()
     {
-        auto* watchedComponent = getComponent();
+        const auto* watchedComponent = getComponent();
 
         if (watchedComponent == nullptr || !watchedComponent->isShowing())
             return;
@@ -71,7 +71,7 @@ public:
         beginTest("showing the component's window paints it straight away");
         {
             Window window;
-            jive::PaintBeforeShowing paintBeforeShowing{ window.content };
+            const jive::PaintBeforeShowing paintBeforeShowing{ window.content };
 
             window.setVisible(true);
             expectGreaterThan(window.content.numPaints, 0);
@@ -90,7 +90,7 @@ public:
             button.setComponentID("button");
             window.content.addAndMakeVisible(button);
             button.setBounds(50, 50, 20, 20);
-            jive::PaintBeforeShowing paintBeforeShowing{ button };
+            const jive::PaintBeforeShowing paintBeforeShowing{ button };
 
             window.setVisible(true);
             expectEquals(window.content.getNumChildComponents(), 2);
@@ -102,7 +102,7 @@ private:
     {
         void paint(juce::Graphics&) final
         {
-            numPaints++;
+            ++numPaints;
         }
 
         int numPaints = 0;

@@ -14,6 +14,7 @@ set_directory_properties(
 option(JIVE_BUILD_BENCHMARKS "Build JIVE's benchmarks?" OFF)
 option(JIVE_BUILD_EXAMPLES "Build JIVE's examples?" OFF)
 option(JIVE_BUILD_TEST_RUNNER "Build JIVE's test runner?" OFF)
+option(JIVE_ENABLE_CLANG_TIDY "Run clang-tidy (and JuceTidy on macOS) when building?" OFF)
 option(JIVE_ENABLE_COVERAGE "Generate coverage reports when running tests?" OFF)
 option(JIVE_ENABLE_MELATONIN_INSPECTOR "Add the component inspector to the demos and examples?" OFF)
 option(JIVE_ENABLE_PLUGINVAL "Add pluginval tests for the demo plugins?" OFF)
@@ -31,6 +32,10 @@ if (JIVE_BUILD_BENCHMARKS
     CPMUsePackageLock(package-lock.cmake)
     CPMGetPackage(JUCE)
 endif ()
+
+if (JIVE_ENABLE_CLANG_TIDY)
+    include(cmake/clang_tidy.cmake)
+endif()
 
 if (JIVE_ENABLE_MELATONIN_INSPECTOR)
     include(cmake/melatonin_inspector.cmake)

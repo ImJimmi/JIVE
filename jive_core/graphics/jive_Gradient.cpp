@@ -37,7 +37,7 @@ namespace jive
         return xAxis == other.xAxis && yAxis == other.yAxis;
     }
 
-    juce::Point<float> RadialPosition::toPoint(const juce::Rectangle<float>& bounds) const
+    juce::Point<float> RadialPosition::toPoint(juce::Rectangle<float> bounds) const
     {
         return {
             std::visit(Visitor{
@@ -81,7 +81,7 @@ namespace jive
                 position.xAxis = RadialPosition::Right{};
             else
                 position.xAxis = RadialPosition::Left{
-                    Length::fromString(keywordOrValue)
+                    Length::fromString(keywordOrValue),
                 };
         };
         static constexpr auto applyToYAxis = [](const auto& keywordOrValue, auto& position) {
@@ -93,7 +93,7 @@ namespace jive
                 position.yAxis = RadialPosition::Bottom{};
             else
                 position.yAxis = RadialPosition::Top{
-                    Length::fromString(keywordOrValue)
+                    Length::fromString(keywordOrValue),
                 };
         };
 
@@ -149,7 +149,7 @@ namespace jive
         return colour == other.colour && length == other.length;
     }
 
-    [[nodiscard]] static float toAngle(SideOrCorner sideOrCorner, const juce::Rectangle<float>& bounds)
+    [[nodiscard]] static float toAngle(SideOrCorner sideOrCorner, juce::Rectangle<float> bounds)
     {
         // https://drafts.csswg.org/css-images-3/#linear-gradient-syntax
         const auto cornerAngle = std::atan2(bounds.getHeight(), bounds.getWidth());
@@ -178,7 +178,7 @@ namespace jive
         return 0.0f;
     }
 
-    juce::ColourGradient Gradient::toJuceColourGradient(const juce::Rectangle<float>& bounds) const
+    juce::ColourGradient Gradient::toJuceColourGradient(juce::Rectangle<float> bounds) const
     {
         juce::ColourGradient result;
 
@@ -256,7 +256,7 @@ namespace jive
         bool withinParentheses = false;
         auto startIndex = 0;
 
-        for (auto i = 0; i < str.length(); i++)
+        for (auto i = 0; i < str.length(); ++i)
         {
             if (i == str.length() - 1)
             {

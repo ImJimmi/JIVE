@@ -21,7 +21,7 @@ namespace jive
                 continue;
 
             const auto proportion = (x - iterator.x1) / (iterator.x2 - iterator.x1);
-            return static_cast<FloatingPoint>(iterator.y2 * proportion + iterator.y1 * (1.0 - proportion));
+            return static_cast<FloatingPoint>((iterator.y2 * proportion) + (iterator.y1 * (1.0 - proportion)));
         }
 
         jassertfalse;

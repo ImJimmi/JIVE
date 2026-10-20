@@ -82,7 +82,7 @@ namespace jive
         {
             juce::ignoreUnused(id);
 
-            if (auto object = property.get(); object != nullptr)
+            if (const auto object = property.get(); object != nullptr)
                 object->removeListener(*this);
         }
     }
@@ -265,7 +265,7 @@ namespace jive
 
             const auto tokenName = value.substring(i, end);
 
-            if (auto token = tokens.find(tokenName); token != std::end(tokens))
+            if (const auto token = tokens.find(tokenName); token != std::end(tokens))
             {
                 const auto replacement = token->second.toString();
                 value = value.substring(0, i) + replacement + value.substring(end);
@@ -298,7 +298,7 @@ namespace jive
         return value;
     }
 
-    static void appendStyleProperties(Object& object,
+    static void appendStyleProperties(const Object& object,
                                       std::optional<Styles>& styles,
                                       const std::unordered_map<juce::String, juce::var>& tokens,
                                       const SourceDirectories* sourceDirectories,
@@ -330,7 +330,7 @@ namespace jive
 
         if (&object == style.get().get() && object.hasProperty(ids::transition()))
         {
-            auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object[ids::transition()]);
+            const auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object[ids::transition()]);
 
             if (transitions != nullptr)
             {
@@ -350,7 +350,7 @@ namespace jive
 
     void StyleSheet::addSelectorBasedStyles(Object& object)
     {
-        static constexpr auto getObjectIfNestedStyleObject = [](const juce::Identifier& name,
+        static constexpr auto getObjectIfNestedStyleObject = [](juce::Identifier name,
                                                                 const juce::var& value) -> Object* {
             if (Styles::propertyNames.count(name.toString()) == 0)
                 return dynamic_cast<Object*>(value.getObject());
@@ -371,7 +371,7 @@ namespace jive
                 if (auto* nested = getObjectIfNestedStyleObject(name, value))
                 {
                     const auto nestedName = name.toString();
-                    const auto combinator = nestedName.startsWith(":") ? "" : " ";
+                    const auto* const combinator = nestedName.startsWith(":") ? "" : " ";
                     appendFromChild(*nested, selector + combinator + nestedName);
                 }
             }
@@ -437,11 +437,11 @@ private:
         beginTest("creation / style sheets can only be created for components using the JIVE look-and-feel");
         {
             juce::Component component;
-            juce::ValueTree state;
+            const juce::ValueTree state;
             auto sheet = jive::StyleSheet::create(component, state);
             expect(sheet == nullptr);
 
-            jive::LookAndFeel lookAndFeel{ component };
+            const jive::LookAndFeel lookAndFeel{ component };
             sheet = jive::StyleSheet::create(component, state);
             expect(sheet != nullptr);
         }
@@ -453,9 +453,9 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{ "Button" };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const juce::ValueTree state{ "Button" };
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(50, 12),
@@ -476,8 +476,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             beginTest("style property / with a style property specified, the component should use relevant styles");
             {
@@ -498,7 +498,7 @@ private:
     {
         juce::TextButton button;
         button.setSize(100, 25);
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Button",
             {
                 {
@@ -508,8 +508,8 @@ private:
             },
         };
         auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
-        jive::LookAndFeel lookAndFeel{ button };
-        auto sheet = jive::StyleSheet::create(button, state);
+        const jive::LookAndFeel lookAndFeel{ button };
+        const auto sheet = jive::StyleSheet::create(button, state);
 
         beginTest("individual properties / style object with no properties");
         {
@@ -547,7 +547,7 @@ private:
     {
         juce::TextButton button;
         button.setSize(100, 25);
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Button",
             {
                 {
@@ -560,8 +560,8 @@ private:
             },
         };
         auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
-        jive::LookAndFeel lookAndFeel{ button };
-        auto sheet = jive::StyleSheet::create(button, state);
+        const jive::LookAndFeel lookAndFeel{ button };
+        const auto sheet = jive::StyleSheet::create(button, state);
 
         beginTest("transitions / background");
         {
@@ -602,7 +602,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -617,7 +617,7 @@ private:
             };
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
             expectEquals(resolvedColour(lookAndFeel, button, "foreground"), juce::Colours::black);
@@ -644,7 +644,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -661,7 +661,7 @@ private:
             };
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
             expectEquals(resolvedColour(lookAndFeel, button, "foreground"), juce::Colours::black);
@@ -679,7 +679,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -693,7 +693,7 @@ private:
             };
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
 
@@ -720,7 +720,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -739,7 +739,7 @@ private:
                 },
             };
             jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
 
@@ -773,7 +773,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -789,11 +789,11 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             // Without the class, the button uses its default background.
-            expect(settledColourAt(button, 40, 12) != juce::Colours::magenta);
+            expectNotEquals(settledColourAt(button, 40, 12), juce::Colours::magenta);
 
             // Adding the class should make the selector apply.
             button.getProperties().set("class", "special");
@@ -803,7 +803,7 @@ private:
             // Removing the class should revert to the default background.
             button.getProperties().remove("class");
             button.lookAndFeelChanged();
-            expect(settledColourAt(button, 40, 12) != juce::Colours::magenta);
+            expectNotEquals(settledColourAt(button, 40, 12), juce::Colours::magenta);
         }
 
         beginTest("dynamic styles / changing the component ID changes which selector applies");
@@ -816,7 +816,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -838,8 +838,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::teal);
 
@@ -867,7 +867,7 @@ private:
             button.setBounds(0, 0, 80, 25);
             containerA.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -899,8 +899,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ root };
-            auto sheet = jive::StyleSheet::create(root, state);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto sheet = jive::StyleSheet::create(root, state);
 
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::orange);
 
@@ -915,23 +915,23 @@ private:
     {
         beginTest("file-based styles / styles are loaded from a referenced file");
         {
-            auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
-                                 .getChildFile("jive-style-sheet-tests");
+            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                       .getChildFile("jive-style-sheet-tests");
             directory.createDirectory();
-            auto file = directory.getChildFile("button.json");
+            const auto file = directory.getChildFile("button.json");
             file.replaceWithText(R"({ "background": "red" })");
 
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     { "jive::source-directories", new jive::SourceDirectories{ directory } },
                     { "style", "button.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto background = styles.find<jive::Fill>("background");
@@ -951,15 +951,15 @@ private:
             const jive::SourceRoot root{ zip.getData(), zip.getSize() };
 
             juce::ComboBox comboBox;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "ComboBox",
                 {
                     { "jive::source-directories", new jive::SourceDirectories{ jive::SourceFile{ "styles" } } },
                     { "style", "styles.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ comboBox };
-            auto sheet = jive::StyleSheet::create(comboBox, state);
+            const jive::LookAndFeel lookAndFeel{ comboBox };
+            const auto sheet = jive::StyleSheet::create(comboBox, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.find<jive::Fill>("background").value_or(jive::Fill{}) == juce::Colours::red);
@@ -975,7 +975,7 @@ private:
             const jive::SourceRoot root{ zip.getData(), zip.getSize() };
 
             juce::ComboBox comboBox;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "ComboBox",
                 {
                     { "jive::source-directories", new jive::SourceDirectories{ jive::SourceFile{} } },
@@ -983,8 +983,8 @@ private:
                     { "style", "../styles/styles.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ comboBox };
-            auto sheet = jive::StyleSheet::create(comboBox, state);
+            const jive::LookAndFeel lookAndFeel{ comboBox };
+            const auto sheet = jive::StyleSheet::create(comboBox, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.icon.hasValue() && !styles.icon.get().isEmpty());
@@ -992,12 +992,12 @@ private:
 
         beginTest("file-based styles / switching the referenced file applies the new file's styles");
         {
-            auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
-                                 .getChildFile("jive-style-sheet-tests");
+            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                       .getChildFile("jive-style-sheet-tests");
             directory.createDirectory();
-            auto redFile = directory.getChildFile("red.json");
+            const auto redFile = directory.getChildFile("red.json");
             redFile.replaceWithText(R"({ "background": "red" })");
-            auto greenFile = directory.getChildFile("green.json");
+            const auto greenFile = directory.getChildFile("green.json");
             greenFile.replaceWithText(R"({ "background": "green" })");
 
             juce::TextButton button;
@@ -1009,8 +1009,8 @@ private:
                     { "style", "red.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expect(lookAndFeel
                        .findMostApplicableStyles(button)
@@ -1038,23 +1038,23 @@ private:
 
         beginTest("file-based styles / modifying the referenced file hot-reloads its styles");
         {
-            auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
-                                 .getChildFile("jive-style-sheet-tests");
+            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                       .getChildFile("jive-style-sheet-tests");
             directory.createDirectory();
-            auto file = directory.getChildFile("hot.json");
+            const auto file = directory.getChildFile("hot.json");
             file.replaceWithText(R"({ "background": "red" })");
 
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     { "jive::source-directories", new jive::SourceDirectories{ directory } },
                     { "style", "hot.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expect(lookAndFeel
                        .findMostApplicableStyles(button)
@@ -1113,7 +1113,7 @@ private:
 
         juce::TextButton button;
         button.setSize(100, 25);
-        jive::LookAndFeel lookAndFeel{ button };
+        const jive::LookAndFeel lookAndFeel{ button };
 
         const auto createStyleSheet = [&directory, &button](juce::ValueTree& state) {
             state = juce::ValueTree{
@@ -1130,7 +1130,7 @@ private:
         {
             file.replaceWithText(R"({ "background": "red" })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
 
             const auto object = juce::VariantConverter<jive::Object::ReferenceCountedPointer>::fromVar(state["style"]);
             expect(object != nullptr);
@@ -1142,9 +1142,9 @@ private:
         {
             file.replaceWithText(R"({ "background": "red" })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
 
-            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            const jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
             styleSheet.get()->setProperty("background", "blue");
             expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
         }
@@ -1153,9 +1153,9 @@ private:
         {
             file.replaceWithText(R"({ "$colour": "red", "Button": { "background": "$colour" } })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
 
-            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            const jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
             styleSheet.get()->setProperty("$colour", "green");
             expect(settledBackground(lookAndFeel, button) == juce::Colours::green);
         }
@@ -1164,13 +1164,13 @@ private:
         {
             file.replaceWithText(R"({ "background": "red" })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
             jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
             const auto original = styleSheet.get();
 
             auto numChanges = 0;
             styleSheet.onValueChange = [&numChanges] {
-                numChanges++;
+                ++numChanges;
             };
 
             modify(file, R"({ "background": "blue" })");
@@ -1216,7 +1216,7 @@ private:
         {
             file.replaceWithText(R"({ "background": "red" })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
 
             state.setProperty("style", new jive::Object{ { "background", "blue" } }, nullptr);
             modify(file, R"({ "background": "yellow" })");
@@ -1227,7 +1227,7 @@ private:
         {
             file.replaceWithText(R"({ "background": "red" })");
             juce::ValueTree state;
-            auto sheet = createStyleSheet(state);
+            const auto sheet = createStyleSheet(state);
 
             state.removeProperty("style", nullptr);
             modify(file, R"({ "background": "yellow" })");
@@ -1246,7 +1246,7 @@ private:
         beginTest("icons / an icon can be given as SVG markup");
         {
             juce::ComboBox comboBox;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "ComboBox",
                 {
                     {
@@ -1257,8 +1257,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ comboBox };
-            auto sheet = jive::StyleSheet::create(comboBox, state);
+            const jive::LookAndFeel lookAndFeel{ comboBox };
+            const auto sheet = jive::StyleSheet::create(comboBox, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.icon.hasValue());
@@ -1268,22 +1268,22 @@ private:
 
         beginTest("icons / an icon file is found in the same places as the style sheet");
         {
-            auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
-                                 .getChildFile("jive-style-sheet-tests");
+            const auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                       .getChildFile("jive-style-sheet-tests");
             directory.createDirectory();
             directory.getChildFile("chevron.svg").replaceWithText(chevron);
             directory.getChildFile("styles.json").replaceWithText(R"({ "icon": "chevron.svg" })");
 
             juce::ComboBox comboBox;
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "ComboBox",
                 {
                     { "jive::source-directories", new jive::SourceDirectories{ directory } },
                     { "style", "styles.json" },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ comboBox };
-            auto sheet = jive::StyleSheet::create(comboBox, state);
+            const jive::LookAndFeel lookAndFeel{ comboBox };
+            const auto sheet = jive::StyleSheet::create(comboBox, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(comboBox);
             expect(styles.icon.hasValue());
@@ -1299,7 +1299,7 @@ private:
             juce::ComboBox comboBox;
             parent.addAndMakeVisible(comboBox);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1310,8 +1310,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             expect(lookAndFeel.findMostApplicableStyles(parent).icon.hasValue());
             expect(!lookAndFeel.findMostApplicableStyles(comboBox).icon.hasValue());
@@ -1324,7 +1324,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1335,8 +1335,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto background = styles.find<jive::Fill>("background");
@@ -1348,7 +1348,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1359,8 +1359,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto radii = styles.find<jive::BorderRadii<float>>("border-radius");
@@ -1375,14 +1375,14 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     { "border-width", 5.0 },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto borderWidth = styles.find<juce::BorderSize<float>>("border-width");
@@ -1401,8 +1401,8 @@ private:
                     { "border-width", 5.0 },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             state.setProperty("border-width", 12.0, nullptr);
 
@@ -1422,8 +1422,8 @@ private:
                     { "border-width", 5.0 },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             state.removeProperty("border-width", nullptr);
 
@@ -1437,7 +1437,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     { "border-width", 5.0 },
@@ -1450,8 +1450,8 @@ private:
                 },
             };
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(lookAndFeel
                              .findMostApplicableStyles(button)
@@ -1477,7 +1477,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1489,8 +1489,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::royalblue);
@@ -1506,7 +1506,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1523,8 +1523,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(40, 12), juce::Colours::crimson);
@@ -1534,7 +1534,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1548,8 +1548,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             expect(styles.find<jive::Fill>("background").value() == juce::Colours::red);
@@ -1560,7 +1560,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1573,8 +1573,8 @@ private:
                 },
             };
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(settledColourAt(button, 50, 12), juce::Colours::red);
 
@@ -1599,8 +1599,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(settledColourAt(button, 50, 12), juce::Colours::red);
 
@@ -1619,7 +1619,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1637,8 +1637,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             expectEquals(settledColourAt(button, 50, 12), juce::Colours::grey);
 
@@ -1651,7 +1651,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1663,8 +1663,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto radii = styles.find<jive::BorderRadii<float>>("border-radius");
@@ -1679,7 +1679,7 @@ private:
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1693,25 +1693,25 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto background = styles.find<jive::Fill>("background");
             expect(background.has_value());
             const auto gradient = background->getJiveGradient();
             expect(gradient.has_value());
-            expectEquals((int)gradient->stops.size(), 3);
-            expect(gradient->stops[0].colour == juce::Colours::red);
-            expect(gradient->stops[1].colour == juce::Colours::lime);
-            expect(gradient->stops[2].colour == juce::Colours::blue);
+            expectEquals(static_cast<int>(gradient->stops.size()), 3);
+            expectEquals(gradient->stops[0].colour, juce::Colours::red);
+            expectEquals(gradient->stops[1].colour, juce::Colours::lime);
+            expectEquals(gradient->stops[2].colour, juce::Colours::blue);
         }
 
         beginTest("tokens / a token name that is a prefix of another token name resolves to the correct value");
         {
             juce::TextButton button;
             button.setSize(100, 25);
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -1724,17 +1724,17 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             const auto styles = lookAndFeel.findMostApplicableStyles(button);
             const auto background = styles.find<jive::Fill>("background");
             expect(background.has_value());
             const auto gradient = background->getJiveGradient();
             expect(gradient.has_value());
-            expectEquals((int)gradient->stops.size(), 2);
-            expect(gradient->stops[0].colour == juce::Colours::lime);
-            expect(gradient->stops[1].colour == juce::Colours::red);
+            expectEquals(static_cast<int>(gradient->stops.size()), 2);
+            expectEquals(gradient->stops[0].colour, juce::Colours::lime);
+            expectEquals(gradient->stops[1].colour, juce::Colours::red);
         }
     }
 
@@ -1749,7 +1749,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1761,8 +1761,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
 
@@ -1786,7 +1786,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     {
@@ -1798,7 +1798,7 @@ private:
                     },
                 },
             };
-            juce::ValueTree childState{
+            const juce::ValueTree childState{
                 "Button",
                 {
                     {
@@ -1810,9 +1810,9 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto parentSheet = jive::StyleSheet::create(parent, parentState);
-            auto childSheet = jive::StyleSheet::create(child, childState);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto parentSheet = jive::StyleSheet::create(parent, parentState);
+            const auto childSheet = jive::StyleSheet::create(child, childState);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
 
@@ -1834,7 +1834,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1851,8 +1851,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             expect(childStyles.find<float>("font-scale").has_value());
@@ -1868,7 +1868,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1879,8 +1879,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             expect(childStyles.find<float>("line-spacing").has_value());
@@ -1896,7 +1896,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1907,8 +1907,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             const auto fontStyles = childStyles.find<std::unordered_set<juce::Font::FontStyleFlags>>("font-styles");
@@ -1926,7 +1926,7 @@ private:
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -1943,8 +1943,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto childStyles = lookAndFeel.findMostApplicableStyles(child);
             const auto fontStyles = childStyles.find<std::unordered_set<juce::Font::FontStyleFlags>>("font-styles");
@@ -1967,8 +1967,8 @@ private:
                     { "line-spacing", 3.0 },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
             expectEquals(lookAndFeel.findMostApplicableStyles(child).find<float>("line-spacing").value_or(0.0f), 3.0f);
 
             state.setProperty("line-spacing", 5.0, nullptr);
@@ -1996,7 +1996,7 @@ private:
             onlyOne.setBounds(10, 40, 80, 25);
             parent.addAndMakeVisible(onlyOne);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2012,11 +2012,11 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             expectEquals(settledColourAt(both, 40, 12), juce::Colours::teal);
-            expect(settledColourAt(onlyOne, 40, 12) != juce::Colours::teal);
+            expectNotEquals(settledColourAt(onlyOne, 40, 12), juce::Colours::teal);
         }
 
         beginTest("selector edge cases / comma-separated selectors including a descendant + type");
@@ -2029,7 +2029,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             panel.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2045,8 +2045,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ panel };
-            auto sheet = jive::StyleSheet::create(panel, state);
+            const jive::LookAndFeel lookAndFeel{ panel };
+            const auto sheet = jive::StyleSheet::create(panel, state);
 
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::olive);
         }
@@ -2061,7 +2061,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             container.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2083,8 +2083,8 @@ private:
                     },
                 },
             };
-            jive::LookAndFeel lookAndFeel{ container };
-            auto sheet = jive::StyleSheet::create(container, state);
+            const jive::LookAndFeel lookAndFeel{ container };
+            const auto sheet = jive::StyleSheet::create(container, state);
 
             // "#container TextButton" carries an ID, so it should win over the
             // plain "TextButton" type selector.
@@ -2104,7 +2104,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2121,8 +2121,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(40, 12), juce::Colours::green);
@@ -2143,7 +2143,7 @@ private:
             button2.setBounds(10, 40, 80, 25);
             parent.addAndMakeVisible(button2);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2166,8 +2166,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto snapshot1 = button1.createComponentSnapshot(button1.getLocalBounds());
             expectEquals(snapshot1.getPixelAt(40, 12), juce::Colours::blue);
@@ -2185,7 +2185,7 @@ private:
             parent.addAndMakeVisible(button);
             button.setBounds(10, 10, 80, 25);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2202,8 +2202,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             const auto snapshot = parent.createComponentSnapshot(parent.getLocalBounds());
             expectEquals(snapshot.getPixelAt(40, 12), juce::Colours::purple);
@@ -2225,7 +2225,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             childContainer.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2252,8 +2252,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             // The full selector should be "#container #inner .btn"
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
@@ -2280,7 +2280,7 @@ private:
             indirectChild.setBounds(0, 0, 80, 25);
             wrapper.addAndMakeVisible(indirectChild);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2297,8 +2297,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             // Direct child should have the style
             const auto directSnapshot = directChild.createComponentSnapshot(directChild.getLocalBounds());
@@ -2315,7 +2315,7 @@ private:
             juce::TextButton button;
             button.setSize(100, 25);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -2339,8 +2339,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             // Default state
             expectEquals(settledColourAt(button, 50, 12), juce::Colours::grey);
@@ -2368,7 +2368,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2396,8 +2396,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::grey);
@@ -2427,7 +2427,7 @@ private:
             button3.setBounds(10, 50, 80, 25);
             parent.addAndMakeVisible(button3);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     {
@@ -2444,8 +2444,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ parent };
-            auto sheet = jive::StyleSheet::create(parent, state);
+            const jive::LookAndFeel lookAndFeel{ parent };
+            const auto sheet = jive::StyleSheet::create(parent, state);
 
             // Both button1 and button2 should match
             const auto snapshot1 = button1.createComponentSnapshot(button1.getLocalBounds());
@@ -2467,7 +2467,7 @@ private:
             button.getProperties().set("class", "btn");
             button.setSize(100, 25);
 
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Button",
                 {
                     {
@@ -2490,8 +2490,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ button };
-            auto sheet = jive::StyleSheet::create(button, state);
+            const jive::LookAndFeel lookAndFeel{ button };
+            const auto sheet = jive::StyleSheet::create(button, state);
 
             // ID selector has higher precedence than class selector
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
@@ -2511,7 +2511,7 @@ private:
             root.addAndMakeVisible(button);
 
             // Style is specified on the button's own ValueTree node
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -2523,8 +2523,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             const auto snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(40, 12), juce::Colours::red);
@@ -2539,7 +2539,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -2557,8 +2557,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::red);
@@ -2578,7 +2578,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -2596,8 +2596,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::green);
@@ -2617,7 +2617,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -2635,8 +2635,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::orange);
@@ -2656,7 +2656,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -2674,8 +2674,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             // Enabled state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::cyan);
@@ -2695,7 +2695,7 @@ private:
             toggle.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(toggle);
 
-            juce::ValueTree toggleState{
+            const juce::ValueTree toggleState{
                 "ToggleButton",
                 {
                     {
@@ -2714,8 +2714,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto toggleSheet = jive::StyleSheet::create(toggle, toggleState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto toggleSheet = jive::StyleSheet::create(toggle, toggleState);
 
             // Unchecked state
             expectEquals(settledColourAt(toggle, 12, 12), juce::Colours::salmon);
@@ -2740,7 +2740,7 @@ private:
             root.addAndMakeVisible(button2);
 
             // Each button has its own ValueTree node with independent styles
-            juce::ValueTree button1State{
+            const juce::ValueTree button1State{
                 "TextButton",
                 {
                     {
@@ -2758,7 +2758,7 @@ private:
                 },
             };
 
-            juce::ValueTree button2State{
+            const juce::ValueTree button2State{
                 "TextButton",
                 {
                     {
@@ -2776,9 +2776,9 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto button1Sheet = jive::StyleSheet::create(button1, button1State);
-            auto button2Sheet = jive::StyleSheet::create(button2, button2State);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto button1Sheet = jive::StyleSheet::create(button1, button1State);
+            const auto button2Sheet = jive::StyleSheet::create(button2, button2State);
 
             // Default state - each button has its own color
             expectEquals(settledColourAt(button1, 40, 12), juce::Colours::tomato);
@@ -2809,7 +2809,7 @@ private:
             container.addAndMakeVisible(childButton);
 
             // Container's ValueTree node has styles that target its children
-            juce::ValueTree containerState{
+            const juce::ValueTree containerState{
                 "Component",
                 {
                     {
@@ -2832,8 +2832,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ container };
-            auto containerSheet = jive::StyleSheet::create(container, containerState);
+            const jive::LookAndFeel lookAndFeel{ container };
+            const auto containerSheet = jive::StyleSheet::create(container, containerState);
 
             // Default state
             expectEquals(settledColourAt(childButton, 40, 12), juce::Colours::indigo);
@@ -2860,7 +2860,7 @@ private:
             panel.addAndMakeVisible(btn2);
 
             // Panel has its own inline style plus child selectors
-            juce::ValueTree panelState{
+            const juce::ValueTree panelState{
                 "Component",
                 {
                     {
@@ -2896,8 +2896,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ panel };
-            auto panelSheet = jive::StyleSheet::create(panel, panelState);
+            const jive::LookAndFeel lookAndFeel{ panel };
+            const auto panelSheet = jive::StyleSheet::create(panel, panelState);
 
             // Default states
             expectEquals(settledColourAt(btn1, 40, 12), juce::Colours::royalblue);
@@ -2932,7 +2932,7 @@ private:
             level2.addAndMakeVisible(deepButton);
 
             // Only level2 has styles - they should apply to deepButton
-            juce::ValueTree level2State{
+            const juce::ValueTree level2State{
                 "Component",
                 {
                     {
@@ -2955,8 +2955,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto level2Sheet = jive::StyleSheet::create(level2, level2State);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto level2Sheet = jive::StyleSheet::create(level2, level2State);
 
             // Default state
             expectEquals(settledColourAt(deepButton, 40, 12), juce::Colours::gold);
@@ -2976,7 +2976,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
-            juce::ValueTree buttonState{
+            const juce::ValueTree buttonState{
                 "TextButton",
                 {
                     {
@@ -3000,8 +3000,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ root };
-            auto buttonSheet = jive::StyleSheet::create(button, buttonState);
+            const jive::LookAndFeel lookAndFeel{ root };
+            const auto buttonSheet = jive::StyleSheet::create(button, buttonState);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::purple);
@@ -3026,7 +3026,7 @@ private:
             button.setBounds(10, 10, 80, 25);
             container.addAndMakeVisible(button);
 
-            juce::ValueTree containerState{
+            const juce::ValueTree containerState{
                 "Component",
                 {
                     {
@@ -3055,8 +3055,8 @@ private:
                 },
             };
 
-            jive::LookAndFeel lookAndFeel{ container };
-            auto containerSheet = jive::StyleSheet::create(container, containerState);
+            const jive::LookAndFeel lookAndFeel{ container };
+            const auto containerSheet = jive::StyleSheet::create(container, containerState);
 
             // Default state
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::olive);

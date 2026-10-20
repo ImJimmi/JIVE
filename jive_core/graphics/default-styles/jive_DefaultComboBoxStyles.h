@@ -40,10 +40,7 @@ namespace jive::default_styles
                                                      const juce::Font& font)
     {
         const auto borderWidth = getBorderWidth(popup, styles);
-        const auto thickestBorder = juce::jmax(borderWidth.getTop(),
-                                               borderWidth.getLeft(),
-                                               borderWidth.getBottom(),
-                                               borderWidth.getRight());
+        const auto thickestBorder = std::max({ borderWidth.getTop(), borderWidth.getLeft(), borderWidth.getBottom(), borderWidth.getRight() });
 
         return static_cast<int>(std::ceil(thickestBorder + getPopupMenuPadding(font)));
     }
@@ -58,7 +55,7 @@ namespace jive::default_styles
         const auto iconSize = getPopupMenuItemIconSize(font);
         const juce::Rectangle<float> content{
             iconSize + getPopupMenuItemGap(font) + std::ceil(calculateStringWidth(text, textFont)),
-            juce::jmax(iconSize, std::ceil(textFont.getHeight())),
+            std::max(iconSize, std::ceil(textFont.getHeight())),
         };
 
         return padding.addedTo(content).withZeroOrigin();
@@ -67,7 +64,7 @@ namespace jive::default_styles
     [[nodiscard]] static auto paintPopupMenu(juce::Graphics& g,
                                              const juce::PopupMenu& popup,
                                              const juce::PopupMenu::Options& options,
-                                             const juce::Rectangle<float>& bounds,
+                                             juce::Rectangle<float> bounds,
                                              const Styles& styles)
     {
         drawRoundedRectangle(g,
@@ -82,9 +79,9 @@ namespace jive::default_styles
                                                       const juce::PopupMenu::Item& item,
                                                       const juce::PopupMenu::Options& options,
                                                       const Styles& styles,
-                                                      const juce::Rectangle<float>& bounds)
+                                                      juce::Rectangle<float> bounds)
     {
-        auto r = bounds.withSizeKeepingCentre(bounds.getWidth(), 1.0f);
+        const auto r = bounds.withSizeKeepingCentre(bounds.getWidth(), 1.0f);
 
         g.setFillType(getBorderFill(item, options, styles, bounds));
         g.fillRect(r.toNearestInt());
@@ -97,7 +94,7 @@ namespace jive::default_styles
                                                      const Styles& popupStyles,
                                                      const Styles& itemStyles,
                                                      const InteractionState& interactionState,
-                                                     const juce::Rectangle<float>& bounds)
+                                                     juce::Rectangle<float> bounds)
     {
         g.setFillType(getForegroundFill(item, options, itemStyles, interactionState, bounds));
 
@@ -126,9 +123,9 @@ namespace jive::default_styles
             const auto halfH = r.getCentreY();
 
             juce::Path path;
-            path.startNewSubPath(x, halfH - arrowH * 0.5f);
-            path.lineTo(x + arrowH * 0.6f, halfH);
-            path.lineTo(x, halfH + arrowH * 0.5f);
+            path.startNewSubPath(x, halfH - (arrowH * 0.5f));
+            path.lineTo(x + (arrowH * 0.6f), halfH);
+            path.lineTo(x, halfH + (arrowH * 0.5f));
 
             g.strokePath(path, juce::PathStrokeType{ 2.0f });
             r.removeFromRight(getPopupMenuItemGap(font));
@@ -153,7 +150,7 @@ namespace jive::default_styles
                                                  const juce::PopupMenu& popup,
                                                  const juce::PopupMenu::Options& options,
                                                  const juce::Component& component,
-                                                 const juce::Rectangle<float>& bounds,
+                                                 juce::Rectangle<float> bounds,
                                                  const InteractionState& interactionState,
                                                  const Styles& popupStyles,
                                                  const Styles& itemStyles)
@@ -199,7 +196,7 @@ namespace jive::default_styles
                                                   const Styles& styles,
                                                   float maxHeight = std::numeric_limits<float>::max())
     {
-        const auto height = juce::jmin(std::round(font.getHeight()), maxHeight);
+        const auto height = std::min(std::round(font.getHeight()), maxHeight);
         const auto aspectRatio = styles.icon.hasValue() ? styles.icon.get().getAspectRatio() : 1.0f;
         return juce::Point{ std::ceil(height * aspectRatio), height };
     }
@@ -242,13 +239,13 @@ namespace jive::default_styles
         const auto font = getFont(comboBox, styles);
         auto textWidth = calculateStringWidth(comboBox.getTextWhenNothingSelected(), font);
 
-        for (auto i = 0; i < comboBox.getNumItems(); i++)
-            textWidth = juce::jmax(textWidth, calculateStringWidth(comboBox.getItemText(i), font));
+        for (auto i = 0; i < comboBox.getNumItems(); ++i)
+            textWidth = std::max(textWidth, calculateStringWidth(comboBox.getItemText(i), font));
 
         const auto iconSize = getComboBoxIconSize(font, styles);
         const juce::Rectangle<float> content{
             std::ceil(textWidth) + getComboBoxGap(font) + iconSize.x,
-            juce::jmax(std::ceil(font.getHeight()), iconSize.y),
+            std::max(std::ceil(font.getHeight()), iconSize.y),
         };
 
         return getBorderWidth(comboBox, styles)

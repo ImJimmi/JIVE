@@ -15,7 +15,7 @@ namespace jive
 
         BorderRadii() = default;
 
-        BorderRadii(Arithmetic initialValue)
+        BorderRadii(Arithmetic initialValue) // NOLINT
             : BorderRadii{
                 initialValue,
                 initialValue,
@@ -81,12 +81,14 @@ namespace jive
         Arithmetic bottomLeft{ 0 };
     };
 
-    template <typename T>
-    struct Interpolate<BorderRadii<T>>
+    template <typename Value>
+    struct Interpolate<BorderRadii<Value>>
     {
-        [[nodiscard]] BorderRadii<T> operator()(BorderRadii<T> start, BorderRadii<T> end, double proportion) const
+        [[nodiscard]] BorderRadii<Value> operator()(BorderRadii<Value> start,
+                                                    BorderRadii<Value> end,
+                                                    double proportion) const
         {
-            return BorderRadii<T>{
+            return BorderRadii<Value>{
                 interpolate(start.topLeft, end.topLeft, proportion),
                 interpolate(start.topRight, end.topRight, proportion),
                 interpolate(start.bottomRight, end.bottomRight, proportion),
@@ -164,11 +166,11 @@ namespace juce
         }
     };
 
-    template <typename T>
-    String& operator<<(String& str, const jive::BorderRadii<T>& border)
+    template <typename Value>
+    String& operator<<(String& str, const jive::BorderRadii<Value>& border)
     {
         return str << "jive::BorderRadii<"
-                   << typeid(T).name()
+                   << typeid(Value).name()
                    << "> { "
                    << border.topLeft << ", "
                    << border.topRight << ", "

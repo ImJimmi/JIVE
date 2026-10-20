@@ -108,7 +108,7 @@ namespace jive
         if (auto* composite = dynamic_cast<juce::DrawableComposite*>(&drawable))
         {
 #if JIVE_JUCE_9
-            for (auto i = 0; i < composite->getNumChildren(); i++)
+            for (auto i = 0; i < composite->getNumChildren(); ++i)
             {
                 auto* child = &composite->getChild(i);
 #else
@@ -205,7 +205,7 @@ static jive::UnitTest iconSourcesTest{
         test.expect(!fromMarkup.isEmpty());
         test.expectEquals(fromMarkup.getAspectRatio(), 4.0f);
 
-        auto file = juce::File::createTempFile(".svg");
+        const auto file = juce::File::createTempFile(".svg");
         file.replaceWithText(R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 20"><rect width="10" height="20" /></svg>)");
         const jive::Icon fromFile{ file.getFullPathName() };
         test.expect(!fromFile.isEmpty());

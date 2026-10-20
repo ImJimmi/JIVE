@@ -217,7 +217,7 @@ namespace jive
 
     using DecoratorCreator = std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>;
 
-    [[nodiscard]] static std::vector<const DecoratorCreator*> collectDecoratorCreators(const juce::Identifier& itemType,
+    [[nodiscard]] static std::vector<const DecoratorCreator*> collectDecoratorCreators(juce::Identifier itemType,
                                                                                        const std::vector<std::pair<juce::Identifier, DecoratorCreator>>& decorators)
     {
         std::vector<const DecoratorCreator*> creators;

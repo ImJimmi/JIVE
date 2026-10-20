@@ -71,6 +71,10 @@ function(jive_add_example TARGET)
         )
     endif ()
 
+    if (JIVE_ENABLE_CLANG_TIDY)
+        add_clang_tidy(${TARGET})
+    endif ()
+
     if (EXAMPLE_PLUGIN AND JIVE_ENABLE_PLUGINVAL)
         add_pluginval_tests(${TARGET})
     endif ()

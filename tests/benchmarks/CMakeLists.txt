@@ -26,6 +26,10 @@ target_link_libraries(jive-benchmarking
                               juce::juce_recommended_warning_flags
 )
 
+if (JIVE_ENABLE_CLANG_TIDY)
+    add_clang_tidy(jive-benchmarking)
+endif()
+
 if (JIVE_ENABLE_PERFETTO)
     add_melatonin_perfetto(jive-benchmarking)
 endif()

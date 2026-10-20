@@ -109,7 +109,7 @@ namespace jive
 
         juce::Array<juce::Rectangle<float>> areas;
 
-        for (auto i = 0; i < grid.items.size(); i++)
+        for (auto i = 0; i < grid.items.size(); ++i)
         {
             const auto& margin = grid.items.getReference(i).margin;
             const auto& start = startAligned.getReference(i).currentBounds;
@@ -140,7 +140,7 @@ namespace jive
         case Alignment::end:
             return availableStart + availableSize - size;
         case Alignment::center:
-            return availableStart + (availableSize - size) / 2.0f;
+            return availableStart + ((availableSize - size) / 2.0f);
         case Alignment::start:
         case Alignment::stretch:
             break;
@@ -177,7 +177,7 @@ namespace jive
     {
         const auto areas = calculateItemAreas(grid, bounds);
 
-        for (auto i = 0; i < grid.items.size(); i++)
+        for (auto i = 0; i < grid.items.size(); ++i)
         {
             const auto& item = grid.items.getReference(i);
 
@@ -221,7 +221,7 @@ namespace jive
             item.alignSelf = juce::GridItem::AlignSelf::stretch;
         }
 
-        grid.performLayout({ std::numeric_limits<juce::uint16>::max(), std::numeric_limits<juce::uint16>::max() });
+        grid.performLayout({ std::numeric_limits<std::uint16_t>::max(), std::numeric_limits<std::uint16_t>::max() });
 
         const auto columnStride = 1.0f + static_cast<float>(grid.columnGap.pixels);
         const auto rowStride = 1.0f + static_cast<float>(grid.rowGap.pixels);
@@ -249,7 +249,7 @@ namespace jive
         auto columnFraction = 0.0f;
         auto rowFraction = 0.0f;
 
-        for (auto i = 0; i < grid.items.size(); i++)
+        for (auto i = 0; i < grid.items.size(); ++i)
         {
             const auto& item = grid.items.getReference(i);
             const auto& tracks = tracksOfItems.getReference(i);
@@ -258,16 +258,16 @@ namespace jive
                 && juce::isPositiveAndBelow(tracks.getX(), grid.templateColumns.size())
                 && grid.templateColumns.getReference(tracks.getX()).isFractional())
             {
-                const auto width = juce::jmax(item.width, item.minWidth) + item.margin.left + item.margin.right;
-                columnFraction = juce::jmax(columnFraction, width / grid.templateColumns.getReference(tracks.getX()).getSize());
+                const auto width = std::max(item.width, item.minWidth) + item.margin.left + item.margin.right;
+                columnFraction = std::max(columnFraction, width / grid.templateColumns.getReference(tracks.getX()).getSize());
             }
 
             if (tracks.getHeight() == 1
                 && juce::isPositiveAndBelow(tracks.getY(), grid.templateRows.size())
                 && grid.templateRows.getReference(tracks.getY()).isFractional())
             {
-                const auto height = juce::jmax(item.height, item.minHeight) + item.margin.top + item.margin.bottom;
-                rowFraction = juce::jmax(rowFraction, height / grid.templateRows.getReference(tracks.getY()).getSize());
+                const auto height = std::max(item.height, item.minHeight) + item.margin.top + item.margin.bottom;
+                rowFraction = std::max(rowFraction, height / grid.templateRows.getReference(tracks.getY()).getSize());
             }
         }
 
@@ -317,7 +317,7 @@ namespace jive
     juce::Rectangle<float> GridContainer::calculateIdealSize(juce::Rectangle<float> constraints) const
     {
         auto integerConstraints = constraints.toNearestInt().withZeroOrigin();
-        integerConstraints.setHeight(static_cast<int>(std::numeric_limits<juce::uint16>::max()));
+        integerConstraints.setHeight(static_cast<int>(std::numeric_limits<std::uint16_t>::max()));
 
         auto grid = const_cast<GridContainer&>(*this)
                         .buildGrid(integerConstraints, LayoutStrategy::dummy);
@@ -328,15 +328,13 @@ namespace jive
         for (const auto& gridItem : grid.items)
         {
             const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
-            if (right > extremities.x)
-                extremities.x = right;
+            extremities.x = std::max(right, extremities.x);
 
             const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
-            if (bottom > extremities.y)
-                extremities.y = bottom;
+            extremities.y = std::max(bottom, extremities.y);
         }
 
-        auto& currentBoxModel = boxModel(*this);
+        const auto& currentBoxModel = boxModel(*this);
 
         return {
             extremities.x
@@ -450,6 +448,9 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
+    #include <algorithm>
+    #include <cstdint>
+
 static bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo& b)
 {
     return (a.isAuto() == b.isAuto())
@@ -457,7 +458,7 @@ static bool compare(const juce::Grid::TrackInfo& a, const juce::Grid::TrackInfo&
         && (a.isPixels() == b.isPixels())
         && (a.getStartLineName() == b.getStartLineName())
         && (a.getEndLineName() == b.getEndLineName())
-        && (juce::approximatelyEqual(a.getSize(), b.getSize()));
+        && juce::approximatelyEqual(a.getSize(), b.getSize());
 }
 
 static bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
@@ -466,7 +467,7 @@ static bool compare(const juce::Array<juce::Grid::TrackInfo>& a,
     if (a.size() != b.size())
         return false;
 
-    for (auto i = 0; i < a.size(); i++)
+    for (auto i = 0; i < a.size(); ++i)
     {
         if (!compare(a[i], b[i]))
             return false;
@@ -888,12 +889,12 @@ private:
         auto item = interpreter.interpret(state);
         auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                  .toType<jive::GridContainer>());
-        expect(grid.templateAreas == juce::Grid{}.templateAreas);
+        expectEquals(grid.templateAreas, juce::Grid{}.templateAreas);
 
         state.setProperty("grid-template-areas", "a b c-d e.f", nullptr);
         grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                             .toType<jive::GridContainer>());
-        expect(grid.templateAreas == juce::StringArray{ "a", "b", "c-d", "e.f" });
+        expectEquals(grid.templateAreas, juce::StringArray{ "a", "b", "c-d", "e.f" });
     }
 
     void testAutoRows()
@@ -1001,7 +1002,7 @@ private:
         beginTest("children");
 
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -1016,7 +1017,7 @@ private:
             expect(grid.items.isEmpty());
         }
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -1034,7 +1035,7 @@ private:
             expectEquals(grid.items.size(), 1);
         }
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 222 },
@@ -1051,7 +1052,7 @@ private:
             auto item = interpreter.interpret(state);
             const auto grid = static_cast<juce::Grid>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                            .toType<jive::GridContainer>());
-            expect(grid.items.size() == 3);
+            expectEquals(grid.items.size(), 3);
         }
     }
 
@@ -1059,7 +1060,7 @@ private:
     {
         beginTest("layout");
 
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "display", "grid" },
@@ -1098,7 +1099,7 @@ private:
                 },
             };
         };
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "display", "grid" },
@@ -1148,7 +1149,7 @@ private:
                 },
             };
         };
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "display", "grid" },
@@ -1178,7 +1179,7 @@ private:
     {
         beginTest("auto-size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },
@@ -1207,8 +1208,8 @@ private:
         auto parent = interpreter.interpret(parentState);
         auto& item = *parent->getChildren()[0];
         const auto& boxModel = jive::boxModel(item);
-        expectEquals(boxModel.getWidth(), 25.f);
-        expectEquals(boxModel.getHeight(), 15.f);
+        expectEquals(boxModel.getWidth(), 25.0f);
+        expectEquals(boxModel.getHeight(), 15.0f);
     }
 
     void testFractionalTracksAutoSize()
@@ -1224,7 +1225,7 @@ private:
                 },
             };
         };
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },
@@ -1267,7 +1268,7 @@ private:
     {
         beginTest("nested text");
 
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Window",
             {
                 { "width", 200 },
@@ -1304,7 +1305,7 @@ private:
 
         // Both columns are a fraction each, so they're both as wide as the
         // widest text.
-        const auto expectedWidth = 2.0f * juce::jmax(std::ceil(jive::calculateStringWidth("hello", font)), std::ceil(jive::calculateStringWidth("world", font)));
+        const auto expectedWidth = 2.0f * std::max(std::ceil(jive::calculateStringWidth("hello", font)), std::ceil(jive::calculateStringWidth("world", font)));
         expectEquals(boxModel.getContentBounds().getWidth(), expectedWidth);
 
         const auto expectedHeight = std::ceil(font.getHeight()) * 2.0f;

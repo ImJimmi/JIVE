@@ -6,6 +6,7 @@
 namespace jive
 {
     // Zips the given contents by their paths, for testing embedded sources.
+    // NOLINTNEXTLINE
     [[nodiscard]] inline juce::MemoryBlock createZip(const std::vector<std::pair<juce::String, juce::String>>& files)
     {
         juce::ZipFile::Builder builder;
@@ -24,7 +25,7 @@ namespace jive
                 juce::Time::getCurrentTime());
         }
 
-        juce::MemoryBlock zip;
+        juce::MemoryBlock zip; // NOLINT
 
         {
             juce::MemoryOutputStream stream{ zip, false };

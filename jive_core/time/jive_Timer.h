@@ -16,7 +16,7 @@ namespace jive
         };
 
         FakeTime() = default;
-        ~FakeTime();
+        ~FakeTime() override;
 
         void addListener(Listener& listener);
         void removeListener(Listener& listener);
@@ -38,7 +38,7 @@ namespace jive
 #if JIVE_UNIT_TESTS
         : private FakeTime::Listener
 #else
-        : private juce::Timer
+        : private juce::Timer // NOLINT
 #endif
     {
     public:
@@ -46,7 +46,9 @@ namespace jive
 
         Timer(Callback timerCallback,
               juce::RelativeTime callbackInterval);
-        ~Timer();
+        JUCE_DECLARE_NON_COPYABLE(Timer)
+        JUCE_DECLARE_NON_MOVEABLE(Timer)
+        ~Timer() override;
 
     private:
 #if JIVE_UNIT_TESTS

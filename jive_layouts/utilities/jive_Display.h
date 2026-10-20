@@ -8,7 +8,7 @@ namespace jive
     {
         flex,
         grid,
-        block
+        block,
     };
 } // namespace jive
 

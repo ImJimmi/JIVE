@@ -34,7 +34,7 @@ namespace jive
             stride = newStride;
         }
 
-        void blur(juce::uint8* pixels) const
+        void blur(std::uint8_t* pixels) const
         {
             Queue queue{ blurRadius, pixels[0] };
 
@@ -45,7 +45,7 @@ namespace jive
                  sourceIndex < (numPixels + blurRadius) * stride;
                  sourceIndex += stride)
             {
-                const auto sourcePixel = pixels[juce::jlimit(0, (numPixels - 1) * stride, sourceIndex)];
+                const auto sourcePixel = pixels[std::clamp(sourceIndex, 0, (numPixels - 1) * stride)];
                 queue.add(sourcePixel);
 
                 stack += queue.calculateStackDifference();
@@ -54,10 +54,8 @@ namespace jive
 
                 if (targetIndex >= 0)
                 {
-                    const auto alpha = juce::jlimit(0.0,
-                                                    static_cast<double>(std::numeric_limits<juce::uint8>::max()),
-                                                    std::round(stack / stackSize));
-                    const auto targetPixel = static_cast<juce::uint8>(alpha);
+                    const auto alpha = std::clamp(std::round(stack / stackSize), 0.0, static_cast<double>(std::numeric_limits<std::uint8_t>::max()));
+                    const auto targetPixel = static_cast<std::uint8_t>(alpha);
                     pixels[targetIndex] = targetPixel;
                 }
             }
@@ -67,38 +65,38 @@ namespace jive
         class Queue
         {
         public:
-            Queue(int radius, juce::uint8 initialValue)
-                : size{ static_cast<juce::uint64>(radius) * 2 + 1 }
+            Queue(int radius, std::uint8_t initialValue)
+                : size{ (static_cast<std::uint64_t>(radius) * 2) + 1 }
                 , buffer(static_cast<std::size_t>(size) + 1, initialValue)
                 , inBuffer{ &buffer[static_cast<std::size_t>(radius) + 1], radius + 1 }
                 , outBuffer{ buffer.data(), radius + 1 }
             {
             }
 
-            void add(juce::uint8 valueToAdd)
+            void add(std::uint8_t valueToAdd)
             {
                 outBuffer.write(inBuffer.front());
                 inBuffer.write(valueToAdd);
             }
 
-            double calculateStackDifference() const
+            [[nodiscard]] double calculateStackDifference() const
             {
                 return inBuffer.sum() - outBuffer.sum();
             }
 
-            const juce::uint64 size;
+            const std::uint64_t size;
 
         private:
             class RingBuffer
             {
             public:
-                RingBuffer(juce::uint8* sourceData, int bufferSize)
+                RingBuffer(std::uint8_t* sourceData, int bufferSize)
                     : data{ sourceData }
                     , size{ bufferSize }
                 {
                 }
 
-                void write(juce::uint8 value)
+                void write(std::uint8_t value)
                 {
                     data[writeIndex] = value;
 
@@ -106,23 +104,23 @@ namespace jive
                         writeIndex = 0;
                 }
 
-                juce::uint8 front() const
+                [[nodiscard]] std::uint8_t front() const
                 {
                     return data[writeIndex];
                 }
 
-                double sum() const
+                [[nodiscard]] double sum() const
                 {
                     return std::accumulate(data, data + size, 0.0);
                 }
 
             private:
                 int writeIndex{ 0 };
-                juce::uint8* data;
+                std::uint8_t* data;
                 const int size;
             };
 
-            std::vector<juce::uint8> buffer;
+            std::vector<std::uint8_t> buffer;
 
             RingBuffer inBuffer;
             RingBuffer outBuffer;
@@ -135,7 +133,7 @@ namespace jive
         int stride{ 0 };
     };
 
-    [[nodiscard]] static auto renderNonBlurredShadow(const juce::Rectangle<int>& bounds, const juce::Path& shape, float spread, float imageScale)
+    [[nodiscard]] static auto renderNonBlurredShadow(juce::Rectangle<int> bounds, const juce::Path& shape, float spread, float imageScale)
     {
         const auto imageSize = bounds
                                    .toFloat()
@@ -159,7 +157,7 @@ namespace jive
         return result;
     }
 
-    static void blurHorizontally(juce::Image& frameBuffer, const Shadow& shadow, float scale)
+    static void blurHorizontally(const juce::Image& frameBuffer, const Shadow& shadow, float scale)
     {
         juce::Image::BitmapData bitmapData{
             frameBuffer,
@@ -176,10 +174,10 @@ namespace jive
 
         for (auto i = 0; i < numRows; i += numJobsPerThread)
         {
-            threadPool.addJob([&bitmapData, i, numRows, &blur]() {
+            threadPool.addJob([&bitmapData, i, numRows, &blur] {
                 for (auto row = i;
                      row < i + numJobsPerThread && row < numRows;
-                     row++)
+                     ++row)
                 {
                     auto* const pixels = bitmapData.getPixelPointer(0, row);
                     blur.blur(pixels);
@@ -192,7 +190,7 @@ namespace jive
         }
     }
 
-    static void blurVertically(juce::Image& frameBuffer, const Shadow& shadow, float scale)
+    static void blurVertically(const juce::Image& frameBuffer, const Shadow& shadow, float scale)
     {
         juce::Image::BitmapData bitmapData{
             frameBuffer,
@@ -209,10 +207,10 @@ namespace jive
 
         for (auto i = 0; i < numColumns; i += numJobsPerThread)
         {
-            threadPool.addJob([&bitmapData, i, numColumns, &blur]() {
+            threadPool.addJob([&bitmapData, i, numColumns, &blur] {
                 for (auto column = i;
                      column < i + numJobsPerThread && column < numColumns;
-                     column++)
+                     ++column)
                 {
                     auto* const pixels = bitmapData.getPixelPointer(column, 0);
                     blur.blur(pixels);
@@ -226,11 +224,11 @@ namespace jive
     }
 
     void Shadow::draw(juce::Graphics& g,
-                      const juce::Rectangle<int>& bounds,
+                      juce::Rectangle<int> bounds,
                       const juce::Path& shape) const
     {
         static constexpr auto scale = 1.0f;
-        auto frameBuffer = renderNonBlurredShadow(bounds, shape, spreadRadius, scale);
+        const auto frameBuffer = renderNonBlurredShadow(bounds, shape, spreadRadius, scale);
         blurHorizontally(frameBuffer, *this, scale);
         blurVertically(frameBuffer, *this, scale);
 
@@ -238,7 +236,7 @@ namespace jive
         g.drawImage(frameBuffer, bounds.toFloat(), juce::RectanglePlacement::stretchToFit, true);
     }
 
-    Shadow& Shadow::setOffset(const juce::Point<int>& newOffset)
+    Shadow& Shadow::setOffset(juce::Point<int> newOffset)
     {
         offset = newOffset;
         return *this;
@@ -249,7 +247,7 @@ namespace jive
         return offset;
     }
 
-    Shadow& Shadow::setColour(const juce::Colour& newColour)
+    Shadow& Shadow::setColour(juce::Colour newColour)
     {
         colour = newColour;
         return *this;
@@ -404,7 +402,7 @@ namespace jive
                           .translated(shadow.getOffset().x, shadow.getOffset().y)
                           .expanded(calculateMargin(shadow));
 
-        for (auto* parentComp = component->getParentComponent();
+        for (const auto* parentComp = component->getParentComponent();
              parentComp != nullptr;
              parentComp = parentComp->getParentComponent())
         {
@@ -454,7 +452,7 @@ namespace jive
         if (component == nullptr)
             return;
 
-        auto* laf = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
+        const auto* laf = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
 
         for (auto* otherParent = component->getParentComponent();
              otherParent != nullptr && dynamic_cast<juce::TopLevelWindow*>(otherParent) == nullptr;
@@ -489,6 +487,8 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/testing/jive_UnitTest.h>
+
+    #include <cstdint>
 
 static jive::UnitTest shadowFollowsAncestorsTest{
     "jive",

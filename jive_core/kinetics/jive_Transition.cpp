@@ -40,7 +40,7 @@ namespace jive
         if (progressLinear >= 0.0 && progressLinear <= 1.0)
             return timingFunction(progressLinear);
 
-        return juce::jlimit(0.0, 1.0, progressLinear);
+        return std::clamp(progressLinear, 0.0, 1.0);
     }
 
     double Transition::calculateProgress() const

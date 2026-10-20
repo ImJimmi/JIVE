@@ -13,16 +13,18 @@
 
 #include <juce_graphics/juce_graphics.h>
 
+#include <utility>
+
 namespace jive
 {
     // A set of styles that might be applied to a component.
-    // Each of the styles defaults to being undefined so you can bevery explicit
-    // about what you want to define. When receiving a Styles object, you should
-    // decide on a sensible default if a style is undefined, or use some other
-    // sort of error handling in that case.
+    // Each of the styles defaults to being undefined so you can be very
+    // explicit about what you want to define. When receiving a Styles object,
+    // you should decide on a sensible default if a style is undefined, or use
+    // some other sort of error handling in that case.
     struct Styles
     {
-        template <typename T>
+        template <typename Value>
         class StyleProperty
         {
         public:
@@ -32,27 +34,32 @@ namespace jive
 
             StyleProperty& operator=(const StyleProperty& other)
             {
-                *const_cast<juce::Identifier*>(&id) = other.id;
-                currentValue = other.currentValue;
-                previousValue = other.previousValue;
-                lastUpdated = other.lastUpdated;
+                if (&other != this)
+                {
+                    *const_cast<juce::Identifier*>(&id) = other.id;
+                    currentValue = other.currentValue;
+                    previousValue = other.previousValue;
+                    lastUpdated = other.lastUpdated;
+                }
 
                 return *this;
             }
 
-            explicit StyleProperty(const juce::Identifier& propertyID)
-                : id{ propertyID }
+            explicit StyleProperty(juce::Identifier propertyID)
+                : id{ std::move(propertyID) }
             {
             }
 
-            StyleProperty(const juce::Identifier& propertyID, const T& value)
-                : id{ propertyID }
+            StyleProperty(juce::Identifier propertyID, const Value& value)
+                : id{ std::move(propertyID) }
                 , currentValue{ value }
                 , previousValue{ value }
             {
             }
 
-            void set(const T& newValue)
+            ~StyleProperty() = default;
+
+            void set(const Value& newValue)
             {
                 if (newValue == currentValue)
                     return;
@@ -71,34 +78,36 @@ namespace jive
             // transition from its current (interpolated) value so that
             // interrupting one transition with another continues smoothly
             // rather than snapping back to the previous target.
-            void setTransitioningFrom(const T& from, const T& newValue)
+            void setTransitioningFrom(const Value& from, const Value& newValue)
             {
                 previousValue = from;
                 currentValue = newValue;
                 lastUpdated = now();
             }
 
-            [[nodiscard]] const T& get() const
+            [[nodiscard]] const Value& get() const
+            {
+                return currentValue.value(); // NOLINT
+            }
+
+            [[nodiscard]] Value& get()
             {
                 return currentValue.value();
             }
 
-            [[nodiscard]] T& get()
-            {
-                return currentValue.value();
-            }
-
-            [[nodiscard]] T getValueOr(const T& fallback) const
+            [[nodiscard]] Value getValueOr(const Value& fallback) const
             {
                 return currentValue.value_or(fallback);
             }
 
-            [[nodiscard]] T interpolated(double proportion) const
+            [[nodiscard]] Value interpolated(double proportion) const
             {
-                return interpolate(previousValue.value(), currentValue.value(), proportion);
+                return interpolate(previousValue.value(), // NOLINT
+                                   currentValue.value(),  // NOLINT
+                                   proportion);
             }
 
-            [[nodiscard]] T interpolatedOr(double proportion, const T& fallback) const
+            [[nodiscard]] Value interpolatedOr(double proportion, const Value& fallback) const
             {
                 if (currentValue.has_value() && previousValue.has_value())
                     return interpolated(proportion);
@@ -121,13 +130,13 @@ namespace jive
                 return lastUpdated;
             }
 
-            StyleProperty& operator=(const T& other)
+            StyleProperty& operator=(const Value& other)
             {
                 set(other);
                 return *this;
             }
 
-            [[nodiscard]] auto operator==(const StyleProperty<T>& other) const
+            [[nodiscard]] auto operator==(const StyleProperty<Value>& other) const
             {
                 return id == other.id && currentValue == other.currentValue;
             }
@@ -135,8 +144,8 @@ namespace jive
             const juce::Identifier id;
 
         private:
-            std::optional<T> currentValue;
-            std::optional<T> previousValue;
+            std::optional<Value> currentValue;
+            std::optional<Value> previousValue;
             juce::Time lastUpdated = now();
         };
 
@@ -167,6 +176,7 @@ namespace jive
 
         Transitions::ReferenceCountedPointer transitions;
 
+        // NOLINTNEXTLINE
         static inline const std::unordered_set<juce::String> propertyNames{
             "accent",
             "background",
@@ -194,7 +204,7 @@ namespace jive
             "track",
         };
 
-        [[nodiscard]] Styles& with(const juce::Identifier& propertyName,
+        [[nodiscard]] Styles& with(juce::Identifier propertyName,
                                    const juce::var& value)
         {
             if (propertyName == accent.id)
@@ -384,7 +394,7 @@ namespace jive
 
         [[nodiscard]] Styles& withTransitions(Transitions::ReferenceCountedPointer value)
         {
-            transitions = value;
+            transitions = std::move(value);
             return *this;
         }
 
@@ -393,8 +403,8 @@ namespace jive
         // indicate the name that should be passed to this function.
         // Passing an incorrect name will cause an assertion failure and return
         // nullptr.
-        template <typename T>
-        [[nodiscard]] std::optional<T> find(const juce::String& styleName) const;
+        template <typename Value>
+        [[nodiscard]] std::optional<Value> find(const juce::String& styleName) const;
 
         template <>
         [[nodiscard]] std::optional<Fill> find(const juce::String& styleName) const
@@ -582,8 +592,8 @@ namespace jive
 
             bool anyTransitioning = false;
 
-            forEach([this, &anyTransitioning](auto property) {
-                if (auto* transition = (*transitions)[property.id.toString()])
+            forEach([this, &anyTransitioning](const auto& property) {
+                if (const auto* transition = (*transitions)[property.id.toString()])
                 {
                     const auto proportion = transition->calculateProgress(property.getLastUpdated());
 
@@ -631,14 +641,14 @@ namespace jive
             const_cast<Styles*>(this)->forEach(std::move(function));
         }
 
-        template <typename T>
-        [[nodiscard]] std::optional<T> calculateCurrent(const StyleProperty<T>& property) const
+        template <typename Value>
+        [[nodiscard]] std::optional<Value> calculateCurrent(const StyleProperty<Value>& property) const
         {
             double proportion = 1.0;
 
             if (transitions != nullptr)
             {
-                if (auto* transition = (*transitions)[property.id.toString()])
+                if (const auto* transition = (*transitions)[property.id.toString()])
                     proportion = transition->calculateProgress(property.getLastUpdated());
             }
 

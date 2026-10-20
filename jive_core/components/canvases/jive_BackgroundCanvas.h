@@ -14,14 +14,16 @@ namespace jive
         void paint(juce::Graphics& g) final;
         void resized() final;
 
-        Fill getFill() const;
+        [[nodiscard]] Fill getFill() const;
         void setFill(const Fill& newFill);
 
-        Fill getBorderFill() const;
+        [[nodiscard]] Fill getBorderFill() const;
         void setBorderFill(const Fill& newFill);
-        float getBorderWidth() const;
+
+        [[nodiscard]] float getBorderWidth() const;
         void setBorderWidth(float newWidth);
-        BorderRadii<float> getBorderRadii() const;
+
+        [[nodiscard]] BorderRadii<float> getBorderRadii() const;
         void setBorderRadii(BorderRadii<float> radii);
 
     private:
@@ -34,6 +36,6 @@ namespace jive
 
         juce::Path shape;
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BackgroundCanvas)
+        JUCE_LEAK_DETECTOR(BackgroundCanvas)
     };
 } // namespace jive

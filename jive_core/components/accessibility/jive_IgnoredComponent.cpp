@@ -12,7 +12,7 @@ namespace jive
 
     void IgnoredComponent::paint(juce::Graphics& g)
     {
-        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
             laf->drawComponent(g, *this);
     }
 

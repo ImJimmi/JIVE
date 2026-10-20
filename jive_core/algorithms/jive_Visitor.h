@@ -3,7 +3,7 @@
 namespace jive
 {
     template <class... Variants>
-    struct Visitor : Variants...
+    struct Visitor : public Variants...
     {
         using Variants::operator()...;
     };

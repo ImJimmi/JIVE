@@ -21,18 +21,18 @@ namespace jive
 
         // Uses CSS syntax to parse the given string to a shadow.
         // See https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow
-        Shadow(const juce::String&);
-        Shadow(const char*);
+        Shadow(const juce::String&); // NOLINT
+        Shadow(const char*);         // NOLINT
 
         // Draws the shadow to the given graphics context using the given path.
         void draw(juce::Graphics&,
-                  const juce::Rectangle<int>&,
+                  juce::Rectangle<int>,
                   const juce::Path&) const;
 
-        Shadow& setOffset(const juce::Point<int>& newOffset);
+        Shadow& setOffset(juce::Point<int> newOffset);
         [[nodiscard]] juce::Point<int> getOffset() const;
 
-        Shadow& setColour(const juce::Colour& newColour);
+        Shadow& setColour(juce::Colour newColour);
         [[nodiscard]] juce::Colour getColour() const;
 
         Shadow& setBlurRadius(float newBlurRadius);
@@ -70,6 +70,8 @@ namespace jive
     {
     public:
         explicit ShadowComponent(juce::Component& componentToAttachTo);
+        JUCE_DECLARE_NON_COPYABLE(ShadowComponent)
+        JUCE_DECLARE_NON_MOVEABLE(ShadowComponent)
         ~ShadowComponent() final;
 
         void paint(juce::Graphics& g) final;
@@ -90,13 +92,15 @@ namespace jive
         juce::Component::SafePointer<juce::Component> parent;
         std::vector<juce::Component::SafePointer<juce::Component>> ancestors;
         Shadow shadow;
+
+        JUCE_LEAK_DETECTOR(ShadowComponent)
     };
 
     // Wraps a shadow component in a reference-counted object so it can be
     // safely stored in another components var properties.
     // Probably not useful for anything other than CLAF's own shadow
     // implementation.
-    struct ReferenceCountedShadowComponent : juce::ReferenceCountedObject
+    struct ReferenceCountedShadowComponent : public juce::ReferenceCountedObject
     {
         explicit ReferenceCountedShadowComponent(std::unique_ptr<ShadowComponent>&& up)
             : shadow{ std::move(up) }

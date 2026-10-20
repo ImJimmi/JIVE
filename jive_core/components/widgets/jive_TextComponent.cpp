@@ -17,7 +17,7 @@ namespace jive
         if (dynamic_cast<TextComponent*>(getParentComponent()) != nullptr)
             return;
 
-        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
             laf->drawComponent(g, *this);
 
         const auto attributedString = getAttributedString();
@@ -80,7 +80,7 @@ namespace jive
 
     void TextComponent::append(const juce::AttributedString& attributedStringToAppend)
     {
-        appendices.add(attributedStringToAppend);
+        appendices.emplace_back(attributedStringToAppend);
         textLayoutsSourceMayBeOutOfDate = true;
         repaint();
     }
@@ -96,7 +96,7 @@ namespace jive
         for (const auto& appendix : appendices)
             attributedString.append(appendix);
 
-        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
             const auto styles = laf->findMostApplicableStyles(*this);
 
@@ -135,12 +135,12 @@ namespace jive
         {
         }
 
-        bool isReadOnly() const override
+        [[nodiscard]] bool isReadOnly() const override
         {
             return true;
         }
 
-        juce::String getCurrentValueAsString() const override
+        [[nodiscard]] juce::String getCurrentValueAsString() const override
         {
             return textComponent.getText();
         }
@@ -170,7 +170,7 @@ namespace jive
         {
         }
 
-        juce::String getTitle() const override
+        [[nodiscard]] juce::String getTitle() const override
         {
             if (textComponent.getTitle().isNotEmpty())
                 return textComponent.getTitle();
@@ -178,7 +178,7 @@ namespace jive
             return textComponent.getText();
         }
 
-        juce::String getDescription() const override
+        [[nodiscard]] juce::String getDescription() const override
         {
             if (textComponent.getDescription().isNotEmpty())
                 return textComponent.getDescription();
@@ -210,7 +210,7 @@ namespace jive
             return false;
         }
 
-        for (auto i = 0; i < a.getNumAttributes(); i++)
+        for (auto i = 0; i < a.getNumAttributes(); ++i)
         {
             const auto& first = a.getAttribute(i);
             const auto& second = b.getAttribute(i);
@@ -286,7 +286,7 @@ namespace jive
     {
         textLayoutsSourceMayBeOutOfDate = true;
 
-        if (auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
+        if (const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel()))
         {
             const auto styles = laf->findMostApplicableStyles(*this);
             const auto newFont = getFont(*this, styles);
@@ -323,9 +323,9 @@ public:
 private:
     [[nodiscard]] static auto hasInkBetween(const juce::Image& image, int top, int bottom)
     {
-        for (auto y = top; y < bottom; y++)
+        for (auto y = top; y < bottom; ++y)
         {
-            for (auto x = 0; x < image.getWidth(); x++)
+            for (auto x = 0; x < image.getWidth(); ++x)
             {
                 if (image.getPixelAt(x, y).getAlpha() > 0)
                     return true;
@@ -378,7 +378,7 @@ private:
         expectWithinAbsoluteError(actual.getWidth(), expected.getWidth(), tolerance, context);
         expectWithinAbsoluteError(actual.getHeight(), expected.getHeight(), tolerance, context);
 
-        for (auto i = 0; i < std::min(actual.getNumLines(), expected.getNumLines()); i++)
+        for (auto i = 0; i < std::min(actual.getNumLines(), expected.getNumLines()); ++i)
         {
             const auto& actualLine = actual.getLine(i);
             const auto& expectedLine = expected.getLine(i);
@@ -486,7 +486,7 @@ private:
         lookAndFeel.applyTheme(jive::Theme::juce);
         text.setText("Text");
 
-        expect(text.getAttributedString().getAttribute(0).colour == jive::detail::getV4Colour(jive::detail::V4Colour::defaultText));
+        expectEquals(text.getAttributedString().getAttribute(0).colour, jive::detail::getV4Colour(jive::detail::V4Colour::defaultText));
     }
 };
 

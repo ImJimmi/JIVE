@@ -43,6 +43,9 @@ namespace jive
         // and detaches just before this object is destroyed.
         explicit LookAndFeel(juce::Component&);
 
+        JUCE_DECLARE_NON_COPYABLE(LookAndFeel)
+        JUCE_DECLARE_NON_MOVEABLE(LookAndFeel)
+
         ~LookAndFeel() override;
 
         // Adds a painter that will be used to paint any component that matches
@@ -162,7 +165,7 @@ namespace jive
         virtual void drawComboBoxPopupBackground(juce::Graphics&,
                                                  const juce::ComboBox&,
                                                  const juce::PopupMenu::Options&,
-                                                 const juce::Rectangle<float>&) const;
+                                                 juce::Rectangle<float>) const;
 
         // Draws an item in a popup menu that's associated with the given
         // combo box.
@@ -171,9 +174,9 @@ namespace jive
                                            const juce::ComboBox&,
                                            const juce::PopupMenu::Options&,
                                            const InteractionState&,
-                                           const juce::Rectangle<float>&) const;
+                                           juce::Rectangle<float>) const;
 
-        // =============================================================================================================
+        //==============================================================================
         // Overridden JUCE methods - see JUCE documentation for details.
 
         // juce::ScrollBar
@@ -219,7 +222,7 @@ namespace jive
         // juce::ProgressBar
         void drawProgressBar(juce::Graphics&, juce::ProgressBar&, int, int, double, const juce::String&) override;
 
-        // =============================================================================================================
+        //==============================================================================
 
 #if JIVE_UNIT_TESTS
         // Runs the per-frame update that would normally be driven by the
@@ -279,7 +282,7 @@ namespace jive
         template <typename Component, typename DefaultStyleDrawer>
         void draw(juce::Graphics& g,
                   const Component& component,
-                  DefaultStyleDrawer drawDefaultStyle) const
+                  const DefaultStyleDrawer& drawDefaultStyle) const
         {
             const auto styles = findMostApplicableStyles(component);
 
@@ -305,8 +308,8 @@ namespace jive
         mutable std::vector<ComponentStylesCache> stylesCache;
 
         juce::VBlankAttachment vBlank;
-        mutable juce::Array<juce::Component::SafePointer<juce::Component>> transitioningComponents;
-        mutable juce::Array<juce::Component::SafePointer<juce::Component>> componentsAwaitingShadowChanges;
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> transitioningComponents;         // NOLINT
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> componentsAwaitingShadowChanges; // NOLINT
     };
 
     // A custom Caret component which is drawn by its look-and-feel, rather
@@ -316,6 +319,9 @@ namespace jive
     public:
         using juce::CaretComponent::CaretComponent;
         void paint(juce::Graphics&) override;
+
+    private:
+        JUCE_LEAK_DETECTOR(Caret)
     };
 } // namespace jive
 
@@ -327,8 +333,5 @@ namespace juce
     public:
         static jive::Theme fromVar(const var& v);
         static var toVar(const jive::Theme& theme);
-
-    private:
-        static const Array<var> options;
     };
 } // namespace juce

@@ -12,17 +12,19 @@ namespace jive
 
         struct Listener
         {
+            JUCE_DECLARE_NON_COPYABLE(Listener)
+            JUCE_DECLARE_NON_MOVEABLE(Listener)
             virtual ~Listener() = default;
 
             virtual void textFontChanged(TextComponent& text) = 0;
         };
 
         TextComponent();
-        JUCE_DECLARE_NON_COPYABLE(TextComponent)
 
         void paint(juce::Graphics& g) override;
         void lookAndFeelChanged() override;
         void parentHierarchyChanged() override;
+        std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
         [[nodiscard]] const juce::String& getText() const;
         void setText(const juce::String& text);
@@ -47,15 +49,13 @@ namespace jive
             juce::TextLayout layout;
         };
 
-        std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
-
         void updateCachedStyles();
         void updateTextLayoutsSource(const juce::AttributedString& attributedString) const;
 
         static constexpr std::size_t maxNumCachedTextLayouts = 16;
 
         juce::String text;
-        juce::Array<juce::AttributedString> appendices;
+        std::vector<juce::AttributedString> appendices;
         mutable std::optional<juce::Font> cachedFont;
 
         float lineSpacing{ 0.0f };
@@ -66,5 +66,7 @@ namespace jive
         mutable juce::AttributedString textLayoutsSource;
         mutable bool textLayoutsSourceMayBeOutOfDate{ true };
         mutable std::vector<CachedTextLayout> textLayouts;
+
+        JUCE_LEAK_DETECTOR(TextComponent)
     };
 } // namespace jive

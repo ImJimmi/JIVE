@@ -12,7 +12,7 @@ namespace jive::default_styles
     } // namespace detail
 
     inline void drawRoundedRectangle(juce::Graphics& g,
-                                     const juce::Rectangle<float>& bounds,
+                                     juce::Rectangle<float> bounds,
                                      const BorderRadii<float>& borderRadius,
                                      const juce::BorderSize<float> borderWidth,
                                      const juce::FillType& backgroundFill,

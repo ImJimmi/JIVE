@@ -32,7 +32,7 @@ namespace jive
 
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
-        hasShadow.onValueChange = [this]() {
+        hasShadow.onValueChange = [this] {
             setDropShadowEnabled(hasShadow.getOr(true));
         };
         setDropShadowEnabled(hasShadow.getOr(true));
@@ -42,24 +42,24 @@ namespace jive
 #else
         static constexpr auto nativeByDefault = true;
 #endif
-        isNative.onValueChange = [this]() {
+        isNative.onValueChange = [this] {
             setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
         };
         setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
 
-        canBeResized.onValueChange = [this]() {
+        canBeResized.onValueChange = [this] {
             setResizable(canBeResized.getOr(true), useCornerResizer.getOr(false));
         };
-        useCornerResizer.onValueChange = [this]() {
+        useCornerResizer.onValueChange = [this] {
             setResizable(canBeResized.getOr(true), useCornerResizer.getOr(false));
         };
         setResizable(canBeResized.getOr(true), useCornerResizer.getOr(false));
 
-        const auto updateResizeLimits = [this]() {
+        const auto updateResizeLimits = [this] {
             setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f))),
                             static_cast<int>(std::ceil(minHeight.getOr(1.0f))),
-                            static_cast<int>(std::floor(maxWidth.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))),
-                            static_cast<int>(std::floor(maxHeight.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))));
+                            static_cast<int>(std::floor(maxWidth.getOr(static_cast<float>(std::numeric_limits<std::int16_t>::max())))),
+                            static_cast<int>(std::floor(maxHeight.getOr(static_cast<float>(std::numeric_limits<std::int16_t>::max())))));
         };
         minWidth.onValueChange = updateResizeLimits;
         minHeight.onValueChange = updateResizeLimits;
@@ -67,31 +67,31 @@ namespace jive
         maxHeight.onValueChange = updateResizeLimits;
         updateResizeLimits();
 
-        draggable.onValueChange = [this]() {
+        draggable.onValueChange = [this] {
             setDraggable(draggable.getOr(true));
         };
         setDraggable(draggable.getOr(true));
 
-        fullScreen.onValueChange = [this]() {
+        fullScreen.onValueChange = [this] {
             setFullScreen(fullScreen);
         };
         setFullScreen(fullScreen);
 
-        minimised.onValueChange = [this]() {
+        minimised.onValueChange = [this] {
             setMinimised(minimised);
         };
         setMinimised(minimised);
 
-        visibility.onValueChange = [this]() {
+        visibility.onValueChange = [this] {
             setVisible(visibility.getOr(true));
         };
 
-        name.onValueChange = [this]() {
+        name.onValueChange = [this] {
             setName(name.getOr(JUCE_APPLICATION_NAME));
         };
         setName(name.getOr(JUCE_APPLICATION_NAME));
 
-        windowTitleBarHeight.onValueChange = [this]() {
+        windowTitleBarHeight.onValueChange = [this] {
             setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
         };
         setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
@@ -102,7 +102,7 @@ namespace jive
         static constexpr auto leftAlignButtons = false;
 #endif
 
-        windowTitleBarButtons.onValueChange = [this]() {
+        windowTitleBarButtons.onValueChange = [this] {
             setTitleBarButtonsRequired(windowTitleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
         };
         setTitleBarButtonsRequired(windowTitleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
@@ -190,6 +190,8 @@ namespace jive
     #include <jive_core/graphics/themes/jive_SynthwaveTheme.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
+    #include <cstdint>
+
 class WindowTest : public juce::UnitTest
 {
 public:
@@ -228,8 +230,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(window.isDropShadowEnabled());
             expect(window.isOnDesktop());
 
@@ -237,7 +239,7 @@ private:
             expect(!window.isDropShadowEnabled());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "shadow", false },
@@ -247,8 +249,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(!window.isDropShadowEnabled());
         }
     }
@@ -258,7 +260,7 @@ private:
         beginTest("native");
 
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Window",
                 {
                     { "native", true },
@@ -268,14 +270,14 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(state);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(window.isUsingNativeTitleBar());
             expectEquals(item->getComponent()->getWidth(), 100);
             expectEquals(item->getComponent()->getHeight(), 150);
         }
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Window",
                 {
                     { "native", false },
@@ -285,8 +287,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(state);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(!window.isUsingNativeTitleBar());
             expectEquals(item->getComponent()->getWidth(),
                          338 - window.getBorderThickness().getLeftAndRight());
@@ -309,15 +311,15 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(window.isResizable());
 
             tree.setProperty("resizable", false, nullptr);
             expect(!window.isResizable());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "resizable", false },
@@ -327,8 +329,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(!window.isResizable());
         }
     }
@@ -352,9 +354,9 @@ private:
             expectEquals(window.getConstrainer()->getMinimumWidth(), 1);
             expectEquals(window.getConstrainer()->getMinimumHeight(), 1);
             expectEquals<int>(window.getConstrainer()->getMaximumWidth(),
-                              std::numeric_limits<juce::int16>::max());
+                              std::numeric_limits<std::int16_t>::max());
             expectEquals<int>(window.getConstrainer()->getMaximumHeight(),
-                              std::numeric_limits<juce::int16>::max());
+                              std::numeric_limits<std::int16_t>::max());
 
             tree.setProperty("min-width", 256, nullptr);
             expectEquals(window.getConstrainer()->getMinimumWidth(), 256);
@@ -369,7 +371,7 @@ private:
             expectEquals(window.getConstrainer()->getMaximumHeight(), 512);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "min-width", 246 },
@@ -405,15 +407,15 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(window.isDraggable());
 
             tree.setProperty("draggable", false, nullptr);
             expect(!window.isDraggable());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "draggable", false },
@@ -423,8 +425,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expect(!window.isDraggable());
         }
     }
@@ -433,7 +435,7 @@ private:
     {
         beginTest("full-screen");
 
-        juce::ValueTree tree{
+        const juce::ValueTree tree{
             "Window",
             {
                 { "width", 100 },
@@ -442,8 +444,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(tree);
-        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                            .toType<jive::Window>();
+        const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                  .toType<jive::Window>();
         expect(!window.isFullScreen());
     }
 
@@ -451,7 +453,7 @@ private:
     {
         beginTest("minimised");
 
-        juce::ValueTree tree{
+        const juce::ValueTree tree{
             "Window",
             {
                 { "width", 100 },
@@ -460,8 +462,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(tree);
-        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                            .toType<jive::Window>();
+        const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                  .toType<jive::Window>();
         expect(!window.isMinimised());
     }
 
@@ -479,15 +481,15 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expectEquals(window.getName(), juce::String{ JUCE_APPLICATION_NAME });
 
             tree.setProperty("name", "foo", nullptr);
             expectEquals(window.getName(), juce::String{ "foo" });
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "name", "foo" },
@@ -497,8 +499,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expectEquals(window.getName(), juce::String{ "foo" });
         }
     }
@@ -518,15 +520,15 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expectEquals(window.getTitleBarHeight(), 26);
 
             tree.setProperty("title-bar-height", 32, nullptr);
             expectEquals(window.getTitleBarHeight(), 32);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "native", false },
@@ -537,8 +539,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
             expectEquals(window.getTitleBarHeight(), 100);
         }
     }
@@ -577,7 +579,7 @@ private:
             expect(settledBackground(*item->getComponent()) == jive::parseColour(jive::themes::material::surface));
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "theme", "synthwave" },
@@ -590,7 +592,7 @@ private:
             expect(settledBackground(*item->getComponent()) == jive::Fill{ jive::themes::synthwave::duskGradient });
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Window",
                 {
                     { "theme", "juce" },
@@ -600,9 +602,9 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                .toType<jive::Window>();
-            expect(window.getBackgroundColour() == jive::detail::getV4Colour(jive::detail::V4Colour::windowBackground));
+            const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                      .toType<jive::Window>();
+            expectEquals(window.getBackgroundColour(), jive::detail::getV4Colour(jive::detail::V4Colour::windowBackground));
         }
     }
 

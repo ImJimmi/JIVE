@@ -16,10 +16,10 @@ namespace jive
         const auto tokens = getTokensBetweenParentheses(text);
         jassert(tokens.size() >= 3);
 
-        const auto red = static_cast<juce::uint8>(tokens[0].getIntValue());
-        const auto green = static_cast<juce::uint8>(tokens[1].getIntValue());
-        const auto blue = static_cast<juce::uint8>(tokens[2].getIntValue());
-        const auto alpha = static_cast<juce::uint8>(juce::roundToInt(255.0f * (tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f)));
+        const auto red = static_cast<std::uint8_t>(tokens[0].getIntValue());
+        const auto green = static_cast<std::uint8_t>(tokens[1].getIntValue());
+        const auto blue = static_cast<std::uint8_t>(tokens[2].getIntValue());
+        const auto alpha = static_cast<std::uint8_t>(juce::roundToInt(255.0f * (tokens.size() > 3 ? tokens[3].getFloatValue() : 1.0f)));
 
         return juce::Colour::fromRGBA(red, green, blue, alpha);
     }
@@ -48,7 +48,7 @@ namespace jive
         {
             const auto length = text.length();
 
-            for (auto i = length - 1; i >= 0; i--)
+            for (auto i = length - 1; i >= 0; --i)
             {
                 const auto replacement = text.substring(i, i + 1) + text.substring(i, i + 1);
                 text = text.replaceSection(i, 1, replacement);
@@ -56,10 +56,10 @@ namespace jive
         }
 
         text = text.paddedRight('F', 8);
-        const auto red = static_cast<juce::uint8>(text.substring(0, 2).getHexValue32());
-        const auto green = static_cast<juce::uint8>(text.substring(2, 4).getHexValue32());
-        const auto blue = static_cast<juce::uint8>(text.substring(4, 6).getHexValue32());
-        const auto alpha = static_cast<juce::uint8>(text.substring(6, 8).getHexValue32());
+        const auto red = static_cast<std::uint8_t>(text.substring(0, 2).getHexValue32());
+        const auto green = static_cast<std::uint8_t>(text.substring(2, 4).getHexValue32());
+        const auto blue = static_cast<std::uint8_t>(text.substring(4, 6).getHexValue32());
+        const auto alpha = static_cast<std::uint8_t>(text.substring(6, 8).getHexValue32());
 
         return juce::Colour{ red, green, blue, alpha };
     }
@@ -74,7 +74,7 @@ namespace jive
             return parseHexColourString(colourString);
 
         static const juce::Colour defaultIfNotFound{ 0x12345670 };
-        if (auto colour = juce::Colours::findColourForName(colourString, defaultIfNotFound);
+        if (const auto colour = juce::Colours::findColourForName(colourString, defaultIfNotFound);
             colour != defaultIfNotFound)
         {
             return colour;
@@ -86,6 +86,8 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/logging/jive_StringStreams.h>
+
+    #include <cstdint>
 
 class ColourParsingUnitTest : public juce::UnitTest
 {
@@ -105,16 +107,16 @@ private:
     {
         beginTest("rgb()");
 
-        expectEquals(jive::parseColour("cornflowerblue"), juce::Colour{ 0xFF6495ED });
-        expectEquals(jive::parseColour("hotpink"), juce::Colour{ 0XFFFF69B4 });
-        expectEquals(jive::parseColour("#123"), juce::Colour{ 0xFF112233 });
-        expectEquals(jive::parseColour("#357B"), juce::Colour{ 0xBB335577 });
-        expectEquals(jive::parseColour("#ABCDEF"), juce::Colour{ 0xFFABCDEF });
+        expectEquals(jive::parseColour("cornflowerblue"), juce::Colour{ 0xff6495ed });
+        expectEquals(jive::parseColour("hotpink"), juce::Colour{ 0xffff69b4 });
+        expectEquals(jive::parseColour("#123"), juce::Colour{ 0xff112233 });
+        expectEquals(jive::parseColour("#357B"), juce::Colour{ 0xbb335577 });
+        expectEquals(jive::parseColour("#ABCDEF"), juce::Colour{ 0xffabcdef });
         expectEquals(jive::parseColour("#01234567"), juce::Colour{ 0x67012345 });
-        expectEquals(jive::parseColour("rgb(0, 255, 0)"), juce::Colour{ 0xFF00FF00 });
-        expectEquals(jive::parseColour("rgba(127, 0, 127, 0.5)"), juce::Colour{ 0x807F007F });
-        expectEquals(jive::parseColour("hsl(120, 60%, 70%)"), juce::Colour{ 0xFF85E085 });
-        expectEquals(jive::parseColour("hsla(280, 80%, 40%, 0.2)"), juce::Colour{ 0x338114B8 });
+        expectEquals(jive::parseColour("rgb(0, 255, 0)"), juce::Colour{ 0xff00ff00 });
+        expectEquals(jive::parseColour("rgba(127, 0, 127, 0.5)"), juce::Colour{ 0x807f007f });
+        expectEquals(jive::parseColour("hsl(120, 60%, 70%)"), juce::Colour{ 0xff85e085 });
+        expectEquals(jive::parseColour("hsla(280, 80%, 40%, 0.2)"), juce::Colour{ 0x338114b8 });
     }
 };
 

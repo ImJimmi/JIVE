@@ -43,7 +43,6 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_core/logging/jive_StringStreams.h>
     #include <jive_core/values/jive_Property.h>
 
 class TransitionsTests : public juce::UnitTest
@@ -63,7 +62,7 @@ public:
     }
 
 private:
-    [[nodiscard]] auto expectSameEasing(jive::Easing a, jive::Easing b)
+    [[nodiscard]] auto expectSameEasing(const jive::Easing& a, const jive::Easing& b)
     {
         for (auto x = 0.0; x <= 1.0; x += 0.01)
         {
@@ -177,7 +176,7 @@ private:
         beginTest("transitions property");
         {
             juce::ValueTree state{ "State" };
-            jive::Property<jive::Transitions::ReferenceCountedPointer> transitions{ state, "transitions" };
+            const jive::Property<jive::Transitions::ReferenceCountedPointer> transitions{ state, "transitions" };
             expect(!transitions.exists());
 
             state.setProperty("transitions", "width 100s", nullptr);

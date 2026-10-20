@@ -70,20 +70,20 @@ private:
     {
         juce::String sidebar;
 
-        for (auto i = 0; i < 8; i++)
+        for (auto i = 0; i < 8; ++i)
             sidebar << "<Button padding=\"6 10\"><Text>Navigation item " << i << "</Text></Button>";
 
         juce::String cards;
 
-        for (auto i = 0; i < numCards; i++)
+        for (auto i = 0; i < numCards; ++i)
         {
-            cards << "<Component width=\"260\" padding=\"12\" gap=\"8\" border-width=\"1\">"
-                  << "    <Component flex-direction=\"row\" gap=\"8\" align-items=\"centre\">"
-                  << "        <Component width=\"24\" height=\"24\" />"
+            cards << R"(<Component width="260" padding="12" gap="8" border-width="1">)"
+                  << R"(    <Component flex-direction="row" gap="8" align-items="centre">)"
+                  << R"(        <Component width="24" height="24" />)"
                   << "        <Text>Card number " << i << "</Text>"
                   << "    </Component>"
                   << "    <Text>Some body text that is long enough that it needs to wrap onto more than one line.</Text>"
-                  << "    <Component flex-direction=\"row\" gap=\"8\" justify-content=\"flex-end\">"
+                  << R"(    <Component flex-direction="row" gap="8" justify-content="flex-end">)"
                   << "        <Button padding=\"4 8\"><Text>Cancel</Text></Button>"
                   << "        <Button padding=\"4 8\"><Text>OK</Text></Button>"
                   << "    </Component>"

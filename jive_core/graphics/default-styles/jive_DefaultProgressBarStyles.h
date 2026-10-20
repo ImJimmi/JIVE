@@ -18,12 +18,12 @@ namespace jive::default_styles
         const auto trackBounds = getTrackBounds(bar, styles, progressValues[0], progressValues[1]);
 
         auto borderRadius = getBorderRadius(bar, styles);
-        borderRadius.topLeft -= juce::jmax(borderWidth.getTop(), borderWidth.getLeft());
-        borderRadius.topRight -= juce::jmax(borderWidth.getTop(), borderWidth.getRight());
-        borderRadius.bottomRight -= juce::jmax(borderWidth.getBottom(), borderWidth.getRight());
-        borderRadius.bottomLeft -= juce::jmax(borderWidth.getBottom(), borderWidth.getLeft());
+        borderRadius.topLeft -= std::max(borderWidth.getTop(), borderWidth.getLeft());
+        borderRadius.topRight -= std::max(borderWidth.getTop(), borderWidth.getRight());
+        borderRadius.bottomRight -= std::max(borderWidth.getBottom(), borderWidth.getRight());
+        borderRadius.bottomLeft -= std::max(borderWidth.getBottom(), borderWidth.getLeft());
 
-        juce::Graphics::ScopedSaveState sss{ g };
+        const juce::Graphics::ScopedSaveState sss{ g };
         g.reduceClipRegion(getShape(getBorderRadius(bar, styles), barBounds, borderWidth));
         drawRoundedRectangle(g,
                              trackBounds,
@@ -48,7 +48,7 @@ namespace jive::default_styles
         else
         {
             const auto spinnerProgress = std::abs(static_cast<double>((juce::Time::getMillisecondCounter() % 2500)) - 1250.0) / 1250.0;
-            paintLinearProgressBarTrack(g, bar, { spinnerProgress * 0.7, 0.3 + spinnerProgress * 0.7 }, styles);
+            paintLinearProgressBarTrack(g, bar, { spinnerProgress * 0.7, 0.3 + (spinnerProgress * 0.7) }, styles);
         }
 
         const_cast<juce::ProgressBar*>(&bar)

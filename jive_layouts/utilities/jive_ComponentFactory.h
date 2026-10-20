@@ -8,7 +8,7 @@ namespace std
     class hash<juce::Identifier>
     {
     public:
-        std::size_t operator()(const juce::Identifier& id) const
+        std::size_t operator()(juce::Identifier id) const
         {
             return id.toString().hash();
         }
@@ -20,12 +20,12 @@ namespace jive
     class ComponentFactory
     {
     public:
-        using ComponentCreator = std::function<std::shared_ptr<juce::Component>(void)>;
+        using ComponentCreator = std::function<std::shared_ptr<juce::Component>()>;
 
         ComponentFactory();
 
-        std::shared_ptr<juce::Component> create(juce::Identifier name) const;
-        void set(juce::Identifier name, ComponentCreator creator);
+        [[nodiscard]] std::shared_ptr<juce::Component> create(juce::Identifier name) const;
+        void set(juce::Identifier name, const ComponentCreator& creator);
 
     private:
         std::unordered_map<juce::Identifier, ComponentCreator> creators;

@@ -14,11 +14,11 @@ namespace jive
 
         void closeButtonPressed() override;
 
-        std::function<void(void)> onCloseButtonPressed;
+        std::function<void()> onCloseButtonPressed;
 
     private:
         PaintBeforeShowing paintBeforeShowing{ *this };
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DocumentWindow)
+        JUCE_LEAK_DETECTOR(DocumentWindow)
     };
 } // namespace jive

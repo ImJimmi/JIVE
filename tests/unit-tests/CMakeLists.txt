@@ -29,6 +29,10 @@ target_link_libraries(jive-test-runner
                               juce::juce_recommended_warning_flags
 )
 
+if (JIVE_ENABLE_CLANG_TIDY)
+    add_clang_tidy(jive-test-runner)
+endif()
+
 add_test(NAME "jive-test-runner"
          COMMAND $<TARGET_FILE:jive-test-runner>
 )

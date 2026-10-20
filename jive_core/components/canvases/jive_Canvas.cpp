@@ -2,10 +2,12 @@
 
 #include <jive_core/jive_core.h>
 
+#include <utility>
+
 namespace jive
 {
     Canvas::Canvas(std::function<void(juce::Graphics&)> paintFunction)
-        : onPaint{ paintFunction }
+        : onPaint{ std::move(paintFunction) }
     {
     }
 

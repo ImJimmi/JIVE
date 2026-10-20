@@ -6,6 +6,8 @@
 #include <shared/Presenter.h>
 #include <shared/Theme.h>
 
+#include <utility>
+
 namespace jive_examples::text
 {
     class Presenter : public BasePresenter
@@ -24,27 +26,27 @@ namespace jive_examples::text
 
     private:
         template <typename T>
-        [[nodiscard]] auto bindControl(const juce::String& id, const juce::Identifier& property, std::function<void()> callback)
+        [[nodiscard]] auto bindControl(const juce::String& id, juce::Identifier property, std::function<void()> callback)
         {
             auto controlState = jive::findElementWithID(window->state, id);
             auto control = std::make_unique<jive::Property<T>>(controlState, property);
-            control->onValueChange = callback;
+            control->onValueChange = std::move(callback);
 
             return control;
         }
 
         template <typename T>
-        [[nodiscard]] auto bindFontControl(const juce::String& id, const juce::Identifier& property)
+        [[nodiscard]] auto bindFontControl(const juce::String& id, juce::Identifier property)
         {
-            return bindControl<T>(id, property, [this]() {
+            return bindControl<T>(id, std::move(property), [this] {
                 applyFontSettings();
             });
         }
 
         template <typename T>
-        [[nodiscard]] auto bindLanguageControl(const juce::String& id, const juce::Identifier& property)
+        [[nodiscard]] auto bindLanguageControl(const juce::String& id, juce::Identifier property)
         {
-            return bindControl<T>(id, property, [this]() {
+            return bindControl<T>(id, std::move(property), [this] {
                 applyLanguage();
             });
         }

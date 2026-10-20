@@ -118,16 +118,14 @@ namespace jive
 
         for (const auto& flexItem : flex.items)
         {
-            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right - gaps.x * 0.5f;
-            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom - gaps.y * 0.5f;
+            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right - (gaps.x * 0.5f);
+            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom - (gaps.y * 0.5f);
 
-            if (right > extremities.x)
-                extremities.x = right;
-            if (bottom > extremities.y)
-                extremities.y = bottom;
+            extremities.x = std::max(right, extremities.x);
+            extremities.y = std::max(bottom, extremities.y);
         }
 
-        auto& currentBoxModel = boxModel(*this);
+        const auto& currentBoxModel = boxModel(*this);
 
         return {
             extremities.x
@@ -242,6 +240,8 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
+    #include <algorithm>
+
 class FlexContainerUnitTest : public juce::UnitTest
 {
 public:
@@ -317,7 +317,7 @@ private:
 
         beginTest("wrap / wrap-reverse doesn't change the ideal size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },
@@ -456,7 +456,7 @@ private:
 
         beginTest("gap / row");
         {
-            juce::ValueTree rowState{
+            const juce::ValueTree rowState{
                 "Component",
                 {
                     { "width", 300 },
@@ -483,7 +483,7 @@ private:
 
         beginTest("gap / wrapped");
         {
-            juce::ValueTree wrappedState{
+            const juce::ValueTree wrappedState{
                 "Component",
                 {
                     { "width", 100 },
@@ -509,7 +509,7 @@ private:
 
         beginTest("gap / auto-size");
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 200 },
@@ -562,7 +562,7 @@ private:
         flexBox = static_cast<juce::FlexBox>(*dynamic_cast<jive::GuiItemDecorator&>(*item)
                                                   .toType<jive::FlexContainer>());
 
-        expect(flexBox.items.size() == item->getChildren().size());
+        expectEquals(flexBox.items.size(), item->getChildren().size());
     }
 
     void testPadding()
@@ -600,7 +600,7 @@ private:
         beginTest("auto-size");
 
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "id", "parent" },
@@ -625,7 +625,7 @@ private:
             expectEquals(boxModel.getHeight(), 0.0f);
         }
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "id", "parent" },
@@ -663,7 +663,7 @@ private:
             expectEquals(childBoxModel.getHeight(), 84.0f);
         }
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "id", "parent" },
@@ -676,21 +676,23 @@ private:
                         {
                             { "display", "flex" },
                         },
-                        { juce::ValueTree{
-                              "Component",
-                              {
-                                  { "width", 43 },
-                                  { "height", 84 },
-                              },
-                          },
-                          juce::ValueTree{
-                              "Component",
-                              {
-                                  { "width", 37 },
-                                  { "height", 99 },
-                                  { "margin", 5 },
-                              },
-                          } },
+                        {
+                            juce::ValueTree{
+                                "Component",
+                                {
+                                    { "width", 43 },
+                                    { "height", 84 },
+                                },
+                            },
+                            juce::ValueTree{
+                                "Component",
+                                {
+                                    { "width", 37 },
+                                    { "height", 99 },
+                                    { "margin", 5 },
+                                },
+                            },
+                        },
                     },
                 },
             };
@@ -728,7 +730,7 @@ private:
                 { "padding", containerPadding },
             },
         };
-        juce::ValueTree windowState{
+        const juce::ValueTree windowState{
             "Window",
             {
                 { "native", true },
@@ -772,7 +774,7 @@ private:
 
             const auto& container = *window->getChildren()[0];
             const auto& boxModel = jive::boxModel(container);
-            expectEquals(boxModel.getContentBounds().getWidth(), 50.f);
+            expectEquals(boxModel.getContentBounds().getWidth(), 50.0f);
             expectEquals(boxModel.getContentBounds().getHeight(), 20.0f);
         }
 
@@ -844,12 +846,12 @@ private:
         static constexpr auto item3Shrink = 3.0;
         static constexpr auto item4Shrink = 4.0;
 
-        static constexpr auto overspill = itemsFlexBasis * 4.0 - containerWidth;
+        static constexpr auto overspill = (itemsFlexBasis * 4.0) - containerWidth;
         static constexpr auto totalShrink = item1Shrink + item2Shrink + item3Shrink + item4Shrink;
-        static constexpr auto item1ExpectedWidth = itemsFlexBasis - item1Shrink * (overspill / totalShrink);
-        static constexpr auto item2ExpectedWidth = itemsFlexBasis - item2Shrink * (overspill / totalShrink);
-        static constexpr auto item3ExpectedWidth = itemsFlexBasis - item3Shrink * (overspill / totalShrink);
-        static constexpr auto item4ExpectedWidth = itemsFlexBasis - item4Shrink * (overspill / totalShrink);
+        static constexpr auto item1ExpectedWidth = itemsFlexBasis - (item1Shrink * (overspill / totalShrink));
+        static constexpr auto item2ExpectedWidth = itemsFlexBasis - (item2Shrink * (overspill / totalShrink));
+        static constexpr auto item3ExpectedWidth = itemsFlexBasis - (item3Shrink * (overspill / totalShrink));
+        static constexpr auto item4ExpectedWidth = itemsFlexBasis - (item4Shrink * (overspill / totalShrink));
 
         juce::ValueTree containerState{
             "Component",

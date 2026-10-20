@@ -6,6 +6,8 @@
 #include <shared/Presenter.h>
 #include <shared/Theme.h>
 
+#include <utility>
+
 namespace jive_examples::layouts
 {
     class Presenter : public BasePresenter
@@ -116,7 +118,7 @@ namespace jive_examples::layouts
 
         [[nodiscard]] static int spanOf(const juce::var& placement)
         {
-            return juce::jmax(1, placement.toString().fromLastOccurrenceOf("span", false, false).getIntValue());
+            return std::max(1, placement.toString().fromLastOccurrenceOf("span", false, false).getIntValue());
         }
 
         struct Length
@@ -232,7 +234,7 @@ namespace jive_examples::layouts
         void bindRadioButtons(const std::vector<std::pair<juce::String, juce::String>>& buttons,
                               const juce::String& labelID,
                               const juce::String& targetID,
-                              const juce::Identifier& property)
+                              juce::Identifier property)
         {
             for (const auto& [button, value] : buttons)
             {
@@ -245,14 +247,14 @@ namespace jive_examples::layouts
 
         void bindComboBox(const juce::String& comboBoxID,
                           const juce::String& targetID,
-                          const juce::Identifier& property)
+                          juce::Identifier property)
         {
-            bindComboBox(comboBoxID, elementWithID(targetID), property);
+            bindComboBox(comboBoxID, elementWithID(targetID), std::move(property));
         }
 
         void bindComboBox(const juce::String& comboBoxID,
-                          std::function<juce::ValueTree()> target,
-                          const juce::Identifier& property)
+                          const std::function<juce::ValueTree()>& target,
+                          juce::Identifier property)
         {
             onValueChange(values, comboBoxID, "selected", [this, comboBoxID, target, property](int selected) {
                 const auto option = jive::findElementWithID(window->state, comboBoxID).getChild(selected);
@@ -263,16 +265,16 @@ namespace jive_examples::layouts
         void bindSlider(const juce::String& sliderID,
                         const juce::String& labelID,
                         const juce::String& targetID,
-                        const juce::Identifier& property,
+                        juce::Identifier property,
                         const juce::String& format = "{}")
         {
-            bindSlider(sliderID, labelID, elementWithID(targetID), property, format);
+            bindSlider(sliderID, labelID, elementWithID(targetID), std::move(property), format);
         }
 
         void bindSlider(const juce::String& sliderID,
                         const juce::String& labelID,
-                        std::function<juce::ValueTree()> target,
-                        const juce::Identifier& property,
+                        const std::function<juce::ValueTree()>& target,
+                        juce::Identifier property,
                         const juce::String& format = "{}")
         {
             onValueChange(values, sliderID, "value", [this, labelID, target, property, format](int value) {
@@ -284,7 +286,7 @@ namespace jive_examples::layouts
 
         void onToggledOn(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
                          const juce::String& buttonID,
-                         std::function<void()> callback)
+                         const std::function<void()>& callback)
         {
             onToggled(bindings, buttonID, [callback](bool toggled) {
                 if (toggled)
@@ -309,17 +311,21 @@ namespace jive_examples::layouts
         }
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
-        const std::array<std::pair<juce::String, juce::String>, 3> pages{ {
-            { "flex-tab", "public/views/Flex.xml" },
-            { "grid-tab", "public/views/Grid.xml" },
-            { "absolute-tab", "public/views/Absolute.xml" },
-        } };
-        const std::array<Length, 4> lengths{ {
-            { "x", "centre-x", true },
-            { "y", "centre-y", false },
-            { "width", {}, true },
-            { "height", {}, false },
-        } };
+        const std::array<std::pair<juce::String, juce::String>, 3> pages{
+            {
+                { "flex-tab", "public/views/Flex.xml" },
+                { "grid-tab", "public/views/Grid.xml" },
+                { "absolute-tab", "public/views/Absolute.xml" },
+            },
+        };
+        const std::array<Length, 4> lengths{
+            {
+                { "x", "centre-x", true },
+                { "y", "centre-y", false },
+                { "width", {}, true },
+                { "height", {}, false },
+            },
+        };
 
         std::unique_ptr<jive::Property<int>> theme;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;

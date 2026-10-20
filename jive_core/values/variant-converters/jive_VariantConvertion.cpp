@@ -69,7 +69,7 @@ private:
                 },
             });
             const juce::String expectedString = "bar";
-            const auto expectedInt = 7531;
+            static constexpr auto expectedInt = 7531;
             expectEquals(actualString, expectedString);
             expectEquals(actualInt, expectedInt);
         }

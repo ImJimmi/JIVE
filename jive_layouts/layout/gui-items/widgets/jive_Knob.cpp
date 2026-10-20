@@ -52,7 +52,7 @@ private:
             },
         };
         auto item = interpreter.interpret(tree);
-        auto& knob = getKnob(*item);
+        const auto& knob = getKnob(*item);
         expectEquals(knob.getSliderStyle(), juce::Slider::RotaryVerticalDrag);
 
         tree.setProperty("orientation", "vertical", nullptr);
@@ -63,7 +63,7 @@ private:
     {
         beginTest("auto size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },

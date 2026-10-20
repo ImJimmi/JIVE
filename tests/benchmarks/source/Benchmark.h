@@ -2,18 +2,20 @@
 
 #include <jive_layouts/jive_layouts.h>
 
+#include <utility>
+
 class Benchmark
 {
 public:
     explicit Benchmark(juce::String testDescription,
                        juce::RelativeTime testDuration)
-        : description{ testDescription }
+        : description{ std::move(testDescription) }
         , duration{ testDuration }
     {
     }
 
     explicit Benchmark(juce::String testDescription, int numIterations)
-        : description{ testDescription }
+        : description{ std::move(testDescription) }
         , iterations{ numIterations }
     {
     }
@@ -40,7 +42,7 @@ private:
         std::cout << "\r" << jive::buildProgressBar(progressNormalised, columnWidth) << std::flush;
     }
 
-    [[nodiscard]] static auto toString(const juce::RelativeTime& duration)
+    [[nodiscard]] static auto toString(juce::RelativeTime duration)
     {
         if (duration.inSeconds() >= 60.0)
             return juce::String{ duration.inSeconds() / 60.0 } + "m";
@@ -58,7 +60,7 @@ private:
         const auto sum = std::accumulate(std::begin(durations),
                                          std::end(durations),
                                          0.0,
-                                         [](double total, const juce::RelativeTime& next) {
+                                         [](double total, juce::RelativeTime next) {
                                              return total + next.inSeconds();
                                          });
         const juce::RelativeTime mean{ sum / static_cast<double>(std::size(durations)) };
@@ -89,7 +91,7 @@ private:
             const auto iterationDurationMS = juce::Time::getMillisecondCounterHiRes() - iterationStart;
             durations.emplace_back(juce::RelativeTime::seconds(iterationDurationMS / 1000.0));
 
-            printProgress(juce::jmin(1.0, (juce::Time::getCurrentTime() - start).inSeconds() / duration->inSeconds()));
+            printProgress(std::min(1.0, (juce::Time::getCurrentTime() - start).inSeconds() / duration->inSeconds()));
         }
 
         printProgress(1.0);
@@ -112,7 +114,7 @@ private:
             const auto iterationDuration = juce::Time::getCurrentTime() - iterationStart;
             durations.emplace_back(iterationDuration);
 
-            i++;
+            ++i;
             printProgress(i / static_cast<double>(*iterations));
         }
 

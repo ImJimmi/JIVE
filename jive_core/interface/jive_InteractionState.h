@@ -11,7 +11,7 @@ namespace jive
     // mouse has moved into them. So that every part of a popup looks the same,
     // it's styled while this is set, which ignores everything interacting with
     // the components behind it.
-    inline thread_local auto ignoreInteractions = false;
+    inline thread_local auto ignoreInteractions = false; // NOLINT
 
     // Some components are highlighted on behalf of something else under the
     // mouse, such as the stand-in for an item in a popup menu.
@@ -58,13 +58,13 @@ namespace jive
     class InteractionState
     {
     public:
-        enum Flag
+        enum Flag // NOLINT
         {
-            focus = 1 << 0,
-            hover = 1 << 1,
-            active = 1 << 2,
-            checked = 1 << 3,
-            disabled = 1 << 4,
+            focus = 1U << 0U,
+            hover = 1U << 1U,
+            active = 1U << 2U,
+            checked = 1U << 3U,
+            disabled = 1U << 4U,
         };
 
         // Constructs an InteractionState that represents the state of the
@@ -94,7 +94,7 @@ namespace jive
         // state = InteractionState::focus; // Implicit constructor straight from a single flag.
         // ```
         template <typename... Flags>
-        InteractionState(Flags... initialFlags)
+        InteractionState(Flags... initialFlags) // NOLINT
             : flags{ initialFlags... }
         {
             static_assert((std::is_same_v<Flags, Flag> && ...));
@@ -213,16 +213,16 @@ namespace jive
         // component.
         [[nodiscard]] auto appliesTo(const juce::Component& component) const
         {
-            auto toggleApplies = !flags.count(checked);
+            auto toggleApplies = flags.count(checked) == 0u;
 
-            if (auto* button = dynamic_cast<const juce::Button*>(&component))
+            if (const auto* button = dynamic_cast<const juce::Button*>(&component))
                 toggleApplies = (flags.count(checked) > 0 && button->getToggleState()) || flags.count(checked) == 0;
 
-            return !((flags.count(hover) > 0 && !isMouseOverOrDragging(component))
-                     || (flags.count(active) > 0 && !isMouseDown(component))
-                     || (flags.count(disabled) > 0 && component.isEnabled())
-                     || (flags.count(focus) > 0 && !hasKeyboardFocus(component))
-                     || !toggleApplies);
+            return (flags.count(hover) <= 0 || isMouseOverOrDragging(component))
+                && (flags.count(active) <= 0 || isMouseDown(component))
+                && (flags.count(disabled) <= 0 || !component.isEnabled())
+                && (flags.count(focus) <= 0 || hasKeyboardFocus(component))
+                && toggleApplies;
         }
 
         // Searches the given set of properties for one with the given
@@ -240,7 +240,7 @@ namespace jive
         [[nodiscard]] std::optional<juce::var> findMostApplicable(const juce::NamedValueSet& properties,
                                                                   const juce::String& baseProperty) const
         {
-            juce::Array<std::pair<juce::String, juce::StringArray>> keys;
+            juce::Array<std::pair<juce::String, juce::StringArray>> keys; // NOLINT
 
             for (const auto& [key, value] : properties)
             {
@@ -263,14 +263,14 @@ namespace jive
                                       + static_cast<int>(Flag::hover)
                                       + static_cast<int>(Flag::checked);
 
-            for (auto bitset = sum; bitset >= 0; bitset--)
+            for (std::uint32_t bitset = sum; bitset >= 0U; --bitset)
             {
                 juce::StringArray parts;
 
-                for (auto i = 0; i < 4; i++)
+                for (auto i = 0U; i < 4U; ++i)
                 {
-                    if ((bitset & (1 << i)) != 0 && flags.count(static_cast<Flag>(1 << i)) > 0)
-                        parts.add(names.at(static_cast<Flag>(1 << i)));
+                    if ((bitset & (1U << i)) != 0U && flags.count(static_cast<Flag>(1U << i)) > 0U)
+                        parts.add(names.at(static_cast<Flag>(1U << i)));
                 }
 
                 parts.sort(false);
@@ -295,6 +295,7 @@ namespace jive
             return !(*this == other);
         }
 
+        // NOLINTNEXTLINE
         static inline const std::unordered_set<juce::String> propertyNames{
             "hover",
             "active",
@@ -303,14 +304,15 @@ namespace jive
             "checked",
         };
 
-    public:
         std::unordered_set<Flag> flags;
+
+        // NOLINTNEXTLINE
         static inline const std::unordered_map<Flag, juce::String> names{
             { Flag::hover, "hover" },
             { Flag::active, "active" },
             { Flag::disabled, "disabled" },
             { Flag::focus, "focus" },
-            { Flag::checked, "checked" }
+            { Flag::checked, "checked" },
         };
     };
 } // namespace jive

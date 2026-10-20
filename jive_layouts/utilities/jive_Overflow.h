@@ -25,11 +25,11 @@ namespace juce
 
         static jive::Overflow fromVar(const var& v)
         {
-            auto overflowStringPair = std::find_if(std::begin(stringsMap),
-                                                   std::end(stringsMap),
-                                                   [v](const auto& pair) {
-                                                       return pair.second == v.toString();
-                                                   });
+            const auto overflowStringPair = std::find_if(std::begin(stringsMap),
+                                                         std::end(stringsMap),
+                                                         [v](const auto& pair) {
+                                                             return pair.second == v.toString();
+                                                         });
             jassert(overflowStringPair != std::end(stringsMap));
 
             return overflowStringPair->first;

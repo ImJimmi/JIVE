@@ -27,8 +27,8 @@ namespace jive::default_styles
                                              getBorderRadius(scrollBar,
                                                              styles,
                                                              BorderRadii{
-                                                                 static_cast<float>(juce::jmin(scrollBar.getWidth(),
-                                                                                               scrollBar.getHeight()))
+                                                                 static_cast<float>(std::min(scrollBar.getWidth(),
+                                                                                             scrollBar.getHeight()))
                                                                      / 4.0f,
                                                              }),
                                              {},
@@ -39,7 +39,7 @@ namespace jive::default_styles
     inline void paintScrollBarButton(juce::Graphics& g,
                                      const juce::ScrollBar& scrollBar,
                                      const Styles& styles,
-                                     const juce::Rectangle<float>& bounds,
+                                     juce::Rectangle<float> bounds,
                                      int direction)
     {
         default_styles::drawRoundedRectangle(g,
@@ -51,7 +51,7 @@ namespace jive::default_styles
 
         juce::Path path;
 
-        const auto radius = juce::jmax(4.0f, juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f - 2.0f);
+        const auto radius = std::max(4.0f, (std::min(bounds.getWidth(), bounds.getHeight()) / 2.0f) - 2.0f);
         const auto centre = bounds.getCentre();
         path.startNewSubPath(centre.getPointOnCircumference(radius, 0.0f));
         path.lineTo(centre.getPointOnCircumference(radius, 120.0f * juce::MathConstants<float>::pi / 180.0f));

@@ -14,10 +14,10 @@ namespace jive
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
-        text.onValueChange = [this]() {
+        text.onValueChange = [this] {
             updateTextComponent();
         };
-        wordWrap.onValueChange = [this]() {
+        wordWrap.onValueChange = [this] {
             updateTextComponent();
         };
 
@@ -125,7 +125,7 @@ namespace jive
         getTextComponent().setWordWrap(wordWrap.getOr(juce::AttributedString::WordWrap::byWord));
         getTextComponent().clearAttributes();
 
-        for (auto* child : getChildren())
+        for (const auto* child : getChildren())
         {
             if (const auto* nestedText = dynamic_cast<const GuiItemDecorator*>(child)
                                              ->toType<const Text>())
@@ -141,7 +141,7 @@ namespace jive
             }
         }
 
-        const auto& naturalLayout = getTextComponent().getTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+        const auto& naturalLayout = getTextComponent().getTextLayout(static_cast<float>(std::numeric_limits<std::uint16_t>::max()));
         const juce::Point naturalSize{ nextWholeNumberAbove(naturalLayout.getWidth()), naturalLayout.getHeight() };
         const auto lineSpacing = getTextComponent().getLineSpacing();
         const auto measurementsChanged = naturalSize != previousNaturalSize
@@ -176,12 +176,12 @@ namespace jive
 
     const Text* findFirstTextContent(const GuiItem& item)
     {
-        if (auto* text = dynamic_cast<const Text*>(&item))
+        if (const auto* text = dynamic_cast<const Text*>(&item))
             return text;
 
         for (const auto* child : item.getChildren())
         {
-            auto* text = findFirstTextContent(*child);
+            const auto* text = findFirstTextContent(*child);
 
             if (text != nullptr)
                 return text;
@@ -194,6 +194,8 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_core/graphics/jive_FontUtilities.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
+
+    #include <cstdint>
 
 class TextTest : public juce::UnitTest
 {
@@ -236,7 +238,7 @@ private:
             expectEquals<juce::String>(text.getTextComponent().getAttributedString().getText(), "Some text...");
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Text",
                 {
                     { "width", 222 },
@@ -278,7 +280,7 @@ private:
                          juce::AttributedString::WordWrap::none);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Text",
                 {
                     { "width", 222 },
@@ -302,7 +304,7 @@ private:
 
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
             juce::ValueTree tree{
                 "Component",
@@ -345,9 +347,9 @@ private:
         }
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -373,7 +375,7 @@ private:
         }
         {
             juce::Component root;
-            jive::LookAndFeel lookAndFeel{ root };
+            const jive::LookAndFeel lookAndFeel{ root };
 
             juce::ValueTree tree{
                 "Component",
@@ -448,7 +450,7 @@ private:
                                        "Nested. Sentence two.");
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Text",
                 {
                     { "width", 222 },
@@ -490,7 +492,7 @@ private:
                     { "text", "This side up." },
                 },
             };
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -532,7 +534,7 @@ private:
             expectGreaterThan(boxModel.getHeight(), font.getHeight());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 240.0f },
@@ -557,7 +559,7 @@ private:
             expectGreaterThan(boxModel.getWidth(), 0.0f);
         }
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Component",
                 {
                     { "width", 5000 },
@@ -588,10 +590,10 @@ private:
             {
                 jive::Interpreter interpreter;
                 auto window = interpreter.interpret(state);
-                auto attributedString = dynamic_cast<jive::GuiItemDecorator&>(*window->getChildren()[0]->getChildren()[0])
-                                            .toType<jive::Text>()
-                                            ->getTextComponent()
-                                            .getAttributedString();
+                const auto attributedString = dynamic_cast<jive::GuiItemDecorator&>(*window->getChildren()[0]->getChildren()[0])
+                                                  .toType<jive::Text>()
+                                                  ->getTextComponent()
+                                                  .getAttributedString();
                 juce::TextLayout layout;
                 layout.createLayout(attributedString, 1000000.0f);
                 expectGreaterOrEqual(window->getChildren()[0]->getComponent()->getWidth(),

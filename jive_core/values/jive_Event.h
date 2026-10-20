@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "jive_Property.h"
 
 namespace jive
@@ -10,14 +12,14 @@ namespace jive
         Event() = delete;
 
         Event(juce::ValueTree sourceState,
-              const juce::Identifier& eventID,
+              juce::Identifier eventID,
               std::function<void()> onEventTrigger = nullptr)
             : id{ eventID }
             , onTrigger{ std::move(onEventTrigger) }
             , event{ sourceState, eventID }
         {
             if (!event.exists())
-                event = new Object{};
+                event = new Object{}; // NOLINT
 
             auto callbacks = event.get()->getProperty(ids::callbacks());
 
@@ -38,19 +40,20 @@ namespace jive
         {
         }
 
-        Event(Event&& other)
-            : event{ std::move(other.event) }
+        Event(Event&& other) noexcept : event{ std::move(other.event) }
         {
         }
 
         Event& operator=(const Event& other)
         {
-            event = other.event.get();
+            if (&other != this)
+                event = other.event.get();
+
             return *this;
         }
 
         Event& operator=(Event&& other) = delete;
-        ~Event() = default;
+        ~Event() override = default;
 
         int getAssumedTriggerCount() const
         {
@@ -66,7 +69,7 @@ namespace jive
                 return juce::Time{};
 
             return juce::Time{
-                static_cast<juce::int64>(event.get()->getProperty(ids::time())),
+                static_cast<std::int64_t>(event.get()->getProperty(ids::time())),
             };
         }
 
@@ -79,13 +82,16 @@ namespace jive
                 .get()
                 ->setProperty(ids::time(), juce::Time::currentTimeMillis());
 
-            for (auto& callback : *event.get()->getProperty(ids::callbacks()).getArray())
+            if (const auto* callbacks = event.get()->getProperty(ids::callbacks()).getArray())
             {
-                callback.getNativeFunction()(juce::var::NativeFunctionArgs{
-                    callback,
-                    nullptr,
-                    0,
-                });
+                for (const auto& callback : *callbacks)
+                {
+                    callback.getNativeFunction()(juce::var::NativeFunctionArgs{
+                        callback,
+                        nullptr,
+                        0,
+                    });
+                }
             }
         }
 
@@ -94,7 +100,7 @@ namespace jive
             const auto callback = onTrigger;
             onTrigger = nullptr;
 
-            juce::WeakReference weakThis{ this };
+            const juce::WeakReference weakThis{ this };
             trigger();
 
             if (weakThis != nullptr)

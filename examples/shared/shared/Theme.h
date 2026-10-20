@@ -8,7 +8,8 @@ namespace jive_examples
     // theme-combo-box, whose options are named after the themes.
     [[nodiscard]] inline std::unique_ptr<jive::Property<int>> bindThemeComboBox(juce::ValueTree root)
     {
-        auto comboBox = jive::findElementWithID(root, "theme-combo-box");
+        static const juce::Identifier themeComboBoxID{ "theme-combo-box" };
+        auto comboBox = jive::findElementWithID(root, themeComboBoxID);
         comboBox.setProperty(jive::ids::selected(), 0, nullptr);
 
         auto selected = std::make_unique<jive::Property<int>>(comboBox, jive::ids::selected());

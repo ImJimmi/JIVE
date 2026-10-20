@@ -143,7 +143,7 @@ namespace jive_examples::style_sheets
         // selector stays toggled on.
         void bindSelectors()
         {
-            for (auto button : jive::findElementsWithClass(window->state, "selector"))
+            for (const auto& button : jive::findElementsWithClass(window->state, "selector"))
             {
                 onToggled(toggles, button, [this, selector = button.getChild(0)["text"].toString()](bool toggled) {
                     if (toggled)
@@ -279,24 +279,28 @@ namespace jive_examples::style_sheets
         }
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
-        const std::array<std::pair<juce::String, juce::String>, 5> pages{ {
-            { "properties-tab", "public/views/Properties.xml" },
-            { "selectors-tab", "public/views/Selectors.xml" },
-            { "specificity-tab", "public/views/Specificity.xml" },
-            { "states-tab", "public/views/States.xml" },
-            { "tokens-tab", "public/views/Tokens.xml" },
-        } };
-        const std::array<Control, 9> controls{ {
-            { "background-combo-box", {}, "#card", "background" },
-            { "border-combo-box", {}, "#card", "border" },
-            { "border-width-slider", {}, "#card", "border-width", "{}px" },
-            { "border-radius-slider", {}, "#card", "border-radius", "{}px" },
-            { "shadow-combo-box", {}, "#card", "shadow" },
-            { "foreground-combo-box", {}, "#card", "foreground" },
-            { "fill-combo-box", {}, "#card", "fill" },
-            { "accent-combo-box", "tokens", {}, "$accent" },
-            { "radius-slider", "tokens", {}, "$radius" },
-        } };
+        const std::array<std::pair<juce::String, juce::String>, 5> pages{
+            {
+                { "properties-tab", "public/views/Properties.xml" },
+                { "selectors-tab", "public/views/Selectors.xml" },
+                { "specificity-tab", "public/views/Specificity.xml" },
+                { "states-tab", "public/views/States.xml" },
+                { "tokens-tab", "public/views/Tokens.xml" },
+            },
+        };
+        const std::array<Control, 9> controls{
+            {
+                { "background-combo-box", {}, "#card", "background" },
+                { "border-combo-box", {}, "#card", "border" },
+                { "border-width-slider", {}, "#card", "border-width", "{}px" },
+                { "border-radius-slider", {}, "#card", "border-radius", "{}px" },
+                { "shadow-combo-box", {}, "#card", "shadow" },
+                { "foreground-combo-box", {}, "#card", "foreground" },
+                { "fill-combo-box", {}, "#card", "fill" },
+                { "accent-combo-box", "tokens", {}, "$accent" },
+                { "radius-slider", "tokens", {}, "$radius" },
+            },
+        };
 
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> windowStyleSheet;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> pageStyleSheet;

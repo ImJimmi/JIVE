@@ -39,7 +39,7 @@ namespace jive
 
     Timer::Timer(Timer::Callback timerCallback,
                  juce::RelativeTime callbackInterval)
-        : callback{ timerCallback }
+        : callback{ std::move(timerCallback) }
         , interval{ callbackInterval }
     {
 #if JIVE_UNIT_TESTS
@@ -80,6 +80,8 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_core/logging/jive_StringStreams.h>
 
+    #include <utility>
+
 class TimerUnitTest : public juce::UnitTest
 {
 public:
@@ -98,7 +100,7 @@ public:
 
         beginTest("getting callbacks");
         juce::Array<juce::Time> invokeTimes;
-        jive::Timer timer{
+        const jive::Timer timer{
             [&invokeTimes](juce::Time now) mutable {
                 invokeTimes.add(now);
             },

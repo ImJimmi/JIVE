@@ -10,11 +10,11 @@ namespace jive
         NormalisedProgressBar();
 
         void setValue(double normalisedValue);
-        double getValue() const;
+        [[nodiscard]] double getValue() const;
 
     private:
         double value{ 0.0 };
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NormalisedProgressBar)
+        JUCE_LEAK_DETECTOR(NormalisedProgressBar)
     };
 } // namespace jive

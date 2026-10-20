@@ -13,6 +13,8 @@ namespace jive
     public:
         struct Listener
         {
+            JUCE_DECLARE_NON_COPYABLE(Listener)
+            JUCE_DECLARE_NON_MOVEABLE(Listener)
             virtual ~Listener() = default;
 
             virtual void boxModelChanged(BoxModel&) {}
@@ -31,6 +33,8 @@ namespace jive
         {
         public:
             explicit ScopedCallbackLock(BoxModel& boxModelToLock);
+            JUCE_DECLARE_NON_COPYABLE(ScopedCallbackLock)
+            JUCE_DECLARE_NON_MOVEABLE(ScopedCallbackLock)
             ~ScopedCallbackLock();
 
         private:
@@ -38,6 +42,8 @@ namespace jive
         };
 
         explicit BoxModel(juce::ValueTree sourceState);
+        JUCE_DECLARE_NON_COPYABLE(BoxModel)
+        JUCE_DECLARE_NON_MOVEABLE(BoxModel)
         ~BoxModel() override;
 
         [[nodiscard]] float getWidth() const;

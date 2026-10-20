@@ -6,7 +6,7 @@
 namespace juce
 {
     class AudioProcessor;
-}
+} // namespace juce
 
 namespace jive
 {
@@ -40,7 +40,7 @@ namespace jive
         void setComponentFactory(const ComponentFactory& newFactory);
 
         template <typename Decorator>
-        void addDecorator(const juce::Identifier& itemType)
+        void addDecorator(juce::Identifier itemType)
         {
             customDecorators.emplace_back(itemType, [](std::unique_ptr<GuiItem> item) {
                 return std::make_unique<Decorator>(std::move(item));
@@ -70,9 +70,9 @@ namespace jive
 
         // Item creation
         [[nodiscard]] std::unique_ptr<GuiItem> interpretInternal(juce::ValueTree tree,
-                                                                 GuiItem* const parent);
+                                                                 GuiItem* parent);
         [[nodiscard]] std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree,
-                                                                     GuiItem* const parent);
+                                                                     GuiItem* parent);
         [[nodiscard]] std::shared_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
         void insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index);
         void setChildItems(GuiItem& item);

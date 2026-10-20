@@ -72,9 +72,9 @@ namespace jive
     {
         auto constraints = box.getExplicitConstraints();
 
-        if (auto* thisParent = dynamic_cast<const GuiItemDecorator*>(getParent()))
+        if (const auto* thisParent = dynamic_cast<const GuiItemDecorator*>(getParent()))
         {
-            if (auto* parentContainer = thisParent->getTopLevelDecorator().toType<ContainerItem>())
+            if (const auto* parentContainer = thisParent->getTopLevelDecorator().toType<ContainerItem>())
                 constraints = constraints.getIntersection(parentContainer->getContentConstraints());
         }
 
@@ -115,7 +115,7 @@ namespace jive
         if (widthChanged && heightChanged)
         {
             {
-                BoxModel::ScopedCallbackLock boxModelLock{ box };
+                const BoxModel::ScopedCallbackLock boxModelLock{ box };
                 idealWidth = newIdealSize.getWidth();
             }
             idealHeight = newIdealSize.getHeight();
@@ -234,6 +234,8 @@ namespace jive
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
+    #include <utility>
+
 class ContainerItemUnitTest : public juce::UnitTest
 {
 public:
@@ -271,14 +273,14 @@ private:
         )");
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(state);
-        auto& sidebar = *item->getChildren()[0]->getComponent();
+        const auto& sidebar = *item->getChildren()[0]->getComponent();
         const auto idealWidth = sidebar.getWidth();
         expectGreaterThan(idealWidth, 50);
 
-        for (auto width = 200; width >= 1; width--)
+        for (auto width = 200; width >= 1; --width)
             state.setProperty("width", width, nullptr);
 
-        for (auto width = 1; width <= 200; width++)
+        for (auto width = 1; width <= 200; ++width)
             state.setProperty("width", width, nullptr);
 
         expectEquals(sidebar.getWidth(), idealWidth);
@@ -303,7 +305,7 @@ private:
             }
         };
 
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "width", 300 },
@@ -331,7 +333,7 @@ private:
     protected:
         juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float>) const final
         {
-            numMeasurements++;
+            ++numMeasurements;
             return measure();
         }
     };
@@ -345,9 +347,9 @@ private:
     }
 
     [[nodiscard]] static MeasurementCounter& findMeasurementCounter(jive::GuiItem& root,
-                                                                    const juce::Identifier& id = "counter")
+                                                                    juce::Identifier id = "counter")
     {
-        auto& counter = *dynamic_cast<jive::GuiItemDecorator&>(*jive::findItemWithID(root, id))
+        auto& counter = *dynamic_cast<jive::GuiItemDecorator&>(*jive::findItemWithID(root, std::move(id)))
                              .toType<MeasurementCounter>();
         counter.numMeasurements = 0;
         return counter;
@@ -359,7 +361,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Text>Short</Text>
                 <Component width="100" height="100">
@@ -380,7 +382,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Text>Short</Text>
                 <Component width="100" height="100">
@@ -402,7 +404,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Text>Short</Text>
                 <Component width="100" height="100" align-items="flex-start">
@@ -427,7 +429,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Counter id="outer" width="100" height="20" flex-direction="row">
                     <Counter id="inner" flex-grow="1" />
@@ -461,7 +463,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Counter id="outer" width="100" height="100">
                     <Counter id="inner" width="10" height="10" />
@@ -488,7 +490,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Text>Short</Text>
                 <Component width="100" height="100">
@@ -519,7 +521,7 @@ private:
 
         jive::Interpreter interpreter;
         addMeasurementCounter(interpreter);
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component width="300" height="300">
                 <Text>Short</Text>
                 <Component width="100" height="100">
@@ -546,25 +548,25 @@ private:
             return;
         }
 
-        for (auto i = 0; i < item.getChildren().size(); i++)
+        for (auto i = 0; i < item.getChildren().size(); ++i)
             expectSameBounds(*item.getChildren()[i], *expected.getChildren()[i], context);
     }
 
     static void removeComputedProperties(juce::ValueTree tree)
     {
-        for (auto i = tree.getNumProperties() - 1; i >= 0; i--)
+        for (auto i = tree.getNumProperties() - 1; i >= 0; --i)
         {
             if (tree.getPropertyName(i).toString().startsWith("jive::"))
                 tree.removeProperty(tree.getPropertyName(i), nullptr);
         }
 
-        for (auto child : tree)
+        for (const auto child : tree)
             removeComputedProperties(child);
     }
 
     void expectSameLayoutAsFreshInterpretation(jive::GuiItem& item, const juce::String& context)
     {
-        auto copy = item.state.createCopy();
+        const auto copy = item.state.createCopy();
         removeComputedProperties(copy);
 
         jive::Interpreter interpreter;
@@ -577,7 +579,7 @@ private:
         beginTest("layout matches that of a fresh interpretation after changes");
 
         jive::Interpreter interpreter;
-        auto state = jive::parseXML(R"(
+        const auto state = jive::parseXML(R"(
             <Component id="root" width="400" height="400" flex-direction="row" gap="10">
                 <Component id="sidebar" gap="5" padding="5">
                     <Button padding="5"><Text>One</Text></Button>

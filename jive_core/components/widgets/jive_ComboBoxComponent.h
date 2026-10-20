@@ -18,6 +18,9 @@ namespace jive
         {
         public:
             Popup();
+
+        private:
+            JUCE_LEAK_DETECTOR(Popup)
         };
 
         class Item : public juce::Component
@@ -32,6 +35,8 @@ namespace jive
 
         private:
             const int itemID;
+
+            JUCE_LEAK_DETECTOR(Item)
         };
 
         ComboBoxComponent();
@@ -55,6 +60,6 @@ namespace jive
         Icon icon;
         juce::BorderSize<float> borderWidth;
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ComboBoxComponent)
+        JUCE_LEAK_DETECTOR(ComboBoxComponent)
     };
 } // namespace jive

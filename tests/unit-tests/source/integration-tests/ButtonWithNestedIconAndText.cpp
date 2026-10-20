@@ -9,7 +9,7 @@ struct ButtonWithNestedIconAndText : public juce::UnitTest
 
     void runTest() final
     {
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "align-items", "flex-start" },
@@ -60,14 +60,14 @@ struct ButtonWithNestedIconAndText : public juce::UnitTest
         auto container = interpreter.interpret(state);
 
         auto* button = container->getChildren()[0]->getChildren()[0];
-        auto& icon = *button->getComponent()->getChildComponent(0);
+        const auto& icon = *button->getComponent()->getChildComponent(0);
         beginTest("icon has x-position 0");
         expectEquals(icon.getX(), 0);
 
         beginTest("icon has a width >0");
         expectGreaterThan(icon.getWidth(), 0);
 
-        auto& text = *button->getComponent()->getChildComponent(1);
+        const auto& text = *button->getComponent()->getChildComponent(1);
         beginTest("text is 10px further right than icon");
         expectEquals(text.getX(), icon.getRight() + 10);
     }

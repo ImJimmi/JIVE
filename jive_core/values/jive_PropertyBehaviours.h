@@ -18,6 +18,6 @@ namespace jive
     enum class Responsiveness
     {
         respondToChanges,
-        ignoreChanges
+        ignoreChanges,
     };
 } // namespace jive

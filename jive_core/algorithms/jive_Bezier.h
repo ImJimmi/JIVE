@@ -28,7 +28,7 @@ namespace jive
         CubicBezier& operator=(CubicBezier&&) = default;
         ~CubicBezier() = default;
 
-        explicit CubicBezier(const juce::Point<float>& initialPosition)
+        explicit CubicBezier(juce::Point<float> initialPosition)
             : start{ initialPosition }
             , control1{ initialPosition }
             , control2{ initialPosition }

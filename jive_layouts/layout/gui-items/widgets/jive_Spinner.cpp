@@ -6,7 +6,7 @@ namespace jive
         : Slider{ std::move(itemToDecorate), { 70.0f, 20.0f }, DefaultSize::fixed }
         , draggable{ state, ids::draggable() }
     {
-        draggable.onValueChange = [this]() {
+        draggable.onValueChange = [this] {
             getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
         };
         getSlider().setIncDecButtonsMode(draggable ? juce::Slider::incDecButtonsDraggable_AutoDirection : juce::Slider::incDecButtonsNotDraggable);
@@ -66,7 +66,7 @@ private:
             },
         };
         auto item = interpreter.interpret(tree);
-        auto& spinner = getSpinner(*item);
+        const auto& spinner = getSpinner(*item);
         expectEquals(spinner.getSliderStyle(), juce::Slider::IncDecButtons);
 
         tree.setProperty("orientation", "vertical", nullptr);
@@ -77,7 +77,7 @@ private:
     {
         beginTest("auto size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },

@@ -18,7 +18,7 @@ namespace jive
 
             void setSelected(bool shouldBeSelected);
             void updateText();
-            bool handlePropertyChange(juce::ValueTree& changedTree, const juce::Identifier& property);
+            bool handlePropertyChange(juce::ValueTree& changedTree, juce::Identifier property);
 
         private:
             void updateStandIn();

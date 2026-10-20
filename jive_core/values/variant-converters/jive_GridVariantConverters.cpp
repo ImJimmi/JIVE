@@ -69,7 +69,7 @@ namespace juce
         return GridItem::Span{ tokens[1].getIntValue() };
     }
 
-    var VariantConverter<GridItem::Span>::toVar(GridItem::Span span)
+    var VariantConverter<GridItem::Span>::toVar(const GridItem::Span& span)
     {
         return "span " + String{ span.number };
     }
@@ -90,7 +90,7 @@ namespace juce
         return value;
     }
 
-    var VariantConverter<GridItem::Property>::toVar(GridItem::Property property)
+    var VariantConverter<GridItem::Property>::toVar(const GridItem::Property& property)
     {
         if (property.hasSpan())
         {
@@ -129,7 +129,7 @@ namespace juce
         return { start, end };
     }
 
-    var VariantConverter<GridItem::StartAndEndProperty>::toVar(GridItem::StartAndEndProperty startAndEnd)
+    var VariantConverter<GridItem::StartAndEndProperty>::toVar(const GridItem::StartAndEndProperty& startAndEnd)
     {
         StringArray tokens;
 

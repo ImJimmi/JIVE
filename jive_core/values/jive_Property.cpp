@@ -28,7 +28,7 @@ private:
         beginTest("reading");
 
         juce::ValueTree tree{ "Tree", { { "value", 123 } } };
-        jive::Property<int> value{ tree, "value" };
+        const jive::Property<int> value{ tree, "value" };
 
         expect(value == static_cast<int>(tree["value"]));
 
@@ -61,7 +61,7 @@ private:
         jive::Property<float> value{ tree, "value" };
 
         auto callbackCalled = false;
-        value.onValueChange = [&callbackCalled]() {
+        value.onValueChange = [&callbackCalled] {
             callbackCalled = true;
         };
 
@@ -92,7 +92,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::Inheritance::inheritFromParent> value{
+            const jive::Property<int, jive::Inheritance::inheritFromParent> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -123,7 +123,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
+            const jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -154,7 +154,7 @@ private:
                     },
                 },
             };
-            jive::Property<int, jive::Inheritance::doNotInherit> value{
+            const jive::Property<int, jive::Inheritance::doNotInherit> value{
                 root.getChild(0).getChild(0),
                 "value",
             };
@@ -196,7 +196,7 @@ private:
             jive::Property<int> foo{ state, "foo" };
 
             bool callbackCalled = false;
-            foo.onValueChange = [&callbackCalled]() {
+            foo.onValueChange = [&callbackCalled] {
                 callbackCalled = true;
             };
 
@@ -218,7 +218,7 @@ private:
                 foo{ state, "foo" };
 
             bool callbackCalled = false;
-            foo.onValueChange = [&callbackCalled]() {
+            foo.onValueChange = [&callbackCalled] {
                 callbackCalled = true;
             };
 
@@ -267,7 +267,7 @@ private:
 
     void testDynamicObjectSource()
     {
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "State",
             {
                 {
@@ -305,7 +305,7 @@ private:
             expect(!value.exists());
 
             expect(!value.isFunctional());
-            value = []() {
+            value = [] {
                 return 999;
             };
             expect(value.isFunctional());
@@ -315,7 +315,7 @@ private:
             expectEquals<juce::String>(value.toString(), "7648");
 
             bool receivedCallback = false;
-            value.onValueChange = [&receivedCallback]() {
+            value.onValueChange = [&receivedCallback] {
                 receivedCallback = true;
             };
             state["object"].getDynamicObject()->setProperty("foo", 111);
@@ -340,7 +340,7 @@ private:
             expectEquals(value.get(), static_cast<int>(state["object"]["value"]));
 
             bool receivedCallback = false;
-            value.onValueChange = [&receivedCallback]() {
+            value.onValueChange = [&receivedCallback] {
                 receivedCallback = true;
             };
             dynamic_cast<jive::Object*>(state["object"]["inner"].getDynamicObject())->setProperty("value", 11358);
@@ -353,7 +353,7 @@ private:
         beginTest("DynamicObject source - inheritFromAncestors");
         {
             state["object"]["inner"].getDynamicObject()->removeProperty("value");
-            jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
+            const jive::Property<int, jive::Inheritance::inheritFromAncestors> value{
                 dynamic_cast<jive::Object*>(state["object"]["inner"]["leaf"].getObject()),
                 "value",
             };
@@ -367,7 +367,7 @@ private:
             state["object"]["inner"].getDynamicObject()->setProperty("value", 456);
             state["object"]["inner"]["leaf"].getDynamicObject()->setProperty("value", 789);
 
-            jive::Property<int, jive::Inheritance::doNotInherit, jive::Accumulation::accumulate> value{
+            const jive::Property<int, jive::Inheritance::doNotInherit, jive::Accumulation::accumulate> value{
                 dynamic_cast<jive::Object*>(state["object"].getObject()),
                 "value",
             };
@@ -383,7 +383,7 @@ private:
     {
         beginTest("object values / changing the object's properties calls onValueChange");
         {
-            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            const jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
             juce::ValueTree state{ "State", { { "object", object.get() } } };
             jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
 
@@ -400,8 +400,8 @@ private:
         {
             // Since JUCE 9, objects with the same properties compare equal, so
             // setting one over an equal original would leave the original.
-            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
-            jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 3 } };
+            const jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            const jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 3 } };
             juce::ValueTree state{ "State", { { "object", original.get() } } };
             jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
             state.setProperty("object", replacement.get(), nullptr);
@@ -421,7 +421,7 @@ private:
 
         beginTest("object values / an object that's set after the property is created is observed");
         {
-            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            const jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
             juce::ValueTree state{ "State" };
             jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
             state.setProperty("object", object.get(), nullptr);
@@ -446,7 +446,7 @@ private:
                 callbackCalled = true;
             };
 
-            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            const jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
             state.setProperty("object", object.get(), nullptr);
             expect(property.get() == object);
 
@@ -457,11 +457,11 @@ private:
 
         beginTest("object values / an object outliving the property can still be changed");
         {
-            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            const jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
             juce::ValueTree state{ "State", { { "object", original.get() } } };
 
             {
-                jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+                const jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
                 state.setProperty("object", new jive::Object{}, nullptr);
             }
 

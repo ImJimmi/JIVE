@@ -11,7 +11,7 @@ static jive::UnitTest componentFactoryTest{
         struct MyComponent : public juce::Component
         {
         };
-        interpreter.getComponentFactory().set("MyComponent", []() {
+        interpreter.getComponentFactory().set("MyComponent", [] {
             return std::make_unique<MyComponent>();
         });
         test.expect(dynamic_cast<MyComponent*>(interpreter.getComponentFactory().create("MyComponent").get()) != nullptr);
@@ -20,7 +20,7 @@ static jive::UnitTest componentFactoryTest{
         {
         };
         jive::ComponentFactory factory;
-        factory.set("YourComponent", []() {
+        factory.set("YourComponent", [] {
             return std::make_unique<YourComponent>();
         });
         interpreter.setComponentFactory(factory);
@@ -37,7 +37,7 @@ static jive::UnitTest fileSourcesTest{
                              .getParentDirectory()
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
-        auto basicView = cwd.getChildFile("basic-view.xml");
+        const auto basicView = cwd.getChildFile("basic-view.xml");
         basicView.create();
         basicView.replaceWithText(R"(<Window width="100" height="100"/>)");
 
@@ -45,7 +45,7 @@ static jive::UnitTest fileSourcesTest{
         const auto item = interpreter.interpret(basicView);
         test.expect(item != nullptr);
 
-        auto& window = *item->getComponent()->getTopLevelComponent();
+        const auto& window = *item->getComponent()->getTopLevelComponent();
         test.expectEquals(window.getWidth(), 100);
         test.expectEquals(window.getHeight(), 100);
 
@@ -65,14 +65,14 @@ static jive::UnitTest nestedFileSourcesTest{
                              .getParentDirectory()
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
-        auto alpha = cwd.getChildFile("alpha.xml");
+        const auto alpha = cwd.getChildFile("alpha.xml");
         alpha.create();
         alpha.replaceWithText(R"(<Component id="alpha"/>)");
-        auto beta = cwd.getChildFile("beta.xml");
+        const auto beta = cwd.getChildFile("beta.xml");
         beta.create();
         beta.replaceWithText(R"(<Component id="beta"/>)");
 
-        auto mainView = cwd.getChildFile("nested-view.xml");
+        const auto mainView = cwd.getChildFile("nested-view.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -86,7 +86,7 @@ static jive::UnitTest nestedFileSourcesTest{
         test.expect(item != nullptr, "Item should have been created");
 
         auto* window = dynamic_cast<jive::Window*>(item->getComponent()->getTopLevelComponent());
-        auto* child = window->getComponent()->findChildWithID("alpha");
+        const auto* child = window->getComponent()->findChildWithID("alpha");
         test.expectEquals(child->getName(),
                           juce::String{ "Alpha" },
                           "Window should have an 'alpha' child with the name 'Alpha'");
@@ -133,12 +133,12 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
         // Mirror the example's directory layout: main.xml lives in the source
         // directory, the nested view lives in a separate "views" directory
         // that's added via addSourceDirectory().
-        auto viewsDir = cwd.getChildFile("views");
-        auto heading = viewsDir.getChildFile("heading.xml");
+        const auto viewsDir = cwd.getChildFile("views");
+        const auto heading = viewsDir.getChildFile("heading.xml");
         heading.create();
         heading.replaceWithText(R"(<Component id="heading"/>)");
 
-        auto mainView = cwd.getChildFile("main.xml");
+        const auto mainView = cwd.getChildFile("main.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -202,11 +202,11 @@ static jive::UnitTest fileSourceRetainsChildrenTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto navButton = cwd.getChildFile("nav-button.xml");
+        const auto navButton = cwd.getChildFile("nav-button.xml");
         navButton.create();
         navButton.replaceWithText(R"(<Button padding="10"/>)");
 
-        auto mainView = cwd.getChildFile("side-bar.xml");
+        const auto mainView = cwd.getChildFile("side-bar.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -243,11 +243,11 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto navButton = cwd.getChildFile("nav-button.xml");
+        const auto navButton = cwd.getChildFile("nav-button.xml");
         navButton.create();
         navButton.replaceWithText(R"(<Button padding="10"/>)");
 
-        auto mainView = cwd.getChildFile("side-bar.xml");
+        const auto mainView = cwd.getChildFile("side-bar.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -260,21 +260,21 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
         jive::Interpreter interpreter;
         const auto item = interpreter.interpret(mainView);
         test.expect(item != nullptr, "Item should have been created");
-        test.expectEquals(static_cast<int>(item->getChildren().size()), 3);
+        test.expectEquals(item->getChildren().size(), 3);
 
         static const juce::StringArray labels{ "Layouts", "Styles", "Animations" };
 
-        auto getPadding = [&](int index) {
+        const auto getPadding = [&](int index) {
             return static_cast<float>(item->getChildren()[index]->state["padding"]);
         };
-        auto getText = [&](int index) -> juce::String {
+        const auto getText = [&](int index) -> juce::String {
             const auto* text = jive::findFirstTextContent(*item->getChildren()[index]);
             return text != nullptr
                      ? text->getTextComponent().getAttributedString().getText()
                      : juce::String{};
         };
 
-        for (auto i = 0; i < 3; i++)
+        for (auto i = 0; i < 3; ++i)
         {
             test.expectEquals(getPadding(i), 10.0f, "Initial padding should come from the source file");
             test.expectEquals(getText(i), labels[i], "Initial text should be retained");
@@ -283,7 +283,7 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
         navButton.replaceWithText(R"(<Button padding="20"/>)");
         jive::FileObserver::triggerAllTimerCallbacks();
 
-        for (auto i = 0; i < 3; i++)
+        for (auto i = 0; i < 3; ++i)
         {
             test.expectEquals(getPadding(i),
                               20.0f,
@@ -296,7 +296,7 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
         navButton.replaceWithText(R"(<Button padding="30"/>)");
         jive::FileObserver::triggerAllTimerCallbacks();
 
-        for (auto i = 0; i < 3; i++)
+        for (auto i = 0; i < 3; ++i)
         {
             test.expectEquals(getPadding(i), 30.0f, "Subsequent reloads should keep applying to every button");
             test.expectEquals(getText(i), labels[i], "Inline text should survive repeated reloads");
@@ -318,7 +318,7 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto mainXml = cwd.getChildFile("main.xml");
+        const auto mainXml = cwd.getChildFile("main.xml");
         mainXml.create();
         mainXml.replaceWithText(R"(
             <Component flex-direction="row">
@@ -327,7 +327,7 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
             </Component>
         )");
 
-        juce::ValueTree windowTree{
+        const juce::ValueTree windowTree{
             "Window",
             {
                 { "width", 100 },
@@ -347,11 +347,11 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
         interpreter.addSourceDirectory(cwd);
         const auto item = interpreter.interpret(windowTree);
         test.expect(item != nullptr, "Item should have been created");
-        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+        test.expectEquals(item->getChildren()[0]->getChildren().size(),
                           2,
                           "Should start with two children");
 
-        for (auto i = 0; i < 3; i++)
+        for (auto i = 0; i < 3; ++i)
         {
             mainXml.replaceWithText(juce::String(R"(
                 <Component flex-direction="row" padding=")")
@@ -363,7 +363,7 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
             )");
             jive::FileObserver::triggerAllTimerCallbacks();
 
-            test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+            test.expectEquals(item->getChildren()[0]->getChildren().size(),
                               2,
                               "Reloading the source file shouldn't duplicate its own children");
         }
@@ -383,15 +383,15 @@ static jive::UnitTest sourcePropertyChangedTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto layouts = cwd.getChildFile("layouts.xml");
+        const auto layouts = cwd.getChildFile("layouts.xml");
         layouts.create();
         layouts.replaceWithText(R"(<Component padding="10"><Component id="layouts-page"/></Component>)");
 
-        auto styles = cwd.getChildFile("styles.xml");
+        const auto styles = cwd.getChildFile("styles.xml");
         styles.create();
         styles.replaceWithText(R"(<Component><Component id="styles-page"/></Component>)");
 
-        juce::ValueTree windowTree{
+        const juce::ValueTree windowTree{
             "Window",
             {
                 { "width", 100 },
@@ -412,7 +412,7 @@ static jive::UnitTest sourcePropertyChangedTest{
         const auto item = interpreter.interpret(windowTree);
         test.expect(item != nullptr, "Item should have been created");
 
-        auto page = [&item]() -> juce::String {
+        const auto page = [&item]() -> juce::String {
             const auto& pages = item->getChildren()[0]->getChildren();
 
             if (pages.isEmpty())
@@ -455,14 +455,14 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto page = cwd.getChildFile("page.xml");
+        const auto page = cwd.getChildFile("page.xml");
         page.create();
         page.replaceWithText(R"(<Component><Text>Layouts</Text></Component>)");
 
         auto mainXml = cwd.getChildFile("main.xml");
         mainXml.create();
 
-        auto writeMainXml = [&mainXml](int padding) {
+        const auto writeMainXml = [&mainXml](int padding) {
             mainXml.replaceWithText(juce::String{ R"(
                 <Component flex-direction="row">
                     <Component id="side-bar" />
@@ -474,7 +474,7 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
         };
         writeMainXml(20);
 
-        juce::ValueTree windowTree{
+        const juce::ValueTree windowTree{
             "Window",
             {
                 { "width", 100 },
@@ -494,7 +494,7 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
         interpreter.addSourceDirectory(cwd);
         const auto item = interpreter.interpret(windowTree);
         test.expect(item != nullptr, "Item should have been created");
-        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+        test.expectEquals(item->getChildren()[0]->getChildren().size(),
                           2,
                           "Should start with two children");
 
@@ -504,7 +504,7 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
         writeMainXml(25);
         jive::FileObserver::triggerAllTimerCallbacks();
 
-        test.expectEquals(static_cast<int>(item->getChildren()[0]->getChildren().size()),
+        test.expectEquals(item->getChildren()[0]->getChildren().size(),
                           2,
                           "An element whose own source was reloaded shouldn't be duplicated");
         test.expectEquals(static_cast<float>(item->getChildren()[0]->getChildren()[1]->state["padding"]),
@@ -526,14 +526,14 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto icon = cwd.getChildFile("icon.svg");
+        const auto icon = cwd.getChildFile("icon.svg");
         icon.create();
         icon.replaceWithText(R"(<svg viewBox="0 0 24 24"><path d="M0,0 L24,24"/></svg>)");
 
         auto mainXml = cwd.getChildFile("main.xml");
         mainXml.create();
 
-        auto writeMainXml = [&mainXml](int padding) {
+        const auto writeMainXml = [&mainXml](int padding) {
             mainXml.replaceWithText(juce::String{ R"(
                 <Component padding=")" }
                                     + juce::String{ padding }
@@ -544,7 +544,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
         };
         writeMainXml(10);
 
-        juce::ValueTree windowTree{
+        const juce::ValueTree windowTree{
             "Window",
             {
                 { "width", 100 },
@@ -565,7 +565,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
         const auto item = interpreter.interpret(windowTree);
         test.expect(item != nullptr, "Item should have been created");
 
-        auto iconItem = [&item]() -> jive::GuiItem* {
+        const auto iconItem = [&item]() -> jive::GuiItem* {
             const auto& icons = item->getChildren()[0]->getChildren();
             return icons.isEmpty() ? nullptr : icons[0];
         };
@@ -574,7 +574,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
         test.expectEquals(iconItem()->state.getType().toString(),
                           juce::String{ "svg" },
                           "The element should take its type from its source file's root");
-        auto* image = dynamic_cast<jive::GuiItemDecorator&>(*iconItem()).toType<jive::Image>();
+        const auto* image = dynamic_cast<jive::GuiItemDecorator&>(*iconItem()).toType<jive::Image>();
         test.expect(image != nullptr, "The element should be treated as an image");
         test.expect(image != nullptr && image->getDrawable().isSVG(),
                     "The element should have found the source file's drawable");
@@ -602,15 +602,15 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
                              .getChildFile("interpreter-tests/");
         cwd.deleteRecursively();
 
-        auto heading = cwd.getChildFile("heading.xml");
+        const auto heading = cwd.getChildFile("heading.xml");
         heading.create();
         heading.replaceWithText(R"(<Component name="original"/>)");
 
-        auto footer = cwd.getChildFile("footer.xml");
+        const auto footer = cwd.getChildFile("footer.xml");
         footer.create();
         footer.replaceWithText(R"(<Component name="footer"/>)");
 
-        auto mainView = cwd.getChildFile("main.xml");
+        const auto mainView = cwd.getChildFile("main.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -681,15 +681,15 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
                              .getChildFile("interpreter-items-tests/");
         cwd.deleteRecursively();
 
-        auto first = cwd.getChildFile("first.xml");
+        const auto first = cwd.getChildFile("first.xml");
         first.create();
         first.replaceWithText(R"(<Component><Component id="inner"/></Component>)");
 
-        auto second = cwd.getChildFile("second.xml");
+        const auto second = cwd.getChildFile("second.xml");
         second.create();
         second.replaceWithText(R"(<Component><Component id="inner"/></Component>)");
 
-        auto mainView = cwd.getChildFile("main.xml");
+        const auto mainView = cwd.getChildFile("main.xml");
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
@@ -706,7 +706,7 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
             if (item == nullptr)
                 return;
 
-            auto* inner = jive::findItemWithID(*item, "inner");
+            const auto* inner = jive::findItemWithID(*item, "inner");
             const auto isInPlace = inner != nullptr && inner->state == jive::findElementWithID(item->state, "inner");
             itemsWhenNotified.add(isInPlace ? "in place" : "missing");
         };
@@ -755,7 +755,7 @@ countries: de
     return directory;
 }
 
-[[nodiscard]] static juce::String getDisplayedText(jive::GuiItem& root, const juce::Identifier& id)
+[[nodiscard]] static juce::String getDisplayedText(jive::GuiItem& root, juce::Identifier id)
 {
     const auto* item = jive::findItemWithID(root, id);
 
@@ -902,11 +902,14 @@ static jive::UnitTest embeddedSourcesTest{
     "Embedded sources: views, nested sources and strings files are read from embedded zips",
     [](auto& test) {
         const auto zip = jive::createZip({
-            { "views/Main.xml", R"(
+            {
+                "views/Main.xml",
+                R"(
                 <Component width="200" height="200" lang="views/languages/english.strings">
                     <Component source="views/Child.xml"/>
                 </Component>
-            )" },
+            )",
+            },
             { "views/Child.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
             { "views/languages/english.strings", R"("greeting" = "Hello")" },
         });
@@ -967,11 +970,14 @@ static jive::UnitTest rootRelativeSourcesTest{
     "Relative sources: paths in a view are relative to the root, not to the view",
     [](auto& test) {
         const auto zip = jive::createZip({
-            { "views/Main.xml", R"(
+            {
+                "views/Main.xml",
+                R"(
                 <Component width="200" height="200">
                     <Component source="Child.xml"/>
                 </Component>
-            )" },
+            )",
+            },
             { "views/Child.xml", R"(<Component><Text id="greeting">Hello</Text></Component>)" },
         });
         const jive::SourceRoot root{ zip.getData(), zip.getSize() };
@@ -988,11 +994,14 @@ static jive::UnitTest fileRelativeSourcesTest{
     "Relative sources: paths starting with ./ or ../ are relative to the file they're in",
     [](auto& test) {
         const auto zip = jive::createZip({
-            { "views/Main.xml", R"(
+            {
+                "views/Main.xml",
+                R"(
                 <Component width="200" height="200" lang="../locales/english.strings">
                     <Component source="./partials/Child.xml"/>
                 </Component>
-            )" },
+            )",
+            },
             { "views/partials/Child.xml", R"(<Component><Component source="./Grandchild.xml"/></Component>)" },
             { "views/partials/Grandchild.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
             { "locales/english.strings", R"("greeting" = "Hello")" },
@@ -1045,7 +1054,7 @@ private:
             expectEquals(view->getComponent()->getNumChildComponents(), 0);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -1058,11 +1067,11 @@ private:
             };
             auto view = interpreter.interpret(tree);
 
-            expect(view->getChildren().size() == tree.getNumChildren());
-            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
+            expectEquals(view->getChildren().size(), tree.getNumChildren());
+            expectEquals(view->getComponent()->getNumChildComponents(), tree.getNumChildren());
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -1082,11 +1091,11 @@ private:
             };
             auto view = interpreter.interpret(tree);
 
-            expect(view->getChildren().size() == tree.getNumChildren());
-            expect(view->getComponent()->getNumChildComponents() == tree.getNumChildren());
+            expectEquals(view->getChildren().size(), tree.getNumChildren());
+            expectEquals(view->getComponent()->getNumChildComponents(), tree.getNumChildren());
 
-            expect(view->getChildren()[0]->getChildren().size() == tree.getChild(0).getNumChildren());
-            expect(view->getChildren()[0]->getComponent()->getNumChildComponents() == tree.getChild(0).getNumChildren());
+            expectEquals(view->getChildren()[0]->getChildren().size(), tree.getChild(0).getNumChildren());
+            expectEquals(view->getChildren()[0]->getComponent()->getNumChildComponents(), tree.getChild(0).getNumChildren());
         }
     }
 
@@ -1216,8 +1225,8 @@ private:
                 },
             },
         });
-        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*view)
-                            .toType<jive::Window>();
+        const auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*view)
+                                  .toType<jive::Window>();
         expect(window.getContentComponent() != nullptr);
     }
 

@@ -34,7 +34,7 @@ namespace jive
         {
             if (auto* itemWithType = dynamic_cast<ItemType*>(this))
                 return itemWithType;
-            else if (auto* decoratedDecorator = dynamic_cast<GuiItemDecorator*>(item.get()))
+            if (auto* decoratedDecorator = dynamic_cast<GuiItemDecorator*>(item.get()))
                 return decoratedDecorator->toType<ItemType>();
 
             return nullptr;

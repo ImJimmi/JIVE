@@ -7,11 +7,13 @@ namespace jive
     class Canvas : public juce::Component
     {
     public:
-        Canvas() = default;
-        explicit Canvas(std::function<void(juce::Graphics&)> paintFunction);
+        explicit Canvas(std::function<void(juce::Graphics&)> paintFunction = nullptr);
 
         void paint(juce::Graphics& g) final;
 
         std::function<void(juce::Graphics&)> onPaint;
+
+    private:
+        JUCE_LEAK_DETECTOR(Canvas)
     };
 } // namespace jive

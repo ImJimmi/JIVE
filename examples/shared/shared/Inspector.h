@@ -13,7 +13,7 @@ namespace jive_examples
     class Inspector
     {
     public:
-        void inspect(juce::Component& root)
+        void inspect([[maybe_unused]] juce::Component& root)
         {
 #if JIVE_ENABLE_MELATONIN_INSPECTOR
             if (inspector != nullptr)
@@ -25,7 +25,6 @@ namespace jive_examples
             inspector = std::make_unique<melatonin::Inspector>(root, false);
             inspector->setVisible(true);
 #else
-            juce::ignoreUnused(root);
 #endif
         }
 

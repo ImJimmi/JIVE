@@ -8,15 +8,17 @@
 #include <jive_core/algorithms/jive_Visitor.h>
 #include <jive_core/kinetics/jive_Transitions.h>
 
+#include <utility>
+
 namespace jive
 {
     template <typename T>
-    struct isReferenceCountedObjectPointer : std::false_type
+    struct isReferenceCountedObjectPointer : public std::false_type
     {
     };
 
     template <typename T>
-    struct isReferenceCountedObjectPointer<juce::ReferenceCountedObjectPtr<T>> : std::true_type
+    struct isReferenceCountedObjectPointer<juce::ReferenceCountedObjectPtr<T>> : public std::true_type
     {
     };
 
@@ -34,9 +36,9 @@ namespace jive
         using Source = std::variant<juce::ValueTree, Object::ReferenceCountedPointer>;
 
         Property(Source propertySource,
-                 const juce::Identifier& propertyID)
+                 juce::Identifier propertyID)
             : id{ propertyID }
-            , source{ propertySource }
+            , source{ std::move(propertySource) }
             , transitionSourceID{ propertyID }
         {
             initialise();
@@ -48,8 +50,7 @@ namespace jive
             *this = other;
         }
 
-        Property(Property&& other)
-            : id{ std::move(other.id) }
+        Property(Property&& other) noexcept : id{ other.id }
         {
             *this = std::move(other);
         }
@@ -66,7 +67,7 @@ namespace jive
             return *this;
         }
 
-        Property& operator=(Property&& other)
+        Property& operator=(Property&& other) noexcept
         {
             jassert(id == other.id);
             transitionSourceID = std::move(other.transitionSourceID);
@@ -93,7 +94,7 @@ namespace jive
 
         [[nodiscard]] auto getOr(const ValueType& valueIfNoneSpecified) const
         {
-            if (auto root = getRootOfInheritance();
+            if (const auto root = getRootOfInheritance();
                 isValid(root))
             {
                 return getFrom(root);
@@ -124,7 +125,7 @@ namespace jive
             set(source, toVar(newValue));
         }
 
-        void set(std::function<ValueType()> function)
+        void set(const std::function<ValueType()>& function)
         {
             set(source, juce::var{
                             [function](const auto&) {
@@ -197,10 +198,10 @@ namespace jive
                               source);
         }
 
-        void setTransitionSourceProperty(const juce::Identifier& sourceID)
+        void setTransitionSourceProperty(juce::Identifier sourceID)
         {
             observeTransition(nullptr);
-            transitionSourceID = sourceID;
+            transitionSourceID = std::move(sourceID);
 
             if (auto* transition = getTransition())
                 observeTransition(transition);
@@ -252,9 +253,9 @@ namespace jive
             return *this;
         }
 
-        auto& operator=(std::function<ValueType()> function)
+        auto& operator=(const std::function<ValueType()>& function)
         {
-            set(function);
+            set(std::move(function));
             return *this;
         }
 
@@ -271,7 +272,7 @@ namespace jive
             Returns true if the change was to this property, in which case
             onValueChange may have destroyed this property's owner.
         */
-        bool handlePropertyChange(juce::ValueTree& tree, const juce::Identifier& property)
+        bool handlePropertyChange(juce::ValueTree& tree, juce::Identifier property)
         {
             const auto isThisProperty = property == id;
             valueTreePropertyChanged(tree, property);
@@ -279,8 +280,8 @@ namespace jive
         }
 
         const juce::Identifier id;
-        mutable std::function<void(void)> onValueChange = nullptr;
-        mutable std::function<void(void)> onTransitionProgressed = nullptr;
+        mutable std::function<void()> onValueChange = nullptr;
+        mutable std::function<void()> onTransitionProgressed = nullptr;
 
     protected:
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
@@ -387,13 +388,13 @@ namespace jive
 
         [[nodiscard]] auto getFirstDescendantWithProperty(const Source& root) const
         {
-            for (auto i = 0; i < getNumChildren(root); i++)
+            for (auto i = 0; i < getNumChildren(root); ++i)
             {
                 if (auto child = getChild(root, i); !getVar(child, id).isVoid())
                     return child;
             }
 
-            for (auto i = 0; i < getNumChildren(root); i++)
+            for (auto i = 0; i < getNumChildren(root); ++i)
             {
                 if (auto descendant = getFirstDescendantWithProperty(getChild(root, i));
                     isValid(descendant))
@@ -414,7 +415,7 @@ namespace jive
             {
                 auto result = fromVar<ValueType>(getVar(root, id));
 
-                for (auto i = 0; i < getNumChildren(root); i++)
+                for (auto i = 0; i < getNumChildren(root); ++i)
                     result += getFrom(getChild(root, i));
 
                 return result;
@@ -425,7 +426,7 @@ namespace jive
 
                 if (var.isMethod())
                 {
-                    juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
+                    const juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
                     var = var.getNativeFunction()(args);
                 }
 
@@ -442,7 +443,7 @@ namespace jive
             {
                 auto result = fromVar<ValueType>(getVar(root, id));
 
-                for (auto i = 0; i < getNumChildren(root); i++)
+                for (auto i = 0; i < getNumChildren(root); ++i)
                     result += getFrom(getChild(root, i));
 
                 return result;
@@ -451,7 +452,7 @@ namespace jive
             {
                 if (root->hasMethod(id))
                 {
-                    juce::var::NativeFunctionArgs args{ juce::var{}, nullptr, 0 };
+                    const juce::var::NativeFunctionArgs args{ juce::var{}, nullptr, 0 };
                     return fromVar<ValueType>(root->invokeMethod(id, args));
                 }
 
@@ -485,7 +486,7 @@ namespace jive
                               src);
         }
 
-        [[nodiscard]] juce::var getVar(const Source& src, const juce::Identifier& name) const
+        [[nodiscard]] juce::var getVar(const Source& src, juce::Identifier name) const
         {
             return std::visit(Visitor{
                                   [name](const juce::ValueTree& sourceTree) {
@@ -548,11 +549,9 @@ namespace jive
 
                                       for (const auto& [_, value] : sourceObject->getProperties())
                                       {
-                                          if (auto* child = dynamic_cast<Object*>(value.getDynamicObject()))
-                                          {
-                                              if (current++ == index)
-                                                  return child;
-                                          }
+                                          if (auto* child = dynamic_cast<Object*>(value.getDynamicObject()); child && (current++ == index))
+
+                                              return child;
                                       }
 
                                       return nullptr;
@@ -624,7 +623,7 @@ namespace jive
                            [this, &value](juce::ValueTree& sourceTree) {
                                sourceTree.setProperty(id, value, nullptr);
                            },
-                           [this, &value](Object::ReferenceCountedPointer sourceObject) {
+                           [this, &value](const Object::ReferenceCountedPointer& sourceObject) {
                                sourceObject->setProperty(id, value);
                            },
                        },
@@ -650,7 +649,7 @@ namespace jive
             // that hasn't been loaded yet, is left for whatever reads it.
             if constexpr (autoParseStrings)
             {
-                if (auto value = getVar(source, id); value.isString())
+                if (const auto value = getVar(source, id); value.isString())
                 {
                     if (const auto parsed = get(); parsed != nullptr)
                         set(parsed);
@@ -689,7 +688,7 @@ namespace jive
             }
         }
 
-        void observeObject(Object::ReferenceCountedPointer object)
+        void observeObject(const Object::ReferenceCountedPointer& object)
         {
             if (observedObject == object)
                 return;
@@ -800,7 +799,7 @@ namespace jive
     // Returns true if one of the properties was the one that changed.
     template <typename... Properties>
     bool forwardPropertyChange(juce::ValueTree& tree,
-                               const juce::Identifier& property,
+                               juce::Identifier property,
                                Properties&... properties)
     {
         return (properties.handlePropertyChange(tree, property) || ...);

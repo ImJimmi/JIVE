@@ -22,7 +22,7 @@ namespace jive
         : attachedComponent{ &comp }
         , vBlank{
             &comp,
-            [this]() {
+            [this] {
                 onVBlankUpdate();
             },
         }
@@ -40,7 +40,7 @@ namespace jive
     juce::Uuid LookAndFeel::addPainter(const StyleSelector& selector,
                                        const ComponentPainter& painter)
     {
-        auto& newItem = painters.emplace_back(Painter<ComponentPainter>{
+        const auto& newItem = painters.emplace_back(Painter<ComponentPainter>{
             juce::Uuid{},
             painter,
             selector,
@@ -71,30 +71,30 @@ namespace jive
     juce::Uuid LookAndFeel::addStyles(const StyleSelector& selector,
                                       const Styles& styles)
     {
-        auto& newItem = stylers.emplace_back(Styler{
+        const auto& newItem = stylers.emplace_back(Styler{
             juce::Uuid{},
             selector,
             styles,
         });
-        stylersVersion++;
+        ++stylersVersion;
 
         return newItem.id;
     }
 
     Styles* LookAndFeel::findStyles(const juce::Uuid& uuid)
     {
-        stylersVersion++;
+        ++stylersVersion;
         return const_cast<Styles*>(std::as_const(*this).findStyles(uuid));
     }
 
     const Styles* LookAndFeel::findStyles(const juce::Uuid& uuid) const
     {
         static constexpr auto find = [](const juce::Uuid& id, const auto& list) -> const Styles* {
-            if (auto styles = std::find_if(std::begin(list),
-                                           std::end(list),
-                                           [&id](const auto& entry) {
-                                               return entry.id == id;
-                                           });
+            if (const auto styles = std::find_if(std::begin(list),
+                                                 std::end(list),
+                                                 [&id](const auto& entry) {
+                                                     return entry.id == id;
+                                                 });
                 styles != std::end(list))
             {
                 return &styles->styles;
@@ -121,13 +121,13 @@ namespace jive
         };
 
         remove(uuid, stylers);
-        stylersVersion++;
+        ++stylersVersion;
     }
 
     void LookAndFeel::clearStyles()
     {
         stylers.clear();
-        stylersVersion++;
+        ++stylersVersion;
     }
 
     void LookAndFeel::drawComponent(juce::Graphics& g, const juce::Component& component) const
@@ -249,7 +249,7 @@ namespace jive
             break;
         }
 
-        for (auto i = numStylersBeforeTheme; i < std::size(stylers); i++)
+        for (auto i = numStylersBeforeTheme; i < std::size(stylers); ++i)
             themeStyles.push_back(stylers[i].id);
     }
 
@@ -298,8 +298,8 @@ namespace jive
                      g.fillPath(tick,
                                 tick.getTransformToScaleToFit(boxBounds
                                                                   .toFloat()
-                                                                  .withSizeKeepingCentre(juce::jmin(boxBounds.toFloat().getWidth(), 13.0f),
-                                                                                         juce::jmin(boxBounds.toFloat().getHeight(), 13.0f)),
+                                                                  .withSizeKeepingCentre(std::min(boxBounds.toFloat().getWidth(), 13.0f),
+                                                                                         std::min(boxBounds.toFloat().getHeight(), 13.0f)),
                                                               true));
                  }
 
@@ -366,7 +366,7 @@ namespace jive
     void LookAndFeel::drawComboBoxPopupBackground(juce::Graphics& g,
                                                   const juce::ComboBox& comboBox,
                                                   const juce::PopupMenu::Options& options,
-                                                  const juce::Rectangle<float>& bounds) const
+                                                  juce::Rectangle<float> bounds) const
     {
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
@@ -380,7 +380,10 @@ namespace jive
                                                          const juce::PopupMenu::Options& options)
     {
         if (const auto* const comboBox = dynamic_cast<juce::ComboBox*>(options.getTopLevelTargetComponent()))
-            return drawComboBoxPopupBackground(g, *comboBox, options, juce::Rectangle{ width, height }.toFloat());
+        {
+            drawComboBoxPopupBackground(g, *comboBox, options, juce::Rectangle{ width, height }.toFloat());
+            return;
+        }
 
         // Don't know how to draw a popup menu that hasn't come from a combo box!
         // Override this method to decide how to handle this.
@@ -392,7 +395,7 @@ namespace jive
                                             const juce::ComboBox& comboBox,
                                             const juce::PopupMenu::Options& options,
                                             const InteractionState& interactionState,
-                                            const juce::Rectangle<float>& bounds) const
+                                            juce::Rectangle<float> bounds) const
     {
         const auto* const popup = comboBox.getRootMenu();
         jassert(popup != nullptr);
@@ -421,7 +424,8 @@ namespace jive
             if (isHighlighted)
                 interactionState.setHovered();
 
-            return drawComboBoxPopupItem(g, item, *comboBox, options, interactionState, bounds.toFloat());
+            drawComboBoxPopupItem(g, item, *comboBox, options, interactionState, bounds.toFloat());
+            return;
         }
 
         // Don't know how to draw a popup menu that hasn't come from a combo box!
@@ -713,7 +717,7 @@ namespace jive
         {
             GenerationOffset generationOffset = 0;
 
-            for (auto* ancestor = &component;
+            for (const auto* ancestor = &component;
                  ancestor != nullptr;
                  ancestor = ancestor->getParentComponent())
             {
@@ -772,11 +776,11 @@ namespace jive
                                    }),
                     std::end(cache));
 
-        if (auto entry = std::find_if(std::begin(cache),
-                                      std::end(cache),
-                                      [&component](auto& cacheEntry) {
-                                          return cacheEntry.component == &component;
-                                      });
+        if (const auto entry = std::find_if(std::begin(cache),
+                                            std::end(cache),
+                                            [&component](auto& cacheEntry) {
+                                                return cacheEntry.component == &component;
+                                            });
             entry != std::end(cache))
         {
             return *entry;
@@ -857,7 +861,7 @@ namespace jive
             && !(destination == source)
             && transitions != nullptr)
         {
-            if (auto* transition = (*transitions)[destination.id.toString()])
+            if (const auto* transition = (*transitions)[destination.id.toString()])
             {
                 if (const auto progress = transition->calculateProgress(destination.getLastUpdated());
                     progress < 1.0)
@@ -985,7 +989,7 @@ namespace jive
         // The entries are safe-pointers that become null when their component is
         // deleted (e.g. when a view is rebuilt while a transition is still in
         // progress), so they must be null-checked before being dereferenced.
-        for (auto& component : transitioningComponents)
+        for (const auto& component : transitioningComponents)
         {
             if (component != nullptr)
                 component->repaint();
@@ -1136,14 +1140,13 @@ private:
         beginTest("styles / resolving again with nothing changed doesn't check any selectors");
         {
             static auto numChecks = 0;
-            static const auto predicate = jive::ComponentTypePredicates::addPredicate(
+            [[maybe_unused]] static const auto predicate = jive::ComponentTypePredicates::addPredicate(
                 [](const juce::Component&, const juce::String& typeName) {
                     if (typeName == "CountedType")
-                        numChecks++;
+                        ++numChecks;
 
                     return false;
                 });
-            juce::ignoreUnused(predicate);
 
             juce::Component parent;
             jive::LookAndFeel lookAndFeel{ parent };
@@ -1269,7 +1272,7 @@ private:
         beginTest("combo box popups / items use their combo box's font by default");
         {
             juce::Component parent;
-            jive::LookAndFeel lookAndFeel{ parent };
+            const jive::LookAndFeel lookAndFeel{ parent };
             juce::ComboBox comboBox;
             parent.addAndMakeVisible(comboBox);
             comboBox.getProperties().set("font-size", 23.0f);
@@ -1287,7 +1290,7 @@ private:
         beginTest("combo box popups / item fonts can be overridden with popup-prefixed properties");
         {
             juce::Component parent;
-            jive::LookAndFeel lookAndFeel{ parent };
+            const jive::LookAndFeel lookAndFeel{ parent };
             juce::ComboBox comboBox;
             parent.addAndMakeVisible(comboBox);
             comboBox.getProperties().set("popup.font-size", 30.0f);
@@ -1316,7 +1319,7 @@ private:
 
             const auto styles = lookAndFeel.findPopupStyles(comboBox);
             expect(styles.background.get() == juce::Colours::blue);
-            expect(styles.borderWidth.get() == juce::BorderSize{ 2.0f });
+            expectEquals(styles.borderWidth.get(), juce::BorderSize{ 2.0f });
         }
 
         beginTest("combo box popups / popups and items don't transition, as nothing repaints them while they would");
@@ -1454,7 +1457,7 @@ private:
         {
             juce::Component parent;
             parent.setSize(200, 100);
-            jive::LookAndFeel lookAndFeel{ parent };
+            const jive::LookAndFeel lookAndFeel{ parent };
 
             juce::ToggleButton checkbox;
             checkbox.setBounds(40, 30, 100, 30);
@@ -1555,13 +1558,13 @@ private:
 
             slider.setValue(slider.getMinimum());
             auto snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
-            expect(snapshot.getPixelAt(15, 138) == juce::Colours::red);
-            expect(snapshot.getPixelAt(15, 12) == juce::Colours::blue);
+            expectEquals(snapshot.getPixelAt(15, 138), juce::Colours::red);
+            expectEquals(snapshot.getPixelAt(15, 12), juce::Colours::blue);
 
             slider.setValue(slider.getMaximum());
             snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
-            expect(snapshot.getPixelAt(15, 12) == juce::Colours::red);
-            expect(snapshot.getPixelAt(15, 75) == juce::Colours::green);
+            expectEquals(snapshot.getPixelAt(15, 12), juce::Colours::red);
+            expectEquals(snapshot.getPixelAt(15, 75), juce::Colours::green);
         }
 
         beginTest("value directions / bar sliders fill from their minimum");
@@ -1583,14 +1586,14 @@ private:
                                       .withTrack(juce::Colours::green));
 
             auto snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
-            expect(snapshot.getPixelAt(10, 10) == juce::Colours::green);
-            expect(snapshot.getPixelAt(50, 10) == juce::Colours::blue);
+            expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::green);
+            expectEquals(snapshot.getPixelAt(50, 10), juce::Colours::blue);
 
             slider.setSliderStyle(juce::Slider::LinearBarVertical);
             slider.setBounds(0, 0, 20, 100);
             snapshot = slider.createComponentSnapshot(slider.getLocalBounds());
-            expect(snapshot.getPixelAt(10, 90) == juce::Colours::green);
-            expect(snapshot.getPixelAt(10, 50) == juce::Colours::blue);
+            expectEquals(snapshot.getPixelAt(10, 90), juce::Colours::green);
+            expectEquals(snapshot.getPixelAt(10, 50), juce::Colours::blue);
         }
 
         beginTest("value directions / vertical progress bars fill from the bottom");
@@ -1611,8 +1614,8 @@ private:
                                       .withTrack(juce::Colours::green));
 
             const auto snapshot = progressBar.createComponentSnapshot(progressBar.getLocalBounds());
-            expect(snapshot.getPixelAt(10, 75) == juce::Colours::green);
-            expect(snapshot.getPixelAt(10, 25) == juce::Colours::blue);
+            expectEquals(snapshot.getPixelAt(10, 75), juce::Colours::green);
+            expectEquals(snapshot.getPixelAt(10, 25), juce::Colours::blue);
         }
     }
 

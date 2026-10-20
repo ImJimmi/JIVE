@@ -18,7 +18,7 @@ protected:
     {
         static constexpr auto button = [] {
             static auto id = -1;
-            id++;
+            ++id;
             return juce::ValueTree{
                 "Button",
                 {

@@ -702,7 +702,7 @@ namespace jive::ids
 
     [[nodiscard]] inline const juce::Identifier& textType()
     {
-        static const juce::Identifier identifier{ "Text" };
+        static const juce::Identifier identifier{ "Text" }; // NOLINT
         return identifier;
     }
 

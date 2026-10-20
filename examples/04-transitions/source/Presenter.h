@@ -98,7 +98,7 @@ namespace jive_examples::transitions
                 const auto lanes = jive::findElementsWithClass(window->state, "lane");
                 const auto runners = jive::findElementsWithClass(window->state, "runner");
 
-                for (std::size_t i = 0; i < std::min(lanes.size(), runners.size()); i++)
+                for (std::size_t i = 0; i < std::min(lanes.size(), runners.size()); ++i)
                 {
                     auto parts = juce::StringArray::fromTokens(lanes[i]["text"].toString(), " ", "");
 
@@ -272,31 +272,37 @@ namespace jive_examples::transitions
         }
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
-        const std::array<std::pair<juce::String, juce::String>, 3> pages{ {
-            { "timing-tab", "public/views/Timing.xml" },
-            { "layout-tab", "public/views/Layout.xml" },
-            { "styles-tab", "public/views/Styles.xml" },
-        } };
-        const std::array<Animation, 9> animations{ {
-            { "flex-grow", "flex-box", 1, 4 },
-            { "flex-basis", "flex-box", 60, 240 },
-            { "gap", "flex-sample", 10, 40 },
-            { "padding", "flex-sample", 10, 25 },
-            { "opacity", "flex-box", 1.0, 0.2 },
-            { "border-width", "flex-box", 0, 12 },
-            { "grid-template-columns", "grid-sample", "1fr 1fr 1fr", "1fr 4fr 1fr" },
-            { "width", "absolute-box", 60, 300 },
-            { "height", "absolute-box", 40, 90 },
-        } };
-        const std::array<StyleRange, 7> styleRanges{ {
-            { "background", 0, 360, "hsl({}, 70%, 60%)", 200, 280 },
-            { "border", 0, 360, "hsl({}, 90%, 70%)", 50, 160 },
-            { "border-width", 0, 12, "{}px", 2, 10 },
-            { "border-radius", 0, 55, "{}px", 16, 55 },
-            { "shadow", 0, 40, "0 0 {}px hotpink", 0, 30 },
-            { "foreground", 0, 100, "hsl(0, 0%, {}%)", 10, 100 },
-            { "fill", 0, 360, "hsl({}, 90%, 55%)", 220, 45 },
-        } };
+        const std::array<std::pair<juce::String, juce::String>, 3> pages{
+            {
+                { "timing-tab", "public/views/Timing.xml" },
+                { "layout-tab", "public/views/Layout.xml" },
+                { "styles-tab", "public/views/Styles.xml" },
+            },
+        };
+        const std::array<Animation, 9> animations{
+            {
+                { "flex-grow", "flex-box", 1, 4 },
+                { "flex-basis", "flex-box", 60, 240 },
+                { "gap", "flex-sample", 10, 40 },
+                { "padding", "flex-sample", 10, 25 },
+                { "opacity", "flex-box", 1.0, 0.2 },
+                { "border-width", "flex-box", 0, 12 },
+                { "grid-template-columns", "grid-sample", "1fr 1fr 1fr", "1fr 4fr 1fr" },
+                { "width", "absolute-box", 60, 300 },
+                { "height", "absolute-box", 40, 90 },
+            },
+        };
+        const std::array<StyleRange, 7> styleRanges{
+            {
+                { "background", 0, 360, "hsl({}, 70%, 60%)", 200, 280 },
+                { "border", 0, 360, "hsl({}, 90%, 70%)", 50, 160 },
+                { "border-width", 0, 12, "{}px", 2, 10 },
+                { "border-radius", 0, 55, "{}px", 16, 55 },
+                { "shadow", 0, 40, "0 0 {}px hotpink", 0, 30 },
+                { "foreground", 0, 100, "hsl(0, 0%, {}%)", 10, 100 },
+                { "fill", 0, 360, "hsl({}, 90%, 55%)", 220, 45 },
+            },
+        };
         const juce::String defaultTiming{ "600ms ease-in-out" };
 
         std::unique_ptr<jive::Property<int>> theme;

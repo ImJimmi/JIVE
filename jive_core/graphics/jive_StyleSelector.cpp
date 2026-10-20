@@ -32,11 +32,11 @@ namespace jive
             };
         }
 
-        for (auto i = selector.length() - 1; i >= 0; i--)
+        for (auto i = selector.length() - 1; i >= 0; --i)
         {
             // Ensure we're not reading off the end of the string in case the
             // size of the selector changed during the previous iteration
-            i = juce::jmin(i, selector.length() - 1);
+            i = std::min(i, selector.length() - 1);
             auto character = selector[i];
 
             if (character == '*')
@@ -111,7 +111,7 @@ namespace jive
                     // remaining selector applies to any of the component's
                     // ancestors
                     return [ancestorPredicate = buildSinglePredicate(selector, root)](const juce::Component& component) {
-                        for (auto* ancestor = component.getParentComponent();
+                        for (const auto* ancestor = component.getParentComponent();
                              ancestor != nullptr;
                              ancestor = ancestor->getParentComponent())
                         {
@@ -147,7 +147,7 @@ namespace jive
         };
     }
 
-    [[nodiscard]] static std::function<bool(const juce::Component&)> buildPredicate(juce::String selector, juce::Component* root)
+    [[nodiscard]] static std::function<bool(const juce::Component&)> buildPredicate(const juce::String& selector, juce::Component* root)
     {
         // Handle comma-separated selectors (multiple selectors)
         const auto selectors = juce::StringArray::fromTokens(selector, ",", "");
@@ -189,19 +189,19 @@ namespace jive
 
         const auto skipIdentifier = [&selector](int& i) {
             while (i < selector.length() && isIdentChar(selector[i]))
-                i++;
+                ++i;
         };
 
         const auto skipUntilAfter = [&selector](int& i, juce::juce_wchar terminator) {
             while (i < selector.length() && selector[i] != terminator)
-                i++;
+                ++i;
             if (i < selector.length())
-                i++; // consume terminator
+                ++i; // consume terminator
         };
 
         for (int i = 0; i < selector.length();)
         {
-            auto character = selector[i];
+            const auto character = selector[i];
 
             // Ignore whitespace and combinators
             if (juce::CharacterFunctions::isWhitespace(character)
@@ -210,22 +210,22 @@ namespace jive
                 || character == '~'
                 || character == ',')
             {
-                i++;
+                ++i;
                 continue;
             }
 
             // Universal selector: zero specificity
             if (character == '*')
             {
-                i++;
+                ++i;
                 continue;
             }
 
             // ID selector
             if (character == '#')
             {
-                precedence[0]++;
-                i++;
+                ++precedence[0];
+                ++i;
                 skipIdentifier(i);
                 continue;
             }
@@ -233,8 +233,8 @@ namespace jive
             // Class selector
             if (character == '.')
             {
-                precedence[1]++;
-                i++;
+                ++precedence[1];
+                ++i;
                 skipIdentifier(i);
                 continue;
             }
@@ -242,8 +242,8 @@ namespace jive
             // Attribute selector
             if (character == '[')
             {
-                precedence[1]++;
-                i++;
+                ++precedence[1];
+                ++i;
                 skipUntilAfter(i, ']');
                 continue;
             }
@@ -251,18 +251,18 @@ namespace jive
             // Pseudo-class / pseudo-element
             if (character == ':')
             {
-                i++;
+                ++i;
 
                 if (i < selector.length() && selector[i] == ':')
                 {
                     // Pseudo-element
-                    precedence[2]++;
-                    i++;
+                    ++precedence[2];
+                    ++i;
                 }
                 else
                 {
                     // Pseudo-class
-                    precedence[1]++;
+                    ++precedence[1];
                 }
 
                 skipIdentifier(i);
@@ -277,13 +277,13 @@ namespace jive
             // Element selector (identifier start)
             if (isIdentStart(character))
             {
-                precedence[2]++;
+                ++precedence[2];
                 skipIdentifier(i);
                 continue;
             }
 
             // Anything else: just advance
-            i++;
+            ++i;
         }
 
         return precedence;

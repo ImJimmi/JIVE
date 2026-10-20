@@ -34,9 +34,7 @@ namespace jive
         const auto font = getFont(group, styles);
         const auto borderRadius = getBorderRadius(group, styles);
 
-        const auto textInset = std::ceil(juce::jmax(font.getHeight(),
-                                                    borderRadius.topLeft + 10.0f,
-                                                    borderRadius.topRight + 10.0f));
+        const auto textInset = std::ceil(std::max({ font.getHeight(), borderRadius.topLeft + 10.0f, borderRadius.topRight + 10.0f }));
 
         auto bounds = juce::Rectangle{
             juce::GlyphArrangement::getStringWidthInt(font, group.getText()),
@@ -61,7 +59,7 @@ namespace jive
             .getLocalBounds()
             .toFloat()
             .withTop(std::round(getTitleBounds(group, styles).getCentreY()
-                                - getBorderWidth(group, styles).getTop() * 0.5f));
+                                - (getBorderWidth(group, styles).getTop() * 0.5f)));
     }
 
     juce::Rectangle<float> getTrackBounds(const juce::ProgressBar& bar,

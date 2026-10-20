@@ -102,10 +102,10 @@ namespace jive
             // otherwise the reinterpretation triggered by re-parenting this
             // tree (see valueTreeChildAdded) would mistake them for inline
             // content and re-append them a second time.
-            for (auto i = 0; i < source.getNumChildren(); i++)
+            for (auto i = 0; i < source.getNumChildren(); ++i)
                 source.getChild(i).setProperty(ids::externalSourceChild(), true, nullptr);
 
-            for (auto i = 0; i < item->state.getNumProperties(); i++)
+            for (auto i = 0; i < item->state.getNumProperties(); ++i)
             {
                 const auto name = item->state.getPropertyName(i).toString();
 
@@ -148,18 +148,18 @@ namespace jive
                 // carried across onto the freshly-parsed replacement tree.
                 std::vector<juce::ValueTree> inlineChildren;
 
-                for (auto i = 0; i < item->state.getNumChildren(); i++)
+                for (auto i = 0; i < item->state.getNumChildren(); ++i)
                 {
-                    auto child = item->state.getChild(i);
+                    const auto child = item->state.getChild(i);
 
                     if (!static_cast<bool>(child.getProperty(ids::externalSourceChild())))
                         inlineChildren.push_back(child);
                 }
 
-                for (auto& child : inlineChildren)
+                for (const auto& child : inlineChildren)
                     item->state.removeChild(child, nullptr);
 
-                for (auto& child : inlineChildren)
+                for (const auto& child : inlineChildren)
                     source.appendChild(child, nullptr);
 
                 auto* parent = item->getParent();
@@ -202,14 +202,14 @@ namespace jive
         if (fileOnDisk == juce::File{})
             return;
 
-        for (auto* observer : fileObservers)
+        for (const auto* observer : fileObservers)
         {
             if (observer->file == fileOnDisk)
                 return;
         }
 
         auto* observer = fileObservers.add(std::make_unique<FileObserver>(fileOnDisk));
-        observer->onFileModified = [this, file]() {
+        observer->onFileModified = [this, file] {
             onObservedFileChanged(file);
         };
     }
@@ -240,7 +240,7 @@ namespace jive
 
         for (auto* const child : root.getChildren())
         {
-            if (auto item = findItem(*child, state))
+            if (auto* item = findItem(*child, state))
                 return item;
         }
 
@@ -253,7 +253,7 @@ namespace jive
         if (observedItem == nullptr || ignoreValueTreeChanges || property != ids::source())
             return;
 
-        auto parentTree = tree.getParent();
+        const auto parentTree = tree.getParent();
         auto* parentItem = findItem(*observedItem, parentTree);
 
         if (parentItem == nullptr)
@@ -292,7 +292,7 @@ namespace jive
     // item is in place, so that they can find it.
     void Interpreter::insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index)
     {
-        interpretationsInProgress++;
+        ++interpretationsInProgress;
 
         if (auto newChild = interpretInternal(tree, &parentItem))
             parentItem.insertChild(std::move(newChild), index);
@@ -338,7 +338,7 @@ namespace jive
         if (observedItem == nullptr || ignoreValueTreeChanges)
             return;
 
-        auto parentTree = treeWhichHasBeenChanged.getParent();
+        const auto parentTree = treeWhichHasBeenChanged.getParent();
         auto* parentItem = findItem(*observedItem, parentTree);
 
         if (parentItem == nullptr)
@@ -378,7 +378,7 @@ namespace jive
     std::unique_ptr<GuiItem> Interpreter::interpretInternal(juce::ValueTree tree,
                                                             GuiItem* const parent)
     {
-        interpretationsInProgress++;
+        ++interpretationsInProgress;
 
         tree = loadExternalSources(tree);
 
@@ -417,7 +417,7 @@ namespace jive
     std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree,
                                                                 GuiItem* const parent)
     {
-        if (auto component = createComponent(tree, parent))
+        if (const auto component = createComponent(tree, parent))
         {
             return std::make_unique<GuiItem>(component,
                                              tree,
@@ -435,7 +435,7 @@ namespace jive
                 return component;
         }
 
-        for (auto* ancestor = parent; ancestor != nullptr; ancestor = ancestor->getParent())
+        for (const auto* ancestor = parent; ancestor != nullptr; ancestor = ancestor->getParent())
         {
             if (auto component = ancestor->getView()->createComponent(tree))
                 return component;
@@ -449,7 +449,7 @@ namespace jive
         for (auto* child : item.getChildren())
             setupItemsRecursive(*child);
 
-        if (auto view = item.getView(); view != nullptr)
+        if (const auto view = item.getView(); view != nullptr)
             view->setup(item);
     }
 
@@ -484,7 +484,7 @@ namespace jive
         auto newTree = parseFileToValueTree(file);
         juce::Array<juce::var> propertiesFromSource;
 
-        for (auto i = 0; i < newTree.getNumProperties(); i++)
+        for (auto i = 0; i < newTree.getNumProperties(); ++i)
         {
             const auto name = newTree.getPropertyName(i);
 
@@ -492,7 +492,7 @@ namespace jive
                 propertiesFromSource.add(name.toString());
         }
 
-        for (auto i = 0; i < tree.getNumProperties(); i++)
+        for (auto i = 0; i < tree.getNumProperties(); ++i)
         {
             const auto name = tree.getPropertyName(i);
             newTree.setProperty(name, tree[name], nullptr);
@@ -500,22 +500,22 @@ namespace jive
 
         std::vector<juce::ValueTree> inlineChildren;
 
-        for (auto i = 0; i < tree.getNumChildren(); i++)
+        for (auto i = 0; i < tree.getNumChildren(); ++i)
         {
-            auto child = tree.getChild(i);
+            const auto child = tree.getChild(i);
 
             if (!static_cast<bool>(child.getProperty(ids::externalSourceChild())))
                 inlineChildren.push_back(child);
         }
 
-        for (auto& child : inlineChildren)
+        for (const auto& child : inlineChildren)
             tree.removeChild(child, nullptr);
 
-        auto finalise = [&](juce::ValueTree destination) {
-            for (auto i = 0; i < destination.getNumChildren(); i++)
+        const auto finalise = [&](juce::ValueTree destination) {
+            for (auto i = 0; i < destination.getNumChildren(); ++i)
                 destination.getChild(i).setProperty(ids::externalSourceChild(), true, nullptr);
 
-            for (auto& child : inlineChildren)
+            for (const auto& child : inlineChildren)
                 destination.appendChild(child, nullptr);
 
             destination.setProperty(ids::externalSourceProperties(), propertiesFromSource, nullptr);
@@ -557,14 +557,12 @@ namespace jive
     {
         std::vector<std::unique_ptr<GuiItem>> children;
 
-        for (auto i = 0; i < item.state.getNumChildren(); i++)
+        for (auto i = 0; i < item.state.getNumChildren(); ++i)
         {
             if (auto child = interpretInternal(item.state.getChild(i), &item);
-                child != nullptr)
-            {
-                if (item.isContainer() || child->isContent())
-                    children.push_back(std::move(child));
-            }
+                (child != nullptr) && (item.isContainer() || child->isContent()))
+
+                children.push_back(std::move(child));
         }
 
         item.setChildren(std::move(children));

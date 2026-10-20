@@ -57,7 +57,7 @@ protected:
 
         if (paint)
         {
-            juce::Image image{ juce::Image::ARGB, component.getWidth(), component.getHeight(), true };
+            const juce::Image image{ juce::Image::ARGB, component.getWidth(), component.getHeight(), true };
             juce::Graphics g{ image };
             component.paintEntireComponent(g, true);
         }

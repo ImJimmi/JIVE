@@ -18,14 +18,14 @@ namespace jive_examples
     protected:
         void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
                        const juce::String& buttonID,
-                       std::function<void(bool)> callback)
+                       const std::function<void(bool)>& callback)
         {
-            onToggled(bindings, jive::findElementWithID(window->state, buttonID), std::move(callback));
+            onToggled(bindings, jive::findElementWithID(window->state, buttonID), callback);
         }
 
         static void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
                               const juce::ValueTree& button,
-                              std::function<void(bool)> callback)
+                              const std::function<void(bool)>& callback)
         {
             if (!button.isValid())
                 return;
@@ -40,8 +40,8 @@ namespace jive_examples
 
         void onValueChange(std::vector<std::unique_ptr<jive::Property<int>>>& bindings,
                            const juce::String& controlID,
-                           const juce::Identifier& property,
-                           std::function<void(int)> callback)
+                           juce::Identifier property,
+                           const std::function<void(int)>& callback)
         {
             const auto control = jive::findElementWithID(window->state, controlID);
 
@@ -56,7 +56,7 @@ namespace jive_examples
             callback(value.get());
         }
 
-        void setProperty(const juce::String& id, const juce::Identifier& property, const juce::var& value)
+        void setProperty(const juce::String& id, juce::Identifier property, const juce::var& value)
         {
             jive::findElementWithID(window->state, id).setProperty(property, value, nullptr);
         }
@@ -65,7 +65,7 @@ namespace jive_examples
         {
             const auto comboBox = jive::findElementWithID(window->state, comboBoxID);
 
-            for (auto i = 0; i < comboBox.getNumChildren(); i++)
+            for (auto i = 0; i < comboBox.getNumChildren(); ++i)
             {
                 if (comboBox.getChild(i)[jive::ids::text()] == text)
                     return i;

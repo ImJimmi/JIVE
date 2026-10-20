@@ -21,14 +21,6 @@ namespace jive_examples::widgets
             return JucePlugin_Name;
         }
 
-        bool isBusesLayoutSupported(const BusesLayout& layouts) const final
-        {
-            const auto output = layouts.getMainOutputChannelSet();
-
-            return output == layouts.getMainInputChannelSet()
-                && (output == juce::AudioChannelSet::mono() || output == juce::AudioChannelSet::stereo());
-        }
-
         void prepareToPlay(double, int) final
         {
             previousGains = calculateGains(getTotalNumOutputChannels());
@@ -41,14 +33,14 @@ namespace jive_examples::widgets
         void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) final
         {
             const juce::ScopedNoDenormals noDenormals;
-            const auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
+            const auto numChannels = std::min(buffer.getNumChannels(), 2);
 
             if (numChannels == 2)
                 routeChannels(buffer);
 
             const auto gains = calculateGains(numChannels);
 
-            for (auto channel = 0; channel < numChannels; channel++)
+            for (auto channel = 0; channel < numChannels; ++channel)
             {
                 const auto index = static_cast<std::size_t>(channel);
                 buffer.applyGainRamp(channel, 0, buffer.getNumSamples(), previousGains[index], gains[index]);
@@ -69,14 +61,6 @@ namespace jive_examples::widgets
         bool producesMidi() const final
         {
             return false;
-        }
-
-        juce::AudioProcessorEditor* createEditor() final
-        {
-            if (presenter == nullptr)
-                presenter = std::make_unique<Presenter>(*this, parameters, undoManager);
-
-            return presenter->createEditor();
         }
 
         bool hasEditor() const final
@@ -122,6 +106,15 @@ namespace jive_examples::widgets
             }
         }
 
+    protected:
+        bool isBusesLayoutSupported(const BusesLayout& layouts) const final
+        {
+            const auto output = layouts.getMainOutputChannelSet();
+
+            return output == layouts.getMainInputChannelSet()
+                && (output == juce::AudioChannelSet::mono() || output == juce::AudioChannelSet::stereo());
+        }
+
     private:
         enum class Channels
         {
@@ -129,6 +122,14 @@ namespace jive_examples::widgets
             swapped,
             mono,
         };
+
+        juce::AudioProcessorEditor* createEditor() final
+        {
+            if (presenter == nullptr)
+                presenter = std::make_unique<Presenter>(*this, parameters, undoManager);
+
+            return presenter->createEditor();
+        }
 
         [[nodiscard]] static juce::AudioProcessorValueTreeState::ParameterLayout createParameters()
         {
@@ -206,19 +207,21 @@ namespace jive_examples::widgets
                 return { level, level };
 
             return {
-                level * juce::jmin(1.0f, 1.0f - pan.get()),
-                level * juce::jmin(1.0f, 1.0f + pan.get()),
+                level * std::min(1.0f, 1.0f - pan.get()),
+                level * std::min(1.0f, 1.0f + pan.get()),
             };
         }
 
         juce::UndoManager undoManager;
         juce::AudioProcessorValueTreeState parameters{ *this, &undoManager, "Parameters", createParameters() };
-        juce::AudioParameterFloat& gain{ dynamic_cast<juce::AudioParameterFloat&>(*parameters.getParameter("gain")) };
-        juce::AudioParameterFloat& pan{ dynamic_cast<juce::AudioParameterFloat&>(*parameters.getParameter("pan")) };
-        juce::AudioParameterChoice& channels{ dynamic_cast<juce::AudioParameterChoice&>(*parameters.getParameter("channels")) };
-        juce::AudioParameterBool& mute{ dynamic_cast<juce::AudioParameterBool&>(*parameters.getParameter("mute")) };
+        juce::AudioParameterFloat& gain{ dynamic_cast<juce::AudioParameterFloat&>(*parameters.getParameter("gain")) };           // NOLINT
+        juce::AudioParameterFloat& pan{ dynamic_cast<juce::AudioParameterFloat&>(*parameters.getParameter("pan")) };             // NOLINT
+        juce::AudioParameterChoice& channels{ dynamic_cast<juce::AudioParameterChoice&>(*parameters.getParameter("channels")) }; // NOLINT
+        juce::AudioParameterBool& mute{ dynamic_cast<juce::AudioParameterBool&>(*parameters.getParameter("mute")) };             // NOLINT
         std::array<float, 2> previousGains{ 1.0f, 1.0f };
 
         std::unique_ptr<Presenter> presenter;
+
+        JUCE_LEAK_DETECTOR(Processor)
     };
 } // namespace jive_examples::widgets

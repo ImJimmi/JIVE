@@ -14,7 +14,7 @@ namespace std
             auto result = std::hash<int>{}(static_cast<int>(pair.second));
 
             for (const auto value : { pair.first.getX(), pair.first.getY(), pair.first.getWidth(), pair.first.getHeight() })
-                result = result * 31 + std::hash<float>{}(value);
+                result = (result * 31) + std::hash<float>{}(value);
 
             return result;
         }

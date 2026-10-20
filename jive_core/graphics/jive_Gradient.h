@@ -41,7 +41,7 @@ namespace jive
         {
         };
 
-        [[nodiscard]] juce::Point<float> toPoint(const juce::Rectangle<float>& bounds) const;
+        [[nodiscard]] juce::Point<float> toPoint(juce::Rectangle<float> bounds) const;
 
         [[nodiscard]] bool operator==(const RadialPosition&) const;
 
@@ -67,7 +67,7 @@ namespace jive
             std::optional<Length> length;
         };
 
-        [[nodiscard]] juce::ColourGradient toJuceColourGradient(const juce::Rectangle<float>& bounds = juce::Rectangle<float>{}) const;
+        [[nodiscard]] juce::ColourGradient toJuceColourGradient(juce::Rectangle<float> bounds = juce::Rectangle<float>{}) const;
 
         [[nodiscard]] bool operator==(const Gradient&) const;
 

@@ -2,7 +2,7 @@
 
 namespace jive
 {
-    struct ReferenceCountedValueTreeWrapper : juce::ReferenceCountedObject
+    struct ReferenceCountedValueTreeWrapper : public juce::ReferenceCountedObject
     {
         using Ptr = juce::ReferenceCountedObjectPtr<ReferenceCountedValueTreeWrapper>;
 

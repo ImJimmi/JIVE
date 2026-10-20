@@ -24,7 +24,7 @@ private:
     {
         beginTest("triggering");
 
-        juce::ValueTree state{ "State" };
+        const juce::ValueTree state{ "State" };
         jive::Event event{ state, "foo" };
         expectEquals(event.getAssumedTriggerCount(), 0);
 
@@ -37,7 +37,7 @@ private:
         expectNotEquals(state["foo"], value);
         expectEquals(event.getAssumedTriggerCount(), 2);
 
-        for (auto i = 0; i < 100; i++)
+        for (auto i = 0; i < 100; ++i)
             event.trigger();
 
         expectEquals(event.getAssumedTriggerCount(), 102);
@@ -47,12 +47,12 @@ private:
     {
         beginTest("observing");
 
-        juce::ValueTree state{ "State" };
+        const juce::ValueTree state{ "State" };
         jive::Event event1{ state, "bar" };
 
         {
             auto wasTriggered = false;
-            event1.onTrigger = [&wasTriggered]() {
+            event1.onTrigger = [&wasTriggered] {
                 wasTriggered = true;
             };
             expect(!wasTriggered);
@@ -70,7 +70,7 @@ private:
             jive::Event event2{ state, "bar" };
 
             auto wasTriggered = false;
-            event2.onTrigger = [&wasTriggered]() {
+            event2.onTrigger = [&wasTriggered] {
                 wasTriggered = true;
             };
             expect(!wasTriggered);
@@ -83,7 +83,7 @@ private:
     {
         beginTest("timing");
 
-        juce::ValueTree state{ "State" };
+        const juce::ValueTree state{ "State" };
         jive::Event event{ state, "fizz" };
         expectEquals(event.getTimeLastTriggered(), juce::Time{});
 
@@ -102,11 +102,11 @@ private:
         jive::Event originalEvent{ originalState, "event" };
 
         auto wasTriggered = false;
-        originalEvent.onTrigger = [&wasTriggered]() {
+        originalEvent.onTrigger = [&wasTriggered] {
             wasTriggered = true;
         };
 
-        auto clonedState = originalState.createCopy();
+        const auto clonedState = originalState.createCopy();
         originalState = juce::ValueTree{};
         jive::Event clonedEvent{ clonedState, "event" };
         clonedEvent.trigger();

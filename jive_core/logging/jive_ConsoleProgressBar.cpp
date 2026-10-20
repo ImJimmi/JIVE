@@ -17,7 +17,7 @@ namespace jive
     [[nodiscard]] juce::String buildProgressBar(double progressNormalised, int maxStringLength)
     {
         jassert(progressNormalised >= 0.0 && progressNormalised <= 1.0);
-        progressNormalised = juce::jlimit(0.0, 1.0, progressNormalised);
+        progressNormalised = std::clamp(progressNormalised, 0.0, 1.0);
 
         static constexpr auto decimalPlaces = 2;
         static constexpr auto hundredPercentAndWhitespaceWidth = decimalPlaces + 6; // 100.00%
@@ -27,7 +27,7 @@ namespace jive
         const auto partialBlock = blocks[juce::roundToInt((filledPortionExactWidth - numFull) * (blocks.size() - 1))];
         const auto bar = juce::String{}
                              .paddedRight(blocks.getLast(), numFull)
-                             .paddedRight(partialBlock, juce::jmin(numFull + 1, barLength))
+                             .paddedRight(partialBlock, std::min(numFull + 1, barLength))
                              .paddedRight(blocks.getFirst(), barLength);
 
         static const juce::String cap{ juce::CharPointer_UTF8("\xe2\x94\x82") };

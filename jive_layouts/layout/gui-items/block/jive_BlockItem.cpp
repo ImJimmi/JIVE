@@ -28,7 +28,7 @@ namespace jive
         };
         x.onTransitionProgressed = updateBounds;
 
-        y.onValueChange = [this, updateBounds]() {
+        y.onValueChange = [this, updateBounds] {
             if (y.exists())
                 centreY.clear();
 
@@ -36,7 +36,7 @@ namespace jive
         };
         y.onTransitionProgressed = updateBounds;
 
-        centreX.onValueChange = [this, updateBounds]() {
+        centreX.onValueChange = [this, updateBounds] {
             if (centreX.exists())
                 x.clear();
 
@@ -44,7 +44,7 @@ namespace jive
         };
         centreX.onTransitionProgressed = updateBounds;
 
-        centreY.onValueChange = [this, updateBounds]() {
+        centreY.onValueChange = [this, updateBounds] {
             if (centreY.exists())
                 y.clear();
 
@@ -82,7 +82,7 @@ namespace jive
                 centreX
                     .calculateCurrent()
                     .toPixels(parentContentBounds.getWidth())
-                - itemWidth / 2.f);
+                - (itemWidth / 2.0f));
         }
 
         return juce::roundToInt(
@@ -100,7 +100,7 @@ namespace jive
             return juce::roundToInt(centreY
                                         .calculateCurrent()
                                         .toPixels(parentContentBounds.getHeight())
-                                    - itemHeight / 2.f);
+                                    - (itemHeight / 2.0f));
         }
 
         return juce::roundToInt(
@@ -166,7 +166,7 @@ private:
         beginTest("position");
 
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -191,7 +191,7 @@ private:
             expectEquals(item.getComponent()->getY(), 46);
         }
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -217,7 +217,7 @@ private:
             expectEquals(item.getComponent()->getY(), 50);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "display", "block" },
@@ -253,7 +253,7 @@ private:
         beginTest("centre");
 
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -282,7 +282,7 @@ private:
             expectEquals(item.getComponent()->getBounds().getCentreY(), 99);
         }
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 222 },
@@ -304,8 +304,8 @@ private:
             jive::Interpreter interpreter;
             const auto parent = interpreter.interpret(parentState);
             auto& item = *parent->getChildren()[0];
-            expect(item.getComponent()->getBounds().getCentreX() == 85);
-            expect(item.getComponent()->getBounds().getCentreY() == 43);
+            expectEquals(item.getComponent()->getBounds().getCentreX(), 85);
+            expectEquals(item.getComponent()->getBounds().getCentreY(), 43);
 
             parentState.getChild(0).setProperty("x", 66, nullptr);
             expectEquals(item.getComponent()->getX(), 66);
@@ -314,7 +314,7 @@ private:
             expectEquals(item.getComponent()->getBounds().getCentreX(), 44);
         }
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "display", "block" },
@@ -348,7 +348,7 @@ private:
     {
         beginTest("size");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {
                 { "width", 222 },

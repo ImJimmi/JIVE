@@ -12,7 +12,7 @@ namespace jive
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<View>;
 
         View() = default;
-        virtual ~View() override = default;
+        ~View() override = default;
 
         [[nodiscard]] juce::ValueTree getState();
 

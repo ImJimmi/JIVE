@@ -5,7 +5,7 @@ namespace juce
     const Array<var> VariantConverter<jive::Display>::options = {
         "flex",
         "grid",
-        "block"
+        "block",
     };
 
     jive::Display VariantConverter<jive::Display>::fromVar(const var& v)

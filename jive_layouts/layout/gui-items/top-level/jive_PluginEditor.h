@@ -13,8 +13,8 @@ namespace jive
         , private juce::ValueTree::Listener
     {
     public:
-        PluginEditor(std::unique_ptr<GuiItem> itemToDecorate,
-                     juce::AudioProcessor* pluginProcessor = nullptr);
+        explicit PluginEditor(std::unique_ptr<GuiItem> itemToDecorate,
+                              juce::AudioProcessor* pluginProcessor = nullptr);
         ~PluginEditor() override;
 
         void replaceDecoratedItem(std::unique_ptr<GuiItem> newItem) override;

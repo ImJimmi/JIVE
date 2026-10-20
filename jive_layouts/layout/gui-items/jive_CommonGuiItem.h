@@ -31,7 +31,7 @@ namespace jive
     private:
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        void updateProperty(const juce::Identifier& property);
+        void updateProperty(juce::Identifier property);
         void updateLocalisedStrings();
 
         PassiveProperty<juce::String> name;

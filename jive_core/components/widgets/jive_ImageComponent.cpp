@@ -13,7 +13,7 @@ namespace jive
     static void forEachChild(Composite& composite, Callback&& callback)
     {
 #if JIVE_JUCE_9
-        for (auto i = 0; i < composite.getNumChildren(); i++)
+        for (auto i = 0; i < composite.getNumChildren(); ++i)
             callback(composite.getChild(i));
 #else
         for (auto* child : composite.getChildren())
@@ -191,7 +191,7 @@ namespace jive
         if (drawable == nullptr)
             return;
 
-        auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
+        const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
 
         if (laf == nullptr)
             return;

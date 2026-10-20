@@ -36,7 +36,7 @@ namespace jive
             const auto buildView = state[ids::makeView()].getNativeFunction();
             const auto viewObjectProperty = buildView({ juce::var{}, nullptr, 0 });
 
-            if (auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
+            if (const auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
             {
                 if (auto* viewObject = dynamic_cast<View*>(wrappedState->state[ids::viewObject()].getObject()))
                     view = viewObject;
@@ -61,9 +61,9 @@ namespace jive
 
     GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
                      GuiItem* parentItem,
-                     View::ReferenceCountedPointer sourceView)
+                     const View::ReferenceCountedPointer& sourceView)
         : state{ sourceView->getState() }
-        , component{ comp }
+        , component{ std::move(comp) }
         , parent{ parentItem }
         , view{ sourceView }
     {
@@ -85,7 +85,7 @@ namespace jive
                      const juce::ValueTree& sourceState,
                      GuiItem* parentItem)
         : GuiItem{
-            comp,
+            std::move(comp),
             parentItem,
             getOrCreateView(sourceState),
         }
@@ -93,7 +93,7 @@ namespace jive
     }
 
     GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
-                     View::ReferenceCountedPointer sourceView,
+                     const View::ReferenceCountedPointer& sourceView,
                      GuiItem* parentItem)
         : GuiItem{
             std::shared_ptr<juce::Component>{ std::move(comp) },
@@ -117,7 +117,7 @@ namespace jive
         masterReference.clear();
     }
 
-    const std::shared_ptr<const juce::Component> GuiItem::getComponent() const
+    std::shared_ptr<const juce::Component> GuiItem::getComponent() const
     {
         return component;
     }
@@ -127,7 +127,7 @@ namespace jive
         return component;
     }
 
-    const View::ReferenceCountedPointer GuiItem::getView() const
+    View::ReferenceCountedPointer GuiItem::getView() const
     {
         return view;
     }
@@ -287,7 +287,7 @@ namespace jive
         return boxModel(*const_cast<GuiItem*>(&item));
     }
 
-    GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id)
+    GuiItem* findItemWithID(GuiItem& root, juce::Identifier id)
     {
         if (root.state[ids::id()].toString() == id.toString())
             return &root;
@@ -304,6 +304,8 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
+
+    #include <utility>
 
 class GuiItemUnitTest : public juce::UnitTest
 {
@@ -388,7 +390,8 @@ private:
         {
             std::vector<std::unique_ptr<jive::GuiItem>> children;
 
-            for (auto i = 0; i < 1000; i++)
+            children.reserve(1000);
+            for (auto i = 0; i < 1000; ++i)
                 children.push_back(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
                                                                    juce::ValueTree{ "Component" }));
 
@@ -398,7 +401,7 @@ private:
     }
 };
 
-struct BoxModelFreeFunctionTest : juce::UnitTest
+struct BoxModelFreeFunctionTest : public juce::UnitTest
 {
     BoxModelFreeFunctionTest()
         : juce::UnitTest{ "jive::boxModel()", "jive" }

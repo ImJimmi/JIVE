@@ -11,5 +11,8 @@ namespace jive
 
         void paint(juce::Graphics& g) override;
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
+
+    private:
+        JUCE_LEAK_DETECTOR(IgnoredComponent)
     };
 } // namespace jive

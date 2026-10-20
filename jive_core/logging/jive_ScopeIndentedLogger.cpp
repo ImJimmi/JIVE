@@ -9,7 +9,7 @@ namespace jive
         , private juce::DeletedAtShutdown
     {
     public:
-        ~Implementation()
+        ~Implementation() override
         {
             juce::Logger::setCurrentLogger(nullptr);
             clearSingletonInstance();
@@ -17,12 +17,12 @@ namespace jive
 
         void incrementIndent()
         {
-            indentLevel++;
+            ++indentLevel;
         }
 
         void decrementIndent()
         {
-            indentLevel = juce::jmax(0, indentLevel - 1);
+            indentLevel = std::max(0, indentLevel - 1);
         }
 
         JUCE_DECLARE_SINGLETON(Implementation, false)
@@ -30,7 +30,7 @@ namespace jive
     protected:
         void logMessage(const juce::String& message) final
         {
-            for (auto indent = 0; indent < indentLevel; indent++)
+            for (auto indent = 0; indent < indentLevel; ++indent)
                 std::cout << "  ";
 
             std::cout << message << "\n";

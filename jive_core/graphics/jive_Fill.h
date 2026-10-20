@@ -29,22 +29,22 @@ namespace jive
         Fill& operator=(Fill&& other) = default;
         ~Fill() = default;
 
-        Fill(const juce::Colour&);
-        Fill(const juce::ColourGradient&);
-        Fill(const juce::FillType&);
-        Fill(const Gradient&);
+        Fill(juce::Colour);                // NOLINT
+        Fill(const juce::ColourGradient&); // NOLINT
+        Fill(const juce::FillType&);       // NOLINT
+        Fill(const Gradient&);             // NOLINT
 
         // If the given string isn't valid, this will fallback to transparent black.
         // Use fromString() and check the optional result for better error handling.
-        Fill(const juce::String&);
-        Fill(const char*);
+        Fill(const juce::String&); // NOLINT
+        Fill(const char*);         // NOLINT
 
         [[nodiscard]] bool isColour() const;
         [[nodiscard]] bool isGradient() const;
         [[nodiscard]] std::optional<Gradient> getJiveGradient() const;
-        [[nodiscard]] juce::FillType toJuceFillType(const juce::Rectangle<float>& bounds = juce::Rectangle<float>{}) const;
+        [[nodiscard]] juce::FillType toJuceFillType(juce::Rectangle<float> bounds = juce::Rectangle<float>{}) const;
 
-        Fill& operator=(const juce::Colour&);
+        Fill& operator=(juce::Colour);
         Fill& operator=(const juce::ColourGradient&);
         Fill& operator=(const juce::FillType&);
         Fill& operator=(const Gradient&);
@@ -55,7 +55,7 @@ namespace jive
 
         [[nodiscard]] bool operator==(const Fill&) const;
         [[nodiscard]] bool operator!=(const Fill&) const;
-        [[nodiscard]] bool operator==(const juce::Colour&) const;
+        [[nodiscard]] bool operator==(juce::Colour) const;
         [[nodiscard]] bool operator==(const juce::ColourGradient&) const;
         [[nodiscard]] bool operator==(const juce::FillType&) const;
         [[nodiscard]] bool operator==(const Gradient&) const;
@@ -142,7 +142,7 @@ namespace jive
                                                    const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::widgetBackground));
     [[nodiscard]] juce::FillType getThumbFill(const juce::Slider& slider,
                                               const Styles& styles,
-                                              const juce::Rectangle<float>& thumbBounds,
+                                              juce::Rectangle<float> thumbBounds,
                                               const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::defaultFill));
     [[nodiscard]] juce::FillType getTrackFill(const juce::Slider& slider,
                                               const Styles& styles,
@@ -206,18 +206,18 @@ namespace jive
                                                    const juce::PopupMenu::Options& options,
                                                    const Styles& styles,
                                                    const InteractionState& interactionState,
-                                                   const juce::Rectangle<float>& bounds,
+                                                   juce::Rectangle<float> bounds,
                                                    const Fill& defaultFill = juce::Colours::transparentBlack);
     [[nodiscard]] juce::FillType getBorderFill(const juce::PopupMenu::Item& item,
                                                const juce::PopupMenu::Options& options,
                                                const Styles& styles,
-                                               const juce::Rectangle<float>& bounds,
+                                               juce::Rectangle<float> bounds,
                                                const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::menuText).withAlpha(0.6f));
     [[nodiscard]] juce::FillType getForegroundFill(const juce::PopupMenu::Item& item,
                                                    const juce::PopupMenu::Options& options,
                                                    const Styles& styles,
                                                    const InteractionState& interactionState,
-                                                   const juce::Rectangle<float>& bounds,
+                                                   juce::Rectangle<float> bounds,
                                                    const Fill& defaultFill = detail::getV4Colour(detail::V4Colour::menuText),
                                                    const Fill& defaultSelectedFill = detail::getV4Colour(detail::V4Colour::highlightedText));
 

@@ -5,40 +5,40 @@
 namespace juce
 {
     // LCOV_EXCL_START
-    String& operator<<(String& str, const Colour& colour);
+    String& operator<<(String& str, Colour colour);
     String& operator<<(String& str, const Font& font);
     String& operator<<(String& str, const Image& image);
     String& operator<<(String& str, const var& value);
-    String& operator<<(String& str, const Time& time);
-    String& operator<<(String& str, long double value);
+    String& operator<<(String& str, Time time);
+    String& operator<<(String& str, long double value); // NOLINT
     String& operator<<(String& str, RelativeTime relativeTime);
     String& operator<<(String& str, juce::Grid::Px px);
-    String& operator<<(String& str, juce::Grid::TrackInfo track);
+    String& operator<<(String& str, const juce::Grid::TrackInfo& track);
     String& operator<<(String& str, const juce::ValueTree& tree);
 
-    template <typename T>
-    String& operator<<(String& str, const Point<T>& point)
+    template <typename Value>
+    String& operator<<(String& str, Point<Value> point)
     {
-        return str << "juce::Point<" << typeid(T).name() << "> { "
+        return str << "juce::Point<" << typeid(Value).name() << "> { "
                    << point.getX()
                    << ", "
                    << point.getY()
                    << " }";
     }
-    template <typename T>
-    String& operator<<(String& str, const Line<T>& line)
+    template <typename Value>
+    String& operator<<(String& str, const Line<Value>& line)
     {
-        return str << "juce::Line<" << typeid(T).name() << "> { "
+        return str << "juce::Line<" << typeid(Value).name() << "> { "
                    << line.getStart()
                    << ", "
                    << line.getEnd()
                    << " }";
     }
 
-    template <typename T>
-    String& operator<<(String& str, const Rectangle<T>& rect)
+    template <typename Value>
+    String& operator<<(String& str, Rectangle<Value> rect)
     {
-        return str << "juce::Rectangle<" << typeid(T).name() << "> { "
+        return str << "juce::Rectangle<" << typeid(Value).name() << "> { "
                    << rect.getX()
                    << ", " << rect.getY()
                    << ", " << rect.getWidth()
@@ -46,10 +46,10 @@ namespace juce
                    << " }";
     }
 
-    template <typename T>
-    String& operator<<(String& str, const Array<T>& array)
+    template <typename Value>
+    String& operator<<(String& str, const Array<Value>& array)
     {
-        str << "juce::Array<" << typeid(T).name() << "> { ";
+        str << "juce::Array<" << typeid(Value).name() << "> { ";
 
         for (const auto& value : array)
             str << value << ", ";
@@ -58,10 +58,10 @@ namespace juce
         return str;
     }
 
-    template <typename T>
-    String& operator<<(String& str, const std::optional<T>& optional)
+    template <typename Value>
+    String& operator<<(String& str, const std::optional<Value>& optional)
     {
-        str << "std::optional<" << typeid(T).name() << "> { ";
+        str << "std::optional<" << typeid(Value).name() << "> { ";
 
         if (optional.has_value())
             str << *optional;
@@ -71,11 +71,11 @@ namespace juce
         return str << " }";
     }
 
-    template <typename T>
-    String& operator<<(String& str, const juce::BorderSize<T>& border)
+    template <typename Value>
+    String& operator<<(String& str, const juce::BorderSize<Value>& border)
     {
         return str << "juce::BorderSize<"
-                   << typeid(T).name()
+                   << typeid(Value).name()
                    << "> { "
                    << border.getTop() << ", "
                    << border.getLeft() << ", "

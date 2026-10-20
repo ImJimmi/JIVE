@@ -14,17 +14,17 @@ namespace jive
         SourceDirectories(SourceDirectories&&) = default;
         SourceDirectories& operator=(const SourceDirectories&) = default;
         SourceDirectories& operator=(SourceDirectories&&) = default;
-        ~SourceDirectories() = default;
+        ~SourceDirectories() override = default;
 
         template <typename... Directories>
-        SourceDirectories(Directories&&... directoriesToSearch)
+        explicit SourceDirectories(Directories&&... directoriesToSearch)
             : directories{ SourceFile{ std::forward<Directories>(directoriesToSearch) }... }
         {
         }
 
         void add(const SourceFile& directory)
         {
-            directories.addIfNotAlreadyThere(directory);
+            directories.emplace(directory);
         }
 
         void add(const juce::File& directory)
@@ -34,7 +34,7 @@ namespace jive
 
         void remove(const SourceFile& directory)
         {
-            directories.removeFirstMatchingValue(directory);
+            directories.erase(directory);
         }
 
         void remove(const juce::File& directory)
@@ -63,7 +63,7 @@ namespace jive
 
         [[nodiscard]] auto size() const
         {
-            return static_cast<std::size_t>(directories.size());
+            return directories.size();
         }
 
         [[nodiscard]] auto begin() const
@@ -77,6 +77,6 @@ namespace jive
         }
 
     private:
-        juce::Array<SourceFile> directories;
+        std::unordered_set<SourceFile> directories;
     };
 } // namespace jive

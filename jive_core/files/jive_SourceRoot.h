@@ -15,6 +15,10 @@ namespace jive
     public:
         explicit SourceRoot(const juce::File& rootDirectory);
         SourceRoot(const void* zipDataToUse, std::size_t zipSizeInBytes);
+
+        JUCE_DECLARE_NON_COPYABLE(SourceRoot)
+        JUCE_DECLARE_NON_MOVEABLE(SourceRoot)
+
         ~SourceRoot();
 
         // Returns the first root with a file at the given relative path, or
@@ -24,13 +28,11 @@ namespace jive
         [[nodiscard]] bool isEmbedded() const;
         [[nodiscard]] bool contains(const juce::String& relativePath) const;
         [[nodiscard]] juce::File getFileOnDisk(const juce::String& relativePath) const;
-        [[nodiscard]] juce::MemoryBlock load(const juce::String& relativePath) const;
+        [[nodiscard]] std::vector<std::byte> load(const juce::String& relativePath) const;
 
     private:
         const juce::File directory;
         const void* const zipData = nullptr;
         const std::size_t zipSize = 0;
-
-        JUCE_DECLARE_NON_COPYABLE(SourceRoot)
     };
 } // namespace jive

@@ -14,17 +14,21 @@ namespace jive
 
         struct Listener
         {
+            JUCE_DECLARE_NON_COPYABLE(Listener)
+            JUCE_DECLARE_NON_MOVEABLE(Listener)
             virtual ~Listener() = default;
 
             virtual void propertyChanged(Object& object,
-                                         const juce::Identifier& propertyName) = 0;
+                                         juce::Identifier propertyName) = 0;
         };
 
         Object();
         Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties);
         Object(const Object& other);
-        Object(Object&& other);
-        Object(const juce::DynamicObject& other, Object* parent = nullptr);
+        Object& operator=(const Object&) = delete;
+        Object(Object&& other) noexcept;
+        Object& operator=(Object&&) = delete;
+        explicit Object(const juce::DynamicObject& other, Object* parent = nullptr);
 
 #if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 4)
         void didModifyProperty(const juce::Identifier& name,
@@ -48,7 +52,7 @@ namespace jive
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
 
-        const juce::var& operator[](const juce::Identifier& name) const noexcept;
+        const juce::var& operator[](juce::Identifier name) const noexcept;
 
     private:
         class InternalListener;
@@ -70,6 +74,6 @@ namespace juce
     struct VariantConverter<jive::Object::ReferenceCountedPointer>
     {
         static jive::Object::ReferenceCountedPointer fromVar(const var& value);
-        static var toVar(jive::Object::ReferenceCountedPointer object);
+        static var toVar(const jive::Object::ReferenceCountedPointer& object);
     };
 } // namespace juce

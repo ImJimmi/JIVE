@@ -69,7 +69,7 @@ namespace jive
 
     void ComboBoxComponent::updateCachedStyles()
     {
-        auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
+        const auto* laf = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
 
         if (laf == nullptr)
             return;

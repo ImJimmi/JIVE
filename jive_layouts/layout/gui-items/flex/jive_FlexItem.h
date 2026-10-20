@@ -10,7 +10,7 @@ namespace jive
     {
     public:
         explicit FlexItem(std::unique_ptr<GuiItem> itemToDecorate);
-        ~FlexItem();
+        ~FlexItem() override;
 
         [[nodiscard]] juce::FlexItem toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                                     LayoutStrategy strategy);

@@ -2,19 +2,25 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <utility>
+
 namespace jive
 {
-    template <typename T>
+    template <typename Value>
     struct Interpolate
     {
-        [[nodiscard]] auto operator()(T start, T end, double proportion) const
+        [[nodiscard]] auto operator()(Value start, Value end, double proportion) const
         {
-            if constexpr (std::is_integral<T>())
-                return static_cast<T>(std::round(start + (end - start) * proportion));
+            if constexpr (std::is_integral<Value>())
+            {
+                return static_cast<Value>(std::round(start + ((end - start) * proportion)));
+            }
             else
             {
-                if constexpr (std::is_arithmetic<T>())
-                    return static_cast<T>(start + (end - start) * proportion);
+                if constexpr (std::is_arithmetic<Value>())
+                {
+                    return static_cast<Value>(start + ((end - start) * proportion));
+                }
                 else
                 {
                     // You should write an implementation of jive::Interpolate for
@@ -30,10 +36,10 @@ namespace jive
         }
     };
 
-    template <typename T>
-    [[nodiscard]] T interpolate(T start, T end, double proportion)
+    template <typename Value>
+    [[nodiscard]] Value interpolate(const Value& start, const Value& end, double proportion)
     {
-        return Interpolate<T>{}(start, end, proportion);
+        return Interpolate<Value>{}(std::move(start), std::move(end), proportion);
     }
 
     template <>
@@ -54,14 +60,14 @@ namespace jive
         }
     };
 
-    template <typename T>
-    struct Interpolate<juce::BorderSize<T>>
+    template <typename Value>
+    struct Interpolate<juce::BorderSize<Value>>
     {
-        [[nodiscard]] auto operator()(juce::BorderSize<T> start,
-                                      juce::BorderSize<T> end,
+        [[nodiscard]] auto operator()(juce::BorderSize<Value> start,
+                                      juce::BorderSize<Value> end,
                                       double proportion) const
         {
-            return juce::BorderSize<T>{
+            return juce::BorderSize<Value>{
                 interpolate(start.getTop(), end.getTop(), proportion),
                 interpolate(start.getLeft(), end.getLeft(), proportion),
                 interpolate(start.getBottom(), end.getBottom(), proportion),
@@ -70,16 +76,16 @@ namespace jive
         }
     };
 
-    template <typename T>
-    struct Interpolate<juce::Array<T>>
+    template <typename Value>
+    struct Interpolate<juce::Array<Value>>
     {
-        [[nodiscard]] auto operator()(const juce::Array<T>& start,
-                                      const juce::Array<T>& end,
+        [[nodiscard]] auto operator()(const juce::Array<Value>& start,
+                                      const juce::Array<Value>& end,
                                       double proportion) const
         {
             auto result = end;
 
-            for (auto i = 0; i < std::min(start.size(), end.size()); i++)
+            for (auto i = 0; i < std::min(start.size(), end.size()); ++i)
                 result.set(i, interpolate(start.getUnchecked(i), end.getUnchecked(i), proportion));
 
             return result;
@@ -115,7 +121,7 @@ namespace jive
             if (start.isFractional() && end.isFractional())
             {
                 return juce::Grid::Fr{
-                    juce::roundToInt(1000.f * interpolate(start.getSize(), end.getSize(), proportion)),
+                    juce::roundToInt(1000.0f * interpolate(start.getSize(), end.getSize(), proportion)),
                 };
             }
 
@@ -134,14 +140,14 @@ namespace jive
         }
     };
 
-    template <typename T>
-    struct Interpolate<juce::Point<T>>
+    template <typename Value>
+    struct Interpolate<juce::Point<Value>>
     {
-        [[nodiscard]] juce::Point<T> operator()(juce::Point<T> start,
-                                                juce::Point<T> end,
-                                                double proportion) const
+        [[nodiscard]] juce::Point<Value> operator()(juce::Point<Value> start,
+                                                    juce::Point<Value> end,
+                                                    double proportion) const
         {
-            return juce::Point<T>{
+            return juce::Point<Value>{
                 interpolate(start.x, end.x, proportion),
                 interpolate(start.y, end.y, proportion),
             };

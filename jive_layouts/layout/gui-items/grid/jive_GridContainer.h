@@ -13,7 +13,7 @@ namespace jive
 
         void layOutChildren() override;
 
-        operator juce::Grid();
+        explicit operator juce::Grid();
 
     protected:
         juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const override;

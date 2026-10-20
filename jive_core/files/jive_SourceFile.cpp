@@ -27,9 +27,11 @@ namespace jive
     }
 
     SourceFile::SourceFile(const juce::String& relativeOrAbsolutePath)
-        : path{ juce::File::isAbsolutePath(relativeOrAbsolutePath)
-                    ? juce::File{ relativeOrAbsolutePath }.getFullPathName()
-                    : normaliseRelativePath(relativeOrAbsolutePath) }
+        : path{
+            juce::File::isAbsolutePath(relativeOrAbsolutePath)
+                ? juce::File{ relativeOrAbsolutePath }.getFullPathName()
+                : normaliseRelativePath(relativeOrAbsolutePath),
+        }
     {
     }
 
@@ -93,15 +95,26 @@ namespace jive
     juce::String SourceFile::loadAsString() const
     {
         const auto data = loadAsData();
-        return juce::String::createStringFromData(data.getData(), static_cast<int>(data.getSize()));
+        return juce::String::createStringFromData(std::data(data),
+                                                  static_cast<int>(std::size(data)));
     }
 
-    juce::MemoryBlock SourceFile::loadAsData() const
+    std::vector<std::byte> SourceFile::loadAsData() const
     {
         if (isAbsolute())
         {
-            juce::MemoryBlock data;
-            juce::File{ path }.loadFileAsData(data);
+            juce::File file{ path };
+            auto stream = file.createInputStream();
+
+            if (stream == nullptr)
+                return {};
+
+            std::vector<std::byte> data;
+            data.reserve((static_cast<std::size_t>(stream->getTotalLength())));
+
+            while (!stream->isExhausted())
+                data.emplace_back(static_cast<std::byte>(stream->readByte()));
+
             return data;
         }
 
@@ -262,9 +275,9 @@ static jive::UnitTest findSourceFileTest{
     "jive::SourceFile",
     "A tree's source file is the one it, or its closest ancestor, was parsed from",
     [](auto& test) {
-        juce::ValueTree grandchild{ "Text" };
-        juce::ValueTree child{ "Component", { { "jive::source-file", "views/Child.xml" } }, { grandchild } };
-        juce::ValueTree root{ "Window", { { "jive::source-file", "views/Main.xml" } }, { child } };
+        const juce::ValueTree grandchild{ "Text" };
+        const juce::ValueTree child{ "Component", { { "jive::source-file", "views/Child.xml" } }, { grandchild } };
+        const juce::ValueTree root{ "Window", { { "jive::source-file", "views/Main.xml" } }, { child } };
 
         test.expectEquals(jive::findSourceFile(root).getPath(), juce::String{ "views/Main.xml" });
         test.expectEquals(jive::findSourceFile(grandchild).getPath(), juce::String{ "views/Child.xml" });

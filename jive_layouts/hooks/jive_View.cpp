@@ -58,7 +58,7 @@ private:
 
         beginTest("basic nested view");
         {
-            juce::ValueTree state{
+            const juce::ValueTree state{
                 "Window",
                 {
                     { "width", 300 },
@@ -92,7 +92,7 @@ private:
 
             void setup(jive::GuiItem& item) final
             {
-                setupCallCount++;
+                ++setupCallCount;
                 lastItemPassedToCallback = &item;
             }
 
@@ -106,7 +106,7 @@ private:
         expect(window != nullptr);
         expect(window->state["view-object"].getObject() == nullptr);
         expect(window->getView() != nullptr);
-        auto* view = dynamic_cast<SpyView*>(window->getView().get());
+        const auto* view = dynamic_cast<SpyView*>(window->getView().get());
         expect(view != nullptr);
         expectEquals(view->setupCallCount, 1);
     }
@@ -135,7 +135,7 @@ private:
                 };
             }
 
-            std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree)
+            std::unique_ptr<juce::Component> createComponent(const juce::ValueTree& tree) override
             {
                 if (tree.getType().toString() == "MyComponent")
                     return std::make_unique<MyComponent>();

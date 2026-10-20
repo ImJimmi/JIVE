@@ -4,11 +4,11 @@
 
 namespace jive
 {
-    static juce::String accumulateInlineText(juce::XmlElement& xml)
+    static juce::String accumulateInlineText(const juce::XmlElement& xml)
     {
         juce::String result;
 
-        for (auto* child : xml.getChildIterator())
+        for (const auto* child : xml.getChildIterator())
         {
             if (child->isTextElement())
                 result += child->getText().trim();
@@ -62,7 +62,7 @@ namespace jive
 
     [[nodiscard]] juce::ValueTree parseXML(const juce::String& xmlString)
     {
-        if (auto xml = juce::parseXML(xmlString))
+        if (const auto xml = juce::parseXML(xmlString))
             return parseXML(*xml);
 
         return {};

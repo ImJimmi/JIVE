@@ -49,7 +49,7 @@ namespace jive_examples::widgets
             auto* pluginEditor = dynamic_cast<juce::AudioProcessorEditor*>(item.get());
 
             if (pluginEditor == nullptr)
-                return new juce::GenericAudioProcessorEditor{ processor };
+                return new juce::GenericAudioProcessorEditor{ processor }; // NOLINT
 
             if (auto* lookAndFeel = dynamic_cast<jive::LookAndFeel*>(&pluginEditor->getLookAndFeel()))
                 lookAndFeel->addPainter("Slider.segmented", paintSegmentedSlider);
@@ -86,7 +86,7 @@ namespace jive_examples::widgets
             {
                 onToggled(tabs, tab, [this, source = view](bool toggled) {
                     if (toggled)
-                        setProperty("page", "source", source);
+                        setProperty("page", jive::ids::source(), source);
                 });
             }
 
@@ -107,41 +107,41 @@ namespace jive_examples::widgets
         void bindGallery()
         {
             onClick("count-button", [this] {
-                clicks++;
-                setProperty("count-label", "text", describeClicks());
+                ++clicks;
+                setProperty("count-label", jive::ids::text(), describeClicks());
             });
 
             const auto switchLight = [this](bool on) {
-                setProperty("light-button", "toggled", on);
-                setProperty("light-checkbox", "toggled", on);
-                light(jive::findElementWithID(editor->state, "light"), on);
+                setProperty("light-button", jive::ids::toggled(), on);
+                setProperty("light-checkbox", jive::ids::toggled(), on);
+                light(jive::findElementWithID(editor->state, lightID), on);
             };
             onToggled(toggles, "light-button", switchLight);
             onToggled(toggles, "light-checkbox", switchLight);
 
-            for (std::size_t i = 0; i < alignments.size(); i++)
+            for (std::size_t i = 0; i < alignments.size(); ++i)
             {
                 onToggled(toggles, alignments[i].first, [this, index = static_cast<int>(i)](bool toggled) {
                     if (toggled)
                         align(index);
                 });
             }
-            onValueChange("alignment-combo-box", "selected", [this](int index) {
+            onValueChange("alignment-combo-box", jive::ids::selected(), [this](int index) {
                 if (index >= 0)
                     align(index);
             });
 
             for (const auto* control : levelControls)
             {
-                onValueChange(control, "value", [this](int level) {
+                onValueChange(control, jive::ids::value(), [this](int level) {
                     setLevel(level);
                 });
             }
 
-            onValueChange("rating-spinner", "value", [this](int rating) {
-                auto stars = jive::findElementWithID(editor->state, "rating");
+            onValueChange("rating-spinner", jive::ids::value(), [this](int rating) {
+                const auto stars = jive::findElementWithID(editor->state, ratingID);
 
-                for (auto i = 0; i < stars.getNumChildren(); i++)
+                for (auto i = 0; i < stars.getNumChildren(); ++i)
                     light(stars.getChild(i), i < rating);
             });
         }
@@ -150,23 +150,23 @@ namespace jive_examples::widgets
         {
             const auto& [buttonID, alignment] = alignments[static_cast<std::size_t>(index)];
 
-            setProperty(buttonID, "toggled", true);
-            setProperty("alignment-combo-box", "selected", index);
-            setProperty("alignment", "align-items", alignment);
+            setProperty(buttonID, jive::ids::toggled(), true);
+            setProperty("alignment-combo-box", jive::ids::selected(), index);
+            setProperty("alignment", jive::ids::alignItems(), alignment);
         }
 
         void setLevel(int level)
         {
             for (const auto* control : levelControls)
-                setProperty(control, "value", level);
+                setProperty(control, jive::ids::value(), level);
 
-            setProperty("level-bar", "value", level / 100.0);
-            setProperty("level-label", "text", juce::String{ level } + "%");
+            setProperty("level-bar", jive::ids::value(), level / 100.0);
+            setProperty("level-label", jive::ids::text(), juce::String{ level } + "%");
         }
 
         static void light(juce::ValueTree icon, bool on)
         {
-            icon.setProperty("class", on ? "icon on" : "icon", nullptr);
+            icon.setProperty(jive::ids::classes(), on ? "icon on" : "icon", nullptr);
         }
 
         [[nodiscard]] juce::String describeClicks() const
@@ -178,12 +178,14 @@ namespace jive_examples::widgets
         {
             attachParameters(*editor);
             onChange("pad", [this] {
-                const auto pad = jive::findElementWithID(editor->state, "pad");
-                const auto format = [&pad](const juce::Identifier& axis) {
+                const auto pad = jive::findElementWithID(editor->state, padID);
+                const auto format = [&pad](juce::Identifier axis) {
                     return juce::String{ static_cast<double>(pad[axis]), 2 };
                 };
 
-                setProperty("pad-label", "text", "x " + format("x-value") + ", y " + format("y-value"));
+                setProperty("pad-label",
+                            jive::ids::text(),
+                            "x " + format(xValueID) + ", y " + format(yValueID));
             });
         }
 
@@ -191,8 +193,12 @@ namespace jive_examples::widgets
         // parameter, including Text elements, which show its value.
         void attachParameters(jive::GuiItem& item)
         {
-            if (const auto parameterID = item.state["parameter"].toString(); parameterID.isNotEmpty())
-                item.attachToParameter(parameters.getParameter(parameterID), &undoManager);
+            if (const auto paramID = item.state[parameterID].toString();
+                paramID.isNotEmpty())
+            {
+                item.attachToParameter(parameters.getParameter(paramID),
+                                       &undoManager);
+            }
 
             for (auto* child : item.getChildren())
                 attachParameters(*child);
@@ -200,15 +206,15 @@ namespace jive_examples::widgets
 
         void onClick(const juce::String& buttonID, std::function<void()> callback)
         {
-            onEvent(buttonID, "on-click", std::move(callback));
+            onEvent(buttonID, jive::ids::onClick(), std::move(callback));
         }
 
         void onChange(const juce::String& controlID, std::function<void()> callback)
         {
-            onEvent(controlID, "on-change", std::move(callback));
+            onEvent(controlID, jive::ids::onChange(), std::move(callback));
         }
 
-        void onEvent(const juce::String& elementID, const juce::Identifier& event, std::function<void()> callback)
+        void onEvent(const juce::String& elementID, juce::Identifier event, std::function<void()> callback)
         {
             const auto element = jive::findElementWithID(editor->state, elementID);
 
@@ -218,14 +224,14 @@ namespace jive_examples::widgets
 
         void onToggled(std::vector<std::unique_ptr<jive::Property<bool>>>& bindings,
                        const juce::String& buttonID,
-                       std::function<void(bool)> callback)
+                       const std::function<void(bool)>& callback)
         {
             const auto button = jive::findElementWithID(editor->state, buttonID);
 
             if (!button.isValid())
                 return;
 
-            auto& toggled = *bindings.emplace_back(std::make_unique<jive::Property<bool>>(button, "toggled"));
+            auto& toggled = *bindings.emplace_back(std::make_unique<jive::Property<bool>>(button, jive::ids::toggled()));
             toggled.onValueChange = [&toggled, callback] {
                 callback(toggled.get());
             };
@@ -234,8 +240,8 @@ namespace jive_examples::widgets
         }
 
         void onValueChange(const juce::String& controlID,
-                           const juce::Identifier& property,
-                           std::function<void(int)> callback)
+                           juce::Identifier property,
+                           const std::function<void(int)>& callback)
         {
             const auto control = jive::findElementWithID(editor->state, controlID);
 
@@ -250,24 +256,36 @@ namespace jive_examples::widgets
             callback(value.get());
         }
 
-        void setProperty(const juce::String& id, const juce::Identifier& property, const juce::var& value)
+        void setProperty(const juce::String& id, juce::Identifier property, const juce::var& value)
         {
             jive::findElementWithID(editor->state, id).setProperty(property, value, nullptr);
         }
+
+        const juce::Identifier lightID{ "light" };
+        const juce::Identifier ratingID{ "rating" };
+        const juce::Identifier padID{ "pad" };
+        const juce::Identifier padLabelID{ "pad-label" };
+        const juce::Identifier xValueID{ "x-value" };
+        const juce::Identifier yValueID{ "y-value" };
+        const juce::Identifier parameterID{ "parameter" };
 
         // Declared before anything that gets interpreted.
         const std::array<juce::Typeface::Ptr, 3> fonts = registerFonts();
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
-        const std::array<std::pair<juce::String, juce::String>, 2> pages{ {
-            { "gallery-tab", "public/views/Gallery.xml" },
-            { "custom-tab", "public/views/Custom.xml" },
-        } };
-        const std::array<std::pair<juce::String, juce::String>, 3> alignments{ {
-            { "left-button", "flex-start" },
-            { "centre-button", "center" },
-            { "right-button", "flex-end" },
-        } };
+        const std::array<std::pair<juce::String, juce::String>, 2> pages{
+            {
+                { "gallery-tab", "public/views/Gallery.xml" },
+                { "custom-tab", "public/views/Custom.xml" },
+            },
+        };
+        const std::array<std::pair<juce::String, juce::String>, 3> alignments{
+            {
+                { "left-button", "flex-start" },
+                { "centre-button", "center" },
+                { "right-button", "flex-end" },
+            },
+        };
         const std::array<const char*, 3> levelControls{
             "level-slider",
             "level-fader",

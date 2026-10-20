@@ -68,7 +68,7 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::GuiItem> createGuiItem(juce::ValueTree tree)
+    std::unique_ptr<jive::GuiItem> createGuiItem(const juce::ValueTree& tree)
     {
         jive::Interpreter interpreter;
 
@@ -84,7 +84,7 @@ private:
         expect(width.isAuto());
 
         width = "10px";
-        expectEquals(width.get().toPixels(0.0f), 10.f);
+        expectEquals(width.get().toPixels(0.0f), 10.0f);
 
         width = "312.65px";
         expectEquals(width.get().toPixels(0.0f), 312.65f);
@@ -95,11 +95,11 @@ private:
         beginTest("percent");
 
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
-                    { "width", 40.f },
-                    { "height", 20.f },
+                    { "width", 40.0f },
+                    { "height", 20.0f },
                 },
                 {
                     juce::ValueTree{ "Component" },
@@ -107,11 +107,11 @@ private:
             };
             jive::Property<jive::Length> width{ tree.getChild(0), "width" };
             width = "50%";
-            expectEquals(width.get().toPixels(40.0f), 20.f);
+            expectEquals(width.get().toPixels(40.0f), 20.0f);
 
             jive::Property<jive::Length> height{ tree.getChild(0), "height" };
             height = "20%";
-            expectWithinAbsoluteError(height.get().toPixels(20.0f), 4.f, 0.000001f);
+            expectWithinAbsoluteError(height.get().toPixels(20.0f), 4.0f, 0.000001f);
         }
     }
 };

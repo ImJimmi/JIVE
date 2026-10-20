@@ -17,10 +17,10 @@ namespace jive
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
 
-        source.onValueChange = [this]() {
+        source.onValueChange = [this] {
             updateImageComponentDrawable();
         };
-        placement.onValueChange = [this]() {
+        placement.onValueChange = [this] {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
                 image->setImagePlacement(placement.getOr(juce::RectanglePlacement::centred));
         };
@@ -51,7 +51,7 @@ namespace jive
 
     static void removeUnserialisableProperties(juce::ValueTree tree)
     {
-        for (auto i = 0; i < tree.getNumProperties(); i++)
+        for (auto i = 0; i < tree.getNumProperties(); ++i)
         {
             const auto name = tree.getPropertyName(i);
 
@@ -60,11 +60,11 @@ namespace jive
                 || tree[name].isObject())
             {
                 tree.removeProperty(name, nullptr);
-                i--;
+                --i;
             }
         }
 
-        for (auto i = 0; i < tree.getNumChildren(); i++)
+        for (auto i = 0; i < tree.getNumChildren(); ++i)
             removeUnserialisableProperties(tree.getChild(i));
     }
 
@@ -74,7 +74,7 @@ namespace jive
 
         if (isInlineSVG)
         {
-            auto stringSafe = state.createCopy();
+            const auto stringSafe = state.createCopy();
             removeUnserialisableProperties(stringSafe);
 
             return Drawable{ stringSafe.toXmlString() };
@@ -132,25 +132,23 @@ namespace jive
     {
         forwardPropertyChange(tree, id, source, placement);
 
-        if (state.getType().toString().compareIgnoreCase("svg") == 0)
+        if ((state.getType().toString().compareIgnoreCase("svg") == 0) && (!changingChild && childComponent != nullptr))
+
         {
-            if (!changingChild && childComponent != nullptr)
+            updateImageComponentDrawable();
+
+            childComponent->setBounds(getComponent()->getLocalBounds());
+
+            if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
             {
-                updateImageComponentDrawable();
-
-                childComponent->setBounds(getComponent()->getLocalBounds());
-
-                if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-                {
-                    drawable->
+                drawable->
 #if JIVE_JUCE_9
-                        setDrawableTransformToFit
+                    setDrawableTransformToFit
 #else
-                        setTransformToFit
+                    setTransformToFit
 #endif
-                        (getComponent()->getLocalBounds().toFloat(),
-                         placement.getOr(juce::RectanglePlacement::centred));
-                }
+                    (getComponent()->getLocalBounds().toFloat(),
+                     placement.getOr(juce::RectanglePlacement::centred));
             }
         }
     }
@@ -288,12 +286,12 @@ public:
             return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
         };
         expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::red);
-        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xFF00FF00 });
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xff00ff00 });
         expectEquals(snapshot().getPixelAt(10, 30), juce::Colours::red);
 
         state.setProperty("class", "blue", nullptr);
         expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::blue);
-        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xFF00FF00 });
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xff00ff00 });
         expectEquals(snapshot().getPixelAt(10, 30), juce::Colours::blue);
 
         root.removeChildComponent(parentComponent);
@@ -305,7 +303,7 @@ public:
 
         juce::Component root;
         root.setSize(100, 100);
-        jive::LookAndFeel lookAndFeel{ root };
+        const jive::LookAndFeel lookAndFeel{ root };
 
         jive::Interpreter interpreter;
         auto state = jive::parseXML(R"(
@@ -415,7 +413,7 @@ public:
 
         juce::Component root;
         root.setSize(100, 100);
-        jive::LookAndFeel lookAndFeel{ root };
+        const jive::LookAndFeel lookAndFeel{ root };
 
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(jive::parseXML(R"(
@@ -433,9 +431,9 @@ public:
         const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
         expectEquals(snapshot.getPixelAt(75, 50), juce::Colours::blue);
         expectEquals(snapshot.getPixelAt(75, 30), juce::Colours::blue);
-        expect(snapshot.getPixelAt(25, 50) != juce::Colours::blue);
-        expect(snapshot.getPixelAt(75, 10) != juce::Colours::blue);
-        expect(snapshot.getPixelAt(75, 90) != juce::Colours::blue);
+        expectNotEquals(snapshot.getPixelAt(25, 50), juce::Colours::blue);
+        expectNotEquals(snapshot.getPixelAt(75, 10), juce::Colours::blue);
+        expectNotEquals(snapshot.getPixelAt(75, 90), juce::Colours::blue);
 
         root.removeChildComponent(parentComponent);
     }
@@ -470,7 +468,7 @@ private:
 
         juce::Component root;
         root.setSize(100, 100);
-        jive::LookAndFeel lookAndFeel{ root };
+        const jive::LookAndFeel lookAndFeel{ root };
 
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(jive::parseXML(R"(
@@ -497,7 +495,7 @@ private:
 
         juce::Component root;
         root.setSize(100, 100);
-        jive::LookAndFeel lookAndFeel{ root };
+        const jive::LookAndFeel lookAndFeel{ root };
 
         jive::Interpreter interpreter;
         auto state = jive::parseXML(R"(
@@ -513,7 +511,7 @@ private:
         parentComponent->setBounds(0, 0, 100, 100);
 
         auto* svgComponent = parent->getChildren()[0]->getComponent().get();
-        const auto rectIsInTheBottomRightQuadrant = [svgComponent]() {
+        const auto rectIsInTheBottomRightQuadrant = [svgComponent] {
             const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
             return snapshot.getPixelAt(75, 75) == juce::Colours::blue
                 && snapshot.getPixelAt(25, 25) != juce::Colours::blue;
@@ -574,8 +572,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
+            const auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                         .toType<jive::Image>();
             expect(imageItem.getDrawable().isEmpty());
 
             const juce::Image image{ juce::Image::ARGB, 120, 40, true };
@@ -587,7 +585,7 @@ private:
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Image",
                 {
                     { "width", 222 },
@@ -597,8 +595,8 @@ private:
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
+            const auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                         .toType<jive::Image>();
             expect(imageItem.getDrawable().isImage());
             expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getWidth(), image.getWidth());
             expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getHeight(), image.getHeight());
@@ -611,8 +609,8 @@ private:
         beginTest("child-getComponent()");
 
         {
-            juce::Image image{ juce::Image::ARGB, 78, 27, true };
-            juce::ValueTree parentState{
+            const juce::Image image{ juce::Image::ARGB, 78, 27, true };
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 489 },
@@ -637,7 +635,7 @@ private:
             expectEquals(item.getComponent()->getNumChildComponents(), 1);
             expectEquals(item.getComponent()->getLocalBounds(), image.getBounds());
 
-            auto& childComponent = *item.getComponent()->getChildComponent(0);
+            const auto& childComponent = *item.getComponent()->getChildComponent(0);
             expectEquals(childComponent.getBounds(), item.getComponent()->getLocalBounds());
 
             parentState.getChild(0).setProperty("width", 134, nullptr);
@@ -676,7 +674,7 @@ private:
         }
         {
             const juce::Image image{ juce::Image::ARGB, 643, 111, true };
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Image",
                 {
                     { "width", 222 },
@@ -718,7 +716,7 @@ private:
         beginTest("auto-size");
 
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -750,7 +748,7 @@ private:
             expectEquals(boxModel.getHeight(), 40.0f);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -787,7 +785,7 @@ private:
             expectEquals(boxModel.getHeight(), 155.0f);
         }
         {
-            juce::ValueTree tree{
+            const juce::ValueTree tree{
                 "Component",
                 {
                     { "width", 222 },
@@ -826,7 +824,7 @@ private:
     {
         beginTest("inline SVG");
 
-        juce::ValueTree state{
+        const juce::ValueTree state{
             "Component",
             {
                 { "width", 300 },
@@ -840,8 +838,8 @@ private:
         };
         jive::Interpreter interpreter;
         auto parent = interpreter.interpret(state);
-        auto& image = *dynamic_cast<jive::GuiItemDecorator*>(parent->getChildren()[0])
-                           ->toType<jive::Image>();
+        const auto& image = *dynamic_cast<jive::GuiItemDecorator*>(parent->getChildren()[0])
+                                 ->toType<jive::Image>();
         expect(image.getDrawable().isSVG());
     }
 };

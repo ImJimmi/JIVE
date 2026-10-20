@@ -5,7 +5,7 @@
 namespace jive
 {
     BoxModel::BoxModel(juce::ValueTree stateSource)
-        : state{ stateSource }
+        : state{ std::move(stateSource) }
         , width{ state, ids::width() }
         , height{ state, ids::height() }
         , minWidth{ state, ids::minWidth() }
@@ -37,10 +37,10 @@ namespace jive
         else
             componentHeight = height.get().toPixels(getParentBounds().getHeight());
 
-        const auto informBoxModelChanged = [this]() {
+        const auto informBoxModelChanged = [this] {
             listeners.call(&Listener::boxModelChanged, *this);
         };
-        const auto onBoxModelChanged = [this, informBoxModelChanged]() {
+        const auto onBoxModelChanged = [this, informBoxModelChanged] {
             if (callbackLock)
                 return;
 
@@ -79,11 +79,11 @@ namespace jive
 
         idealWidth.onValueChange = onBoxModelChanged;
         idealHeight.onValueChange = onBoxModelChanged;
-        componentWidth.onValueChange = [this, onBoxModelChanged]() {
+        componentWidth.onValueChange = [this, onBoxModelChanged] {
             if (!componentWidth.isTransitioning())
                 onBoxModelChanged();
         };
-        componentHeight.onValueChange = [this, onBoxModelChanged]() {
+        componentHeight.onValueChange = [this, onBoxModelChanged] {
             if (!componentHeight.isTransitioning())
                 onBoxModelChanged();
         };
@@ -96,7 +96,7 @@ namespace jive
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
         margin.onTransitionProgressed = [this, informBoxModelChanged] {
-            constraintsVersion++;
+            ++constraintsVersion;
             informBoxModelChanged();
         };
     }
@@ -108,7 +108,7 @@ namespace jive
 
     float BoxModel::getWidth() const
     {
-        if (auto* transition = componentWidth.getTransition())
+        if (const auto* transition = componentWidth.getTransition())
             return transition->calculateCurrent<float>();
 
         return componentWidth;
@@ -135,7 +135,7 @@ namespace jive
 
     float BoxModel::getHeight() const
     {
-        if (auto* transition = componentHeight.getTransition())
+        if (const auto* transition = componentHeight.getTransition())
             return transition->calculateCurrent<float>();
 
         return componentHeight;
@@ -181,7 +181,7 @@ namespace jive
 
     juce::BorderSize<float> BoxModel::getPadding() const
     {
-        if (auto* transition = padding.getTransition())
+        if (const auto* transition = padding.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
         return padding.getOr(juce::BorderSize<float>{ 0.0f });
@@ -189,7 +189,7 @@ namespace jive
 
     juce::BorderSize<float> BoxModel::getBorder() const
     {
-        if (auto* transition = border.getTransition())
+        if (const auto* transition = border.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
         return border;
@@ -197,7 +197,7 @@ namespace jive
 
     juce::BorderSize<float> BoxModel::getMargin() const
     {
-        if (auto* transition = margin.getTransition())
+        if (const auto* transition = margin.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
         return margin;
@@ -213,16 +213,16 @@ namespace jive
         const auto bounds = getPadding()
                                 .subtractedFrom(getBorder()
                                                     .subtractedFrom(getOuterBounds()));
-        return bounds.withSize(juce::jmax(0.0f, bounds.getWidth()),
-                               juce::jmax(0.0f, bounds.getHeight()));
+        return bounds.withSize(std::max(0.0f, bounds.getWidth()),
+                               std::max(0.0f, bounds.getHeight()));
     }
 
     juce::Rectangle<float> BoxModel::getExplicitConstraints() const
     {
         return getMaximumBounds()
             .getIntersection(juce::Rectangle<float>{
-                hasAutoWidth() ? std::numeric_limits<juce::uint16>::max() : getWidth(),
-                hasAutoHeight() ? std::numeric_limits<juce::uint16>::max() : getHeight(),
+                hasAutoWidth() ? std::numeric_limits<std::uint16_t>::max() : getWidth(),
+                hasAutoHeight() ? std::numeric_limits<std::uint16_t>::max() : getHeight(),
             });
     }
 
@@ -239,10 +239,10 @@ namespace jive
         return {
             maxWidth.exists()
                 ? maxWidth.get().toPixels(getParentBounds().getWidth())
-                : std::numeric_limits<juce::uint16>::max(),
+                : std::numeric_limits<std::uint16_t>::max(),
             maxHeight.exists()
                 ? maxHeight.get().toPixels(getParentBounds().getHeight())
-                : std::numeric_limits<juce::uint16>::max(),
+                : std::numeric_limits<std::uint16_t>::max(),
         };
     }
 
@@ -287,7 +287,7 @@ namespace jive
                 || property == idealHeight.id
                 || property == margin.id))
         {
-            constraintsVersion++;
+            ++constraintsVersion;
         }
 
         forwardPropertyChange(tree,
@@ -333,6 +333,9 @@ namespace jive
     #include <jive_core/logging/jive_StringStreams.h>
     #include <jive_core/time/jive_Timer.h>
 
+    #include <cstdint>
+    #include <utility>
+
 class BoxModelUnitTest : public juce::UnitTest
 {
 public:
@@ -370,7 +373,7 @@ private:
         // Top-level component
         {
             juce::ValueTree state{ "Component" };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             Listener listener;
             boxModel.addListener(listener);
             expectEquals(boxModel.getWidth(), 0.0f);
@@ -391,7 +394,7 @@ private:
 
         // Child component
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 333 },
@@ -401,12 +404,12 @@ private:
                     juce::ValueTree{ "Component" },
                 },
             };
-            jive::BoxModel parentBoxModel{ parentState };
+            const jive::BoxModel parentBoxModel{ parentState };
             expectEquals(parentBoxModel.getWidth(), 333.0f);
             expectEquals(parentBoxModel.getHeight(), 888.0f);
 
             auto state = parentState.getChild(0);
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             expectEquals(boxModel.getWidth(), 0.0f);
             expectEquals(boxModel.getHeight(), 0.0f);
 
@@ -423,20 +426,20 @@ private:
         beginTest("padding");
 
         juce::ValueTree state{ "Component" };
-        jive::BoxModel box{ state };
-        expect(box.getPadding() == juce::BorderSize<float>{ 0.f });
+        const jive::BoxModel box{ state };
+        expectEquals(box.getPadding(), juce::BorderSize<float>{ 0.0f });
 
         state.setProperty("padding", 14, nullptr);
-        expect(box.getPadding() == juce::BorderSize<float>{ 14.f });
+        expectEquals(box.getPadding(), juce::BorderSize<float>{ 14.0f });
 
         state.setProperty("padding", "112.4 73.7", nullptr);
-        expect(box.getPadding() == juce::BorderSize<float>{ 112.4f, 73.7f, 112.4f, 73.7f });
+        expectEquals(box.getPadding(), juce::BorderSize<float>{ 112.4f, 73.7f, 112.4f, 73.7f });
 
         state.setProperty("padding", "14.25 8.3 1.1", nullptr);
-        expect(box.getPadding() == juce::BorderSize<float>{ 14.25f, 8.3f, 1.1f, 8.3f });
+        expectEquals(box.getPadding(), juce::BorderSize<float>{ 14.25f, 8.3f, 1.1f, 8.3f });
 
         state.setProperty("padding", "1 2 3 4", nullptr);
-        expect(box.getPadding() == juce::BorderSize<float>{ 1.f, 4.f, 3.f, 2.f });
+        expectEquals(box.getPadding(), juce::BorderSize<float>{ 1.0f, 4.0f, 3.0f, 2.0f });
     }
 
     void testBorder()
@@ -444,11 +447,11 @@ private:
         beginTest("border");
 
         juce::ValueTree state{ "Component" };
-        jive::BoxModel box{ state };
-        expect(box.getBorder() == juce::BorderSize<float>{ 0.f });
+        const jive::BoxModel box{ state };
+        expectEquals(box.getBorder(), juce::BorderSize<float>{ 0.0f });
 
         state.setProperty("border-width", "9 8 7 6", nullptr);
-        expect(box.getBorder() == juce::BorderSize<float>{ 9.f, 6.f, 7.f, 8.f });
+        expectEquals(box.getBorder(), juce::BorderSize<float>{ 9.0f, 6.0f, 7.0f, 8.0f });
     }
 
     void testMargin()
@@ -456,18 +459,18 @@ private:
         beginTest("margin");
 
         juce::ValueTree state{ "Component" };
-        jive::BoxModel box{ state };
-        expect(box.getMargin() == juce::BorderSize<float>{ 0.f });
+        const jive::BoxModel box{ state };
+        expectEquals(box.getMargin(), juce::BorderSize<float>{ 0.0f });
 
         state.setProperty("margin", "2 4 6 8", nullptr);
-        expect(box.getMargin() == juce::BorderSize<float>{ 2.f, 8.f, 6.f, 4.f });
+        expectEquals(box.getMargin(), juce::BorderSize<float>{ 2.0f, 8.0f, 6.0f, 4.0f });
     }
 
     void testContentBounds()
     {
         beginTest("content-bounds");
 
-        juce::ValueTree parentState{
+        const juce::ValueTree parentState{
             "Component",
             {},
             {
@@ -482,7 +485,7 @@ private:
                 },
             }
         };
-        jive::BoxModel box{ parentState.getChild(0) };
+        const jive::BoxModel box{ parentState.getChild(0) };
         expectEquals(box.getContentBounds(),
                      juce::Rectangle<float>{
                          30.0f + 20.0f,
@@ -507,7 +510,7 @@ private:
                     { "transition", "width 5s, height 3s" },
                 },
             };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             Listener listener;
             boxModel.addListener(listener);
             expectEquals(boxModel.getWidth(), 0.0f);
@@ -550,7 +553,7 @@ private:
                     { "transition", "padding 200ms" },
                 },
             };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             Listener listener;
             boxModel.addListener(listener);
             expectEquals(boxModel.getPadding(), juce::BorderSize{ 0.0f });
@@ -584,7 +587,7 @@ private:
                     { "transition", "border-width 10s" },
                 },
             };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             Listener listener;
             boxModel.addListener(listener);
             expectEquals(boxModel.getBorder(), juce::BorderSize{ 0.0f });
@@ -618,7 +621,7 @@ private:
                     { "transition", "margin 10s" },
                 },
             };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             Listener listener;
             boxModel.addListener(listener);
             expectEquals(boxModel.getMargin(), juce::BorderSize{ 0.0f });
@@ -644,7 +647,7 @@ private:
     {
         beginTest("constraints version / changes");
         {
-            juce::ValueTree parentState{
+            const juce::ValueTree parentState{
                 "Component",
                 {
                     { "width", 200 },
@@ -692,7 +695,7 @@ private:
                     { "transition", "margin 10s" },
                 },
             };
-            jive::BoxModel boxModel{ state };
+            const jive::BoxModel boxModel{ state };
             state.setProperty("margin", 100, nullptr);
             const auto version = boxModel.getConstraintsVersion();
 
