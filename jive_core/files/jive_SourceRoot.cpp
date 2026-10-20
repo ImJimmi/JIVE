@@ -109,4 +109,8 @@ namespace jive
 
         return data;
     }
+
+#if defined(JIVE_SOURCE_ROOT)
+    static const SourceRoot defaultSourceRoot{ juce::File{ JIVE_SOURCE_ROOT } };
+#endif
 } // namespace jive

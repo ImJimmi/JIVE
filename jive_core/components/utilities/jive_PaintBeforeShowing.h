@@ -11,7 +11,7 @@ namespace jive
     class PaintBeforeShowing : private juce::ComponentMovementWatcher
     {
     public:
-        explicit PaintBeforeShowing(juce::Component& component);
+        explicit PaintBeforeShowing(juce::Component& componentToWatch);
 
     private:
         void componentMovedOrResized(bool, bool) final;

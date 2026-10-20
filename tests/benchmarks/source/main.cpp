@@ -1,7 +1,6 @@
 #include "CardsBenchmark.h"
 #include "FlexStressTest.h"
 #include "MinimumViewBenchmark.h"
-#include "PageSwitchBenchmark.h"
 #include "TextResizeBenchmark.h"
 
 class BenchmarkApp : public juce::JUCEApplication
@@ -33,8 +32,6 @@ public:
             MinimumViewBenchmark{}.run();
         if (shouldRun("flex"))
             FlexStressTest{}.run();
-        if (shouldRun("page-switch"))
-            PageSwitchBenchmark{}.run();
         if (shouldRun("text-resize"))
         {
             TextResizeBenchmark{ false }.run();

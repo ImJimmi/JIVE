@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SharedResources.h>
+#include <BinaryData.h>
 #include <jive_layouts/jive_layouts.h>
 
 namespace jive_examples

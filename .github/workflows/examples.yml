@@ -1,0 +1,102 @@
+name: Examples
+run-name: "Examples `${{ github.ref_name || github.head_ref }}`"
+
+on: push
+
+env:
+  BUILD_TYPE: Debug
+  CMAKE_BUILD_DIRECTORY: build
+  CPM_CACHE_DIR: .cpm-cache
+  GH_TOKEN: ${{ github.token }}
+  SCCACHE_CACHE_MULTIARCH: 1
+  SCCACHE_GHA_ENABLED: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-example:
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets]
+        platform: [macos-latest, windows-latest]
+        project: [CMake, Projucer]
+        exclude:
+          - platform: windows-latest
+            project: Projucer
+        include:
+          - platform: macos-latest
+            platform-name: macOS
+            package-manager: brew
+
+          - platform: windows-latest
+            platform-name: Windows
+            package-manager: choco
+
+          - project: Projucer
+            target-suffix: -projucer
+            cmake-options: -D JIVE_ENABLE_PROJUCER_PROJECTS=ON
+
+          - example: 05-widgets
+            project: CMake
+            target-suffix: _All
+            cmake-options: -D JIVE_ENABLE_PLUGINVAL=ON
+            run-pluginval: true
+
+    name: ${{ matrix.example }} (${{ matrix.project }}, ${{ matrix.platform-name }})
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Ninja
+        run: ${{ matrix.package-manager }} install ninja
+      - name: Setup devcmd
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Restore CPM dependencies
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.CPM_CACHE_DIR }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+          restore-keys: |
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+            cpm-${{ runner.os }}-main
+            cpm-${{ runner.os }}
+
+      - name: CMake Generate
+        run: |
+          cmake \
+            -B ${{ env.CMAKE_BUILD_DIRECTORY }} \
+            -G Ninja \
+            -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -D JIVE_BUILD_EXAMPLES=ON \
+            -D CMAKE_C_COMPILER_LAUNCHER=sccache \
+            -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
+            -D CMAKE_POLICY_DEFAULT_CMP0141=NEW \
+            -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \
+            ${{ matrix.cmake-options }}
+
+      - name: CMake Build
+        run: |
+          cmake \
+            --build ${{ env.CMAKE_BUILD_DIRECTORY }} \
+            --config ${{ env.BUILD_TYPE }} \
+            --target jive-${{ matrix.example }}${{ matrix.target-suffix }} \
+            -- -k 0
+
+      - name: Run pluginval
+        if: matrix.run-pluginval
+        run: |
+          cd ${{ env.CMAKE_BUILD_DIRECTORY }}
+          ctest \
+            --output-on-failure \
+            -C ${{ env.BUILD_TYPE }} \
+            -R pluginval

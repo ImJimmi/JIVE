@@ -35,14 +35,14 @@ namespace jive_examples::widgets
 
         void paint(juce::Graphics& g) final
         {
-            auto* lookAndFeel = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
+            auto* laf = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
 
-            if (lookAndFeel == nullptr)
+            if (laf == nullptr)
                 return;
 
-            lookAndFeel->drawComponent(g, *this);
+            laf->drawComponent(g, *this);
 
-            const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+            const auto styles = laf->findMostApplicableStyles(*this);
             const auto bounds = getLocalBounds().toFloat();
             const auto puck = getPuckArea().getRelativePoint(value.x, 1.0f - value.y);
 

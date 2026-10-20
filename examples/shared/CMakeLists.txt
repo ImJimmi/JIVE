@@ -1,8 +1,6 @@
 juce_add_binary_data(examples-shared-resources
 NAMESPACE
     "shared_resources"
-HEADER_NAME
-    "SharedResources.h"
 SOURCES
     ../resources/rubik.ttf
     ../resources/rubik-mono-one.ttf
