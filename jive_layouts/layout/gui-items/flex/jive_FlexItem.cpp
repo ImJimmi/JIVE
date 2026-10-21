@@ -34,6 +34,7 @@ namespace jive
         , flexBasis{ state, ids::flexBasis() }
         , alignSelf{ state, ids::alignSelf() }
         , parentDirection{ state.getParent(), ids::flexDirection() }
+        , parentAlignItems{ state.getParent(), ids::alignItems() }
         , layoutDummy{ std::make_unique<FlexLayoutDummy>(*this) }
     {
         const auto updateParentLayout = [this]() {
@@ -106,8 +107,18 @@ namespace jive
             cachedItems[key] = flexItem;
         }
 
-        lastMinHeight = cachedItems.find(key)->second.minHeight;
-        return cachedItems.find(key)->second;
+        auto flexItem = cachedItems.find(key)->second;
+        lastMinHeight = flexItem.minHeight;
+
+        if (strategy == LayoutStrategy::real
+            && flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign
+            && !parentAlignItems.exists()
+            && !getTopLevelDecorator().stretchesByDefault())
+        {
+            flexItem.alignSelf = juce::FlexItem::AlignSelf::flexStart;
+        }
+
+        return flexItem;
     }
 
     void FlexItem::idealSizeChanged()

@@ -43,6 +43,11 @@ namespace jive
         [[nodiscard]] virtual bool isContainer() const;
         [[nodiscard]] virtual bool isContent() const;
 
+        // Items that don't stretch by default keep their ideal size unless
+        // their parent's align-items/justify-items, or their own
+        // align-self/justify-self, ask for them to be stretched.
+        [[nodiscard]] virtual bool stretchesByDefault() const;
+
         void callLayoutChildrenWithRecursionLock();
         [[nodiscard]] bool isLayingOutChildren() const;
 

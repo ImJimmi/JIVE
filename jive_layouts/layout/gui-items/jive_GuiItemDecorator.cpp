@@ -86,6 +86,11 @@ namespace jive
         return item->isContent();
     }
 
+    bool GuiItemDecorator::stretchesByDefault() const
+    {
+        return item->stretchesByDefault();
+    }
+
 #if JIVE_IS_PLUGIN_PROJECT
     void GuiItemDecorator::attachToParameter(juce::RangedAudioParameter* parameter, juce::UndoManager* undoManager)
     {

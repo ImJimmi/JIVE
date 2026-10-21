@@ -19,6 +19,7 @@ namespace jive
 
         bool isContainer() const override;
         bool isContent() const override;
+        bool stretchesByDefault() const override;
 
 #if JIVE_IS_PLUGIN_PROJECT
         void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager*) override;

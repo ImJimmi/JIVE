@@ -246,6 +246,11 @@ namespace jive
         return false;
     }
 
+    bool GuiItem::stretchesByDefault() const
+    {
+        return true;
+    }
+
     void GuiItem::callLayoutChildrenWithRecursionLock()
     {
         if (isLayingOutChildren() || std::size(getChildren()) == 0)

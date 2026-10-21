@@ -27,6 +27,8 @@ namespace jive
         PassiveProperty<juce::GridItem::StartAndEndProperty> gridRow;
         PassiveProperty<juce::String> gridArea;
         PassiveProperty<float> idealWidth;
+        const PassiveProperty<juce::Grid::JustifyItems> parentJustifyItems;
+        const PassiveProperty<juce::Grid::AlignItems> parentAlignItems;
 
         const BoxModel& box{ boxModel(*this) };
         std::unordered_map<ItemCacheKey, juce::GridItem> cachedItems;

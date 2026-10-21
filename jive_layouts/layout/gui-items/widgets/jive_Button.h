@@ -27,6 +27,7 @@ namespace jive
         juce::Button& getButton();
         const juce::Button& getButton() const;
 
+        bool stretchesByDefault() const override;
         void layOutChildren() override;
 
     protected:
@@ -35,6 +36,8 @@ namespace jive
 
     private:
         static constexpr auto defaultMinHeight = 20.0f;
+        static constexpr auto defaultHorizontalPadding = 15.0f;
+        static constexpr auto defaultVerticalPadding = 10.0f;
 
         void buttonClicked(juce::Button* button) final;
         void componentParentHierarchyChanged(juce::Component& component) final;

@@ -26,6 +26,7 @@ namespace jive
         PassiveProperty<float> flexBasis;
         PassiveProperty<juce::FlexItem::AlignSelf> alignSelf;
         const PassiveProperty<juce::FlexBox::Direction> parentDirection;
+        const PassiveProperty<juce::FlexBox::AlignItems> parentAlignItems;
 
         const BoxModel& box{ boxModel(*this) };
         const std::unique_ptr<juce::Component> layoutDummy;

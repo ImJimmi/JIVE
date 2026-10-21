@@ -11,6 +11,8 @@ namespace jive
         , gridRow{ state, ids::gridRow() }
         , gridArea{ state, ids::gridArea() }
         , idealWidth{ state, ids::idealWidth() }
+        , parentJustifyItems{ state.getParent(), ids::justifyItems() }
+        , parentAlignItems{ state.getParent(), ids::alignItems() }
     {
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
@@ -94,7 +96,17 @@ namespace jive
             cachedItems[key] = gridItem;
         }
 
-        return cachedItems.find(key)->second;
+        auto gridItem = cachedItems.find(key)->second;
+
+        if (strategy == LayoutStrategy::real && !getTopLevelDecorator().stretchesByDefault())
+        {
+            if (gridItem.justifySelf == juce::GridItem::JustifySelf::autoValue && !parentJustifyItems.exists())
+                gridItem.justifySelf = juce::GridItem::JustifySelf::start;
+            if (gridItem.alignSelf == juce::GridItem::AlignSelf::autoValue && !parentAlignItems.exists())
+                gridItem.alignSelf = juce::GridItem::AlignSelf::start;
+        }
+
+        return gridItem;
     }
 
     void GridItem::idealSizeChanged()
