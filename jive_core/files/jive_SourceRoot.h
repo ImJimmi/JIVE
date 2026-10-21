@@ -7,9 +7,8 @@ namespace jive
     // Somewhere relative SourceFile paths are found: a directory on disk, or a
     // zip embedded in the binary. The jive_sources() CMake function creates
     // one for each call. Where that's not available, such as in a Projucer
-    // project, defining JIVE_SOURCE_ROOT as a directory's path creates one for
-    // that directory. Roots are searched in the order they were created, for
-    // as long as they exist.
+    // project, create them as static objects instead. Roots are searched in
+    // the order they were created, for as long as they exist.
     class SourceRoot
     {
     public:

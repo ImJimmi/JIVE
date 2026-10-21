@@ -34,7 +34,7 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_USE_CURL="0"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" extraDefs="JIVE_SOURCE_ROOT=&quot;$(PROJECT_DIR)/../..&quot;">
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraDefs="PROJECT_ROOT=&quot;$(PROJECT_DIR)/../..&quot;">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" macOSDeploymentTarget="12.0"/>
         <CONFIGURATION isDebug="0" name="Release" macOSDeploymentTarget="12.0"/>
