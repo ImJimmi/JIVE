@@ -42,7 +42,7 @@ This matches CSS, and lets states be combined with other selectors, for example 
 
 Add a colon to each state key:
 
-```json
+```jsonc
 // 1.x
 {
     "hover": { "background": "lime" },
@@ -53,7 +53,7 @@ Add a colon to each state key:
 }
 ```
 
-```json
+```jsonc
 // 2.0
 {
     ":hover": { "background": "lime" },
@@ -116,7 +116,7 @@ CSS gradients can point in any direction, use side and corner keywords, and posi
 
 Write gradients as `linear-gradient()` or `radial-gradient()` strings:
 
-```json
+```jsonc
 // 1.x
 "background": {
     "gradient": "linear",
@@ -129,7 +129,7 @@ Write gradients as `linear-gradient()` or `radial-gradient()` strings:
 }
 ```
 
-```json
+```jsonc
 // 2.0
 "background": "linear-gradient(to right, red 0%, #FF00FF 30%, blue 100%)"
 ```
@@ -160,7 +160,7 @@ Set `text-align` and `direction` in a style sheet instead. `text-align` takes th
 <Text id="greeting">...</Text>
 ```
 
-```json
+```jsonc
 {
   "#greeting": {
     "text-align": "centred",

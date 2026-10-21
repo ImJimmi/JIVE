@@ -15,10 +15,10 @@ namespace jive_examples::text
         {
             window = interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" });
             interpreter.onExternalSourceLoaded = [this](const jive::SourceFile&) {
-                bindControls();
+                // bindControls();
                 inspector.inspect(*window->getComponent());
             };
-            bindControls();
+            // bindControls();
             inspector.inspect(*window->getComponent());
         }
 
