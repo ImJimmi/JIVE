@@ -188,6 +188,63 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
     },
 };
 
+static jive::UnitTest topLevelFileReloadRemovesPropertiesTest{
+    "jive",
+    "jive::Interpreter",
+    "Top-Level File Reload Removes Properties Removed From The File",
+    [](auto& test) {
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-removed-properties-tests/");
+        cwd.deleteRecursively();
+        cwd.createDirectory();
+
+        cwd.getChildFile("styles.json").replaceWithText(R"({ "background": "#FF0000" })");
+
+        auto mainView = cwd.getChildFile("main.xml");
+        mainView.replaceWithText(R"(<Window width="100" height="100" style="styles.json"/>)");
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(cwd);
+        const auto item = interpreter.interpret(mainView);
+
+        const auto getBackground = [&item] {
+            auto* lookAndFeel = dynamic_cast<jive::LookAndFeel*>(&item->getComponent()->getLookAndFeel());
+            return lookAndFeel->findMostApplicableStyles(*item->getComponent())
+                .find<jive::Fill>("background")
+                .value_or(jive::Fill{});
+        };
+        test.expect(getBackground() == juce::Colours::red);
+
+        item->state.setProperty(jive::ids::theme(), "material", nullptr);
+
+        mainView.replaceWithText(R"(<Window width="100" height="100"/>)");
+        mainView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expect(!item->state.hasProperty(jive::ids::style()),
+                    "A property removed from the file should be removed from the tree");
+        test.expect(getBackground() != juce::Colours::red,
+                    "Removing the style property should remove the style sheet's styles");
+        test.expectEquals(item->state[jive::ids::theme()].toString(),
+                          juce::String{ "material" },
+                          "Properties set at runtime should survive a reload");
+
+        mainView.replaceWithText(R"(<Window width="100" height="100" style="styles.json"/>)");
+        mainView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(20.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expect(getBackground() == juce::Colours::red,
+                    "Adding the style property back should apply its styles again");
+
+        mainView.replaceWithText(R"(<Window width="100" height="100"/>)");
+        mainView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(30.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expect(getBackground() != juce::Colours::red,
+                    "Removing the style property after a reload should remove its styles");
+
+        cwd.deleteRecursively();
+    },
+};
+
 static jive::UnitTest fileSourceRetainsChildrenTest{
     "jive",
     "jive::Interpreter",

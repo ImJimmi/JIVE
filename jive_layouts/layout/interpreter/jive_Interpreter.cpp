@@ -82,6 +82,16 @@ namespace jive
             findItemsWithSource(child, file, results);
     }
 
+    static void rememberTopLevelSourceProperties(juce::ValueTree& tree)
+    {
+        juce::Array<juce::var> names;
+
+        for (auto i = 0; i < tree.getNumProperties(); i++)
+            names.add(tree.getPropertyName(i).toString());
+
+        tree.setProperty(ids::topLevelSourceProperties(), names, nullptr);
+    }
+
     void Interpreter::onObservedFileChanged(const SourceFile& file)
     {
         std::vector<GuiItem*> items;
@@ -97,6 +107,9 @@ namespace jive
                 continue;
             }
 
+            if (item->isTopLevel())
+                rememberTopLevelSourceProperties(source);
+
             // These children came straight from the source file, so mark
             // them as such before any inline children are appended below -
             // otherwise the reinterpretation triggered by re-parenting this
@@ -105,6 +118,8 @@ namespace jive
             for (auto i = 0; i < source.getNumChildren(); i++)
                 source.getChild(i).setProperty(ids::externalSourceChild(), true, nullptr);
 
+            const auto* previousSourceProperties = item->state[ids::topLevelSourceProperties()].getArray();
+
             for (auto i = 0; i < item->state.getNumProperties(); i++)
             {
                 const auto name = item->state.getPropertyName(i).toString();
@@ -112,6 +127,8 @@ namespace jive
                 if (name.startsWith("jive::"))
                     continue;
                 if (source.hasProperty(name))
+                    continue;
+                if (previousSourceProperties != nullptr && previousSourceProperties->contains(name))
                     continue;
 
                 source.setProperty(name, item->state[name], nullptr);
@@ -184,7 +201,10 @@ namespace jive
     std::unique_ptr<GuiItem> Interpreter::interpret(const SourceFile& file,
                                                     juce::AudioProcessor* pluginProcessor)
     {
-        auto item = interpret(parseFileToValueTree(file), pluginProcessor);
+        auto tree = parseFileToValueTree(file);
+        rememberTopLevelSourceProperties(tree);
+
+        auto item = interpret(tree, pluginProcessor);
         listenTo(*item);
 
         item->state.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);

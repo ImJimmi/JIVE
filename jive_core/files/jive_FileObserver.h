@@ -22,8 +22,13 @@ namespace jive
 
         static void triggerAllTimerCallbacks()
         {
-            for (auto* observer : observers)
-                observer->timerCallback();
+            const auto observersToTrigger = observers;
+
+            for (auto* observer : observersToTrigger)
+            {
+                if (observers.contains(observer))
+                    observer->timerCallback();
+            }
         }
 
         const juce::File file;

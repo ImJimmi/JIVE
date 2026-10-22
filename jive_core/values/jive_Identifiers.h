@@ -772,6 +772,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& topLevelSourceProperties()
+    {
+        static const juce::Identifier identifier{ "jive::top-level-source-properties" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& track()
     {
         static const juce::Identifier identifier{ "track" };
