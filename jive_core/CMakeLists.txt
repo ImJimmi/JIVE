@@ -106,7 +106,6 @@ target_sources(jive_core
                       values/jive_Property.cpp
                       values/jive_Property.h
                       values/jive_PropertyBehaviours.h
-                      values/jive_ReferenceCountedValueTreeWrapper.h
                       values/jive_XmlParser.cpp
                       values/jive_XmlParser.h
                       values/variant-converters/jive_AttributedStringVariantConverters.cpp

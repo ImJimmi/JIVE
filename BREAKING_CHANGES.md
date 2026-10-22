@@ -201,10 +201,72 @@ External sources do the same job, and can be edited and hot-reloaded while the a
 
 ### Migrating
 
-Move the markup you aliased into its own XML file and pull it in with `source`, or build it in C++ with a `jive::View` and `jive::makeView()`:
+Move the markup you aliased into its own XML file and pull it in with `source`:
 
 ```xml
 <Component source="views/Header.xml"/>
+```
+
+## `jive::View` has been removed
+
+`jive::View`, `jive::makeView()` and `GuiItem::getView()` have been removed, along with the `GuiItem` constructor that took a view.
+
+### Reason
+
+Each of its hooks has a replacement that keeps working when a view is hot-reloaded: `source` files for `initialise()`, the interpreter's `ComponentFactory` for `createComponent()`, and `Interpreter::onLoad` for `setup()`.
+
+### Migrating
+
+Declare the element in XML, register its component with the interpreter's `ComponentFactory`, and do any setup in `onLoad`:
+
+```cpp
+// 1.x
+class KeyboardView : public jive::View
+{
+public:
+    explicit KeyboardView(juce::MidiKeyboardState& state)
+        : keyboardState{ state }
+    {
+    }
+
+protected:
+    juce::ValueTree initialise() final
+    {
+        return juce::ValueTree{ "Keyboard", { { "width", 400 }, { "height", 80 } } };
+    }
+
+    std::unique_ptr<juce::Component> createComponent(const juce::ValueTree&) final
+    {
+        return std::make_unique<juce::MidiKeyboardComponent>(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard);
+    }
+
+    void setup(jive::GuiItem& item) final
+    {
+        // ...
+    }
+
+private:
+    juce::MidiKeyboardState& keyboardState;
+};
+
+footer.appendChild(jive::makeView<KeyboardView>(keyboardState), nullptr);
+```
+
+```xml
+<!-- 2.0 -->
+<Keyboard id="keyboard" width="400" height="80"/>
+```
+
+```cpp
+// 2.0
+interpreter.getComponentFactory().set("Keyboard", [&keyboardState] {
+    return std::make_shared<juce::MidiKeyboardComponent>(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard);
+});
+
+interpreter.onLoad = [](jive::GuiItem& root) {
+    auto* keyboard = jive::findItemWithID(root, "keyboard");
+    // ...
+};
 ```
 
 ## The `mouse` and `keyboard` properties have been removed

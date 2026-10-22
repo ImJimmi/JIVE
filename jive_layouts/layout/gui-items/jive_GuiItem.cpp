@@ -5,109 +5,32 @@
 
 namespace jive
 {
-    class PassiveView : public View
+    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
+                     const juce::ValueTree& sourceState,
+                     GuiItem* parentItem)
+        : GuiItem{
+            std::shared_ptr<juce::Component>{ std::move(comp) },
+            sourceState,
+            parentItem,
+        }
     {
-    public:
-        explicit PassiveView(const juce::ValueTree& sourceState)
-            : view{ sourceState }
-        {
-        }
-
-    protected:
-        [[nodiscard]] juce::ValueTree initialise() final
-        {
-            return view;
-        }
-
-    private:
-        juce::ValueTree view;
-    };
-
-    View::ReferenceCountedPointer GuiItem::getOrCreateView(juce::ValueTree state)
-    {
-        View::ReferenceCountedPointer view;
-
-        if (state.hasProperty(ids::viewObject()))
-        {
-            view = dynamic_cast<View*>(state[ids::viewObject()].getObject());
-        }
-        else if (state.hasProperty(ids::makeView()))
-        {
-            const auto buildView = state[ids::makeView()].getNativeFunction();
-            const auto viewObjectProperty = buildView({ juce::var{}, nullptr, 0 });
-
-            if (auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
-            {
-                if (auto* viewObject = dynamic_cast<View*>(wrappedState->state[ids::viewObject()].getObject()))
-                    view = viewObject;
-                else
-                    jassertfalse;
-            }
-            else
-            {
-                jassertfalse;
-            }
-        }
-        else
-        {
-            view = new PassiveView{ state };
-        }
-
-        state.removeProperty(ids::viewObject(), nullptr);
-        view->state = state;
-
-        return view;
     }
 
     GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
-                     GuiItem* parentItem,
-                     View::ReferenceCountedPointer sourceView)
-        : state{ sourceView->getState() }
+                     const juce::ValueTree& sourceState,
+                     GuiItem* parentItem)
+        : state{ sourceState }
         , component{ comp }
         , parent{ parentItem }
-        , view{ sourceView }
     {
         jassert(component != nullptr);
-    }
-
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
-                     const juce::ValueTree& sourceState,
-                     GuiItem* parentItem)
-        : GuiItem{
-            std::shared_ptr<juce::Component>{ std::move(comp) },
-            parentItem,
-            getOrCreateView(sourceState),
-        }
-    {
-    }
-
-    GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
-                     const juce::ValueTree& sourceState,
-                     GuiItem* parentItem)
-        : GuiItem{
-            comp,
-            parentItem,
-            getOrCreateView(sourceState),
-        }
-    {
-    }
-
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
-                     View::ReferenceCountedPointer sourceView,
-                     GuiItem* parentItem)
-        : GuiItem{
-            std::shared_ptr<juce::Component>{ std::move(comp) },
-            parentItem,
-            sourceView,
-        }
-    {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
         : GuiItem{
             other.component,
+            other.state,
             other.parent,
-            other.view,
         }
     {
     }
@@ -125,16 +48,6 @@ namespace jive
     std::shared_ptr<juce::Component> GuiItem::getComponent()
     {
         return component;
-    }
-
-    const View::ReferenceCountedPointer GuiItem::getView() const
-    {
-        return view;
-    }
-
-    View::ReferenceCountedPointer GuiItem::getView()
-    {
-        return view;
     }
 
     void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)

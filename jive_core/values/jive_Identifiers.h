@@ -454,12 +454,6 @@ namespace jive::ids
         return identifier;
     }
 
-    [[nodiscard]] inline const juce::Identifier& makeView()
-    {
-        static const juce::Identifier identifier{ "make-view" };
-        return identifier;
-    }
-
     [[nodiscard]] inline const juce::Identifier& margin()
     {
         static const juce::Identifier identifier{ "margin" };
@@ -835,12 +829,6 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& velocityThreshold()
     {
         static const juce::Identifier identifier{ "velocity-threshold" };
-        return identifier;
-    }
-
-    [[nodiscard]] inline const juce::Identifier& viewObject()
-    {
-        static const juce::Identifier identifier{ "view-object" };
         return identifier;
     }
 

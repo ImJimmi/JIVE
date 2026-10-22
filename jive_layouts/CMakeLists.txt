@@ -9,8 +9,6 @@ add_library(jive::jive_layouts
 
 target_sources(jive_layouts
                INTERFACE
-                      hooks/jive_View.cpp
-                      hooks/jive_View.h
                       layout/gui-items/block/jive_BlockContainer.cpp
                       layout/gui-items/block/jive_BlockContainer.h
                       layout/gui-items/block/jive_BlockItem.cpp

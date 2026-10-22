@@ -415,8 +415,6 @@ namespace jive
 
             if (item->isTopLevel())
             {
-                setupItemsRecursive(*item);
-
                 if (auto* container = dynamic_cast<GuiItemDecorator&>(*item)
                                           .getTopLevelDecorator()
                                           .toType<ContainerItem>())
@@ -437,7 +435,7 @@ namespace jive
     std::unique_ptr<GuiItem> Interpreter::createUndecoratedItem(const juce::ValueTree& tree,
                                                                 GuiItem* const parent)
     {
-        if (auto component = createComponent(tree, parent))
+        if (auto component = componentFactory.create(tree.getType()))
         {
             return std::make_unique<GuiItem>(component,
                                              tree,
@@ -445,32 +443,6 @@ namespace jive
         }
 
         return nullptr;
-    }
-
-    std::shared_ptr<juce::Component> Interpreter::createComponent(const juce::ValueTree& tree, const GuiItem* parent) const
-    {
-        if (auto* viewObject = dynamic_cast<jive::View*>(tree[ids::viewObject()].getObject()))
-        {
-            if (auto component = viewObject->createComponent(tree))
-                return component;
-        }
-
-        for (auto* ancestor = parent; ancestor != nullptr; ancestor = ancestor->getParent())
-        {
-            if (auto component = ancestor->getView()->createComponent(tree))
-                return component;
-        }
-
-        return componentFactory.create(tree.getType());
-    }
-
-    void Interpreter::setupItemsRecursive(GuiItem& item) const
-    {
-        for (auto* child : item.getChildren())
-            setupItemsRecursive(*child);
-
-        if (auto view = item.getView(); view != nullptr)
-            view->setup(item);
     }
 
     juce::ValueTree Interpreter::loadExternalSources(juce::ValueTree tree)

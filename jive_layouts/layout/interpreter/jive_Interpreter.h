@@ -75,10 +75,8 @@ namespace jive
                                                                  GuiItem* const parent);
         [[nodiscard]] std::unique_ptr<GuiItem> createUndecoratedItem(const juce::ValueTree& tree,
                                                                      GuiItem* const parent);
-        [[nodiscard]] std::shared_ptr<juce::Component> createComponent(const juce::ValueTree& tree, const GuiItem* parent) const;
         void insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index);
         void setChildItems(GuiItem& item);
-        void setupItemsRecursive(GuiItem& item) const;
 
         // File sources
         [[nodiscard]] juce::ValueTree loadExternalSources(juce::ValueTree tree);

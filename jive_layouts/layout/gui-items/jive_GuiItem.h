@@ -1,7 +1,5 @@
 #pragma once
 
-#include <jive_layouts/hooks/jive_View.h>
-
 #include <jive_style_sheets/jive_style_sheets.h>
 
 #if JIVE_IS_PLUGIN_PROJECT
@@ -19,17 +17,12 @@ namespace jive
         GuiItem(std::shared_ptr<juce::Component> component,
                 const juce::ValueTree& sourceState,
                 GuiItem* parent = nullptr);
-        GuiItem(std::unique_ptr<juce::Component> component,
-                View::ReferenceCountedPointer sourceView,
-                GuiItem* parent = nullptr);
 
         GuiItem(const GuiItem& other);
         virtual ~GuiItem();
 
         [[nodiscard]] const std::shared_ptr<const juce::Component> getComponent() const;
         [[nodiscard]] std::shared_ptr<juce::Component> getComponent();
-        [[nodiscard]] const View::ReferenceCountedPointer getView() const;
-        [[nodiscard]] View::ReferenceCountedPointer getView();
 
         virtual void insertChild(std::unique_ptr<GuiItem> child, int index);
         virtual void setChildren(std::vector<std::unique_ptr<GuiItem>>&& children);
@@ -80,21 +73,14 @@ namespace jive
     private:
         friend class GuiItemDecorator;
 
-        GuiItem(std::shared_ptr<juce::Component> component,
-                GuiItem* parent,
-                View::ReferenceCountedPointer sourceView);
-
         void insertChild(std::unique_ptr<GuiItem> child, int index, bool invokeCallback);
         void notifyLocalisedStringsChanged();
 
         StyleSheet::ReferenceCountedPointer styleSheet;
         std::optional<juce::LocalisedStrings> localisedStrings;
 
-        static View::ReferenceCountedPointer getOrCreateView(juce::ValueTree state);
-
         GuiItem* const parent;
         juce::OwnedArray<GuiItem> children;
-        View::ReferenceCountedPointer view;
 
         bool layoutRecursionLock = false;
 

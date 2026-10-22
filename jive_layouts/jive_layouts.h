@@ -28,7 +28,6 @@ namespace jive
     class GuiItem;
 } // namespace jive
 
-#include "hooks/jive_View.h"
 #include "layout/gui-items/block/jive_BlockContainer.h"
 #include "layout/gui-items/block/jive_BlockItem.h"
 #include "layout/gui-items/content/jive_Image.h"

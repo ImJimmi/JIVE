@@ -1,6 +1,5 @@
 #include "jive_layouts.h"
 
-#include "hooks/jive_View.cpp"
 #include "layout/gui-items/block/jive_BlockContainer.cpp"
 #include "layout/gui-items/block/jive_BlockItem.cpp"
 #include "layout/gui-items/content/jive_Image.cpp"

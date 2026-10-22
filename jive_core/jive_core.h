@@ -75,7 +75,6 @@ END_JUCE_MODULE_DECLARATION */
 #include "values/jive_Object.h"
 #include "values/jive_Property.h"
 #include "values/jive_PropertyBehaviours.h"
-#include "values/jive_ReferenceCountedValueTreeWrapper.h"
 #include "values/jive_XmlParser.h"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.h"
 #include "values/variant-converters/jive_FlexVariantConverters.h"
