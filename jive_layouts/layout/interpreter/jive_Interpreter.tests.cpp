@@ -646,14 +646,14 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
     },
 };
 
-static jive::UnitTest externalSourceLoadedCallbackTest{
+static jive::UnitTest stateBuildCallbackTest{
     "jive",
     "jive::Interpreter",
-    "External Source Loaded Callback",
+    "State Build Callback",
     [](auto& test) {
-        // Reloading a source file swaps in a brand-new tree, so clients need
-        // to be told when that's happened in order to reassign any listeners
-        // they'd attached to the old one.
+        // Interpreting a file, or reloading any part of it, builds brand-new
+        // trees, so clients need to be told when that's happened in order to
+        // (re)assign any listeners they'd attached to the old ones.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
                              .getParentDirectory()
                              .getChildFile("interpreter-tests/");
@@ -678,58 +678,74 @@ static jive::UnitTest externalSourceLoadedCallbackTest{
         jive::Interpreter interpreter;
         interpreter.addSourceDirectory(cwd);
 
-        std::vector<jive::SourceFile> loadedSources;
         juce::StringArray namesWhenNotified;
-        juce::ValueTree root;
-        interpreter.onExternalSourceLoaded = [&](const jive::SourceFile& file) {
-            loadedSources.push_back(file);
-            namesWhenNotified.add(jive::findElementWithID(root, "content")["name"].toString());
+        const jive::GuiItem* rootWhenNotified = nullptr;
+        interpreter.onLoad = [&](jive::GuiItem& root) {
+            namesWhenNotified.add(jive::findElementWithID(root.state, "content")["name"].toString());
+            rootWhenNotified = &root;
         };
 
         const auto item = interpreter.interpret(mainView);
-        root = item->state;
-        test.expectEquals(static_cast<int>(loadedSources.size()),
-                          1,
-                          "Loading a source file should notify listeners");
-        test.expect(loadedSources.size() == 1 && loadedSources[0] == jive::SourceFile{ heading },
-                    "Listeners should be told which file was loaded");
+        test.expectEquals(namesWhenNotified.joinIntoString(","),
+                          juce::String{ "original" },
+                          "Interpreting a file should notify listeners once the tree has been built");
+        test.expect(rootWhenNotified == item.get(),
+                    "Listeners should be given the item that interpreting returns");
 
-        loadedSources.clear();
         namesWhenNotified.clear();
         heading.replaceWithText(R"(<Component name="updated"/>)");
         jive::FileObserver::triggerAllTimerCallbacks();
-        test.expectEquals(static_cast<int>(loadedSources.size()),
-                          1,
-                          "Changing a source file should notify listeners");
         test.expectEquals(namesWhenNotified.joinIntoString(","),
                           juce::String{ "updated" },
-                          "Listeners should be notified once the new tree is in place");
+                          "Changing a source file should notify listeners once the new tree is in place");
 
-        loadedSources.clear();
+        namesWhenNotified.clear();
         jive::findElementWithID(item->state, "content")
             .setProperty("source", "footer.xml", nullptr);
-        test.expectEquals(static_cast<int>(loadedSources.size()),
+        test.expectEquals(namesWhenNotified.size(),
                           1,
                           "Pointing an element at a different source should notify listeners");
-        test.expect(loadedSources.size() == 1 && loadedSources[0] == jive::SourceFile{ footer },
-                    "Listeners should be told about the newly referenced file");
 
-        loadedSources.clear();
+        namesWhenNotified.clear();
         mainView.replaceWithText(R"(
             <Window width="200" height="200">
-                <Component id="content" source="heading.xml"/>
+                <Component id="content" name="reloaded" source="heading.xml"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
-        test.expect(std::find(loadedSources.begin(), loadedSources.end(), jive::SourceFile{ mainView }) != loadedSources.end(),
-                    "Changing the top-level source file should notify listeners");
+        test.expectEquals(namesWhenNotified.joinIntoString(","),
+                          juce::String{ "reloaded" },
+                          "Changing the top-level source file should notify listeners once the new top-level tree is in place");
+    },
+};
+
+static jive::UnitTest stateBuildCallbackWithoutFileTest{
+    "jive",
+    "jive::Interpreter",
+    "State Build Callback for a tree that wasn't read from a file",
+    [](auto& test) {
+        jive::Interpreter interpreter;
+
+        auto numNotifications = 0;
+        const jive::GuiItem* rootWhenNotified = nullptr;
+        interpreter.onLoad = [&](jive::GuiItem& root) {
+            numNotifications++;
+            rootWhenNotified = &root;
+        };
+
+        const auto item = interpreter.interpret(R"(<Window width="100" height="100"/>)");
+        test.expectEquals(numNotifications,
+                          1,
+                          "Interpreting a tree should notify listeners once");
+        test.expect(rootWhenNotified == item.get(),
+                    "Listeners should be given the item that interpreting returns");
     },
 };
 
 static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
     "jive",
     "jive::Interpreter",
-    "External sources' items are in place by the time listeners are notified",
+    "Items are in place by the time listeners are notified",
     [](auto& test) {
         // Listeners use the items as well as the tree, for example to attach
         // them to plugin parameters.
@@ -757,19 +773,19 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
         jive::Interpreter interpreter;
         interpreter.addSourceDirectory(cwd);
 
-        std::unique_ptr<jive::GuiItem> item;
         juce::StringArray itemsWhenNotified;
-        interpreter.onExternalSourceLoaded = [&](const jive::SourceFile&) {
-            if (item == nullptr)
-                return;
-
-            auto* inner = jive::findItemWithID(*item, "inner");
-            const auto isInPlace = inner != nullptr && inner->state == jive::findElementWithID(item->state, "inner");
+        interpreter.onLoad = [&](jive::GuiItem& root) {
+            auto* inner = jive::findItemWithID(root, "inner");
+            const auto isInPlace = inner != nullptr && inner->state == jive::findElementWithID(root.state, "inner");
             itemsWhenNotified.add(isInPlace ? "in place" : "missing");
         };
 
-        item = interpreter.interpret(mainView);
+        const auto item = interpreter.interpret(mainView);
+        test.expectEquals(itemsWhenNotified.joinIntoString(","),
+                          juce::String{ "in place" },
+                          "Interpreting the file");
 
+        itemsWhenNotified.clear();
         jive::findElementWithID(item->state, "content").setProperty("source", "second.xml", nullptr);
         test.expectEquals(itemsWhenNotified.joinIntoString(","),
                           juce::String{ "in place" },
@@ -781,6 +797,17 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
         test.expectEquals(itemsWhenNotified.joinIntoString(","),
                           juce::String{ "in place" },
                           "Changing the source file on disk");
+
+        itemsWhenNotified.clear();
+        mainView.replaceWithText(R"(
+            <Window width="200" height="200">
+                <Component id="content" source="second.xml"/>
+            </Window>
+        )");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(itemsWhenNotified.joinIntoString(","),
+                          juce::String{ "in place" },
+                          "Changing the top-level file on disk");
     },
 };
 

@@ -13,17 +13,14 @@ namespace jive_examples::style_sheets
     public:
         Presenter()
         {
-            window = interpreter.interpret(mainView);
-            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
-                if (file == mainView)
+            interpreter.onLoad = [this](jive::GuiItem& root) {
+                if (root.state != windowState)
                     bindWindow();
 
                 bindPage();
                 inspector.inspect(*window->getComponent());
             };
-            bindWindow();
-            bindPage();
-            inspector.inspect(*window->getComponent());
+            window = interpreter.interpret(mainView);
         }
 
     private:
@@ -41,6 +38,7 @@ namespace jive_examples::style_sheets
 
         void bindWindow()
         {
+            windowState = window->state;
             windowStyleSheet = observeStyleSheet(window->state);
 
             tabs.clear();
@@ -300,6 +298,9 @@ namespace jive_examples::style_sheets
 
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> windowStyleSheet;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> pageStyleSheet;
+        // Switching pages leaves the window's tree in place, along with the
+        // tab binding that switched them. Reloading Main.xml replaces it.
+        juce::ValueTree windowState;
         std::unique_ptr<jive::Property<int>> theme;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;
         std::vector<std::unique_ptr<jive::Property<bool>>> toggles;

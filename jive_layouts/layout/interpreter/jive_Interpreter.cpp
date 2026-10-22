@@ -34,9 +34,16 @@ namespace jive
 
     std::unique_ptr<GuiItem> Interpreter::interpret(const juce::ValueTree& tree, juce::AudioProcessor* pluginProcessor)
     {
+        interpretationsInProgress++;
+
         auto item = interpretInternal(tree, nullptr);
         decorateWithTopLevelItem(item, pluginProcessor);
         listenTo(*item);
+        notificationPending = true;
+
+        if (--interpretationsInProgress == 0)
+            notifyStateBuild();
+
         return item;
     }
 
@@ -143,6 +150,8 @@ namespace jive
 
             if (item->isTopLevel())
             {
+                interpretationsInProgress++;
+
                 auto* topLevel = dynamic_cast<TopLevelGuiItem*>(item);
                 jassert(topLevel != nullptr);
                 topLevel->replaceDecoratedItem(interpretInternal(source, nullptr));
@@ -154,9 +163,10 @@ namespace jive
                 // unnoticed.
                 item->state.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);
                 listenTo(*item);
+                notificationPending = true;
 
-                sourcesPendingNotification.push_back(file);
-                notifyExternalSourcesLoaded();
+                if (--interpretationsInProgress == 0)
+                    notifyStateBuild();
             }
             else
             {
@@ -203,15 +213,11 @@ namespace jive
     {
         auto tree = parseFileToValueTree(file);
         rememberTopLevelSourceProperties(tree);
-
-        auto item = interpret(tree, pluginProcessor);
-        listenTo(*item);
-
-        item->state.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);
+        tree.setProperty(ids::topLevelSourceFile(), file.getPath(), nullptr);
 
         observeFileForChanges(file);
 
-        return item;
+        return interpret(tree, pluginProcessor);
     }
 
     // Embedded files can't change, so only files on disk are observed.
@@ -308,8 +314,8 @@ namespace jive
         insertInterpretedChild(*parentItem, childWhichHasBeenAdded, parentTree.indexOf(childWhichHasBeenAdded));
     }
 
-    // Listeners are told about the files that were read in only once the new
-    // item is in place, so that they can find it.
+    // Listeners are told about the build only once the new item is in place,
+    // so that they can find it.
     void Interpreter::insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index)
     {
         interpretationsInProgress++;
@@ -318,7 +324,7 @@ namespace jive
             parentItem.insertChild(std::move(newChild), index);
 
         if (--interpretationsInProgress == 0)
-            notifyExternalSourcesLoaded();
+            notifyStateBuild();
     }
 
     void Interpreter::valueTreeChildRemoved(juce::ValueTree& parentTree,
@@ -384,15 +390,10 @@ namespace jive
             parentItem->insertChild(std::move(newChild), indexInParent);
     }
 
-    void Interpreter::notifyExternalSourcesLoaded()
+    void Interpreter::notifyStateBuild()
     {
-        const auto sources = std::exchange(sourcesPendingNotification, {});
-
-        for (const auto& source : sources)
-        {
-            if (onExternalSourceLoaded != nullptr)
-                onExternalSourceLoaded(source);
-        }
+        if (std::exchange(notificationPending, false) && observedItem != nullptr && onLoad != nullptr)
+            onLoad(*observedItem);
     }
 
     std::unique_ptr<GuiItem> Interpreter::interpretInternal(juce::ValueTree tree,
@@ -425,11 +426,10 @@ namespace jive
             }
         }
 
-        // Listeners are told about the files that were read in only once the
-        // whole tree they were read into has been interpreted, so that they're
-        // free to go looking around it.
+        // Listeners are told about the build only once the whole tree has been
+        // interpreted, so that they're free to go looking around it.
         if (--interpretationsInProgress == 0)
-            notifyExternalSourcesLoaded();
+            notifyStateBuild();
 
         return item;
     }
@@ -541,14 +541,7 @@ namespace jive
             destination.setProperty(ids::externalSourceProperties(), propertiesFromSource, nullptr);
 
             observeFileForChanges(file);
-
-            if (std::find(std::begin(sourcesPendingNotification),
-                          std::end(sourcesPendingNotification),
-                          file)
-                == std::end(sourcesPendingNotification))
-            {
-                sourcesPendingNotification.push_back(file);
-            }
+            notificationPending = true;
 
             return destination;
         };

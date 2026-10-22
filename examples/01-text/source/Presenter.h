@@ -13,13 +13,11 @@ namespace jive_examples::text
     public:
         Presenter()
         {
-            window = interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" });
-            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile&) {
-                // bindControls();
-                inspector.inspect(*window->getComponent());
+            interpreter.onLoad = [this](jive::GuiItem& root) {
+                bindControls();
+                inspector.inspect(*root.getComponent());
             };
-            // bindControls();
-            inspector.inspect(*window->getComponent());
+            window = interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" });
         }
 
     private:

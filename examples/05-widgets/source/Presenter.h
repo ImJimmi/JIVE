@@ -31,11 +31,11 @@ namespace jive_examples::widgets
                 return typeName == "XYPad" && dynamic_cast<const XYPad*>(&component) != nullptr;
             });
 
-            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
+            interpreter.onLoad = [this](jive::GuiItem& root) {
                 if (editor == nullptr)
                     return;
 
-                if (file == mainView)
+                if (root.state != editorState)
                     bindEditor();
 
                 bindPage();
@@ -80,6 +80,7 @@ namespace jive_examples::widgets
 
         void bindEditor()
         {
+            editorState = editor->state;
             tabs.clear();
 
             for (const auto& [tab, view] : pages)
@@ -280,6 +281,9 @@ namespace jive_examples::widgets
 
         jive::Interpreter interpreter;
         juce::WeakReference<jive::GuiItem> editor;
+        // Switching pages leaves the editor's tree in place, along with the
+        // tab binding that switched them. Reloading Main.xml replaces it.
+        juce::ValueTree editorState;
         std::unique_ptr<jive::Property<int>> theme;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;
         std::vector<std::unique_ptr<jive::Property<bool>>> toggles;

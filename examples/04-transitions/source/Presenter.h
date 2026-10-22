@@ -13,17 +13,14 @@ namespace jive_examples::transitions
     public:
         Presenter()
         {
-            window = interpreter.interpret(mainView);
-            interpreter.onExternalSourceLoaded = [this](const jive::SourceFile& file) {
-                if (file == mainView)
+            interpreter.onLoad = [this](jive::GuiItem& root) {
+                if (root.state != windowState)
                     bindWindow();
 
                 bindPage();
                 inspector.inspect(*window->getComponent());
             };
-            bindWindow();
-            bindPage();
-            inspector.inspect(*window->getComponent());
+            window = interpreter.interpret(mainView);
         }
 
     private:
@@ -66,6 +63,7 @@ namespace jive_examples::transitions
 
         void bindWindow()
         {
+            windowState = window->state;
             theme = bindThemeComboBox(window->state);
 
             tabs.clear();
@@ -299,6 +297,9 @@ namespace jive_examples::transitions
         } };
         const juce::String defaultTiming{ "600ms ease-in-out" };
 
+        // Switching pages leaves the window's tree in place, along with the
+        // tab binding that switched them. Reloading Main.xml replaces it.
+        juce::ValueTree windowState;
         std::unique_ptr<jive::Property<int>> theme;
         std::unique_ptr<jive::Property<jive::Object::ReferenceCountedPointer>> cardStyleSheet;
         std::vector<std::unique_ptr<jive::Property<bool>>> tabs;

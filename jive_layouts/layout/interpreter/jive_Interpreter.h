@@ -47,15 +47,17 @@ namespace jive
             });
         }
 
-        /** Called after a file referenced by a "source" property has been read
-            into the tree, be that for the first time or because the file
-            changed on disk.
+        /** Called whenever interpreting builds part of the state tree: once
+            interpret() has built it, and again whenever a file referenced by a
+            "source" property is read in, or any file it was built from changes
+            on disk.
 
-            The trees an external source is loaded into are replaced wholesale,
-            so any listeners attached to them need to be reassigned when this
-            is called. The state tree is up to date by the time this is called.
+            Every build replaces its trees wholesale, so any listeners attached
+            to them need to be reassigned when this is called. The state tree
+            and its items are up to date by then. The root is the item
+            interpret() returns, which may not have been returned yet.
         */
-        std::function<void(const SourceFile&)> onExternalSourceLoaded = nullptr;
+        std::function<void(GuiItem& root)> onLoad = nullptr;
 
     private:
         // ValueTree callbacks
@@ -83,7 +85,7 @@ namespace jive
         [[nodiscard]] juce::ValueTree parseFileToValueTree(const SourceFile&) const;
         void onObservedFileChanged(const SourceFile& file);
         void observeFileForChanges(const SourceFile& file);
-        void notifyExternalSourcesLoaded();
+        void notifyStateBuild();
 
         ComponentFactory componentFactory;
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
@@ -96,7 +98,7 @@ namespace jive
             juce::File::getCurrentWorkingDirectory(),
         };
         bool ignoreValueTreeChanges = false;
-        std::vector<SourceFile> sourcesPendingNotification;
+        bool notificationPending = false;
         int interpretationsInProgress = 0;
 
         JUCE_LEAK_DETECTOR(Interpreter)
