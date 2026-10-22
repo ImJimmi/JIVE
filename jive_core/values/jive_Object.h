@@ -62,6 +62,13 @@ namespace jive
         JUCE_DECLARE_WEAK_REFERENCEABLE(Object)
     };
 
+    /** Parses the given string to a juce::var.
+
+        This has two advantages over juce::JSON::parse:
+        1. It parses to jive::Objects rather than juce::DynamicObjects
+        2. It allows comments (starting with "//" only), which JUCE usually
+           does not allow
+    */
     juce::var parseJSON(const juce::String& jsonString);
 } // namespace jive
 

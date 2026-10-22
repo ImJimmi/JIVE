@@ -207,9 +207,38 @@ namespace jive
         return getProperties()[name];
     }
 
+    [[nodiscard]] static auto findCommentStart(const juce::String& line)
+    {
+        auto inString = false;
+
+        for (auto index = 0; index < line.length() - 1; ++index)
+        {
+            const auto character = line[index];
+
+            if (inString && character == '\\')
+                ++index;
+            else if (character == '"')
+                inString = !inString;
+            else if (!inString && character == '/' && line[index + 1] == '/')
+                return index;
+        }
+
+        return line.length();
+    }
+
+    [[nodiscard]] static auto withoutComments(const juce::String& jsonString)
+    {
+        auto lines = juce::StringArray::fromLines(jsonString);
+
+        for (auto& line : lines)
+            line = line.substring(0, findCommentStart(line));
+
+        return lines.joinIntoString("\n");
+    }
+
     juce::var parseJSON(const juce::String& jsonString)
     {
-        auto value = juce::JSON::parse(jsonString);
+        auto value = juce::JSON::parse(withoutComments(jsonString));
         replaceDynamicObjectsWithJiveObjects(value);
 
         return value;
@@ -377,6 +406,25 @@ private:
             deeperObject->setProperty("number", 2);
             expectEquals(numCalls, 2);
             expect(deeperObject->getRoot() == root.get());
+        }
+
+        beginTest("JSON parsing / comments are ignored, but not inside strings");
+        {
+            auto root = juce::VariantConverter<jive::Object::ReferenceCountedPointer>::fromVar(jive::parseJSON(R"(
+                // A leading comment
+                {
+                    "url": "https://github.com/ImJimmi/JIVE", // A trailing comment
+                    // "commented": "out",
+                    "quoted": "\"// not a comment\"",
+                    "slash": "\\", // A comment after an escaped backslash
+                }
+            )"));
+
+            expect(root != nullptr);
+            expectEquals(root->getProperty("url"), juce::var{ "https://github.com/ImJimmi/JIVE" });
+            expect(!root->hasProperty("commented"));
+            expectEquals(root->getProperty("quoted"), juce::var{ "\"// not a comment\"" });
+            expectEquals(root->getProperty("slash"), juce::var{ "\\" });
         }
     }
 
