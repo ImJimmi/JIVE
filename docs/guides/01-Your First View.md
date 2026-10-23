@@ -1,12 +1,14 @@
 # Your First View
 
+This guide walks you through building a very basic UI with JIVE, touching on layouts, styling, and events.
+
 Before getting started, make sure you have followed the [integration](../../README.md#integration) steps.
 
 ## JIVE Sources
 
 Before we can write our first view, we need to tell JIVE where to look for our source files.
 
-JIVE sources (XML and JSON files) aren't compiled or minified in any way, so it's best practice to keep them separate from your other source code. The recommended practice is to use a `public/` directory next to your `source/` directory.
+It's best practice to keep your JIVE sources (XML and JSON files) separate from your other source code. The recommended practice is to use a `public/` directory next to your `source/` directory so everything under `public/` can be bundled in the Release binary.
 
 ### CMake
 
@@ -24,7 +26,7 @@ SOURCES
 )
 ```
 
-Sources are always relative to the directory containing the `CMakeLists.txt` that called `jive_sources()`. E.g. in this case we would use <code>jive::SourceFile{&nbsp;"public/some.file"&nbsp;}</code>, or <code>jive::SourceFile{&nbsp;"modules/my&#8209;component&#8209;library/some&#8209;other.file"&nbsp;}</code>.
+Sources are always relative to the directory containing the `CMakeLists.txt` that called `jive_sources()`. E.g. in this case we would use `jive::SourceFile{ "public/some.file" }`, or `jive::SourceFile{ "modules/my-component-library/some-other.file" }`.
 
 ### Projucer
 
@@ -51,7 +53,7 @@ Create a file called `MainView.xml` in your project's `public/` directory.
 _You can use other names if you wish, JIVE has no restrictions on filenames so long as they can be found and parsed._
 
 ```xml
-<Window width="600" height="400">
+<Window name="My First View" width="350" height="220">
 </Window>
 ```
 
@@ -101,41 +103,79 @@ public:
     auto* pluginEditor = dynamic_cast<juce::AudioProcessorEditor*>(item.get());
 
     if (pluginEditor == nullptr)
-      return nullptr;
+      return nullptr; // Or return a fallback editor
 
     editor = item.release();
+
     return pluginEditor;
   }
 
 private:
   jive::Interpreter interpreter;
 
-    // We can't own the editor like we own the window in applications, as
-    // it's owned by the JUCE base class, so we use a weak reference here
-    // instead. Just remember to always check it still exists before trying
-    // to access it.
+  // We can't own the editor like we own the window in applications, as
+  // it's owned by the JUCE base class, so we use a weak reference here
+  // instead. Just remember to always check it still exists before trying
+  // to access it.
   juce::WeakReference<jive::GuiItem> editor;
 };
 ```
 
 ## First Run
 
-Build and run your project and you should see a blank, 600x400 window appear. If you're using CMake and have hot-reloading enabled (which it is by default), you should now be able to edit `MainView.xml` and see the UI change immediately without having to rebuild.
+Build and run your project and you should see a blank, 350x220 window appear.
 
-## Adding widgets
+If hot-reloading is enabled (which it is by default for Debug builds), you should now be able to edit `MainView.xml` and see the UI change immediately without having to rebuild.
+
+<p align="center">
+  <img src="./assets/01-01.png" alt="The blank, 350x220 window" width="462px"/>
+</p>
+
+## Adding Widgets
 
 Edit `MainView.xml` to add some child components to the window:
 
 ```xml
-<Window width="600" height="400" padding="50">
-  <Text>My First JIVE UI</Text>
-
+<Window name="My First View" width="350" height="220">
+  <Text id="title">My First JIVE UI</Text>
   <Button id="counter-button">Click Me!</Button>
   <Text id="counter-label">Clicked 0 times</Text>
 </Window>
 ```
 
-## Event handlers
+<p align="center">
+  <img src="./assets/01-02.png" alt="Widgets added to the window" width="462px"/>
+</p>
+
+As you can see, the widgets automatically size and position themselves according to their content, mirroring their ordering from the XML source.
+
+The `id` properties on each of the items will allow us to interact with them later to assign styles and event handlers. It's a good habit to get into to always add IDs to your UI elements.
+
+The window, as with all containers, uses a [flex](https://docs.juce.com/master/classjuce_1_1FlexBox.html) layout by default, with a "column" direction so children are stacked vertically. We can specify some extra properties in our XML to customise the layout:
+
+```xml
+<Window
+  name="My First View"
+  width="350"
+  height="220"
+  align-items="center"
+  justify-content="center"
+>
+  <Text id="title">My First JIVE UI</Text>
+  <Button id="counter-button" margin="30 0 10 0">Click Me!</Button>
+  <Text id="counter-label">Clicked 0 times</Text>
+</Window>
+```
+
+`align-items` and `justify-content` are flex properties which specify the horizontal and vertical positioning of the window's children respectively.
+
+`margin` on the button tells the layout engine how much space to leave around the button. In this case 30px above, and 10px below.
+
+<p align="center">
+  <img src="./assets/01-03.png" alt="Widgets centered with extra spacing between them" width="462px"/>
+</p>
+
+## Event Handlers
 
 To respond to when a user interacts with a widget, we need to assign event handlers. JIVE doesn't have any scripting capabilities, so event handling is done in C++.
 
@@ -149,31 +189,46 @@ public:
 
   void initialise(const juce::String&) override
   {
-    window = interpreter.interpret(jive::SourceFile{ "public/MainView.xml" });
+    // The onLoad callback is called anytime the interpreter builds or
+    // updates the ValueTree state.
+    // This is therefore where you should always assign handlers as
+    // otherwise hot-reloading would invalidate the handlers.
+    interpreter.onLoad = [this](jive::GuiItem& windowItem) {
+      // Find the value-tree node representing the button we want to
+      // attach the event to.
+      juce::ValueTree buttonState = jive::findElementWithID(windowItem.state,
+                                                            "counter-button");
 
-    // After the component hierarchy has been built, we can interact with
-    // the ValueTrees that control the component tree.
-    // Here, we find the value-tree node representing the button we want
-    // to attach the event.
-    auto buttonState = jive::findElementWithID(window->state, "counter-button");
+      // We can now construct the handle for the button's on-click event
+      // by giving jive::Event the button's ValueTree state and the name
+      // of the event
+      onClick.emplace(buttonState, "on-click");
 
-    // Make a new event handle to respond to the button's on-click
-    // callback.
-    onClick = jive::Event{ buttonState, "on-click" };
-    onClick->onTrigger = [this] {
-      // This lambda is called when the button is clicked.
-      // Here, we find the ValueTree for the label, and set its "text"
-      // property with the incremented counter.
-      // JIVE will respond to this and update the label UI component
-      // to show the new text.
-      auto labelState = jive::findElementWithID(window->state, "counter-label");
-      labelState["text"] = "Clicked " + ++numClicks + " times";
+      // Give the event a lambda to call when it's triggered.
+      onClick->onTrigger = [this] {
+        juce::ValueTree labelState = jive::findElementWithID(window->state,
+                                                             "counter-label");
+
+        // juce::ValueTree doesn't support inline text, so JIVE parses
+        // inline text in XML files to a "text" property on the tree, so
+        // we change that property here to update the label
+        // <Text>Hello</Text> becomes <Text text="Hello"/>
+        labelState.setProperty("text",
+                               juce::String::formatted("Clicked %d times",
+                                                       ++numClicks),
+                               nullptr);
+      };
     };
+
+    window = interpreter.interpret(jive::SourceFile{ "public/MainView.xml" });
   }
 
 private:
   jive::Interpreter interpreter;
   std::unique_ptr<jive::GuiItem> window;
+
+  // jive::Event has no default constructor so we use an optional so it
+  // can be constructed in the onLoad callback.
   std::optional<jive::Event> onClick;
   int numClicks = 0;
 };
@@ -187,21 +242,28 @@ Create a new file in the `public/` directory called `Styles.json`:
 
 ```jsonc
 {
-  // Background colour of the window
-  "background": "#250001",
+  "background": "#250001",  // Window background colour
+  "font-size": "16px",       // Global font size for all widgets
+  "foreground": "#F3F3F3",  // Global foreground (text) colour
 
-  // Default foreground (text) colour for all elements
-  "foreground": "#F3F3F3",
-
-  // Use the "Button" selector to specify styles for all buttons
-  "Button": {
-    "background": "#590004",
-    "border": "#A50104"
+  // ID selector to style just the title text
+  "#title": {
+    "font-family": "Arial",
+    "font-size": 25,
+    "font-styles": "bold",
+    "foreground": "#FCBA04"
   },
 
-  // Use an ID selector to style just the counter-label component
-  "#counter-label": {
-    "foreground": "#FCBA04"
+  // Type selector to style all buttons
+  "Button": {
+    "background": "#590004",
+    "border": "#A50104",
+
+    // Nested state specifier to change button's
+    // styles when the mouse is hovered over it
+    ":hover": {
+      "background": "#A50104"
+    }
   }
 }
 ```
@@ -209,13 +271,22 @@ Create a new file in the `public/` directory called `Styles.json`:
 Then edit your view to tell it to use your new style sheet:
 
 ```xml
-<Window width="600"
-        height="400"
-        padding="50"
-        style="public/Styles.json"
+<Window
+  name="My First View"
+  width="350"
+  height="220"
+  align-items="center"
+  justify-content="center"
+  style="public/Styles.json"
 >
     <!-- ... -->
 </Window>
 ```
 
-JIVE will automatically pick up the "style" property, find and parse the style sheet, and apply the rules to your UI.
+_You can also use `style="./Styles.json"`. JIVE treats `./` and `../` as relative paths to the current file, rather than relative to the root._
+
+JIVE will automatically pick up the "style" property, find and parse the style sheet, and apply the rules to your UI. As with the XML sources, JIVE will hot-reload any changes to your JSON sources too.
+
+<p align="center">
+  <img src="./assets/01-04.png" alt="With styles applied" width="462px"/>
+</p>
