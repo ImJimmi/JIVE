@@ -13,6 +13,7 @@ namespace jive_examples::style_sheets
     public:
         Presenter()
         {
+            window = interpreter.interpret(mainView);
             interpreter.onLoad = [this](jive::GuiItem& root) {
                 if (root.state != windowState)
                     bindWindow();
@@ -20,7 +21,7 @@ namespace jive_examples::style_sheets
                 bindPage();
                 inspector.inspect(*window->getComponent());
             };
-            window = interpreter.interpret(mainView);
+            interpreter.onLoad(*window);
         }
 
     private:

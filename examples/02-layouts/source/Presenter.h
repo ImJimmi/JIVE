@@ -13,6 +13,7 @@ namespace jive_examples::layouts
     public:
         Presenter()
         {
+            window = interpreter.interpret(mainView);
             interpreter.onLoad = [this](jive::GuiItem& root) {
                 if (root.state != windowState)
                     bindWindow();
@@ -20,7 +21,7 @@ namespace jive_examples::layouts
                 bindPage();
                 inspector.inspect(*window->getComponent());
             };
-            window = interpreter.interpret(mainView);
+            interpreter.onLoad(*window);
         }
 
     private:
@@ -120,13 +121,7 @@ namespace jive_examples::layouts
         struct Length
         {
             juce::Identifier property;
-            juce::Identifier centreProperty;
             bool horizontal;
-
-            [[nodiscard]] juce::Identifier propertyOf(const juce::ValueTree& item) const
-            {
-                return centreProperty.isValid() && item.hasProperty(centreProperty) ? centreProperty : property;
-            }
 
             [[nodiscard]] juce::String id(const juce::String& suffix) const
             {
@@ -143,17 +138,14 @@ namespace jive_examples::layouts
             onValueChange(values, "absolute-item-combo-box", "selected", [this, absoluteItem](int) {
                 showAbsoluteItem(absoluteItem());
             });
-            onValueChange(values, "anchor-combo-box", "selected", [this, absoluteItem](int selected) {
-                anchor(absoluteItem(), selected == 1);
-            });
+            bindComboBox("anchor-combo-box", absoluteItem, "anchor");
 
             for (const auto& length : lengths)
             {
                 onValueChange(values, length.id("-slider"), "value", [this, length, absoluteItem](int value) {
                     auto item = absoluteItem();
-                    const auto property = length.propertyOf(item);
-                    item.setProperty(property, withUnit(value, isPercentage(item[property])), nullptr);
-                    setProperty(length.id("-label"), "text", item[property]);
+                    item.setProperty(length.property, withUnit(value, isPercentage(item[length.property])), nullptr);
+                    setProperty(length.id("-label"), "text", item[length.property]);
                 });
                 onToggledOn(toggles, length.id("-px-button"), [this, length, absoluteItem] {
                     convertUnit(length, absoluteItem(), false);
@@ -166,11 +158,11 @@ namespace jive_examples::layouts
 
         void showAbsoluteItem(const juce::ValueTree& item)
         {
-            setProperty("anchor-combo-box", "selected", item.hasProperty("centre-x") ? 1 : 0);
+            setProperty("anchor-combo-box", "selected", indexOfOption("anchor-combo-box", item.getProperty("anchor", "top-left")));
 
             for (const auto& length : lengths)
             {
-                const auto percentage = isPercentage(item[length.propertyOf(item)]);
+                const auto percentage = isPercentage(item[length.property]);
                 setProperty(length.id(percentage ? "-percent-button" : "-px-button"), "toggled", true);
                 showLength(length, item);
             }
@@ -178,7 +170,7 @@ namespace jive_examples::layouts
 
         void showLength(const Length& length, const juce::ValueTree& item)
         {
-            const auto value = item[length.propertyOf(item)];
+            const auto value = item[length.property];
             setProperty(length.id("-slider"), "max", isPercentage(value) ? 100 : 500);
             setProperty(length.id("-slider"), "value", juce::roundToInt(value.toString().getFloatValue()));
             setProperty(length.id("-label"), "text", value);
@@ -188,7 +180,7 @@ namespace jive_examples::layouts
         // box stays where it is until the preview is resized.
         void convertUnit(const Length& length, juce::ValueTree item, bool toPercentage)
         {
-            const auto property = length.propertyOf(item);
+            const auto& property = length.property;
 
             if (isPercentage(item[property]) != toPercentage)
             {
@@ -200,21 +192,6 @@ namespace jive_examples::layouts
             }
 
             showLength(length, item);
-        }
-
-        void anchor(juce::ValueTree item, bool toCentre)
-        {
-            for (const auto& length : lengths)
-            {
-                if (!length.centreProperty.isValid())
-                    continue;
-
-                const auto& from = toCentre ? length.property : length.centreProperty;
-                const auto& to = toCentre ? length.centreProperty : length.property;
-
-                if (item.hasProperty(from))
-                    item.setProperty(to, item[from], nullptr);
-            }
         }
 
         [[nodiscard]] static bool isPercentage(const juce::var& length)
@@ -313,10 +290,10 @@ namespace jive_examples::layouts
             { "absolute-tab", "public/views/Absolute.xml" },
         } };
         const std::array<Length, 4> lengths{ {
-            { "x", "centre-x", true },
-            { "y", "centre-y", false },
-            { "width", {}, true },
-            { "height", {}, false },
+            { "x", true },
+            { "y", false },
+            { "width", true },
+            { "height", false },
         } };
 
         // Switching pages leaves the window's tree in place, along with the

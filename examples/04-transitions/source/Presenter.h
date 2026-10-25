@@ -13,6 +13,7 @@ namespace jive_examples::transitions
     public:
         Presenter()
         {
+            window = interpreter.interpret(mainView);
             interpreter.onLoad = [this](jive::GuiItem& root) {
                 if (root.state != windowState)
                     bindWindow();
@@ -20,7 +21,7 @@ namespace jive_examples::transitions
                 bindPage();
                 inspector.inspect(*window->getComponent());
             };
-            window = interpreter.interpret(mainView);
+            interpreter.onLoad(*window);
         }
 
     private:
@@ -112,7 +113,7 @@ namespace jive_examples::transitions
             });
             onToggled(toggles, "move-button", [this](bool toggled) {
                 for (auto runner : jive::findElementsWithClass(window->state, "runner"))
-                    runner.setProperty("centre-x", toggled ? "95%" : "5%", nullptr);
+                    runner.setProperty("x", toggled ? "95%" : "5%", nullptr);
             });
         }
 
@@ -275,18 +276,17 @@ namespace jive_examples::transitions
             { "layout-tab", "public/views/Layout.xml" },
             { "styles-tab", "public/views/Styles.xml" },
         } };
-        const std::array<Animation, 9> animations{ {
+        const std::array<Animation, 8> animations{ {
             { "flex-grow", "flex-box", 1, 4 },
             { "flex-basis", "flex-box", 60, 240 },
             { "gap", "flex-sample", 10, 40 },
             { "padding", "flex-sample", 10, 25 },
-            { "opacity", "flex-box", 1.0, 0.2 },
             { "border-width", "flex-box", 0, 12 },
             { "grid-template-columns", "grid-sample", "1fr 1fr 1fr", "1fr 4fr 1fr" },
             { "width", "absolute-box", 60, 300 },
             { "height", "absolute-box", 40, 90 },
         } };
-        const std::array<StyleRange, 7> styleRanges{ {
+        const std::array<StyleRange, 8> styleRanges{ {
             { "background", 0, 360, "hsl({}, 70%, 60%)", 200, 280 },
             { "border", 0, 360, "hsl({}, 90%, 70%)", 50, 160 },
             { "border-width", 0, 12, "{}px", 2, 10 },
@@ -294,6 +294,7 @@ namespace jive_examples::transitions
             { "shadow", 0, 40, "0 0 {}px hotpink", 0, 30 },
             { "foreground", 0, 100, "hsl(0, 0%, {}%)", 10, 100 },
             { "fill", 0, 360, "hsl({}, 90%, 55%)", 220, 45 },
+            { "opacity", 0, 100, "{}%", 100, 30 },
         } };
         const juce::String defaultTiming{ "600ms ease-in-out" };
 
