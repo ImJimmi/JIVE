@@ -77,10 +77,9 @@ namespace jive
             applyTheme();
     }
 
-    // Editors have no theme unless they're given one.
     void PluginEditor::applyTheme()
     {
-        jiveLookAndFeel.applyTheme(fromVar<Theme>(state.getProperty(ids::theme(), toVar(Theme::juce))));
+        jiveLookAndFeel.applyTheme(fromVar<Theme>(state.getProperty(ids::theme(), toVar(Theme::steel))));
 
         if (auto comp = getComponent())
             comp->sendLookAndFeelChange();
