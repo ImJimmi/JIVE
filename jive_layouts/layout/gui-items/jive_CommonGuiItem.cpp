@@ -21,7 +21,6 @@ namespace jive
         , clickingGrabsFocus{ state, ids::clickingGrabsFocus() }
         , focusOutline{ state, ids::focusOutline() }
         , focusOrder{ state, ids::focusOrder() }
-        , opacity{ state, ids::opacity() }
         , classes{ state, ids::classes() }
         , cursor{ state, ids::cursor() }
         , width{ state, ids::width() }
@@ -89,13 +88,6 @@ namespace jive
         for (const auto& updater : propertyUpdaters)
             updater.second();
 
-        const auto updateOpacity = [this] {
-            getComponent()->setAlpha(opacity.exists() ? opacity.calculateCurrent() : 1.0f);
-        };
-        opacity.onValueChange = updateOpacity;
-        opacity.onTransitionProgressed = updateOpacity;
-        getComponent()->setAlpha(opacity.getOr(1.0f));
-
         if (isTopLevel())
         {
             // Top-level items must have an explicit size!
@@ -119,9 +111,6 @@ namespace jive
     void CommonGuiItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
     {
         if (tree != state)
-            return;
-
-        if (opacity.handlePropertyChange(tree, property))
             return;
 
         updateProperty(property);
@@ -348,7 +337,6 @@ public:
         testClickingGrabsFocus();
         testFocusOutline();
         testEnablement();
-        testOpacity();
         testCursor();
         testClass();
         testParentHierarchy();
@@ -932,46 +920,6 @@ private:
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(state);
             expect(!item->getComponent()->isEnabled());
-        }
-    }
-
-    void testOpacity()
-    {
-        beginTest("opacity");
-
-        {
-            juce::ValueTree state{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(state);
-            expect(item->getComponent()->getAlpha() == 1.f);
-
-            state.setProperty("opacity", 0.42f, nullptr);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
-
-            state.setProperty("transition", "opacity 10s", nullptr);
-            state.setProperty("opacity", 0.92f, nullptr);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
-            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(4.0));
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.62f, 1.f / 256.f);
-        }
-        {
-            juce::ValueTree state{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "opacity", 0.123f },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(state);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.123f, 1.f / 256.f);
         }
     }
 

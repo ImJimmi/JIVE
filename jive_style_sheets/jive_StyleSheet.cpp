@@ -409,6 +409,7 @@ public:
         testSelectorEdgeCases();
         testInheritance();
         testMiscStyleProperties();
+        testOpacity();
         testTokens();
         testFileBasedStyles();
         testIcons();
@@ -1468,6 +1469,184 @@ private:
                              .find<juce::BorderSize<float>>("border-width")
                              ->getTop(),
                          5.0f);
+        }
+    }
+
+    void testOpacity()
+    {
+        static constexpr auto alphaTolerance = 1.0f / 256.0f;
+
+        beginTest("opacity / sets the component's alpha");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "opacity", 0.4 },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            button.createComponentSnapshot(button.getLocalBounds());
+            expectWithinAbsoluteError(button.getAlpha(), 0.4f, alphaTolerance);
+        }
+
+        beginTest("opacity / can be a percentage");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "opacity", "25%" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            button.createComponentSnapshot(button.getLocalBounds());
+            expectWithinAbsoluteError(button.getAlpha(), 0.25f, alphaTolerance);
+        }
+
+        beginTest("opacity / the first paint uses the component's opacity");
+        {
+            jive::IgnoredComponent parent;
+            parent.setSize(100, 100);
+            juce::TextButton child;
+            child.setComponentID("child");
+            child.setBounds(0, 0, 100, 100);
+            parent.addAndMakeVisible(child);
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "background", "blue" },
+                            {
+                                "#child",
+                                new jive::Object{
+                                    { "background", "red" },
+                                    { "border-width", 0 },
+                                    { "opacity", 0.5 },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            const auto pixel = parent
+                                   .createComponentSnapshot(parent.getLocalBounds())
+                                   .getPixelAt(50, 50);
+            const auto expected = juce::Colours::blue.overlaidWith(juce::Colours::red.withAlpha(0.5f));
+            expectWithinAbsoluteError(static_cast<int>(pixel.getRed()), static_cast<int>(expected.getRed()), 2);
+            expectWithinAbsoluteError(static_cast<int>(pixel.getBlue()), static_cast<int>(expected.getBlue()), 2);
+        }
+
+        beginTest("opacity / transitions, even from fully transparent");
+        {
+            jive::IgnoredComponent parent;
+            parent.setSize(100, 100);
+            juce::TextButton child;
+            child.setComponentID("child");
+            child.setBounds(0, 0, 50, 25);
+            parent.addAndMakeVisible(child);
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "transition", "opacity 1s linear" },
+                            {
+                                "#child",
+                                new jive::Object{
+                                    { "opacity", 0 },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            auto& rule = dynamic_cast<jive::Object&>(*state["style"]
+                                                          .getDynamicObject()
+                                                          ->getProperty("#child")
+                                                          .getDynamicObject());
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            parent.createComponentSnapshot(parent.getLocalBounds());
+            expectWithinAbsoluteError(child.getAlpha(), 0.0f, alphaTolerance);
+
+            // A fully transparent component isn't painted, so it can't be the
+            // one to apply its new opacity.
+            rule.setProperty("opacity", 1);
+            parent.createComponentSnapshot(parent.getLocalBounds());
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+            parent.createComponentSnapshot(parent.getLocalBounds());
+            expectWithinAbsoluteError(child.getAlpha(), 0.5f, alphaTolerance);
+        }
+
+        beginTest("opacity / removing it restores the component's alpha");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "opacity", 0.4 },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+            button.createComponentSnapshot(button.getLocalBounds());
+
+            state.setProperty("style", new jive::Object{ { "background", "red" } }, nullptr);
+            button.createComponentSnapshot(button.getLocalBounds());
+            expectWithinAbsoluteError(button.getAlpha(), 1.0f, alphaTolerance);
+        }
+
+        beginTest("opacity / without one, the component's alpha is left alone");
+        {
+            juce::TextButton button;
+            button.setSize(100, 25);
+            button.setAlpha(0.3f);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "background", "red" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            button.createComponentSnapshot(button.getLocalBounds());
+            expectWithinAbsoluteError(button.getAlpha(), 0.3f, alphaTolerance);
         }
     }
 

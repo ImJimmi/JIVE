@@ -15,6 +15,7 @@
                     <Option>shadow</Option>
                     <Option>foreground</Option>
                     <Option>fill</Option>
+                    <Option>opacity</Option>
                 </ComboBox>
 
                 <Label>Start</Label>

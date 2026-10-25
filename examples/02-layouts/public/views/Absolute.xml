@@ -1,5 +1,5 @@
 <Component>
-    <Text margin="0 0 25 0">Set 'display' to block to position children yourself, either by their top-left corner with x and y, or by their centre with centre-x and centre-y. Positions and sizes are in pixels or a percentage of the parent, so resize the window to see the difference.</Text>
+    <Text margin="0 0 25 0">Set 'display' to block to position children yourself, with x and y. The anchor sets which point of a child sits at that position: its top-left corner by default, its centre, or any other point. Positions and sizes are in pixels or a percentage of the parent, so resize the window to see the difference.</Text>
 
     <Component display="grid" grid-template-columns="400px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
         <Component>
@@ -19,7 +19,14 @@
                 <Label>Anchor</Label>
                 <ComboBox id="anchor-combo-box" grid-column="2 / span 3" grid-row="2 / 3">
                     <Option>top-left</Option>
-                    <Option>centre</Option>
+                    <Option>centred-top</Option>
+                    <Option>top-right</Option>
+                    <Option>centred-left</Option>
+                    <Option>centred</Option>
+                    <Option>centred-right</Option>
+                    <Option>bottom-left</Option>
+                    <Option>centred-bottom</Option>
+                    <Option>bottom-right</Option>
                 </ComboBox>
 
                 <Label>X</Label>
@@ -60,9 +67,9 @@
             <Component class="box box-red" x="20px" y="20px" width="60px" height="60px" />
             <Component class="box box-orange" x="40%" y="20px" width="60px" height="60px" />
             <Component class="box box-yellow" x="75%" y="20px" width="20%" height="60px" />
-            <Component class="box box-green" centre-x="50%" centre-y="50%" width="20%" height="20%" />
+            <Component class="box box-green" x="50%" y="50%" anchor="centred" width="20%" height="20%" />
             <Component class="box box-blue" x="20px" y="75%" width="60px" height="20%" />
-            <Component class="box box-purple" centre-x="80%" centre-y="80%" width="60px" height="60px" />
+            <Component class="box box-purple" x="80%" y="80%" anchor="centred" width="60px" height="60px" />
         </Component>
     </Component>
 </Component>

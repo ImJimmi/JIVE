@@ -50,7 +50,6 @@ namespace jive
         PassiveProperty<bool> clickingGrabsFocus;
         PassiveProperty<bool> focusOutline;
         PassiveProperty<int> focusOrder;
-        PassiveProperty<float> opacity;
         PassiveProperty<juce::String> classes;
         PassiveProperty<juce::MouseCursor::StandardCursorType> cursor;
         PassiveProperty<Length> width;

@@ -45,6 +45,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "files/jive_SourceDirectories.h"
 #include "files/jive_SourceFile.h"
 #include "files/jive_SourceRoot.h"
+#include "geometry/jive_Anchor.h"
 #include "geometry/jive_BorderRadii.h"
 #include "geometry/jive_BoxModel.h"
 #include "geometry/jive_Geometry.h"

@@ -274,6 +274,7 @@ namespace jive
             // styles were last resolved from.
             std::vector<SelectorInputs> resolvedFrom;
             std::uint64_t resolvedFromStylersVersion;
+            bool appliedOpacity;
         };
 
         template <typename Component, typename DefaultStyleDrawer>
@@ -282,6 +283,7 @@ namespace jive
                   DefaultStyleDrawer drawDefaultStyle) const
         {
             const auto styles = findMostApplicableStyles(component);
+            applyChildOpacities(component);
 
             if (const auto painter = findMostApplicablePainter(component);
                 painter.has_value())
@@ -294,6 +296,8 @@ namespace jive
             updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component), styles);
         }
 
+        void applyOpacity(ComponentStylesCache&) const;
+        void applyChildOpacities(const juce::Component&) const;
         void onVBlankUpdate();
 
         juce::Component::SafePointer<juce::Component> attachedComponent;
@@ -302,6 +306,7 @@ namespace jive
         std::vector<Styler> stylers;
         std::vector<juce::Uuid> themeStyles;
         std::uint64_t stylersVersion = 0;
+        mutable bool usesOpacity = false;
         mutable std::vector<ComponentStylesCache> stylesCache;
 
         juce::VBlankAttachment vBlank;

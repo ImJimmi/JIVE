@@ -9,8 +9,7 @@ namespace jive
         : ContainerItem::Child{ std::move(itemToDecorate) }
         , x{ state, ids::x() }
         , y{ state, ids::y() }
-        , centreX{ state, ids::centreX() }
-        , centreY{ state, ids::centreY() }
+        , anchor{ state, ids::anchor() }
         , width{ state, ids::width() }
         , height{ state, ids::height() }
     {
@@ -20,38 +19,12 @@ namespace jive
             getComponent()->setBounds(calculateBounds());
         };
 
-        x.onValueChange = [this, updateBounds] {
-            if (x.exists())
-                centreX.clear();
-
-            updateBounds();
-        };
+        x.onValueChange = updateBounds;
         x.onTransitionProgressed = updateBounds;
-
-        y.onValueChange = [this, updateBounds]() {
-            if (y.exists())
-                centreY.clear();
-
-            updateBounds();
-        };
+        y.onValueChange = updateBounds;
         y.onTransitionProgressed = updateBounds;
-
-        centreX.onValueChange = [this, updateBounds]() {
-            if (centreX.exists())
-                x.clear();
-
-            updateBounds();
-        };
-        centreX.onTransitionProgressed = updateBounds;
-
-        centreY.onValueChange = [this, updateBounds]() {
-            if (centreY.exists())
-                y.clear();
-
-            updateBounds();
-        };
-        centreY.onTransitionProgressed = updateBounds;
-
+        anchor.onValueChange = updateBounds;
+        anchor.onTransitionProgressed = updateBounds;
         width.onValueChange = updateBounds;
         width.onTransitionProgressed = updateBounds;
         height.onValueChange = updateBounds;
@@ -69,44 +42,35 @@ namespace jive
 
     void BlockItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
     {
-        forwardPropertyChange(tree, property, x, y, centreX, centreY, width, height);
+        forwardPropertyChange(tree, property, x, y, anchor, width, height);
     }
 
     int BlockItem::calculateX(float itemWidth) const
     {
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
-        if (centreX.exists())
-        {
-            return juce::roundToInt(
-                centreX
-                    .calculateCurrent()
-                    .toPixels(parentContentBounds.getWidth())
-                - itemWidth / 2.f);
-        }
-
         return juce::roundToInt(
             x
                 .calculateCurrent()
-                .toPixels(parentContentBounds.getWidth()));
+                .toPixels(parentContentBounds.getWidth())
+            - anchor
+                  .calculateCurrent()
+                  .x
+                  .toPixels(itemWidth));
     }
 
     int BlockItem::calculateY(float itemHeight) const
     {
         const auto parentContentBounds = boxModel(*getParent()).getContentBounds();
 
-        if (centreY.exists())
-        {
-            return juce::roundToInt(centreY
-                                        .calculateCurrent()
-                                        .toPixels(parentContentBounds.getHeight())
-                                    - itemHeight / 2.f);
-        }
-
         return juce::roundToInt(
             y
                 .calculateCurrent()
-                .toPixels(parentContentBounds.getHeight()));
+                .toPixels(parentContentBounds.getHeight())
+            - anchor
+                  .calculateCurrent()
+                  .y
+                  .toPixels(itemHeight));
     }
 
     juce::Rectangle<int> BlockItem::calculateBounds() const
@@ -156,7 +120,7 @@ public:
     void runTest() override
     {
         testPosition();
-        testCentre();
+        testAnchor();
         testSize();
     }
 
@@ -246,73 +210,6 @@ private:
             expectEquals(child.getComponent()->getX(), 5);
             expectEquals(child.getComponent()->getY(), 20);
         }
-    }
-
-    void testCentre()
-    {
-        beginTest("centre");
-
-        {
-            juce::ValueTree parentState{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "display", "block" },
-                },
-                {
-                    juce::ValueTree{
-                        "Component",
-                        {
-                            { "width", 50 },
-                            { "height", 50 },
-                        },
-                    },
-                },
-            };
-            jive::Interpreter interpreter;
-            const auto parent = interpreter.interpret(parentState);
-            auto& item = *parent->getChildren()[0];
-            expectEquals(item.getComponent()->getBounds().getCentreX(), 25);
-            expectEquals(item.getComponent()->getBounds().getCentreY(), 25);
-
-            parentState.getChild(0).setProperty("centre-x", 12.3f, nullptr);
-            parentState.getChild(0).setProperty("centre-y", 98.7f, nullptr);
-            expectEquals(item.getComponent()->getBounds().getCentreX(), 12);
-            expectEquals(item.getComponent()->getBounds().getCentreY(), 99);
-        }
-        {
-            juce::ValueTree parentState{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "display", "block" },
-                },
-                {
-                    juce::ValueTree{
-                        "Component",
-                        {
-                            { "width", 50 },
-                            { "height", 50 },
-                            { "centre-x", 85 },
-                            { "centre-y", 43 },
-                        },
-                    },
-                },
-            };
-            jive::Interpreter interpreter;
-            const auto parent = interpreter.interpret(parentState);
-            auto& item = *parent->getChildren()[0];
-            expect(item.getComponent()->getBounds().getCentreX() == 85);
-            expect(item.getComponent()->getBounds().getCentreY() == 43);
-
-            parentState.getChild(0).setProperty("x", 66, nullptr);
-            expectEquals(item.getComponent()->getX(), 66);
-
-            parentState.getChild(0).setProperty("centre-x", 44, nullptr);
-            expectEquals(item.getComponent()->getBounds().getCentreX(), 44);
-        }
         {
             juce::ValueTree parentState{
                 "Component",
@@ -341,6 +238,79 @@ private:
             parentState.getChild(0).setProperty("y", "10%", nullptr);
             expectEquals(item.getComponent()->getX(), 98);
             expectEquals(item.getComponent()->getY(), 25);
+        }
+    }
+
+    void testAnchor()
+    {
+        beginTest("anchor");
+
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "display", "block" },
+                },
+                {
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "width", 50 },
+                            { "height", 40 },
+                            { "x", 100 },
+                            { "y", 100 },
+                        },
+                    },
+                },
+            };
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 100, 100, 50, 40 });
+
+            parentState.getChild(0).setProperty("anchor", "centred", nullptr);
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 75, 80, 50, 40 });
+
+            parentState.getChild(0).setProperty("anchor", "bottom-right", nullptr);
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 50, 60, 50, 40 });
+
+            parentState.getChild(0).setProperty("anchor", "centred-top", nullptr);
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 75, 100, 50, 40 });
+
+            parentState.getChild(0).setProperty("anchor", "10px 50%", nullptr);
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 90, 80, 50, 40 });
+
+            parentState.getChild(0).removeProperty("anchor", nullptr);
+            expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 100, 100, 50, 40 });
+        }
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 334 },
+                    { "display", "block" },
+                    { "padding", 10 },
+                },
+                {
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "width", 50 },
+                            { "height", 50 },
+                            { "x", "50%" },
+                            { "y", "50%" },
+                            { "anchor", "centred" },
+                        },
+                    },
+                },
+            };
+            jive::Interpreter interpreter;
+            const auto parent = interpreter.interpret(parentState);
+            auto& item = *parent->getChildren()[0];
+            expectEquals(item.getComponent()->getBounds().getCentre(), juce::Point{ 111, 167 });
         }
     }
 
@@ -381,8 +351,9 @@ private:
 
         beginTest("a centred item stays centred when its size changes");
 
-        parentState.getChild(0).setProperty("centre-x", "50%", nullptr);
-        parentState.getChild(0).setProperty("centre-y", 100, nullptr);
+        parentState.getChild(0).setProperty("x", "50%", nullptr);
+        parentState.getChild(0).setProperty("y", 100, nullptr);
+        parentState.getChild(0).setProperty("anchor", "centred", nullptr);
         expectEquals(item.getComponent()->getBounds(), juce::Rectangle{ 56, 83, 111, 33 });
 
         parentState.getChild(0).setProperty("width", 20, nullptr);

@@ -22,8 +22,7 @@ namespace jive
 
         PassiveProperty<Length> x;
         PassiveProperty<Length> y;
-        PassiveProperty<Length> centreX;
-        PassiveProperty<Length> centreY;
+        PassiveProperty<Anchor> anchor;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;
 

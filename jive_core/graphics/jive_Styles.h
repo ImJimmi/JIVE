@@ -159,6 +159,7 @@ namespace jive
         StyleProperty<Fill> foreground{ ids::foreground() };
         StyleProperty<Icon> icon{ ids::icon() };
         StyleProperty<float> lineSpacing{ ids::lineSpacing() };
+        StyleProperty<float> opacity{ ids::opacity() };
         StyleProperty<Shadow> shadow{ ids::shadow() };
         StyleProperty<Fill> stroke{ ids::stroke() };
         StyleProperty<juce::Justification> textAlign{ ids::textAlign() };
@@ -187,6 +188,7 @@ namespace jive
             "foreground",
             "icon",
             "line-spacing",
+            "opacity",
             "shadow",
             "stroke",
             "text-align",
@@ -233,6 +235,10 @@ namespace jive
                 return withIcon(fromVar<Icon>(value));
             if (propertyName == lineSpacing.id)
                 return withLineSpacing(fromVar<float>(value));
+            if (propertyName == opacity.id)
+                return withOpacity(value.toString().endsWithChar('%')
+                                       ? value.toString().getFloatValue() / 100.0f
+                                       : fromVar<float>(value));
             if (propertyName == shadow.id)
                 return withShadow(fromVar<Shadow>(value));
             if (propertyName == stroke.id)
@@ -349,6 +355,12 @@ namespace jive
         [[nodiscard]] Styles& withLineSpacing(float value)
         {
             lineSpacing = value;
+            return *this;
+        }
+
+        [[nodiscard]] Styles& withOpacity(float value)
+        {
+            opacity = value;
             return *this;
         }
 
@@ -481,6 +493,8 @@ namespace jive
                 property = &fontExtraKerningFactor;
             else if (styleName == "line-spacing")
                 property = &lineSpacing;
+            else if (styleName == "opacity")
+                property = &opacity;
 #if JUCE_MAJOR_VERSION >= 8
             else if (styleName == "font-ascent-override")
                 property = &fontAscentOverride;
@@ -565,6 +579,7 @@ namespace jive
                                        styles.foreground,
                                        styles.icon,
                                        styles.lineSpacing,
+                                       styles.opacity,
                                        styles.shadow,
                                        styles.stroke,
                                        styles.textAlign,
@@ -618,6 +633,7 @@ namespace jive
             function(foreground);
             function(icon);
             function(lineSpacing);
+            function(opacity);
             function(shadow);
             function(stroke);
             function(textAlign);

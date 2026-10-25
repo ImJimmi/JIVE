@@ -77,6 +77,7 @@ namespace jive
             styles,
         });
         stylersVersion++;
+        usesOpacity = usesOpacity || styles.opacity.hasValue();
 
         return newItem.id;
     }
@@ -695,6 +696,7 @@ namespace jive
         destination.borderWidth = destination.borderWidth.hasValue() ? destination.borderWidth : source.borderWidth;
         destination.direction = destination.direction.hasValue() ? destination.direction : source.direction;
         destination.icon = destination.icon.hasValue() ? destination.icon : source.icon;
+        destination.opacity = destination.opacity.hasValue() ? destination.opacity : source.opacity;
         destination.shadow = destination.shadow.hasValue() ? destination.shadow : source.shadow;
         destination.textAlign = destination.textAlign.hasValue() ? destination.textAlign : source.textAlign;
         destination.thumb = destination.thumb.hasValue() ? destination.thumb : source.thumb;
@@ -787,6 +789,7 @@ namespace jive
             Styles{},
             {},
             0,
+            false,
         });
     }
 
@@ -898,6 +901,7 @@ namespace jive
         updateStyleProperty(destination.foreground, source.foreground, transitions);
         updateStyleProperty(destination.icon, source.icon, transitions);
         updateStyleProperty(destination.lineSpacing, source.lineSpacing, transitions);
+        updateStyleProperty(destination.opacity, source.opacity, transitions);
         updateStyleProperty(destination.shadow, source.shadow, transitions);
         updateStyleProperty(destination.stroke, source.stroke, transitions);
         updateStyleProperty(destination.textAlign, source.textAlign, transitions);
@@ -926,6 +930,7 @@ namespace jive
             entry.resolvedFromStylersVersion = stylersVersion;
         }
 
+        applyOpacity(entry);
         transitioningComponents.removeAllInstancesOf(nullptr);
 
         if (entry.styles.hasTransitionsInProgress())
@@ -934,6 +939,34 @@ namespace jive
             transitioningComponents.removeAllInstancesOf(const_cast<juce::Component*>(&component));
 
         return entry.styles;
+    }
+
+    // An alpha that wasn't set by a style is left alone.
+    void LookAndFeel::applyOpacity(ComponentStylesCache& entry) const
+    {
+        const auto opacity = entry.styles.find<float>("opacity");
+
+        if (opacity.has_value() || entry.appliedOpacity)
+            entry.component->setAlpha(opacity.value_or(1.0f));
+
+        entry.appliedOpacity = opacity.has_value();
+        usesOpacity = usesOpacity || entry.appliedOpacity;
+    }
+
+    // JUCE reads a component's alpha before painting it, and doesn't paint it
+    // at all with no alpha, so a component's opacity can't wait until it's
+    // painted. Resolving every child's styles isn't free, so it's only done
+    // once something has used an opacity.
+    void LookAndFeel::applyChildOpacities(const juce::Component& component) const
+    {
+        if (!usesOpacity)
+            return;
+
+        for (auto* child : component.getChildren())
+        {
+            if (child->isVisible())
+                juce::ignoreUnused(findMostApplicableStyles(*child));
+        }
     }
 
     // Popups are painted from hidden stand-ins, so nothing repaints a popup

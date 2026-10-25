@@ -41,6 +41,8 @@ target_sources(jive_core
                       files/jive_SourceFile.h
                       files/jive_SourceRoot.cpp
                       files/jive_SourceRoot.h
+                      geometry/jive_Anchor.cpp
+                      geometry/jive_Anchor.h
                       geometry/jive_BorderRadii.cpp
                       geometry/jive_BorderRadii.h
                       geometry/jive_BorderWidth.cpp

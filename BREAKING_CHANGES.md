@@ -171,6 +171,64 @@ Set `text-align` and `direction` in a style sheet instead. `text-align` takes th
 
 `word-wrap` is still an attribute. `line-spacing` can be set as an attribute or as a style property.
 
+## `opacity` has moved to style sheets
+
+The `opacity` attribute has been removed.
+
+### Reason
+
+Opacity is purely stylistic, so it belongs with the other style properties. As a style property it can also change with interaction states such as `:hover`.
+
+### Migrating
+
+Set `opacity` in a style sheet instead. It also accepts percentages, such as `"50%"`. To transition it, list it in the style sheet's `transition` rather than the element's.
+
+#### 1.x
+
+```xml
+<Component opacity="0.5" transition="opacity 200ms" />
+```
+
+#### 2.0
+
+```xml
+<Component id="faded" />
+```
+
+```jsonc
+{
+  "transition": "opacity 200ms",
+
+  "#faded": {
+    "opacity": 0.5
+  }
+}
+```
+
+## `centre-x` and `centre-y` have been replaced by `anchor`
+
+The `centre-x` and `centre-y` attributes have been removed. Block items are always positioned with `x` and `y`, and the new `anchor` attribute sets which point on the item sits at that position.
+
+### Reason
+
+`centre-x` and `centre-y` could only position an item by its top-left corner or its centre, and setting one cleared the other. `anchor` can use any point on the item, such as `bottom-right` or `10px 50%`, without changing which properties hold the position.
+
+### Migrating
+
+Replace `centre-x` and `centre-y` with `x` and `y`, and add `anchor="centred"`. Any transitions on `centre-x` or `centre-y` should now be on `x` or `y`.
+
+#### 1.x
+
+```xml
+<Component centre-x="50%" centre-y="50%" width="60" height="40" />
+```
+
+#### 2.0
+
+```xml
+<Component x="50%" y="50%" anchor="centred" width="60" height="40" />
+```
+
 ## Default values are no longer written to the tree
 
 In 1.x, GUI items wrote default values for unset properties into the `juce::ValueTree`. For example, `display="flex"`, `opacity="1"`, `enabled="1"`, `flex-direction="column"` and `justification="centred-left"` appeared on elements that never set them. 2.0 leaves unset properties unset and applies the defaults internally.

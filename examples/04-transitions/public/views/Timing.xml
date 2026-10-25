@@ -1,31 +1,31 @@
 <Component>
-    <Text margin="0 0 25 0">A transition reads "property duration easing delay", and an element can list several, separated by commas. Each box below uses the transition written next to it, with the duration swapped for the one you choose, and a transition can be changed like this at any time, even part-way. Move only changes the boxes' centre-x. Press it again before they arrive: each box turns round from wherever it has got to, instead of jumping back to the start.</Text>
+    <Text margin="0 0 25 0">A transition reads "property duration easing delay", and an element can list several, separated by commas. Each box below uses the transition written next to it, with the duration swapped for the one you choose, and a transition can be changed like this at any time, even part-way. Move only changes the boxes' x. Press it again before they arrive: each box turns round from wherever it has got to, instead of jumping back to the start.</Text>
 
     <Component class="preview" padding="25" gap="25" flex-grow="1" justify-content="center">
         <Component display="grid" grid-template-columns="auto 1fr" gap="20 25" align-items="center">
-            <Text class="lane value">centre-x 1500ms linear</Text>
+            <Text class="lane value">x 1500ms linear</Text>
             <Component class="track" display="block" height="40">
-                <Component class="runner box box-red" width="30" height="30" centre-x="5%" centre-y="50%" />
+                <Component class="runner box box-red" width="30" height="30" x="5%" y="50%" anchor="centred" />
             </Component>
 
-            <Text class="lane value">centre-x 1500ms ease-in</Text>
+            <Text class="lane value">x 1500ms ease-in</Text>
             <Component class="track" display="block" height="40">
-                <Component class="runner box box-orange" width="30" height="30" centre-x="5%" centre-y="50%" />
+                <Component class="runner box box-orange" width="30" height="30" x="5%" y="50%" anchor="centred" />
             </Component>
 
-            <Text class="lane value">centre-x 1500ms ease-out</Text>
+            <Text class="lane value">x 1500ms ease-out</Text>
             <Component class="track" display="block" height="40">
-                <Component class="runner box box-yellow" width="30" height="30" centre-x="5%" centre-y="50%" />
+                <Component class="runner box box-yellow" width="30" height="30" x="5%" y="50%" anchor="centred" />
             </Component>
 
-            <Text class="lane value">centre-x 1500ms ease-in-out</Text>
+            <Text class="lane value">x 1500ms ease-in-out</Text>
             <Component class="track" display="block" height="40">
-                <Component class="runner box box-green" width="30" height="30" centre-x="5%" centre-y="50%" />
+                <Component class="runner box box-green" width="30" height="30" x="5%" y="50%" anchor="centred" />
             </Component>
 
-            <Text class="lane value">centre-x 1500ms ease-in-out 500ms</Text>
+            <Text class="lane value">x 1500ms ease-in-out 500ms</Text>
             <Component class="track" display="block" height="40">
-                <Component class="runner box box-blue" width="30" height="30" centre-x="5%" centre-y="50%" />
+                <Component class="runner box box-blue" width="30" height="30" x="5%" y="50%" anchor="centred" />
             </Component>
         </Component>
 

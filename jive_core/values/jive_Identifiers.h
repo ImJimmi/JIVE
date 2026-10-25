@@ -40,6 +40,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& anchor()
+    {
+        static const juce::Identifier identifier{ "anchor" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& attachedShadowComponent()
     {
         static const juce::Identifier identifier{ "jive::attached-shadow-component" };
@@ -79,18 +85,6 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& callbacks()
     {
         static const juce::Identifier identifier{ "callbacks" };
-        return identifier;
-    }
-
-    [[nodiscard]] inline const juce::Identifier& centreX()
-    {
-        static const juce::Identifier identifier{ "centre-x" };
-        return identifier;
-    }
-
-    [[nodiscard]] inline const juce::Identifier& centreY()
-    {
-        static const juce::Identifier identifier{ "centre-y" };
         return identifier;
     }
 

@@ -14,6 +14,7 @@
 #include "components/widgets/jive_TextComponent.cpp"
 #include "files/jive_SourceFile.cpp"
 #include "files/jive_SourceRoot.cpp"
+#include "geometry/jive_Anchor.cpp"
 #include "geometry/jive_BorderRadii.cpp"
 #include "geometry/jive_BorderWidth.cpp"
 #include "geometry/jive_BoxModel.cpp"
