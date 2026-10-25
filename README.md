@@ -28,7 +28,7 @@ JIVE completely overhauls the frontend development experience for JUCE projects 
 
 Unlike in JUCE, where we build UIs entirely in C++, JIVE interprets XML files for layouts, and JSON files for styles similar to the way browsers load HTML and CSS. With the introduction of [Hot Reloading](#-hot-reloading) in JIVE 2.0, it's now easier than ever to build UIs for audio applications and plugins.
 
-## Layouts
+## [Layouts](./jive_layouts/)
 
 JIVE parses XML files to build a hierarchy of `juce::Component`s for you, which you can then interact with through the `jive::GuiItem` class. The XML files are parsed to `juce::ValueTree`s which you can then change at runtime and JIVE will update the UI accordingly.
 
@@ -50,7 +50,9 @@ state["padding"] = "30 40";
 state.getChildWithName("Text")["text"] = "Greetings!";
 ```
 
-## Styles
+_See [jive_layouts/README.md](./jive_layouts/README.md) for an in-depth overview of layouts._
+
+## [Styles](./jive_style_sheets/)
 
 JIVE's powerful styling API parses JSON files and applies the rules they define to relevant components. CSS-like selectors allow for specific components, or classes of component to be styled differently.
 
@@ -88,6 +90,8 @@ JIVE's powerful styling API parses JSON files and applies the rules they define 
   }
 }
 ```
+
+_See [jive_style_sheets/README.md](./jive_style_sheets/README.md) for an in-depth overview of style sheets._
 
 ## :fire: Hot Reloading
 
