@@ -88,18 +88,29 @@ namespace jive
 
     // Attributes merged in from a previously loaded template belong to that
     // template, not to the instance.
-    static juce::String findPlaceholderValue(const juce::ValueTree& instance, const juce::String& name)
+    static std::optional<juce::String> findPlaceholderValue(const juce::ValueTree& instance, const juce::String& name)
     {
-        if (name.isEmpty())
-            return {};
+        if (name.isEmpty() || !instance.hasProperty(name))
+            return std::nullopt;
 
         if (const auto* previousTemplateProperties = instance[ids::externalSourceProperties()].getArray();
             previousTemplateProperties != nullptr && previousTemplateProperties->contains(name))
         {
-            return {};
+            return std::nullopt;
         }
 
         return instance[name].toString();
+    }
+
+    // A default is part of the template's own markup, so it's used as written.
+    static juce::String fillPlaceholder(const juce::String& placeholder, const juce::ValueTree& instance)
+    {
+        const auto name = placeholder.upToFirstOccurrenceOf("=", false, false).trim();
+
+        if (const auto value = findPlaceholderValue(instance, name))
+            return escapeForXml(*value);
+
+        return placeholder.fromFirstOccurrenceOf("=", false, false).trim().unquoted();
     }
 
     static juce::String fillPlaceholders(const juce::String& xml, const juce::ValueTree& instance)
@@ -115,7 +126,7 @@ namespace jive
                 break;
 
             result << xml.substring(end, open)
-                   << escapeForXml(findPlaceholderValue(instance, xml.substring(open + 2, close).trim()));
+                   << fillPlaceholder(xml.substring(open + 2, close), instance);
             end = close + 2;
         }
 

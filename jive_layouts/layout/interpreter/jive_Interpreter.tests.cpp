@@ -313,6 +313,59 @@ static jive::UnitTest templatePlaceholdersTest{
     },
 };
 
+static jive::UnitTest templatePlaceholderDefaultsTest{
+    "jive",
+    "jive::Interpreter",
+    "Template Placeholder Defaults",
+    [](auto& test) {
+        // A placeholder's default is used only when the instance doesn't have
+        // the attribute at all - an empty value still replaces the default.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto card = cwd.getChildFile("card.xml");
+        card.create();
+        card.replaceWithText(R"(
+            <Component id="{{ id }}" class="{{class='card'}}">
+                <Text>{{ title = "Untitled &amp; Unloved" }}</Text>
+                <{{ control="Button" }}/>
+            </Component>
+        )");
+
+        auto mainView = cwd.getChildFile("cards.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component template="card.xml" id="defaulted"/>
+                <Component template="card.xml" id="supplied" class="custom" title="Hello" control="Slider"/>
+                <Component template="card.xml" id="emptied" class="" title=""/>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        const auto expectCard = [&test, &item](const juce::String& id,
+                                               const juce::String& expectedClass,
+                                               const juce::String& expectedTitle,
+                                               const juce::String& expectedControl) {
+            const auto instance = jive::findElementWithID(item->state, id);
+            test.expectEquals(instance["class"].toString(), expectedClass, id);
+            test.expectEquals(instance.getChild(0)["text"].toString(), expectedTitle, id);
+            test.expectEquals(instance.getChild(1).getType().toString(), expectedControl, id);
+        };
+
+        expectCard("defaulted", "card", "Untitled & Unloved", "Button");
+        expectCard("supplied", "custom", "Hello", "Slider");
+        expectCard("emptied", "", "", "Button");
+
+        cwd.deleteRecursively();
+    },
+};
+
 static juce::StringArray describeChildren(const juce::ValueTree& tree)
 {
     juce::StringArray result;

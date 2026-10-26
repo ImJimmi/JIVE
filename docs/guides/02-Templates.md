@@ -42,13 +42,15 @@ This is a basic mixer UI that has a list of tracks each with volume, mute, and s
   <img src="./assets/02-01.png" alt="The mini mixer window" width="512px"/>
 </p>
 
-The XML contains a lot of repetition as each track is laid out the same. The only thing that varies between tracks is the name, and the initial slider value.
+The XML contains a lot of repetition as each track has the same layout. The only thing that varies between tracks is the name, and the initial slider value.
 
 We can instead use a Template for the tracks to reduce the repetition and make it clearer what is actually different between each track.
 
 ## Templates
 
-We write templates in XML files, just like views. The key difference is that templates can have placeholders, like `{{ name }}` and _Snippets_. We'll look at snippets later.
+Templates are written in XML files, just like views. The key difference is that templates can have placeholders, like `{{ name }}` and _Snippets_, which we'll look at later.
+
+Here's a template that describes our Track component:
 
 ```xml
 <!-- public/Track.xml -->
@@ -60,7 +62,7 @@ We write templates in XML files, just like views. The key difference is that tem
 </Component>
 ```
 
-We can now simplify our main view by invoking the template:
+We can invoke our Track template in our main view to reduce the repetition:
 
 ```xml
 <!-- public/MainView.xml -->
@@ -77,17 +79,104 @@ We can now simplify our main view by invoking the template:
 </Window>
 ```
 
-It's now much clearer to see the difference between the tracks, and adding new tracks only requires a single additional line.
+It's now much clearer to see the difference between the tracks, and adding new tracks only requires a single line per track.
+
+## Nested Templates
+
+Templates can invoke other templates, down to any depth.
+
+```xml
+<!-- public/templates/Card.xml -->
+<Component class="card" padding="10">
+  <Text class="title">{{ title }}</Text>
+  <Snippet name="body"/>
+</Component>
+```
+
+```xml
+<!-- public/templates/Panel.xml -->
+<Component class="panel">
+  <Component template="./Card.xml" title="{{ title }}">
+    <Snippet name="body">
+      <Text>{{ body-text }}</Text>
+    </Snippet>
+  </Component>
+</Component>
+```
+
+```xml
+<!-- public/MainView.xml -->
+<Window width="300" height="200">
+  <Component
+    template="public/templates/Panel.xml"
+    title="Cool Templates!"
+    body-text="Lorum Ipsum..."
+  />
+</Window>
+```
+
+After both the templates are invoked, this becomes:
+
+```xml
+<!-- public/MainView.xml -->
+<Window width="300" height="200">
+  <Component class="panel">
+    <Component class="card" padding="10">
+      <Text class="title">Cool Templates!</Text>
+      <Text>Lorum Ipsum...</Text>
+    </Component>
+  </Component>
+</Window>
+```
 
 ## Placeholders
 
-Placeholders are processed before the XML is parsed, so they can be used anywhere in the XML:
+As shown above, placeholders can be used to pass information to templates when they're invoked.
+
+Placeholders use the syntax `{{ name }}`. The whitespace within the braces is ignored, so `{{name}}` is also valid.
+
+Placeholders are replaced character-for-character before the XML is parsed, so they can be used to replace any part of the XML document:
 
 ```xml
 <{{ type-name }} width="100" {{ prop }}="2468">
   <Text>{{ message }}</Text>
 </{{ type-name }}>
 ```
+
+### Repeated Placeholders
+
+Templates can use the same placeholder in multiple places. Every instance of the same placeholder will be replaced with the exact same string.
+
+```xml
+<Component id="{{ group-id }}">
+  <Button id="{{ group-id }}-button"></Button>
+  <Slider id="{{ group-id }}-slider"/>
+</Component>
+```
+
+### Unused & Default Placeholders
+
+If the invoker doesn't supply a value for a placeholder it will be removed and ignored.
+
+Templates can give their placeholders default values which will be used if the invoker doesn't supply its own value. Default values are specified like `{{ name = "Default Value" }}`.
+
+### Placeholders in Nested Templates
+
+Placeholders in nested templates can only be set by the template that invokes them. To allow invokers of an outer template to supply values for placeholders in inner templates, they should be forwarded like so:
+
+```xml
+<!-- Inner.xml -->
+<Component margin="0 0 {{margin-bottom}} 0"/>
+```
+
+```xml
+<!-- Outer.xml -->
+<Component template="./Inner.xml" margin-bottom="{{margin-bottom}}"/>
+```
+
+This has the slight caveat that if the inner template's placeholder has a default value, like `{{margin-bottom="10"}}`, but the invoker of the outer template doesn't supply a value for its `margin-bottom` placeholder, then the outer template's placeholder will be replaced with an empty string and so will become `margin-bottom=""` and so the inner template's placeholder will use that empty string, rather than using the default value.
+
+The only way to mitigate this would be to give the same default value for the outer template's forwarding placeholder.
 
 ## Snippets
 
@@ -181,54 +270,6 @@ Since the view didn't implement the `"children"` snippet, this becomes:
   <Component>
     <Text>Placeholder</Text>
     <Button>Placeholder</Button>
-  </Component>
-</Window>
-```
-
-## Nested Templates
-
-Templates can invoke other templates, down to any depth.
-
-```xml
-<!-- public/templates/Card.xml -->
-<Component class="card" padding="10">
-  <Text class="title">{{ title }}</Text>
-  <Snippet name="body"/>
-</Component>
-```
-
-```xml
-<!-- public/templates/Panel.xml -->
-<Component class="panel">
-  <Component template="./Card.xml" title="{{ title }}">
-    <Snippet name="body">
-      <Text>{{ body-text }}</Text>
-    </Snippet>
-  </Component>
-</Component>
-```
-
-```xml
-<!-- public/MainView.xml -->
-<Window width="300" height="200">
-  <Component
-    template="public/templates/Panel.xml"
-    title="Cool Templates!"
-    body-text="Lorum Ipsum..."
-  />
-</Window>
-```
-
-After both the templates are invoked, this becomes:
-
-```xml
-<!-- public/MainView.xml -->
-<Window width="300" height="200">
-  <Component class="panel">
-    <Component class="card" padding="10">
-      <Text class="title">Cool Templates!</Text>
-      <Text>Lorum Ipsum...</Text>
-    </Component>
   </Component>
 </Window>
 ```
