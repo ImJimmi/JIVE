@@ -634,6 +634,24 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& snippet()
+    {
+        static const juce::Identifier identifier{ "Snippet" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& snippets()
+    {
+        static const juce::Identifier identifier{ "jive::snippets" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& snippetSourceFile()
+    {
+        static const juce::Identifier identifier{ "jive::snippet-source-file" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& source()
     {
         static const juce::Identifier identifier{ "source" };
@@ -673,6 +691,12 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& styleFile()
     {
         static const juce::Identifier identifier{ "jive::style-file" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& templatePath()
+    {
+        static const juce::Identifier identifier{ "template" };
         return identifier;
     }
 

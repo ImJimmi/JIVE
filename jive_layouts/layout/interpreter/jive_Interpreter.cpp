@@ -62,9 +62,9 @@ namespace jive
         return interpret(parseXML(xmlStringData, xmlStringDataSize), pluginProcessor);
     }
 
-    juce::ValueTree Interpreter::parseFileToValueTree(const SourceFile& file) const
+    static juce::ValueTree parseSourceXml(const juce::String& xml, const SourceFile& file)
     {
-        auto sourceTree = jive::parseXML(file.loadAsString());
+        auto sourceTree = jive::parseXML(xml);
 
         if (sourceTree.isValid())
             sourceTree.setProperty(ids::sourceFile(), file.getPath(), nullptr);
@@ -72,12 +72,154 @@ namespace jive
         return sourceTree;
     }
 
+    juce::ValueTree Interpreter::parseFileToValueTree(const SourceFile& file) const
+    {
+        return parseSourceXml(file.loadAsString(), file);
+    }
+
+    static juce::String escapeForXml(const juce::String& text)
+    {
+        return text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;");
+    }
+
+    // Attributes merged in from a previously loaded template belong to that
+    // template, not to the instance.
+    static juce::String findPlaceholderValue(const juce::ValueTree& instance, const juce::String& name)
+    {
+        if (name.isEmpty())
+            return {};
+
+        if (const auto* previousTemplateProperties = instance[ids::externalSourceProperties()].getArray();
+            previousTemplateProperties != nullptr && previousTemplateProperties->contains(name))
+        {
+            return {};
+        }
+
+        return instance[name].toString();
+    }
+
+    static juce::String fillPlaceholders(const juce::String& xml, const juce::ValueTree& instance)
+    {
+        juce::String result;
+        auto end = 0;
+
+        for (auto open = xml.indexOf("{{"); open >= 0; open = xml.indexOf(end, "{{"))
+        {
+            const auto close = xml.indexOf(open + 2, "}}");
+
+            if (close < 0)
+                break;
+
+            result << xml.substring(end, open)
+                   << escapeForXml(findPlaceholderValue(instance, xml.substring(open + 2, close).trim()));
+            end = close + 2;
+        }
+
+        return result + xml.substring(end);
+    }
+
+    // Placeholders are filled in before parsing so that they can stand in for
+    // types and property names, not just values.
+    static juce::ValueTree instantiateTemplate(const SourceFile& file, const juce::ValueTree& instance)
+    {
+        return parseSourceXml(fillPlaceholders(file.loadAsString(), instance), file);
+    }
+
+    // An instance's snippets are kept aside, rather than as children, so that
+    // they can fill in its template again whenever it's reloaded. Their content
+    // is moved into the template, so it's marked with the file it was written
+    // in to keep its paths relative to that file.
+    static void storeSnippets(juce::ValueTree& instance, const SourceFile& declaringFile)
+    {
+        std::vector<juce::ValueTree> snippets;
+
+        for (const auto& child : instance)
+        {
+            if (child.hasType(ids::snippet()) && !static_cast<bool>(child[ids::externalSourceChild()]))
+                snippets.push_back(child);
+        }
+
+        if (snippets.empty())
+            return;
+
+        juce::Array<juce::var> definitions;
+
+        for (auto& snippet : snippets)
+        {
+            instance.removeChild(snippet, nullptr);
+
+            for (auto content : snippet)
+            {
+                if (!content.hasProperty(ids::snippetSourceFile()))
+                {
+                    content.setProperty(ids::sourceFile(), declaringFile.getPath(), nullptr);
+                    content.setProperty(ids::snippetSourceFile(), declaringFile.getPath(), nullptr);
+                }
+            }
+
+            definitions.add(snippet.toXmlString());
+        }
+
+        instance.setProperty(ids::snippets(), definitions, nullptr);
+    }
+
+    static juce::ValueTree findSnippet(const juce::ValueTree& instance, const juce::var& name)
+    {
+        if (const auto* definitions = instance[ids::snippets()].getArray())
+        {
+            for (const auto& definition : *definitions)
+            {
+                if (const auto snippet = juce::ValueTree::fromXml(definition.toString());
+                    snippet[ids::name()] == name)
+                {
+                    return snippet;
+                }
+            }
+        }
+
+        return {};
+    }
+
+    // Snippets inside an element that uses a template are passed on to that
+    // template rather than filled in, though they can still pass on this
+    // template's own snippets. A snippet with nothing to fill it keeps its own
+    // content, which may have snippets of its own.
+    static void fillSnippets(juce::ValueTree tree, const juce::ValueTree& instance)
+    {
+        for (auto i = 0; i < tree.getNumChildren(); i++)
+        {
+            auto child = tree.getChild(i);
+
+            if (!child.hasType(ids::snippet()) || tree.hasProperty(ids::templatePath()))
+            {
+                fillSnippets(child, instance);
+                continue;
+            }
+
+            const auto snippet = findSnippet(instance, child[ids::name()]);
+            const auto content = snippet.isValid() ? snippet : child;
+            tree.removeChild(i, nullptr);
+
+            for (auto j = 0; j < content.getNumChildren(); j++)
+                tree.addChild(content.getChild(j).createCopy(), i + j, nullptr);
+
+            if (snippet.isValid())
+                i += content.getNumChildren();
+
+            i--;
+        }
+    }
+
     static void findItemsWithSource(GuiItem* root, const SourceFile& file, std::vector<GuiItem*>& results)
     {
         if (root == nullptr)
             return;
 
-        if (file.getPath().contains(root->state.getProperty(ids::source(), "jive::no-source-found").toString())
+        if (file.getPath().contains(root->state.getProperty(ids::templatePath(), "jive::no-source-found").toString())
             || file.getPath() == root->state.getProperty(ids::topLevelSourceFile(), "jive::no-source-found").toString())
         {
             // Don't descend into an item that's about to be entirely replaced.
@@ -106,7 +248,10 @@ namespace jive
 
         for (auto* item : items)
         {
-            auto source = parseFileToValueTree(file);
+            const auto isTopLevelFile = file.getPath() == item->state[ids::topLevelSourceFile()].toString();
+            auto source = isTopLevelFile
+                            ? parseFileToValueTree(file)
+                            : instantiateTemplate(file, item->state);
 
             if (!source.isValid())
             {
@@ -147,6 +292,14 @@ namespace jive
             // content and keep it around alongside its freshly-parsed twin.
             if (item->state.hasProperty(ids::externalSourceChild()))
                 source.setProperty(ids::externalSourceChild(), true, nullptr);
+
+            // An instance's snippets aren't part of its template, so they're
+            // carried across to fill in the freshly-parsed template.
+            for (const auto& id : { ids::snippets(), ids::snippetSourceFile() })
+            {
+                if (!isTopLevelFile && item->state.hasProperty(id))
+                    source.setProperty(id, item->state[id], nullptr);
+            }
 
             if (item->isTopLevel())
             {
@@ -276,7 +429,7 @@ namespace jive
     void Interpreter::valueTreePropertyChanged(juce::ValueTree& tree,
                                                const juce::Identifier& property)
     {
-        if (observedItem == nullptr || ignoreValueTreeChanges || property != ids::source())
+        if (observedItem == nullptr || ignoreValueTreeChanges || property != ids::templatePath())
             return;
 
         auto parentTree = tree.getParent();
@@ -450,26 +603,32 @@ namespace jive
         if (tree.isValid())
             tree.setProperty(ids::sourceDirectories(), sourceDirectories.get(), nullptr);
 
-        const auto source = tree[ids::source()].toString();
+        const auto templatePath = tree[ids::templatePath()].toString();
 
-        if (source.isEmpty())
+        if (templatePath.isEmpty())
             return tree;
 
-        // The source is written in the file that declares this element, but
-        // once it's been loaded, this element belongs to the source file.
+        // The template is written in the file that declares this element, but
+        // once it's been loaded, this element belongs to the template's file.
+        // Content from a snippet is declared in the file the snippet is in.
         const auto declaringTree = tree.getParent().isValid() ? tree.getParent() : tree;
-        const auto file = sourceDirectories->find(source, findSourceFile(declaringTree));
+        const auto declaringFile = tree.hasProperty(ids::snippetSourceFile())
+                                     ? SourceFile{ tree[ids::snippetSourceFile()].toString() }
+                                     : findSourceFile(declaringTree);
+        const auto file = sourceDirectories->find(templatePath, declaringFile);
 
         if (!file.exists())
             return tree;
 
-        // Files that aren't markup, like images, are loaded by the item itself.
-        auto newTree = parseFileToValueTree(file);
+        auto newTree = instantiateTemplate(file, tree);
 
         if (!newTree.isValid())
             return tree;
 
         const juce::ScopedValueSetter svs{ ignoreValueTreeChanges, true };
+
+        storeSnippets(tree, declaringFile);
+        fillSnippets(newTree, tree);
 
         // Properties merged in from a previously loaded source would otherwise
         // outlive it, overriding whatever the new source has to say.
@@ -494,6 +653,8 @@ namespace jive
             const auto name = tree.getPropertyName(i);
             newTree.setProperty(name, tree[name], nullptr);
         }
+
+        newTree.setProperty(ids::sourceFile(), file.getPath(), nullptr);
 
         std::vector<juce::ValueTree> inlineChildren;
 
@@ -524,7 +685,7 @@ namespace jive
         };
 
         // The root of the source file decides what kind of element this is - a
-        // <Component source="icon.svg"/> is really an <svg>. A tree's type can
+        // <Component template="icon.svg"/> is really an <svg>. A tree's type can
         // only change by swapping it out of its parent, so an element with no
         // parent to swap it in has to keep the type it was declared with.
         auto parentTree = tree.getParent();

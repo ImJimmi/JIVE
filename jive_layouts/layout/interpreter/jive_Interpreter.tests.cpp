@@ -76,7 +76,7 @@ static jive::UnitTest nestedFileSourcesTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Component source="alpha.xml" name="Alpha"/>
+                <Component template="alpha.xml" name="Alpha"/>
             </Window>
         )");
 
@@ -94,7 +94,7 @@ static jive::UnitTest nestedFileSourcesTest{
         // Replace the Alpha component with a Beta component in the main source
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Component source="beta.xml" name="Beta"/>
+                <Component template="beta.xml" name="Beta"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
@@ -123,7 +123,7 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
     "Top-Level File With Nested Source",
     [](auto& test) {
         // Replicates the xml-views example: a top-level file (main.xml)
-        // containing a Window that pulls in a nested file via "source"
+        // containing a Window that pulls in a nested file via "template"
         // (heading.xml). Editing *either* file should be reflected live.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
                              .getParentDirectory()
@@ -142,7 +142,7 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Component source="heading.xml"/>
+                <Component template="heading.xml"/>
             </Window>
         )");
 
@@ -157,7 +157,7 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
         // Editing the top-level file should be reflected.
         mainView.replaceWithText(R"(
             <Window width="200" height="200">
-                <Component source="heading.xml"/>
+                <Component template="heading.xml"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
@@ -170,7 +170,7 @@ static jive::UnitTest topLevelFileWithNestedSourceTest{
         // up.
         mainView.replaceWithText(R"(
             <Window width="300" height="300">
-                <Component source="heading.xml"/>
+                <Component template="heading.xml"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
@@ -245,12 +245,247 @@ static jive::UnitTest topLevelFileReloadRemovesPropertiesTest{
     },
 };
 
+static jive::UnitTest templatePlaceholdersTest{
+    "jive",
+    "jive::Interpreter",
+    "Template Placeholders",
+    [](auto& test) {
+        // Placeholders are filled in from the instance's attributes before the
+        // template is parsed, so they can stand in for types and property
+        // names as well as values.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto track = cwd.getChildFile("track.xml");
+        track.create();
+        track.replaceWithText(R"(
+            <Component class="track {{ extra-class }}">
+                <Text id="name">{{name}}</Text>
+                <{{ control }} id="control" {{	control-property  }}="{{ value }}"/>
+            </Component>
+        )");
+
+        auto mainView = cwd.getChildFile("mixer.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component template="track.xml" name="Rock &amp; &quot;Roll&quot; &lt;3" control="Slider" control-property="value" value="0.5"/>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        const auto expectInstantiated = [&test, &item](const juce::String& message) {
+            test.expectEquals(jive::findElementWithID(item->state, "name")["text"].toString(),
+                              juce::String{ "Rock & \"Roll\" <3" },
+                              message + ": values should be substituted, whatever their characters");
+
+            const auto control = jive::findElementWithID(item->state, "control");
+            test.expectEquals(control.getType().toString(),
+                              juce::String{ "Slider" },
+                              message + ": placeholders should be able to name types");
+            test.expectEquals(control["value"].toString(),
+                              juce::String{ "0.5" },
+                              message + ": placeholders should be able to name properties");
+
+            test.expectEquals(item->state.getChild(0)["class"].toString(),
+                              juce::String{ "track " },
+                              message + ": placeholders without a matching attribute should be left empty");
+        };
+
+        expectInstantiated("Initial load");
+
+        track.replaceWithText(R"(
+            <Component class="track {{ extra-class }}" padding="1">
+                <Text id="name">{{name}}</Text>
+                <{{ control }} id="control" {{	control-property  }}="{{ value }}"/>
+            </Component>
+        )");
+        jive::FileObserver::triggerAllTimerCallbacks();
+
+        expectInstantiated("After reloading the template");
+
+        cwd.deleteRecursively();
+    },
+};
+
+static juce::StringArray describeChildren(const juce::ValueTree& tree)
+{
+    juce::StringArray result;
+
+    for (const auto& child : tree)
+        result.add(child.getType().toString() + ":" + child["text"].toString());
+
+    return result;
+}
+
+static jive::UnitTest templateSnippetsTest{
+    "jive",
+    "jive::Interpreter",
+    "Template Snippets",
+    [](auto& test) {
+        // Snippets in an instance replace the same-named snippets in its
+        // template, wherever they are. A template's snippets that aren't
+        // given any content keep their own.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto panel = cwd.getChildFile("panel.xml");
+        panel.create();
+        const auto writePanel = [&panel](const juce::String& header) {
+            panel.replaceWithText(R"(
+                <Component>
+                    <Text>)" + header
+                                  + R"(</Text>
+                    <Component id="body">
+                        <Snippet name="content"/>
+                    </Component>
+                    <Snippet name="footer">
+                        <Text>Default footer</Text>
+                    </Snippet>
+                </Component>
+            )");
+        };
+        writePanel("Header");
+
+        auto mainView = cwd.getChildFile("panels.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component id="first" template="panel.xml">
+                    <Snippet name="content">
+                        <Text>Hello, World!</Text>
+                        <Text>Line 2</Text>
+                    </Snippet>
+                </Component>
+                <Component id="second" template="panel.xml">
+                    <Snippet name="content">Inline text</Snippet>
+                    <Snippet name="footer">
+                        <Text>Custom footer</Text>
+                    </Snippet>
+                </Component>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        const auto expectFilled = [&test, &item](const juce::String& header, const juce::String& message) {
+            const auto first = jive::findElementWithID(item->state, "first");
+            const auto second = jive::findElementWithID(item->state, "second");
+
+            test.expectEquals(describeChildren(first).joinIntoString(", "),
+                              "Text:" + header + ", Component:, Text:Default footer",
+                              message + ": snippets without content should be replaced by their own children");
+            test.expectEquals(describeChildren(jive::findElementWithID(first, "body")).joinIntoString(", "),
+                              juce::String{ "Text:Hello, World!, Text:Line 2" },
+                              message + ": snippets should be replaced by the instance's content, however deep they are");
+            test.expectEquals(describeChildren(jive::findElementWithID(second, "body")).joinIntoString(", "),
+                              juce::String{ "Text:Inline text" },
+                              message + ": each instance should get its own content");
+            test.expectEquals(describeChildren(second).joinIntoString(", "),
+                              "Text:" + header + ", Component:, Text:Custom footer",
+                              message + ": a snippet's content should replace the template's default content");
+
+            test.expectEquals(item->getChildren()[0]->getChildren().size(),
+                              3,
+                              message + ": only the filled-in template should be interpreted");
+        };
+
+        expectFilled("Header", "Initial load");
+
+        writePanel("Reloaded");
+        jive::FileObserver::triggerAllTimerCallbacks();
+        expectFilled("Reloaded", "After reloading the template");
+
+        auto compactPanel = cwd.getChildFile("compact-panel.xml");
+        compactPanel.create();
+        compactPanel.replaceWithText(R"(<Component><Snippet name="footer"/><Snippet name="content"/></Component>)");
+        jive::findElementWithID(item->state, "second").setProperty("template", "compact-panel.xml", nullptr);
+        test.expectEquals(describeChildren(jive::findElementWithID(item->state, "second")).joinIntoString(", "),
+                          juce::String{ "Text:Custom footer, Text:Inline text" },
+                          "Snippets should fill in a template that replaces the previous one");
+
+        cwd.deleteRecursively();
+    },
+};
+
+static jive::UnitTest templateSnippetsForwardedTest{
+    "jive",
+    "jive::Interpreter",
+    "Template Snippets Forwarded",
+    [](auto& test) {
+        // A template can pass its own snippets on to a template it uses, and
+        // paths in a snippet stay relative to the file it was written in.
+        const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                             .getParentDirectory()
+                             .getChildFile("interpreter-tests/");
+        cwd.deleteRecursively();
+
+        auto card = cwd.getChildFile("templates/card.xml");
+        card.create();
+        card.replaceWithText(R"(<Component id="card"><Snippet name="body"/></Component>)");
+
+        auto panel = cwd.getChildFile("templates/panel.xml");
+        panel.create();
+        panel.replaceWithText(R"(
+            <Component>
+                <Component template="./card.xml">
+                    <Snippet name="body">
+                        <Snippet name="content"/>
+                    </Snippet>
+                </Component>
+            </Component>
+        )");
+
+        auto label = cwd.getChildFile("views/parts/label.xml");
+        label.create();
+        label.replaceWithText(R"(<Component id="label"><Component template="./text.xml"/></Component>)");
+
+        auto text = cwd.getChildFile("views/parts/text.xml");
+        text.create();
+        text.replaceWithText(R"(<Text>Forwarded</Text>)");
+
+        auto mainView = cwd.getChildFile("views/main.xml");
+        mainView.create();
+        mainView.replaceWithText(R"(
+            <Window width="100" height="100">
+                <Component template="../templates/panel.xml">
+                    <Snippet name="content">
+                        <Component template="./parts/label.xml"/>
+                    </Snippet>
+                </Component>
+            </Window>
+        )");
+
+        jive::Interpreter interpreter;
+        const auto item = interpreter.interpret(mainView);
+        test.expect(item != nullptr, "Item should have been created");
+
+        test.expectEquals(describeChildren(jive::findElementWithID(item->state, "card")).joinIntoString(", "),
+                          juce::String{ "Component:" },
+                          "The content should be passed on to the nested template");
+        test.expectEquals(describeChildren(jive::findElementWithID(item->state, "label")).joinIntoString(", "),
+                          juce::String{ "Text:Forwarded" },
+                          "Paths in a template used by a snippet should be relative to that template");
+
+        cwd.deleteRecursively();
+    },
+};
+
 static jive::UnitTest fileSourceRetainsChildrenTest{
     "jive",
     "jive::Interpreter",
     "File Source Retains Children",
     [](auto& test) {
-        // A component using an external "source" may still declare its own
+        // A component using an external "template" may still declare its own
         // children in-place (e.g. a Button's inline text). Those children
         // should be retained alongside whatever the source tree defines,
         // rather than being wiped out when the source tree is merged in.
@@ -267,7 +502,7 @@ static jive::UnitTest fileSourceRetainsChildrenTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Button source="nav-button.xml">Layouts</Button>
+                <Button template="nav-button.xml">Layouts</Button>
             </Window>
         )");
 
@@ -292,7 +527,7 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
     "File Source Live Reload With Shared Source",
     [](auto& test) {
         // Replicates the SideBar/NavButton example: several Buttons share the
-        // same "source" file, each with their own inline text. Editing the
+        // same "template" file, each with their own inline text. Editing the
         // source file should update *every* item that references it, and
         // each item's inline text should survive the reload.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
@@ -308,9 +543,9 @@ static jive::UnitTest fileSourceLiveReloadWithSharedSourceTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Button source="nav-button.xml">Layouts</Button>
-                <Button source="nav-button.xml">Styles</Button>
-                <Button source="nav-button.xml">Animations</Button>
+                <Button template="nav-button.xml">Layouts</Button>
+                <Button template="nav-button.xml">Styles</Button>
+                <Button template="nav-button.xml">Animations</Button>
             </Window>
         )");
 
@@ -367,7 +602,7 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
     "File Source Reload Does Not Duplicate Own Children",
     [](auto& test) {
         // Reproduces the jive-demo app: a Window contains a Component whose
-        // "source" points at a file (main.xml) that itself declares children
+        // "template" points at a file (main.xml) that itself declares children
         // of its own (a side-bar and a content area). Editing main.xml
         // shouldn't duplicate those children on every reload.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
@@ -394,7 +629,7 @@ static jive::UnitTest fileSourceReloadDoesNotDuplicateOwnChildrenTest{
                 juce::ValueTree{
                     "Component",
                     {
-                        { "source", "main.xml" },
+                        { "template", "main.xml" },
                     },
                 },
             },
@@ -432,7 +667,7 @@ static jive::UnitTest sourcePropertyChangedTest{
     "jive::Interpreter",
     "Source Property Changed",
     [](auto& test) {
-        // Changing an element's "source" at runtime - like an app swapping out
+        // Changing an element's "template" at runtime - like an app swapping out
         // the page shown in its content area - should replace that element's
         // content with the newly referenced file's.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
@@ -480,12 +715,12 @@ static jive::UnitTest sourcePropertyChangedTest{
 
         test.expectEquals(page(), juce::String{}, "Content should start out empty");
 
-        windowTree.getChild(0).setProperty("source", "layouts.xml", nullptr);
+        windowTree.getChild(0).setProperty("template", "layouts.xml", nullptr);
         test.expectEquals(page(),
                           juce::String{ "layouts-page" },
                           "Setting the source should load the file's content");
 
-        windowTree.getChild(0).setProperty("source", "styles.xml", nullptr);
+        windowTree.getChild(0).setProperty("template", "styles.xml", nullptr);
         test.expectEquals(page(),
                           juce::String{ "styles-page" },
                           "Changing the source should replace the previous file's content");
@@ -523,7 +758,7 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
             mainXml.replaceWithText(juce::String{ R"(
                 <Component flex-direction="row">
                     <Component id="side-bar" />
-                    <Component id="demo" source="page.xml" padding=")" }
+                    <Component id="demo" template="page.xml" padding=")" }
                                     + juce::String{ padding }
                                     + R"(" />
                 </Component>
@@ -541,7 +776,7 @@ static jive::UnitTest nestedSourceReloadDoesNotDuplicateSiblingTest{
                 juce::ValueTree{
                     "Component",
                     {
-                        { "source", "main.xml" },
+                        { "template", "main.xml" },
                     },
                 },
             },
@@ -576,7 +811,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
     "Source File Determines Element Type",
     [](auto& test) {
         // An element's type comes from the root of the file it sources, so a
-        // <Component source="icon.svg"/> is really an <svg> - and stays one
+        // <Component template="icon.svg"/> is really an <svg> - and stays one
         // when the file it was declared in is reloaded.
         const auto cwd = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
                              .getParentDirectory()
@@ -595,7 +830,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
                 <Component padding=")" }
                                     + juce::String{ padding }
                                     + R"(">
-                    <Component source="icon.svg" width="24" height="24" />
+                    <Component template="icon.svg" width="24" height="24" />
                 </Component>
             )");
         };
@@ -611,7 +846,7 @@ static jive::UnitTest sourceFileDeterminesElementTypeTest{
                 juce::ValueTree{
                     "Component",
                     {
-                        { "source", "main.xml" },
+                        { "template", "main.xml" },
                     },
                 },
             },
@@ -671,7 +906,7 @@ static jive::UnitTest stateBuildCallbackTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Component id="content" source="heading.xml"/>
+                <Component id="content" template="heading.xml"/>
             </Window>
         )");
 
@@ -701,7 +936,7 @@ static jive::UnitTest stateBuildCallbackTest{
 
         namesWhenNotified.clear();
         jive::findElementWithID(item->state, "content")
-            .setProperty("source", "footer.xml", nullptr);
+            .setProperty("template", "footer.xml", nullptr);
         test.expectEquals(namesWhenNotified.size(),
                           1,
                           "Pointing an element at a different source should notify listeners");
@@ -709,7 +944,7 @@ static jive::UnitTest stateBuildCallbackTest{
         namesWhenNotified.clear();
         mainView.replaceWithText(R"(
             <Window width="200" height="200">
-                <Component id="content" name="reloaded" source="heading.xml"/>
+                <Component id="content" name="reloaded" template="heading.xml"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
@@ -766,7 +1001,7 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
         mainView.create();
         mainView.replaceWithText(R"(
             <Window width="100" height="100">
-                <Component id="content" source="first.xml"/>
+                <Component id="content" template="first.xml"/>
             </Window>
         )");
 
@@ -786,7 +1021,7 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
                           "Interpreting the file");
 
         itemsWhenNotified.clear();
-        jive::findElementWithID(item->state, "content").setProperty("source", "second.xml", nullptr);
+        jive::findElementWithID(item->state, "content").setProperty("template", "second.xml", nullptr);
         test.expectEquals(itemsWhenNotified.joinIntoString(","),
                           juce::String{ "in place" },
                           "Pointing an element at a different source");
@@ -801,7 +1036,7 @@ static jive::UnitTest externalSourceItemsExistWhenNotifiedTest{
         itemsWhenNotified.clear();
         mainView.replaceWithText(R"(
             <Window width="200" height="200">
-                <Component id="content" source="second.xml"/>
+                <Component id="content" template="second.xml"/>
             </Window>
         )");
         jive::FileObserver::triggerAllTimerCallbacks();
@@ -988,7 +1223,7 @@ static jive::UnitTest embeddedSourcesTest{
         const auto zip = jive::createZip({
             { "views/Main.xml", R"(
                 <Component width="200" height="200" lang="views/languages/english.strings">
-                    <Component source="views/Child.xml"/>
+                    <Component template="views/Child.xml"/>
                 </Component>
             )" },
             { "views/Child.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
@@ -1022,7 +1257,7 @@ static jive::UnitTest relativeSourceReloadTest{
         directory.getChildFile("views").createDirectory();
 
         const auto mainView = directory.getChildFile("views/Main.xml");
-        mainView.replaceWithText(R"(<Window width="200" height="200"><Component source="views/Child.xml"/></Window>)");
+        mainView.replaceWithText(R"(<Window width="200" height="200"><Component template="views/Child.xml"/></Window>)");
         const auto childView = directory.getChildFile("views/Child.xml");
         childView.replaceWithText(R"(<Component><Text id="greeting">Hello</Text></Component>)");
 
@@ -1053,7 +1288,7 @@ static jive::UnitTest rootRelativeSourcesTest{
         const auto zip = jive::createZip({
             { "views/Main.xml", R"(
                 <Component width="200" height="200">
-                    <Component source="Child.xml"/>
+                    <Component template="Child.xml"/>
                 </Component>
             )" },
             { "views/Child.xml", R"(<Component><Text id="greeting">Hello</Text></Component>)" },
@@ -1074,10 +1309,10 @@ static jive::UnitTest fileRelativeSourcesTest{
         const auto zip = jive::createZip({
             { "views/Main.xml", R"(
                 <Component width="200" height="200" lang="../locales/english.strings">
-                    <Component source="./partials/Child.xml"/>
+                    <Component template="./partials/Child.xml"/>
                 </Component>
             )" },
-            { "views/partials/Child.xml", R"(<Component><Component source="./Grandchild.xml"/></Component>)" },
+            { "views/partials/Child.xml", R"(<Component><Component template="./Grandchild.xml"/></Component>)" },
             { "views/partials/Grandchild.xml", R"(<Component><Text id="greeting">greeting</Text></Component>)" },
             { "locales/english.strings", R"("greeting" = "Hello")" },
         });

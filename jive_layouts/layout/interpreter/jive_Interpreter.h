@@ -49,7 +49,7 @@ namespace jive
 
         /** Called whenever interpreting builds part of the state tree: once
             interpret() has built it, and again whenever a file referenced by a
-            "source" property is read in, or any file it was built from changes
+            "template" property is read in, or any file it was built from changes
             on disk.
 
             Every build replaces its trees wholesale, so any listeners attached

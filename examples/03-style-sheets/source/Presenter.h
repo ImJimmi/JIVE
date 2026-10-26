@@ -48,7 +48,7 @@ namespace jive_examples::style_sheets
             {
                 onToggled(tabs, tab, [this, source = view](bool toggled) {
                     if (toggled)
-                        setProperty("page", "source", source);
+                        setProperty("page", "template", source);
                 });
             }
 

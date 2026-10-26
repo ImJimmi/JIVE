@@ -29,6 +29,6 @@
             <Button id="custom-tab" radio-group="1" toggle-on-click="true" padding="4 12">Custom</Button>
         </Component>
 
-        <Component id="page" source="public/views/Gallery.xml" flex-grow="1" />
+        <Component id="page" template="public/views/Gallery.xml" flex-grow="1" />
     </Component>
 </Editor>

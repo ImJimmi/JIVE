@@ -80,6 +80,9 @@ namespace jive
         if (const auto image = juce::ImageFileFormat::loadFrom(data.getData(), data.getSize()); image.isValid())
             return Drawable{ image };
 
+        if (const auto svg = juce::parseXML(data.toString()); svg != nullptr && svg->hasTagName("svg"))
+            return Drawable{ data.toString() };
+
         return {};
     }
 

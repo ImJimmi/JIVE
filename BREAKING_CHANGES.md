@@ -259,10 +259,10 @@ External sources do the same job, and can be edited and hot-reloaded while the a
 
 ### Migrating
 
-Move the markup you aliased into its own XML file and pull it in with `source`:
+Move the markup you aliased into its own XML file and pull it in with `template`:
 
 ```xml
-<Component source="views/Header.xml"/>
+<Component template="views/Header.xml"/>
 ```
 
 ## `jive::View` has been removed
@@ -271,7 +271,7 @@ Move the markup you aliased into its own XML file and pull it in with `source`:
 
 ### Reason
 
-Each of its hooks has a replacement that keeps working when a view is hot-reloaded: `source` files for `initialise()`, the interpreter's `ComponentFactory` for `createComponent()`, and `Interpreter::onLoad` for `setup()`.
+Each of its hooks has a replacement that keeps working when a view is hot-reloaded: `template` files for `initialise()`, the interpreter's `ComponentFactory` for `createComponent()`, and `Interpreter::onLoad` for `setup()`.
 
 ### Migrating
 

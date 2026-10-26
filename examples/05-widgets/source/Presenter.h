@@ -87,7 +87,7 @@ namespace jive_examples::widgets
             {
                 onToggled(tabs, tab, [this, source = view](bool toggled) {
                     if (toggled)
-                        setProperty("page", "source", source);
+                        setProperty("page", "template", source);
                 });
             }
 

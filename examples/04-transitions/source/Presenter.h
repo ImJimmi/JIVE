@@ -73,7 +73,7 @@ namespace jive_examples::transitions
             {
                 onToggled(tabs, tab, [this, source = view](bool toggled) {
                     if (toggled)
-                        setProperty("page", "source", source);
+                        setProperty("page", "template", source);
                 });
             }
         }

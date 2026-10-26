@@ -35,7 +35,7 @@ namespace jive_examples::layouts
             for (const auto& [tab, view] : pages)
             {
                 onToggledOn(tabs, tab, [this, source = view] {
-                    setProperty("page", "source", source);
+                    setProperty("page", "template", source);
                 });
             }
         }

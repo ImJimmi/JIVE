@@ -14,16 +14,16 @@
                 <Component flex-direction="row" justify-content="space-between" grid-column="2 / span 2" grid-row="2 / 3">
                     <Component flex-direction="row" gap="2">
                         <Button id="row-button" min-width="0" min-height="0" padding="0" radio-group="1" toggle-on-click="true" toggled="true">
-                            <Component source="public/icons/arrow-small-right.svg" />
+                            <Component template="public/icons/arrow-small-right.svg" />
                         </Button>
                         <Button id="column-button" min-width="0" min-height="0" padding="0" radio-group="1" toggle-on-click="true">
-                            <Component source="public/icons/arrow-small-down.svg" />
+                            <Component template="public/icons/arrow-small-down.svg" />
                         </Button>
                         <Button id="row-reverse-button" min-width="0" min-height="0" padding="0" radio-group="1" toggle-on-click="true">
-                            <Component source="public/icons/arrow-small-left.svg" />
+                            <Component template="public/icons/arrow-small-left.svg" />
                         </Button>
                         <Button id="column-reverse-button" min-width="0" min-height="0" padding="0" radio-group="1" toggle-on-click="true">
-                            <Component source="public/icons/arrow-small-up.svg" />
+                            <Component template="public/icons/arrow-small-up.svg" />
                         </Button>
                     </Component>
                     <Text id="flex-direction-label" class="value" accessible="false">row</Text>
