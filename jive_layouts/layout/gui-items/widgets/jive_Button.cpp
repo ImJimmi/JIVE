@@ -93,7 +93,7 @@ namespace jive
         toggleOnClick.onValueChange = [this]() {
             getButton().setClickingTogglesState(toggleOnClick);
         };
-        getButton().setClickingTogglesState(toggleOnClick);
+        getButton().setClickingTogglesState(toggleOnClick.exists() ? toggleOnClick.get() : getCheckbox() != nullptr);
 
         radioGroup.onValueChange = [this]() {
             getButton().setRadioGroupId(radioGroup);
