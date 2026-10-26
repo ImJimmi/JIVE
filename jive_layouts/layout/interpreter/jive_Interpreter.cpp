@@ -463,6 +463,12 @@ namespace jive
         if (!file.exists())
             return tree;
 
+        // Files that aren't markup, like images, are loaded by the item itself.
+        auto newTree = parseFileToValueTree(file);
+
+        if (!newTree.isValid())
+            return tree;
+
         const juce::ScopedValueSetter svs{ ignoreValueTreeChanges, true };
 
         // Properties merged in from a previously loaded source would otherwise
@@ -473,7 +479,6 @@ namespace jive
                 tree.removeProperty(name.toString(), nullptr);
         }
 
-        auto newTree = parseFileToValueTree(file);
         juce::Array<juce::var> propertiesFromSource;
 
         for (auto i = 0; i < newTree.getNumProperties(); i++)

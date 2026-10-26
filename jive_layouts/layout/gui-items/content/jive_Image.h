@@ -36,12 +36,15 @@ namespace jive
         float calculateRequiredHeight(const juce::Drawable& drawable) const;
         float calculateRequiredHeight() const;
 
+        [[nodiscard]] SourceFile findImageFile() const;
+        void observeImageFile();
         void updateImageComponentDrawable();
 
         std::unique_ptr<juce::Component> childComponent;
+        std::unique_ptr<FileObserver> imageFileObserver;
         bool changingChild = false;
 
-        PassiveProperty<Drawable> source;
+        PassiveProperty<juce::String> source;
         PassiveProperty<juce::RectanglePlacement> placement;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;

@@ -40,15 +40,3 @@ namespace jive
         JUCE_LEAK_DETECTOR(Drawable)
     };
 } // namespace jive
-
-namespace juce
-{
-    template <>
-    struct VariantConverter<jive::Drawable>
-    {
-        static jive::Drawable fromVar(const var& v);
-        static var toVar(const jive::Drawable& drawable);
-    };
-
-    String& operator<<(String& str, const jive::Drawable& drawable);
-} // namespace juce

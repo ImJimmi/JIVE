@@ -89,33 +89,3 @@ namespace jive
         return drawable == nullptr;
     }
 } // namespace jive
-
-namespace juce
-{
-    jive::Drawable VariantConverter<jive::Drawable>::fromVar(const var& v)
-    {
-        if (v.isObject())
-            return jive::Drawable{ VariantConverter<Image>::fromVar(v) };
-
-        if (v.isString())
-            return jive::Drawable{ v.toString() };
-
-        return {};
-    }
-
-    var VariantConverter<jive::Drawable>::toVar(const jive::Drawable& drawable)
-    {
-        if (drawable.isImage())
-            return VariantConverter<Image>::toVar(static_cast<Image>(drawable));
-
-        if (drawable.isSVG())
-            return static_cast<String>(drawable);
-
-        return {};
-    }
-
-    String& operator<<(String& str, const jive::Drawable& /* drawable */)
-    {
-        return str << "Drawable{}";
-    }
-} // namespace juce

@@ -408,3 +408,27 @@ const auto pixels = width.toPixels(parentBounds);
 jive::Property<jive::Length> width{ tree, "width" };
 const auto pixels = width.get().toPixels(parentBounds.getWidth());
 ```
+
+## An image's `source` can only be a path
+
+The `source` of an `<Image>` is now always the path of an image file. Setting it to a string of SVG markup, or to a `juce::Image` from C++, draws nothing.
+
+### Reason
+
+Images are found the same way as every other source, so PNG, JPEG and GIF files can be used as well as SVGs, and SVGs are kept out of the view's markup.
+
+### Migrating
+
+Move SVG markup into its own SVG file and refer to it by its path, or write the `<svg>` element directly in the view:
+
+```xml
+<!-- 1.x -->
+<Image source="&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;...&lt;/svg&gt;"/>
+```
+
+```xml
+<!-- 2.0 -->
+<Image source="icons/star.svg"/>
+```
+
+Save a `juce::Image` to a file in your sources and refer to it by its path, or draw it with a `juce::ImageComponent`.
