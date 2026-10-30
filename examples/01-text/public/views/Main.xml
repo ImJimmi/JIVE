@@ -1,11 +1,13 @@
-<Window
-    width="600"
-    height="400"
-    padding="50"
-    style="public/styles/Styles.json"
->
-    <Text>My First JIVE UI</Text>
+<Window name="Advanced Styling" width="400" height="250" padding="30" gap="10" style="./Styles.json">
+    <Button>One</Button>
+    <Button>Two</Button>
+    <Button>Three</Button>
 
-    <Button id="counter-button">Click Me!</Button>
-    <Text id="counter-label">Clicked 0 times</Text>
+    <!-- <ComboBox align-self="start">
+        <Option>Alpha</Option>
+        <Option>Beta</Option>
+        <Option>Gamma</Option>
+    </ComboBox> -->
+
+    <Slider />
 </Window>

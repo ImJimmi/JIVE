@@ -27,9 +27,6 @@ namespace jive_examples::widgets
                 return std::make_shared<XYPad>();
             });
             interpreter.addDecorator<XYPadItem>("XYPad");
-            jive::ComponentTypePredicates::addPredicate([](const juce::Component& component, const juce::String& typeName) {
-                return typeName == "XYPad" && dynamic_cast<const XYPad*>(&component) != nullptr;
-            });
 
             interpreter.onLoad = [this](jive::GuiItem& root) {
                 if (editor == nullptr)

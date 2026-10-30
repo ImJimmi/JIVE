@@ -400,6 +400,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& imports()
+    {
+        static const juce::Identifier identifier{ "imports" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& interval()
     {
         static const juce::Identifier identifier{ "interval" };
@@ -694,6 +700,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& styleFiles()
+    {
+        static const juce::Identifier identifier{ "jive::style-files" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& templatePath()
     {
         static const juce::Identifier identifier{ "template" };
@@ -805,6 +817,12 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& triggerEvent()
     {
         static const juce::Identifier identifier{ "trigger-event" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& type()
+    {
+        static const juce::Identifier identifier{ "jive::type" };
         return identifier;
     }
 

@@ -804,14 +804,6 @@ namespace jive
              | (button != nullptr && button->getToggleState() ? InteractionState::checked : 0);
     }
 
-    [[nodiscard]] static std::optional<juce::Slider::SliderStyle> getSliderStyle(const juce::Component& component)
-    {
-        if (const auto* slider = dynamic_cast<const juce::Slider*>(&component))
-            return slider->getSliderStyle();
-
-        return std::nullopt;
-    }
-
     [[nodiscard]] static auto getClasses(const juce::Component& component)
     {
         return component.getProperties()[ids::classes()];
@@ -822,7 +814,7 @@ namespace jive
         , id{ comp.getComponentID() }
         , classes{ getClasses(comp) }
         , interactionState{ getInteractionState(comp) }
-        , sliderStyle{ getSliderStyle(comp) }
+        , type{ comp.getProperties()[ids::type()] }
     {
     }
 
@@ -832,7 +824,7 @@ namespace jive
             && id == other.id
             && classes == other.classes
             && interactionState == other.interactionState
-            && sliderStyle == other.sliderStyle;
+            && type == other.type;
     }
 
     // Copies the latest value of a style property into the persistent cached
@@ -1263,17 +1255,18 @@ private:
             expect(lookAndFeel.findMostApplicableStyles(button).stroke.get() == juce::Colours::blue);
         }
 
-        beginTest("styles / are resolved again when a slider's style changes");
+        beginTest("styles / are resolved again when a component's type changes");
         {
             juce::Component parent;
             jive::LookAndFeel lookAndFeel{ parent };
             juce::Slider slider{ juce::Slider::LinearHorizontal, juce::Slider::NoTextBox };
+            slider.getProperties().set("jive::type", "Slider");
             parent.addAndMakeVisible(slider);
             lookAndFeel.addStyles("Knob", jive::Styles{}.withAccent(juce::Colours::red));
 
             expect(!lookAndFeel.findMostApplicableStyles(slider).accent.hasValue());
 
-            slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+            slider.getProperties().set("jive::type", "Knob");
             expect(lookAndFeel.findMostApplicableStyles(slider).accent.get() == juce::Colours::red);
         }
 
@@ -1377,6 +1370,7 @@ private:
             juce::Component parent;
             jive::LookAndFeel lookAndFeel{ parent };
             jive::ComboBoxComponent comboBox;
+            comboBox.getProperties().set("jive::type", "ComboBox");
             parent.addAndMakeVisible(comboBox);
             jive::ComboBoxComponent::Item standIn{ 1 };
             comboBox.getPopup().addChildComponent(standIn);
@@ -1444,6 +1438,7 @@ private:
             juce::Component parent;
             jive::LookAndFeel lookAndFeel{ parent };
             juce::ComboBox comboBox;
+            comboBox.getProperties().set("jive::type", "ComboBox");
             parent.addAndMakeVisible(comboBox);
             lookAndFeel.addStyles("ComboBox",
                                   jive::Styles{}
@@ -1687,6 +1682,7 @@ private:
             juce::Component parent;
             jive::LookAndFeel lookAndFeel{ parent };
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             parent.addAndMakeVisible(button);
             expect(settledBackground(lookAndFeel, button) == jive::parseColour(jive::themes::steel::raisinBlack));
 
@@ -1720,6 +1716,11 @@ private:
                 juce::Slider slider;
                 juce::Slider knob{ juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox };
                 juce::ComboBox comboBox;
+                button.getProperties().set("jive::type", "Button");
+                checkbox.getProperties().set("jive::type", "Checkbox");
+                slider.getProperties().set("jive::type", "Slider");
+                knob.getProperties().set("jive::type", "Knob");
+                comboBox.getProperties().set("jive::type", "ComboBox");
                 parent.addAndMakeVisible(button);
                 parent.addAndMakeVisible(checkbox);
                 parent.addAndMakeVisible(slider);
@@ -1752,6 +1753,7 @@ private:
 
                 juce::HyperlinkButton hyperlink;
                 jive::TextComponent text;
+                hyperlink.getProperties().set("jive::type", "Hyperlink");
                 parent.addAndMakeVisible(hyperlink);
                 hyperlink.addAndMakeVisible(text);
 
@@ -1781,6 +1783,8 @@ private:
             juce::ToggleButton checkbox;
             juce::HyperlinkButton hyperlink;
             jive::TextComponent text;
+            checkbox.getProperties().set("jive::type", "Checkbox");
+            hyperlink.getProperties().set("jive::type", "Hyperlink");
             parent.addAndMakeVisible(checkbox);
             parent.addAndMakeVisible(hyperlink);
             hyperlink.addAndMakeVisible(text);
@@ -1800,6 +1804,11 @@ private:
             juce::Slider slider;
             juce::ComboBox comboBox;
             juce::ProgressBar progressBar{ progress };
+            button.getProperties().set("jive::type", "Button");
+            checkbox.getProperties().set("jive::type", "Checkbox");
+            slider.getProperties().set("jive::type", "Slider");
+            comboBox.getProperties().set("jive::type", "ComboBox");
+            progressBar.getProperties().set("jive::type", "ProgressBar");
             parent.addAndMakeVisible(button);
             parent.addAndMakeVisible(checkbox);
             parent.addAndMakeVisible(slider);

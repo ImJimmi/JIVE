@@ -41,8 +41,9 @@ namespace jive
             {
                 lastModificationTime = file.getLastModificationTime();
 
-                if (onFileModified)
-                    onFileModified();
+                // The callback may delete this observer, so must outlive it.
+                if (const auto callback = onFileModified)
+                    callback();
             }
         }
 

@@ -15,7 +15,7 @@ namespace jive_examples::text
         {
             window = interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" });
             interpreter.onLoad = [this](jive::GuiItem& root) {
-                bindControls();
+                // bindControls();
                 inspector.inspect(*root.getComponent());
             };
             interpreter.onLoad(*window);

@@ -1,0 +1,29 @@
+{
+  "$darkRed": "#89023E",
+  "$mediumRed": "#951748",
+  "$pink": "#EA638C",
+  "$cream": "#FFD9DA",
+
+  "Button": {
+    "background": "$darkRed",
+    "foreground": "$cream",
+    "border": "$pink",
+
+    "border-width": 2.5,
+    "border-radius": "50%",
+
+    "font-family": "Arial",
+    "font-size": 16,
+
+    ":hover": {
+      "background": "$mediumRed",
+      "foreground": "white"
+    }
+  },
+
+  "Slider": {
+    "background": "$darkRed",
+    "thumb": "$cream",
+    "track": "$pink"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "background": "#89023E",
+  "foreground": "#FFD9DA",
+  "border": "#EA638C",
+
+  "border-width": 2.5,
+  "border-radius": "50%",
+
+  "font-family": "Arial",
+  "font-size": 16,
+
+  ":hover": {
+    "background": "#951748",
+    "foreground": "white"
+  }
+}

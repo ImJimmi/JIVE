@@ -2,7 +2,7 @@
 
 This guide introduces Templates, which allow you to write reusable, configurable UI components.
 
-_Have a read through [Your First View](./01-Your%20First%20View.md) if you haven't already._
+_Have a read through [Your First View](./01-Your%20First%20View.md) if you haven't already, which introduces the basics of writing views._
 
 ## Mini Mixer
 

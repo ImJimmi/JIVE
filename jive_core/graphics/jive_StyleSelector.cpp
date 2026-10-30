@@ -289,9 +289,21 @@ namespace jive
         return precedence;
     }
 
+    // Like CSS, a list of selectors is as specific as the most specific
+    // selector in it, rather than the specificity of each being added up.
+    [[nodiscard]] static auto calculateListPrecedence(const juce::String& selector)
+    {
+        std::array<std::uint16_t, 3> precedence{ 0, 0, 0 };
+
+        for (const auto& singleSelector : juce::StringArray::fromTokens(selector, ",", ""))
+            precedence = std::max(precedence, calculatePrecedence(singleSelector));
+
+        return precedence;
+    }
+
     StyleSelector::StyleSelector(const juce::String& selector, juce::Component* root)
         : predicate{ buildPredicate(selector, root) }
-        , precedence{ calculatePrecedence(selector) }
+        , precedence{ calculateListPrecedence(selector) }
     {
     }
 
@@ -470,6 +482,41 @@ static jive::UnitTest indirectChildSelectorTest{
     },
 };
 
+static jive::UnitTest typeSelectors{
+    "jive",
+    "jive::StyleSelector",
+    "Type selectors",
+    [](auto& test) {
+        {
+            juce::ToggleButton component;
+            component.getProperties().set("jive::type", "Checkbox");
+            test.expect(jive::StyleSelector{ "Checkbox" }.appliesTo(component));
+            test.expect(!jive::StyleSelector{ "Button" }.appliesTo(component));
+        }
+        {
+            juce::Component component;
+            component.getProperties().set("jive::type", "XYPad");
+            test.expect(jive::StyleSelector{ "XYPad" }.appliesTo(component));
+        }
+        {
+            juce::TextButton component;
+            test.expect(!jive::StyleSelector{ "Button" }.appliesTo(component));
+            test.expect(!jive::StyleSelector{ "TextButton" }.appliesTo(component));
+        }
+        {
+            juce::ScrollBar scrollBar{ true };
+            juce::TextEditor textEditor;
+            test.expect(jive::StyleSelector{ "ScrollBar" }.appliesTo(scrollBar));
+            test.expect(jive::StyleSelector{ "TextEditor" }.appliesTo(textEditor));
+        }
+        {
+            juce::TextEditor textEditor;
+            textEditor.getProperties().set("jive::type", "Text");
+            test.expect(!jive::StyleSelector{ "TextEditor" }.appliesTo(textEditor));
+        }
+    },
+};
+
 static jive::UnitTest descendantTypeSelectorTest{
     "jive",
     "jive::StyleSelector",
@@ -481,23 +528,25 @@ static jive::UnitTest descendantTypeSelectorTest{
         container.setComponentID("container");
         topLevel.addAndMakeVisible(container);
         juce::TextButton directButton;
+        directButton.getProperties().set("jive::type", "Button");
         container.addAndMakeVisible(directButton);
         juce::Component wrapper;
         container.addAndMakeVisible(wrapper);
         juce::TextButton indirectButton;
+        indirectButton.getProperties().set("jive::type", "Button");
         wrapper.addAndMakeVisible(indirectButton);
 
         // Plain type selector.
         {
-            const jive::StyleSelector selector{ "TextButton" };
+            const jive::StyleSelector selector{ "Button" };
             test.expect(selector.appliesTo(directButton));
             test.expect(selector.appliesTo(indirectButton));
             test.expect(!selector.appliesTo(container));
         }
-        // Descendant combinator ending in a type - should match a TextButton at
+        // Descendant combinator ending in a type - should match a Button at
         // any depth beneath #container.
         {
-            const jive::StyleSelector selector{ "#container TextButton" };
+            const jive::StyleSelector selector{ "#container Button" };
             test.expect(selector.appliesTo(directButton));
             test.expect(selector.appliesTo(indirectButton));
             test.expect(!selector.appliesTo(container));
@@ -505,20 +554,20 @@ static jive::UnitTest descendantTypeSelectorTest{
         }
         // A non-matching ancestor id should not match.
         {
-            const jive::StyleSelector selector{ "#nope TextButton" };
+            const jive::StyleSelector selector{ "#nope Button" };
             test.expect(!selector.appliesTo(directButton));
             test.expect(!selector.appliesTo(indirectButton));
         }
-        // Child combinator ending in a type - should only match a TextButton
+        // Child combinator ending in a type - should only match a Button
         // that is a *direct* child of #container.
         {
-            const jive::StyleSelector selector{ "#container > TextButton" };
+            const jive::StyleSelector selector{ "#container > Button" };
             test.expect(selector.appliesTo(directButton));
             test.expect(!selector.appliesTo(indirectButton));
         }
         // A descendant combinator mixing a type ancestor with a type target.
         {
-            const jive::StyleSelector selector{ "TextButton TextButton" };
+            const jive::StyleSelector selector{ "Button Button" };
             test.expect(!selector.appliesTo(directButton));
             test.expect(!selector.appliesTo(indirectButton));
         }
@@ -668,6 +717,10 @@ static jive::UnitTest selectorPrecedence{
 
         test.expect(jive::StyleSelector{ "div.foo.bar span" } > jive::StyleSelector{ "#app div.foo.bar span" });
         test.expect(jive::StyleSelector{ "#app div.foo span::before" } > jive::StyleSelector{ "#app #content div.foo span:hover::before" });
+
+        test.expect(jive::StyleSelector{ "Button:hover, Checkbox:hover" } == jive::StyleSelector{ "Checkbox:hover" });
+        test.expect(jive::StyleSelector{ "Button, .foo" } == jive::StyleSelector{ ".foo" });
+        test.expect(jive::StyleSelector{ "Button:hover, Checkbox:hover" } > jive::StyleSelector{ "Checkbox:checked:hover" });
     },
 };
 

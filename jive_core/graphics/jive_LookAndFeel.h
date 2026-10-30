@@ -262,7 +262,7 @@ namespace jive
             juce::String id;
             juce::var classes;
             int interactionState;
-            std::optional<juce::Slider::SliderStyle> sliderStyle;
+            juce::var type;
         };
 
         struct ComponentStylesCache

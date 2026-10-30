@@ -64,28 +64,6 @@ Add a colon to each state key:
 }
 ```
 
-## Type selectors match component types, not element names
-
-A type selector such as `"Button"` used to match elements by the type name of their `juce::ValueTree`. It now matches by the type of the underlying JUCE component. The built-in names are:
-
-`Button`, `TextButton`, `Checkbox`, `ComboBox`, `Hyperlink`, `Label`, `ProgressBar`, `TextEditor`, `ScrollBar`, `Slider`, `Knob`, `Spinner`, `Popup`, `Option`, `Window` and `Editor`.
-
-Other element names, such as `Component`, `Text`, `Image` and any custom names, no longer match. `Button` matches every kind of button, so a `Button` rule also styles checkboxes and hyperlinks.
-
-### Reason
-
-Styles are resolved against components rather than trees, so selectors can also match components that no element creates, such as `ScrollBar`, `TextEditor` and combo-box popups.
-
-### Migrating
-
-Give elements that used a type selector a `class` or an `id`, and select them with `.class` or `#id`. Use `TextButton` to style only `<Button>` elements. To select a custom component by name, register a predicate for it:
-
-```cpp
-jive::ComponentTypePredicates::addPredicate([](const juce::Component& component, const juce::String& typeName) {
-    return typeName == "XYPad" && dynamic_cast<const XYPad*>(&component) != nullptr;
-});
-```
-
 ## Some font properties have been renamed
 
 | 1.x                               | 2.0                                                                  |
