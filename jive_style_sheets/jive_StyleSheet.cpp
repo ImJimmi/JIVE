@@ -500,7 +500,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_core/graphics/themes/jive_SteelTheme.h>
+    #include <jive_style_sheets/graphics/themes/jive_SteelTheme.h>
 
 class StyleSheetTests : public juce::UnitTest
 {

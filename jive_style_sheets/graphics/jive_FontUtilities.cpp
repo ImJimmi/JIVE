@@ -1,0 +1,317 @@
+#include "jive_FontUtilities.h"
+
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
+#include <jive_style_sheets/graphics/jive_Styles.h>
+
+namespace jive
+{
+    float calculateStringWidth(const juce::String& text, const juce::Font& font)
+    {
+#if JUCE_VERSION > JIVE_JUCE_VERSION(8, 0, 1)
+        return juce::GlyphArrangement::getStringWidth(font, text);
+#else
+        return font.getStringWidthFloat(text);
+#endif
+    }
+
+    static const std::unordered_map<juce::String, juce::Font::FontStyleFlags> namedFontStyles{
+        { "normal", juce::Font::plain },
+        { "italic", juce::Font::italic },
+        { "bold", juce::Font::bold },
+        { "underlined", juce::Font::underlined },
+    };
+
+    [[nodiscard]] static auto getDefaultFontSize()
+    {
+        return 13.0f;
+    }
+
+    [[nodiscard]] static auto getDefaultFontStyle()
+    {
+        return juce::Font::plain;
+    }
+
+    [[nodiscard]] static auto getDefaultFont()
+    {
+        return juce::Font{
+#if JUCE_MAJOR_VERSION >= 8
+            juce::FontOptions{
+                juce::Font::getSystemUIFontName(),
+                0.0f,
+                getDefaultFontStyle(),
+            },
+#else
+            juce::Font::getDefaultSansSerifFontName(),
+            0.0f,
+            getDefaultFontStyle(),
+#endif
+        }
+            .withPointHeight(getDefaultFontSize());
+    }
+
+    template <typename... Args>
+    [[nodiscard]] static auto makeFont(const Args&... args)
+    {
+        return juce::Font{
+#if JUCE_MAJOR_VERSION >= 8
+            juce::FontOptions{
+#endif
+                args...
+#if JUCE_MAJOR_VERSION >= 8
+            },
+#endif
+        };
+    }
+
+    static void replaceAliasFontFamilies(juce::String& fontFamily)
+    {
+        static const std::unordered_map<juce::String, juce::String> genericFontNames{
+            { "serif", juce::Font::getDefaultSerifFontName() },
+            { "sans-serif", juce::Font::getDefaultSansSerifFontName() },
+#if JUCE_MAJOR_VERSION >= 8
+            { "system-ui", juce::Font::getSystemUIFontName() },
+#endif
+            { "monospace", juce::Font::getDefaultMonospacedFontName() },
+        };
+
+        if (const auto name = genericFontNames.find(fontFamily);
+            name != std::end(genericFontNames))
+        {
+            fontFamily = name->second;
+        }
+    }
+
+    juce::Font parseFont(const juce::String& text)
+    {
+        if (text.isEmpty())
+            return getDefaultFont();
+
+        static const auto getFontFamily = [](const juce::String& id) {
+            auto copy = id;
+            replaceAliasFontFamilies(copy);
+            return copy;
+        };
+
+        const auto tokens = juce::StringArray::fromTokens(text, " ", "");
+
+        if (tokens.size() == 1)
+        {
+            return makeFont(getFontFamily(text), 0.0f, getDefaultFontStyle())
+                .withPointHeight(getDefaultFontSize());
+        }
+
+        if (tokens.size() == 2)
+        {
+            const auto foundFontStyle = namedFontStyles.find(tokens[0]);
+            const auto fontStyle = foundFontStyle != std::end(namedFontStyles)
+                                     ? foundFontStyle->second
+                                     : juce::Font::plain;
+            const auto fontSize = foundFontStyle != std::end(namedFontStyles)
+                                    ? getDefaultFontSize()
+                                    : tokens[0].getFloatValue();
+
+            return makeFont(getFontFamily(tokens[1]), 0.0f, fontStyle)
+                .withPointHeight(fontSize);
+        }
+
+        const auto numTokens = tokens.size();
+        const auto fontFamily = getFontFamily(tokens[numTokens - 1]);
+        const auto fontSize = tokens[numTokens - 2].getFloatValue();
+        int styleFlags = juce::Font::plain;
+
+        for (auto i = 0; i < numTokens - 2; i++)
+            styleFlags += namedFontStyles.find(tokens[i])->second;
+
+        return makeFont(fontFamily, 0.0f, styleFlags)
+            .withPointHeight(fontSize);
+    }
+
+    [[nodiscard]] static auto findFont(const juce::Component& component,
+                                       const Styles& styles,
+                                       const juce::Font& baseFont = getDefaultFont(),
+                                       const juce::String& propertyNamesPrefix = "")
+    {
+        std::optional<juce::String> fontFamily;
+        std::optional<float> fontPointSize;
+        std::unordered_set<juce::Font::FontStyleFlags> fontStyleFlags;
+        std::optional<float> fontHorizontalScale;
+        std::optional<float> fontExtraKerningFactor;
+
+#if JUCE_MAJOR_VERSION >= 8
+        std::optional<float> fontAscentOverride;
+        std::optional<float> fontDescentOverride;
+#endif
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-family");
+                property.has_value())
+            {
+                fontFamily = property->toString();
+            }
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-size");
+                property.has_value())
+            {
+                fontPointSize = static_cast<float>(*property);
+            }
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-styles");
+                property.has_value())
+            {
+                for (const auto& token : juce::StringArray::fromTokens(property->toString(), " ", ""))
+                {
+                    if (const auto namedStyle = namedFontStyles.find(token);
+                        namedStyle != std::end(namedFontStyles))
+                    {
+                        fontStyleFlags.emplace(namedStyle->second);
+                    }
+                }
+            }
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-scale");
+                property.has_value())
+            {
+                fontHorizontalScale = static_cast<float>(*property);
+            }
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-kerning");
+                property.has_value())
+            {
+                fontExtraKerningFactor = static_cast<float>(*property);
+            }
+#if JUCE_MAJOR_VERSION >= 8
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-ascent-override");
+                property.has_value())
+            {
+                fontAscentOverride = static_cast<float>(*property);
+            }
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyNamesPrefix + "font-descent-override");
+                property.has_value())
+            {
+                fontDescentOverride = static_cast<float>(*property);
+            }
+#endif
+        }
+
+        auto result = baseFont;
+
+        auto finalFontFamily = fontFamily.value_or(styles.fontFamily.getValueOr(result.getTypefaceName()));
+        replaceAliasFontFamilies(finalFontFamily);
+
+        result.setTypefaceName(finalFontFamily);
+        result = result.withPointHeight(fontPointSize.value_or(styles.find<float>("font-size").value_or(result.getHeightInPoints())));
+        result.setHorizontalScale(fontHorizontalScale.value_or(styles.find<float>("font-scale").value_or(result.getHorizontalScale())));
+        result.setExtraKerningFactor(fontExtraKerningFactor.value_or(styles.find<float>("font-kerning").value_or(result.getExtraKerningFactor())));
+
+        for (const auto& flag : styles.fontStyleFlags.getValueOr({}))
+            fontStyleFlags.emplace(flag);
+        for (const auto& flag : fontStyleFlags)
+            result.setStyleFlags(result.getStyleFlags() | flag);
+
+#if JUCE_MAJOR_VERSION >= 8
+        if (const auto ascent = fontAscentOverride; ascent.has_value())
+            result.setAscentOverride(ascent);
+        else if (const auto a = styles.find<float>("font-ascent-override"); a.has_value())
+            result.setAscentOverride(a);
+
+        if (const auto descent = fontDescentOverride; descent.has_value())
+            result.setDescentOverride(descent);
+        else if (const auto d = styles.find<float>("font-descent-override"); d.has_value())
+            result.setDescentOverride(d);
+#endif
+
+        return result;
+    }
+
+    juce::Font getFont(const juce::Component& component,
+                       const Styles& styles,
+                       juce::Font defaultFont)
+    {
+        return findFont(component, styles, defaultFont);
+    }
+
+    juce::Font getFont(const juce::Label& label,
+                       const Styles& styles)
+    {
+        return findFont(label,
+                        styles,
+                        label
+                            .getLookAndFeel()
+                            .getLabelFont(*const_cast<juce::Label*>(&label)));
+    }
+
+    // A combo box's items use its font, so only the "popup."-prefixed
+    // properties are applied on top of it.
+    juce::Font getFont(const juce::PopupMenu::Item&,
+                       const juce::Component& component,
+                       const Styles& styles)
+    {
+        if (const auto* comboBox = dynamic_cast<const juce::ComboBox*>(&component))
+            return findFont(*comboBox, Styles{}, getFont(*comboBox, styles), "popup.");
+
+        return findFont(component, styles, component.getLookAndFeel().getPopupMenuFont(), "popup.");
+    }
+
+    juce::Font getFont(const juce::ComboBox& comboBox,
+                       const Styles& styles)
+    {
+        return findFont(comboBox,
+                        styles,
+                        comboBox
+                            .getLookAndFeel()
+                            .getComboBoxFont(*const_cast<juce::ComboBox*>(&comboBox)));
+    }
+
+    [[nodiscard]] juce::AttributedString::ReadingDirection getReadingDirection(const juce::Component& component,
+                                                                               const Styles& styles,
+                                                                               juce::AttributedString::ReadingDirection defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "direction");
+                property.has_value())
+            {
+                return fromVar<juce::AttributedString::ReadingDirection>(*property);
+            }
+        }
+
+        if (styles.direction.hasValue())
+            return styles.direction.get();
+
+        return defaultValue;
+    }
+
+    [[nodiscard]] juce::Justification getTextAlignment(const juce::Component& component,
+                                                       const Styles& styles,
+                                                       juce::Justification defaultValue)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = currentComponent->getParentComponent())
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(), "text-align");
+                property.has_value())
+            {
+                return fromVar<juce::Justification>(*property);
+            }
+        }
+
+        if (styles.textAlign.hasValue())
+            return styles.textAlign.get();
+
+        return defaultValue;
+    }
+} // namespace jive

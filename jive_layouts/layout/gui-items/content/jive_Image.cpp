@@ -1,7 +1,7 @@
 #include "jive_Image.h"
 
-#include <jive_core/graphics/jive_CurrentColour.h>
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_style_sheets/graphics/jive_CurrentColour.h>
 
 namespace jive
 {

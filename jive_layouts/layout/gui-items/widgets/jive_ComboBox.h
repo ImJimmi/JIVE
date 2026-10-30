@@ -1,7 +1,7 @@
 #pragma once
 
-#include <jive_core/components/widgets/jive_ComboBoxComponent.h>
 #include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
+#include <jive_style_sheets/components/widgets/jive_ComboBoxComponent.h>
 
 namespace jive
 {

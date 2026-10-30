@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jive_core/jive_core.h>
+#include <jive_style_sheets/graphics/jive_LookAndFeel.h>
 
 namespace jive
 {

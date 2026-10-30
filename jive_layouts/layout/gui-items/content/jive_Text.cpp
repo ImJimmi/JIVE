@@ -192,8 +192,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_core/graphics/jive_FontUtilities.h>
     #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
+    #include <jive_style_sheets/graphics/jive_FontUtilities.h>
 
 class TextTest : public juce::UnitTest
 {
