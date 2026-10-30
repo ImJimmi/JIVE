@@ -8,12 +8,14 @@ namespace jive
     ComboBoxComponent::Popup::Popup()
     {
         setAccessible(false);
+        getProperties().set(ids::type(), "Popup");
     }
 
     ComboBoxComponent::Item::Item(int id)
         : itemID{ id }
     {
         setAccessible(false);
+        getProperties().set(ids::type(), "Option");
     }
 
     int ComboBoxComponent::Item::getItemID() const noexcept

@@ -99,7 +99,7 @@ _Selectors only match the root component and its descendants._
 | Selector     | Example                                                | Matches                                                                                            |
 | ------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | Universal    | `*`                                                    | Every component.                                                                                   |
-| Type         | `Button`                                               | Components of the given type (see below).                                                          |
+| Type         | `Button`                                               | Elements with the given name, like `<Button>` (see below).                                         |
 | Class        | `.toggle`                                              | Elements with the class in their `class` property.                                                 |
 | ID           | `#title`                                               | The element with the given `id`.                                                                   |
 | Pseudo-class | `:hover`, `:active`, `:focus`, `:disabled`, `:checked` | Components in the given interaction state.                                                         |
@@ -110,23 +110,22 @@ _Selectors only match the root component and its descendants._
 
 #### Type selectors
 
-Type selectors match the type of the underlying JUCE component, not the element's name. The built-in types are:
+Type selectors match the element's name, which is the type of its `juce::ValueTree`. `"Button"` matches `<Button>` elements, `"Checkbox"` matches `<Checkbox>` elements, and so on. Custom elements work the same way, so `"XYPad"` matches `<XYPad>` elements with no extra setup.
 
-`Button`, `TextButton`, `Checkbox`, `ComboBox`, `Hyperlink`, `Label`, `ProgressBar`, `TextEditor`, `ScrollBar`, `Slider`, `Knob`, `Spinner`, `Popup`, `Option`, `Window`, and `Editor`.
+Each element only matches its own name: `"Button"` doesn't match checkboxes or hyperlinks, and `"Slider"` doesn't match knobs or spinners. Use a list, like `"Button, Checkbox, Hyperlink"`, to style several types at once.
 
-`Button` matches every kind of button, including checkboxes and hyperlinks, while `TextButton` matches only `<Button>` elements. `Slider` doesn't match knobs or spinners. `Popup` and `Option` match a combo box's popup menu and its items.
+A few components aren't created by any element, so they have their own type names instead:
 
-To select a custom component by type, register a predicate for it:
-
-```cpp
-jive::ComponentTypePredicates::addPredicate([](const juce::Component& component, const juce::String& typeName) {
-    return typeName == "XYPad" && dynamic_cast<const XYPad*>(&component) != nullptr;
-});
-```
+| Type         | Matches                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| `ScrollBar`  | Scroll bars, such as a `juce::Viewport`'s.                                                    |
+| `TextEditor` | Text editors, such as the one an editable combo box shows.                                    |
+| `Popup`      | A combo box's popup menu.                                                                     |
+| `Option`     | The items in a combo box's popup menu. Each one also matches its `<Option>`'s ID and classes. |
 
 ### Precedence
 
-When more than one rule sets the same property on a component, the most specific selector wins, as in CSS: IDs beat classes and pseudo-classes, which beat types. Properties at the top level of a style sheet beat any selector.
+When more than one rule sets the same property on a component, the most specific selector wins, as in CSS: IDs beat classes and pseudo-classes, which beat types. A list of selectors is as specific as the most specific selector in it. Properties at the top level of a style sheet beat any selector.
 
 ## Tokens
 

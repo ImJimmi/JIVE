@@ -56,15 +56,15 @@ namespace jive::themes
                           .withBorderWidth(juce::BorderSize<float>{}));
 
         // Buttons
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button, Checkbox, Hyperlink"),
                       jive::Styles{}
                           .withBackground(steel::raisinBlack)
                           .withBorderFill(steel::charcoalGunmetalGradient)
                           .withShadow(steel::widgetShadow));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:hover"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:hover, Checkbox:hover, Hyperlink:hover"),
                       jive::Styles{}
                           .withBackground(steel::raisinBlackHover));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:active"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:active, Checkbox:active, Hyperlink:active"),
                       jive::Styles{}
                           .withBackground(steel::raisinBlackActive));
 
@@ -87,16 +87,16 @@ namespace jive::themes
                           .withBackground(steel::pictonBlueActive)
                           .withBorderFill(juce::Colours::transparentBlack));
 
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked"),
                       jive::Styles{}
                           .withBackground(steel::pictonBlue)
                           .withBorderFill(steel::pictonBlue)
                           .withForeground(steel::raisinBlack));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:hover"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked:hover"),
                       jive::Styles{}
                           .withBackground(steel::pictonBlueHover)
                           .withBorderFill(steel::pictonBlueHover));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:active"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked:active"),
                       jive::Styles{}
                           .withBackground(steel::pictonBlueActive)
                           .withBorderFill(steel::pictonBlueActive));

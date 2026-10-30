@@ -56,25 +56,25 @@ namespace jive::themes
 
         // Buttons, styled as Material's tonal buttons, or filled ones when
         // they're toggled on.
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button"),
                       jive::Styles{}
                           .withBackground(material::secondaryContainer)
                           .withBorderRadius(material::fullBorderRadius)
                           .withForeground(material::onSecondaryContainer));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:hover"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:hover"),
                       jive::Styles{}
                           .withBackground(material::secondaryContainerHover));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:hover:active"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:hover:active"),
                       jive::Styles{}
                           .withBackground(material::secondaryContainerPressed));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked"),
                       jive::Styles{}
                           .withBackground(material::primary)
                           .withForeground(material::onPrimary));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:hover"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked:hover"),
                       jive::Styles{}
                           .withBackground(material::primaryHover));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextButton:checked:hover:active"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Button:checked:hover:active"),
                       jive::Styles{}
                           .withBackground(material::primaryPressed));
 

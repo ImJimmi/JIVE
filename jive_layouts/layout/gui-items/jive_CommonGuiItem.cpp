@@ -84,6 +84,7 @@ namespace jive
         }
     {
         getComponent()->addComponentListener(this);
+        getComponent()->getProperties().set(ids::type(), state.getType().toString());
 
         for (const auto& updater : propertyUpdaters)
             updater.second();
@@ -339,6 +340,7 @@ public:
         testEnablement();
         testCursor();
         testClass();
+        testType();
         testParentHierarchy();
     }
 
@@ -988,6 +990,37 @@ private:
         expectEquals(parentComponent->createComponentSnapshot({ 20, 20 }).getPixelAt(10, 10), juce::Colours::red);
 
         root.removeChildComponent(parentComponent);
+    }
+
+    void testType()
+    {
+        beginTest("type / type selectors match the element's name");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("Card", jive::Styles{}.withBackground(juce::Colours::red));
+        lookAndFeel.addStyles("Button", jive::Styles{}.withBackground(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        interpreter.getComponentFactory().set("Card", [] {
+            return std::make_shared<juce::Component>();
+        });
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <Card width="20" height="20" />
+                <Checkbox width="20" height="20" />
+            </Component>
+        )"));
+        root.addAndMakeVisible(*parent->getComponent());
+
+        const auto& card = *parent->getChildren()[0]->getComponent();
+        const auto& checkbox = *parent->getChildren()[1]->getComponent();
+        expect(lookAndFeel.findMostApplicableStyles(card).find<jive::Fill>("background") == juce::Colours::red);
+        expect(lookAndFeel.findMostApplicableStyles(checkbox).find<jive::Fill>("background") != juce::Colours::blue);
+
+        root.removeChildComponent(parent->getComponent().get());
     }
 
     void testParentHierarchy()

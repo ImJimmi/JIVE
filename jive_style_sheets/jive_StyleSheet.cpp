@@ -28,7 +28,13 @@ namespace jive
         {
             styleFile = SourceFile{ state[ids::styleFile()].toString() };
             parsedFile = style.get();
-            watch(styleFile);
+
+            juce::Array<SourceFile> files;
+
+            for (const auto& path : *state[ids::styleFiles()].getArray())
+                files.add(SourceFile{ path.toString() });
+
+            watch(files);
         }
 
         style.onValueChange = [this] {
@@ -138,9 +144,10 @@ namespace jive
 
         if (object == nullptr || object != parsedFile)
         {
-            fileObserver = nullptr;
+            fileObservers.clear();
             parsedFile = nullptr;
             state.removeProperty(ids::styleFile(), nullptr);
+            state.removeProperty(ids::styleFiles(), nullptr);
         }
 
         if (!style.exists())
@@ -163,38 +170,24 @@ namespace jive
             if (const auto file = sourceDirectories.get()->find(style.toString(), findSourceFile(state));
                 file.exists())
             {
-                watch(file);
                 loadFile(file);
             }
         }
     }
 
-    void StyleSheet::watch(const SourceFile& file)
+    void StyleSheet::watch(const juce::Array<SourceFile>& files)
     {
-        const auto fileOnDisk = file.getFileOnDisk();
-        fileObserver = fileOnDisk == juce::File{}
-                         ? nullptr
-                         : std::make_unique<FileObserver>(fileOnDisk);
+        fileObservers.clear();
 
-        if (fileObserver != nullptr)
+        for (const auto& file : files)
         {
-            fileObserver->onFileModified = [this, file] {
-                loadFile(file);
-            };
-        }
-    }
-
-    // The file's path is replaced by its parsed object so that C++ can
-    // change the sheet at runtime, for example to set a token's value.
-    void StyleSheet::loadFile(const SourceFile& file)
-    {
-        if (const auto object = fromVar<Object::ReferenceCountedPointer>(parseJSON(file.loadAsString()));
-            object != nullptr)
-        {
-            styleFile = file;
-            parsedFile = object;
-            state.setProperty(ids::styleFile(), file.getPath(), nullptr);
-            style.set(object);
+            if (const auto fileOnDisk = file.getFileOnDisk(); fileOnDisk != juce::File{})
+            {
+                auto& observer = fileObservers.emplace_back(std::make_unique<FileObserver>(fileOnDisk));
+                observer->onFileModified = [this] {
+                    loadFile(styleFile);
+                };
+            }
         }
     }
 
@@ -296,6 +289,127 @@ namespace jive
             return file.getPath();
 
         return value;
+    }
+
+    // Rather than a style object, a selector can be given the path of a style
+    // sheet to use for it, and any style sheet can list other style sheets to
+    // import. The rules of all the imported style sheets are merged into a
+    // single object, with later rules taking precedence over earlier ones.
+    class StyleSheetImporter
+    {
+    public:
+        explicit StyleSheetImporter(const SourceDirectories& directories)
+            : sourceDirectories{ directories }
+        {
+        }
+
+        [[nodiscard]] bool importFile(Object& target, const SourceFile& file)
+        {
+            if (importing.contains(file))
+            {
+                DBG("Style sheet '" << file.getPath() << "' imports itself");
+                jassertfalse;
+                return false;
+            }
+
+            const auto object = fromVar<Object::ReferenceCountedPointer>(parseJSON(file.loadAsString()));
+
+            if (object == nullptr)
+                return false;
+
+            importing.add(file);
+            files.addIfNotAlreadyThere(file);
+            addRules(target, *object, file);
+            importing.removeLast();
+
+            return true;
+        }
+
+        juce::Array<SourceFile> files;
+
+    private:
+        [[nodiscard]] static bool isImport(const juce::Identifier& name, const juce::var& value)
+        {
+            return value.isString()
+                && value.toString().trim().endsWithIgnoreCase(".json")
+                && name != ids::transition()
+                && !name.toString().startsWith("$")
+                && Styles::propertyNames.count(name.toString()) == 0;
+        }
+
+        [[nodiscard]] static Object& getOrCreateObject(Object& parent, const juce::Identifier& name)
+        {
+            if (auto* existing = dynamic_cast<Object*>(parent.getProperty(name).getDynamicObject()))
+                return *existing;
+
+            auto* object = new Object{};
+            parent.setProperty(name, object);
+            return *object;
+        }
+
+        void import(Object& target, const juce::String& path, const SourceFile& referrer)
+        {
+            if (const auto file = sourceDirectories.find(path, referrer); file.exists())
+            {
+                juce::ignoreUnused(importFile(target, file));
+                return;
+            }
+
+            DBG("No style sheet found at '" << path << "'");
+            jassertfalse;
+        }
+
+        // Nested objects are copied rather than moved so that they're never
+        // left listened to by an object that's since been deleted.
+        void addRules(Object& target, const Object& source, const SourceFile& file)
+        {
+            if (const auto* paths = source[ids::imports()].getArray())
+            {
+                for (const auto& path : *paths)
+                    import(target, path.toString(), file);
+            }
+
+            for (const auto& [name, value] : source.getProperties())
+            {
+                if (name == ids::imports())
+                    continue;
+
+                if (isImport(name, value))
+                    import(getOrCreateObject(target, name), value.toString(), file);
+                else if (const auto* nested = dynamic_cast<Object*>(value.getDynamicObject()))
+                    addRules(getOrCreateObject(target, name), *nested, file);
+                else if (name == ids::icon())
+                    target.setProperty(name, findIconFile(value, &sourceDirectories, file));
+                else
+                    target.setProperty(name, value);
+            }
+        }
+
+        const SourceDirectories& sourceDirectories;
+        juce::Array<SourceFile> importing;
+    };
+
+    // The file's path is replaced by its parsed object so that C++ can
+    // change the sheet at runtime, for example to set a token's value.
+    void StyleSheet::loadFile(const SourceFile& file)
+    {
+        StyleSheetImporter importer{ *sourceDirectories.get() };
+
+        if (Object::ReferenceCountedPointer object = new Object{};
+            importer.importFile(*object, file))
+        {
+            juce::Array<juce::var> paths;
+
+            for (const auto& importedFile : importer.files)
+                paths.add(importedFile.getPath());
+
+            styleFile = file;
+            parsedFile = object;
+            state.setProperty(ids::styleFile(), file.getPath(), nullptr);
+            state.setProperty(ids::styleFiles(), paths, nullptr);
+            watch(importer.files);
+            style.set(object);
+        }
     }
 
     static void appendStyleProperties(Object& object,
@@ -453,6 +567,7 @@ private:
         beginTest("style property / with no style property specified, the component should use the default styles");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{ "Button" };
             jive::LookAndFeel lookAndFeel{ button };
@@ -465,6 +580,7 @@ private:
 
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -498,6 +614,7 @@ private:
     void testIndividualStyleProperties()
     {
         juce::TextButton button;
+        button.getProperties().set("jive::type", "Button");
         button.setSize(100, 25);
         juce::ValueTree state{
             "Button",
@@ -547,6 +664,7 @@ private:
     void testTransitions()
     {
         juce::TextButton button;
+        button.getProperties().set("jive::type", "Button");
         button.setSize(100, 25);
         juce::ValueTree state{
             "Button",
@@ -602,6 +720,7 @@ private:
         beginTest("transition details / multiple properties transition independently");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -644,6 +763,7 @@ private:
         beginTest("transition details / only properties with a transition animate");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -679,6 +799,7 @@ private:
         beginTest("transition details / interrupting a transition continues from the current value");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -720,6 +841,7 @@ private:
         beginTest("transition details / a state change transitions and then reverts");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -771,6 +893,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
 
@@ -813,6 +936,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setComponentID("first");
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
@@ -865,6 +989,7 @@ private:
             root.addAndMakeVisible(containerB);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(0, 0, 80, 25);
             containerA.addAndMakeVisible(button);
 
@@ -878,7 +1003,7 @@ private:
                                 "#container-a",
                                 new jive::Object{
                                     {
-                                        "TextButton",
+                                        "Button",
                                         new jive::Object{
                                             { "background", "orange" },
                                         },
@@ -889,7 +1014,7 @@ private:
                                 "#container-b",
                                 new jive::Object{
                                     {
-                                        "TextButton",
+                                        "Button",
                                         new jive::Object{
                                             { "background", "purple" },
                                         },
@@ -923,6 +1048,7 @@ private:
             file.replaceWithText(R"({ "background": "red" })");
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1002,6 +1128,7 @@ private:
             greenFile.replaceWithText(R"({ "background": "green" })");
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1046,6 +1173,7 @@ private:
             file.replaceWithText(R"({ "background": "red" })");
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1084,6 +1212,7 @@ private:
         }
 
         testFileBasedStyleObjects();
+        testImports();
     }
 
     static auto settledBackground(const jive::LookAndFeel& lookAndFeel, const juce::Component& component)
@@ -1113,6 +1242,7 @@ private:
         auto file = directory.getChildFile("object.json");
 
         juce::TextButton button;
+        button.getProperties().set("jive::type", "Button");
         button.setSize(100, 25);
         jive::LookAndFeel lookAndFeel{ button };
 
@@ -1240,6 +1370,169 @@ private:
         directory.deleteRecursively();
     }
 
+    void testImports()
+    {
+        auto directory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                             .getChildFile("jive-style-sheet-import-tests");
+        directory.deleteRecursively();
+        directory.createDirectory();
+
+        juce::TextButton button;
+        button.getProperties().set("jive::type", "Button");
+        button.setSize(100, 25);
+        jive::LookAndFeel lookAndFeel{ button };
+
+        const auto createStyleSheet = [&directory, &button](juce::ValueTree& state) {
+            state = juce::ValueTree{
+                "Button",
+                {
+                    { "jive::source-directories", new jive::SourceDirectories{ directory } },
+                    { "style", "root.json" },
+                },
+            };
+            return jive::StyleSheet::create(button, state);
+        };
+
+        beginTest("imports / a selector can be given the path of a style sheet to use for it");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "Button": "./button.json" })");
+            directory.getChildFile("button.json").replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+        }
+
+        beginTest("imports / nested selectors can be given the path of a style sheet");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "Button": { ":hover": "./hover.json" } })");
+            directory.getChildFile("hover.json").replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            const auto* hover = dynamic_cast<jive::Object*>(styleSheet.get()
+                                                                ->getProperty("Button")
+                                                                .getDynamicObject()
+                                                                ->getProperty(":hover")
+                                                                .getDynamicObject());
+            expect(hover != nullptr);
+            expectEquals(hover->getProperty("background").toString(), juce::String{ "red" });
+        }
+
+        beginTest("imports / string values that aren't paths to style sheets are kept as they are");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "Button": { "backgrond": "red" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            const auto* buttonRule = styleSheet.get()->getProperty("Button").getDynamicObject();
+            expect(buttonRule != nullptr);
+            expectEquals(buttonRule->getProperty("backgrond").toString(), juce::String{ "red" });
+        }
+
+        beginTest("imports / the rules of each imported style sheet are added to the importing style sheet");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./a.json", "./b.json" ] })");
+            directory.getChildFile("a.json").replaceWithText(R"({ "Button": { "background": "red" } })");
+            directory.getChildFile("b.json").replaceWithText(R"({ "Slider": { "background": "green" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::Property<jive::Object::ReferenceCountedPointer> styleSheet{ state, "style" };
+            expect(!styleSheet.get()->hasProperty("imports"));
+            expect(styleSheet.get()->hasProperty("Slider"));
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+        }
+
+        beginTest("imports / later imports take precedence over earlier ones");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./a.json", "./b.json" ] })");
+            directory.getChildFile("a.json").replaceWithText(R"({ "Button": { "background": "red", "foreground": "red" } })");
+            directory.getChildFile("b.json").replaceWithText(R"({ "Button": { "background": "green" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::green);
+            expect(lookAndFeel.findMostApplicableStyles(button).find<jive::Fill>("foreground").value() == juce::Colours::red);
+        }
+
+        beginTest("imports / the importing style sheet's own rules take precedence over imported ones");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./a.json" ], "Button": { "background": "blue" } })");
+            directory.getChildFile("a.json").replaceWithText(R"({ "Button": { "background": "red" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+        }
+
+        beginTest("imports / imported style sheets can import others, relative to themselves");
+        {
+            directory.getChildFile("system").createDirectory();
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./system/widgets.json" ] })");
+            directory.getChildFile("system/widgets.json").replaceWithText(R"({ "Button": "./button.json" })");
+            directory.getChildFile("system/button.json").replaceWithText(R"({ "background": "red" })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+        }
+
+        beginTest("imports / paths that don't start with ./ or ../ are looked for in the source directories");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "a.json" ] })");
+            directory.getChildFile("a.json").replaceWithText(R"({ "Button": { "background": "red" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+        }
+
+        beginTest("imports / a style sheet that imports itself doesn't cause infinite recursion");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./a.json" ], "Button": { "background": "blue" } })");
+            directory.getChildFile("a.json").replaceWithText(R"({ "imports": [ "./root.json" ] })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+        }
+
+        beginTest("imports / icons in imported style sheets are relative to the imported style sheet");
+        {
+            directory.getChildFile("system").createDirectory();
+            directory.getChildFile("system/chevron.svg").replaceWithText(R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0L10 10L20 0"/></svg>)");
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./system/icon.json" ] })");
+            directory.getChildFile("system/icon.json").replaceWithText(R"({ "Button": { "icon": "./chevron.svg" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            const auto styles = lookAndFeel.findMostApplicableStyles(button);
+            expect(styles.icon.hasValue() && !styles.icon.get().isEmpty());
+        }
+
+        beginTest("imports / modifying an imported style sheet hot-reloads the importing one");
+        {
+            auto imported = directory.getChildFile("a.json");
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./a.json" ] })");
+            imported.replaceWithText(R"({ "Button": { "background": "red" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::red);
+
+            modify(imported, R"({ "Button": { "background": "blue" } })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::blue);
+
+            sheet = jive::StyleSheet::create(button, state);
+            modify(imported, R"({ "Button": { "background": "yellow" } })");
+            expect(settledBackground(lookAndFeel, button) == juce::Colours::yellow);
+        }
+
+        directory.deleteRecursively();
+    }
+
     void testIcons()
     {
         static constexpr auto chevron = R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path d="M0 0 L10 10 L20 0" /></svg>)";
@@ -1324,6 +1617,7 @@ private:
         beginTest("misc style properties / gradient background resolves as a gradient");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1348,6 +1642,7 @@ private:
         beginTest("misc style properties / border-radius resolves to the specified radii");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1375,6 +1670,7 @@ private:
         beginTest("misc style properties / border-width set on the component state is applied");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1395,6 +1691,7 @@ private:
         beginTest("misc style properties / updating border-width on the state updates the applied style");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1416,6 +1713,7 @@ private:
         beginTest("misc style properties / removing border-width from the state reverts to the theme default");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1437,6 +1735,7 @@ private:
         beginTest("misc style properties / changing the style object preserves a state border-width");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1479,6 +1778,7 @@ private:
         beginTest("opacity / sets the component's alpha");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1501,6 +1801,7 @@ private:
         beginTest("opacity / can be a percentage");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1525,6 +1826,7 @@ private:
             jive::IgnoredComponent parent;
             parent.setSize(100, 100);
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setComponentID("child");
             child.setBounds(0, 0, 100, 100);
             parent.addAndMakeVisible(child);
@@ -1563,6 +1865,7 @@ private:
             jive::IgnoredComponent parent;
             parent.setSize(100, 100);
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setComponentID("child");
             child.setBounds(0, 0, 50, 25);
             parent.addAndMakeVisible(child);
@@ -1605,6 +1908,7 @@ private:
         beginTest("opacity / removing it restores the component's alpha");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1629,6 +1933,7 @@ private:
         beginTest("opacity / without one, the component's alpha is left alone");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             button.setAlpha(0.3f);
             juce::ValueTree state{
@@ -1655,6 +1960,7 @@ private:
         beginTest("tokens / a token referenced by an inline style property resolves to its value");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1681,6 +1987,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.getProperties().set("class", "highlight");
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
@@ -1712,6 +2019,7 @@ private:
         beginTest("tokens / multiple tokens each resolve independently across different properties");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1738,6 +2046,7 @@ private:
         beginTest("tokens / changing a token's value updates any styles that reference it");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1765,6 +2074,7 @@ private:
         beginTest("tokens / replacing the style object entirely resolves tokens against the new object only");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1797,6 +2107,7 @@ private:
         beginTest("tokens / a token can be referenced by a stateful selector");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1829,6 +2140,7 @@ private:
         beginTest("tokens / a token can be used for a non-colour style property");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1857,6 +2169,7 @@ private:
         beginTest("tokens / multiple tokens embedded within a single property value all resolve");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1889,6 +2202,7 @@ private:
         beginTest("tokens / a token name that is a prefix of another token name resolves to the correct value");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
             juce::ValueTree state{
                 "Button",
@@ -1925,6 +2239,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
@@ -1962,6 +2277,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
@@ -2009,6 +2325,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.getProperties().set("class", "child");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
@@ -2044,6 +2361,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
@@ -2072,6 +2390,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
@@ -2101,6 +2420,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.getProperties().set("class", "child");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
@@ -2137,6 +2457,7 @@ private:
             parent.setSize(200, 200);
 
             juce::TextButton child;
+            child.getProperties().set("jive::type", "Button");
             child.setBounds(0, 0, 100, 50);
             parent.addAndMakeVisible(child);
 
@@ -2166,11 +2487,13 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton both;
+            both.getProperties().set("jive::type", "Button");
             both.getProperties().set("class", "primary big");
             both.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(both);
 
             juce::TextButton onlyOne;
+            onlyOne.getProperties().set("jive::type", "Button");
             onlyOne.getProperties().set("class", "primary");
             onlyOne.setBounds(10, 40, 80, 25);
             parent.addAndMakeVisible(onlyOne);
@@ -2205,6 +2528,7 @@ private:
             panel.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             panel.addAndMakeVisible(button);
 
@@ -2215,7 +2539,7 @@ private:
                         "style",
                         new jive::Object{
                             {
-                                "#panel TextButton, .nonexistent",
+                                "#panel Button, .nonexistent",
                                 new jive::Object{
                                     { "background", "olive" },
                                 },
@@ -2237,6 +2561,7 @@ private:
             container.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             container.addAndMakeVisible(button);
 
@@ -2247,13 +2572,13 @@ private:
                         "style",
                         new jive::Object{
                             {
-                                "TextButton",
+                                "Button",
                                 new jive::Object{
                                     { "background", "blue" },
                                 },
                             },
                             {
-                                "#container TextButton",
+                                "#container Button",
                                 new jive::Object{
                                     { "background", "red" },
                                 },
@@ -2265,8 +2590,8 @@ private:
             jive::LookAndFeel lookAndFeel{ container };
             auto sheet = jive::StyleSheet::create(container, state);
 
-            // "#container TextButton" carries an ID, so it should win over the
-            // plain "TextButton" type selector.
+            // "#container Button" carries an ID, so it should win over the
+            // plain "Button" type selector.
             expectEquals(settledColourAt(button, 40, 12), juce::Colours::red);
         }
     }
@@ -2279,6 +2604,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setComponentID("my-button");
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
@@ -2313,11 +2639,13 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button1;
+            button1.getProperties().set("jive::type", "Button");
             button1.getProperties().set("class", "primary");
             button1.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button1);
 
             juce::TextButton button2;
+            button2.getProperties().set("jive::type", "Button");
             button2.getProperties().set("class", "secondary");
             button2.setBounds(10, 40, 80, 25);
             parent.addAndMakeVisible(button2);
@@ -2361,6 +2689,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             parent.addAndMakeVisible(button);
             button.setBounds(10, 10, 80, 25);
 
@@ -2371,7 +2700,7 @@ private:
                         "style",
                         new jive::Object{
                             {
-                                "TextButton",
+                                "Button",
                                 new jive::Object{
                                     { "background", "purple" },
                                 },
@@ -2400,6 +2729,7 @@ private:
             parent.addAndMakeVisible(childContainer);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.getProperties().set("class", "btn");
             button.setBounds(10, 10, 80, 25);
             childContainer.addAndMakeVisible(button);
@@ -2446,6 +2776,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton directChild;
+            directChild.getProperties().set("jive::type", "Button");
             directChild.getProperties().set("class", "btn");
             directChild.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(directChild);
@@ -2455,6 +2786,7 @@ private:
             parent.addAndMakeVisible(wrapper);
 
             juce::TextButton indirectChild;
+            indirectChild.getProperties().set("jive::type", "Button");
             indirectChild.getProperties().set("class", "btn");
             indirectChild.setBounds(0, 0, 80, 25);
             wrapper.addAndMakeVisible(indirectChild);
@@ -2492,6 +2824,7 @@ private:
         beginTest("selector-based styles / state selectors");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setSize(100, 25);
 
             juce::ValueTree state{
@@ -2543,6 +2876,7 @@ private:
             parent.setSize(100, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.getProperties().set("class", "nav-button");
             button.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button);
@@ -2593,16 +2927,19 @@ private:
             parent.setSize(200, 100);
 
             juce::TextButton button1;
+            button1.getProperties().set("jive::type", "Button");
             button1.setComponentID("btn-primary");
             button1.setBounds(10, 10, 80, 25);
             parent.addAndMakeVisible(button1);
 
             juce::TextButton button2;
+            button2.getProperties().set("jive::type", "Button");
             button2.getProperties().set("class", "highlighted");
             button2.setBounds(100, 10, 80, 25);
             parent.addAndMakeVisible(button2);
 
             juce::TextButton button3;
+            button3.getProperties().set("jive::type", "Button");
             button3.setBounds(10, 50, 80, 25);
             parent.addAndMakeVisible(button3);
 
@@ -2642,6 +2979,7 @@ private:
         beginTest("selector-based styles / precedence - more specific selector wins");
         {
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setComponentID("special-btn");
             button.getProperties().set("class", "btn");
             button.setSize(100, 25);
@@ -2686,12 +3024,13 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             // Style is specified on the button's own ValueTree node
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2715,11 +3054,12 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2754,11 +3094,12 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2793,11 +3134,12 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2832,11 +3174,12 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2911,16 +3254,18 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button1;
+            button1.getProperties().set("jive::type", "Button");
             button1.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button1);
 
             juce::TextButton button2;
+            button2.getProperties().set("jive::type", "Button");
             button2.setBounds(100, 10, 80, 25);
             root.addAndMakeVisible(button2);
 
             // Each button has its own ValueTree node with independent styles
             juce::ValueTree button1State{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2938,7 +3283,7 @@ private:
             };
 
             juce::ValueTree button2State{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -2983,6 +3328,7 @@ private:
             container.setSize(200, 100);
 
             juce::TextButton childButton;
+            childButton.getProperties().set("jive::type", "Button");
             childButton.getProperties().set("class", "action-btn");
             childButton.setBounds(10, 10, 80, 25);
             container.addAndMakeVisible(childButton);
@@ -3029,11 +3375,13 @@ private:
             panel.setSize(200, 100);
 
             juce::TextButton btn1;
+            btn1.getProperties().set("jive::type", "Button");
             btn1.setComponentID("primary");
             btn1.setBounds(10, 10, 80, 25);
             panel.addAndMakeVisible(btn1);
 
             juce::TextButton btn2;
+            btn2.getProperties().set("jive::type", "Button");
             btn2.setComponentID("secondary");
             btn2.setBounds(10, 40, 80, 25);
             panel.addAndMakeVisible(btn2);
@@ -3106,6 +3454,7 @@ private:
             level1.addAndMakeVisible(level2);
 
             juce::TextButton deepButton;
+            deepButton.getProperties().set("jive::type", "Button");
             deepButton.getProperties().set("class", "deep");
             deepButton.setBounds(10, 10, 80, 25);
             level2.addAndMakeVisible(deepButton);
@@ -3152,11 +3501,12 @@ private:
             root.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             root.addAndMakeVisible(button);
 
             juce::ValueTree buttonState{
-                "TextButton",
+                "Button",
                 {
                     {
                         "style",
@@ -3202,6 +3552,7 @@ private:
             container.setSize(200, 100);
 
             juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
             button.setBounds(10, 10, 80, 25);
             container.addAndMakeVisible(button);
 
@@ -3212,19 +3563,19 @@ private:
                         "style",
                         new jive::Object{
                             {
-                                "TextButton",
+                                "Button",
                                 new jive::Object{
                                     { "background", "olive" },
                                 },
                             },
                             {
-                                "TextButton:hover",
+                                "Button:hover",
                                 new jive::Object{
                                     { "background", "olivedrab" },
                                 },
                             },
                             {
-                                "TextButton:active",
+                                "Button:active",
                                 new jive::Object{
                                     { "background", "darkolivegreen" },
                                 },

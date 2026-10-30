@@ -64,7 +64,7 @@ JIVE's powerful styling API parses JSON files and applies the rules they define 
   "foreground": "#E0BAD7",
 
   // Style all <Button> elements
-  "TextButton": {
+  "Button": {
     // Support for most CSS value syntax,
     // including gradients and shadows
     "background": "linear-gradient(180deg, #48BF84, #439775)",
