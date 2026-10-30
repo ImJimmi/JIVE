@@ -1,7 +1,6 @@
 #include "jive_Interpolate.h"
 
 #include <jive_core/geometry/jive_BorderRadii.h>
-#include <jive_core/graphics/jive_Fill.h>
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/logging/jive_StringStreams.h>
@@ -103,17 +102,6 @@ private:
         beginTest("colour");
         expectEquals(jive::interpolate(juce::Colours::red, juce::Colours::blue, 0.5),
                      juce::Colours::red.interpolatedWith(juce::Colours::blue, 0.5f));
-
-        beginTest("fill");
-        expect(jive::interpolate(jive::Fill{ juce::Colours::orange },
-                                 jive::Fill{ juce::Colours::cornflowerblue },
-                                 0.3)
-               == jive::Fill{ juce::Colours::orange.interpolatedWith(juce::Colours::cornflowerblue, 0.3f) });
-
-        expect(jive::interpolate(jive::Fill{ jive::Gradient{} },
-                                 jive::Fill{ juce::Colours::aliceblue },
-                                 0.7)
-               == jive::Fill{ juce::Colours::aliceblue });
     }
 };
 

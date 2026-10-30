@@ -6,17 +6,29 @@ This file lists breaking changes introduced to JIVE with each release, if any. W
 
 JIVE 2.0 introduced significant breaking changes which were necessary to address some major limitations in the framework.
 
-## `jive_components` has been merged into `jive_core`
+## `jive_components` has been merged into `jive_style_sheets`
 
-The components have been moved to [`jive_core/components/`](./jive_core/components/).
+The components have been moved to [`jive_style_sheets/components/`](./jive_style_sheets/components/).
 
 ### Reason
 
-[`jive::LookAndFeel`](./jive_core/graphics/jive_LookAndFeel.h) paints JIVE's own components so they have to be in the same module, and there was little value to the components being in their own module.
+[`jive::LookAndFeel`](./jive_style_sheets/graphics/jive_LookAndFeel.h) paints JIVE's own components so they have to be in the same module, and there was little value to the components being in their own module.
 
 ### Migrating
 
-Remove the `jive_components` module from your CMake or Projucer projects, and replace any includes of `<jive_components/jive_components.h>` with `<jive_core/jive_core.h>`.
+Remove the `jive_components` module from your CMake or Projucer projects, and replace any includes of `<jive_components/jive_components.h>` with `<jive_style_sheets/jive_style_sheets.h>`.
+
+## Graphics have moved from `jive_core` to `jive_style_sheets`
+
+`jive::LookAndFeel`, `jive::Styles`, `jive::StyleSelector`, `jive::Fill`, `jive::Gradient`, `jive::Shadow`, `jive::Icon`, the themes, and the `getBorderRadius()` and `getBorderWidth()` functions have been moved to [`jive_style_sheets/graphics/`](./jive_style_sheets/graphics/) and [`jive_style_sheets/geometry/`](./jive_style_sheets/geometry/).
+
+### Reason
+
+Everything JIVE paints is driven by styles, so the graphics belong in the same module as the style sheets that provide them.
+
+### Migrating
+
+Add the `jive_style_sheets` module to any Projucer projects that only used `jive_core`, and replace includes of `<jive_core/jive_core.h>` with `<jive_style_sheets/jive_style_sheets.h>` wherever you use any of the above. CMake projects linking `jive::jive_layouts` need no changes.
 
 ## Style sheets can no longer be turned off
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jive_core/jive_core.h>
+#include <jive_style_sheets/jive_style_sheets.h>
 
 namespace jive_examples::widgets
 {

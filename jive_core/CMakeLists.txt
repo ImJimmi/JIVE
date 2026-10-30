@@ -17,25 +17,6 @@ target_sources(jive_core
                       algorithms/jive_TransferFunction.h
                       algorithms/jive_Visitor.h
                       compile-time-helpers/jive_JuceVersion.h
-                      components/accessibility/jive_IgnoredComponent.cpp
-                      components/accessibility/jive_IgnoredComponent.h
-                      components/canvases/jive_BackgroundCanvas.cpp
-                      components/canvases/jive_BackgroundCanvas.h
-                      components/canvases/jive_Canvas.cpp
-                      components/canvases/jive_Canvas.h
-                      components/containers/jive_DocumentWindow.cpp
-                      components/containers/jive_DocumentWindow.h
-                      components/utilities/jive_HierarchyTraversal.h
-                      components/utilities/jive_PaintBeforeShowing.cpp
-                      components/utilities/jive_PaintBeforeShowing.h
-                      components/widgets/jive_ComboBoxComponent.cpp
-                      components/widgets/jive_ComboBoxComponent.h
-                      components/widgets/jive_ImageComponent.cpp
-                      components/widgets/jive_ImageComponent.h
-                      components/widgets/jive_NormalisedProgressBar.cpp
-                      components/widgets/jive_NormalisedProgressBar.h
-                      components/widgets/jive_TextComponent.cpp
-                      components/widgets/jive_TextComponent.h
                       files/jive_FileObserver.h
                       files/jive_SourceFile.cpp
                       files/jive_SourceFile.h
@@ -43,42 +24,13 @@ target_sources(jive_core
                       files/jive_SourceRoot.h
                       geometry/jive_Anchor.cpp
                       geometry/jive_Anchor.h
-                      geometry/jive_BorderRadii.cpp
                       geometry/jive_BorderRadii.h
-                      geometry/jive_BorderWidth.cpp
-                      geometry/jive_BorderWidth.h
                       geometry/jive_BoxModel.cpp
                       geometry/jive_BoxModel.h
-                      geometry/jive_Geometry.cpp
-                      geometry/jive_Geometry.h
                       geometry/jive_Length.cpp
                       geometry/jive_Length.h
                       geometry/jive_Orientation.cpp
                       geometry/jive_Orientation.h
-                      graphics/default-styles/jive_DefaultComboBoxStyles.h
-                      graphics/default-styles/jive_DefaultComponentStyles.h
-                      graphics/default-styles/jive_DefaultGroupComponentStyles.h
-                      graphics/default-styles/jive_DefaultLabelStyles.h
-                      graphics/default-styles/jive_DefaultProgressBarStyles.h
-                      graphics/default-styles/jive_DefaultSliderStyles.h
-                      graphics/jive_ComponentTypePredicates.cpp
-                      graphics/jive_ComponentTypePredicates.h
-                      graphics/jive_CurrentColour.h
-                      graphics/jive_Fill.cpp
-                      graphics/jive_Fill.h
-                      graphics/jive_FontUtilities.cpp
-                      graphics/jive_FontUtilities.h
-                      graphics/jive_Gradient.cpp
-                      graphics/jive_Gradient.h
-                      graphics/jive_Icon.cpp
-                      graphics/jive_Icon.h
-                      graphics/jive_LookAndFeel.cpp
-                      graphics/jive_LookAndFeel.h
-                      graphics/jive_Shadow.cpp
-                      graphics/jive_Shadow.h
-                      graphics/jive_Styles.h
-                      graphics/jive_StyleSelector.cpp
-                      graphics/jive_StyleSelector.h
                       interface/jive_InteractionState.h
                       jive_core.h
                       kinetics/jive_Easing.cpp
