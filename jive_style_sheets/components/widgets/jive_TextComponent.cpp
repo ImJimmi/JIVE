@@ -100,8 +100,13 @@ namespace jive
         {
             const auto styles = laf->findMostApplicableStyles(*this);
 
-            attributedString.setReadingDirection(getReadingDirection(*this, styles));
-            attributedString.setJustification(getTextAlignment(*this, styles));
+            const auto direction = getReadingDirection(*this, styles);
+            const auto defaultAlignment = direction == juce::AttributedString::ReadingDirection::rightToLeft
+                                            ? juce::Justification::centredRight
+                                            : juce::Justification::centredLeft;
+
+            attributedString.setReadingDirection(direction);
+            attributedString.setJustification(getTextAlignment(*this, styles, defaultAlignment));
 
             if (cachedFont.has_value())
                 attributedString.setFont(*cachedFont);
@@ -240,6 +245,39 @@ namespace jive
             || (layout.getWidth() <= maxWidth && maxWidth <= createdAtMaxWidth);
     }
 
+    // JUCE only uses the reading direction for text without any strong
+    // characters, so a mark is put at the front to make it the direction
+    // JUCE detects.
+    [[nodiscard]] static auto withDirectionMark(const juce::AttributedString& source)
+    {
+        using ReadingDirection = juce::AttributedString::ReadingDirection;
+
+        if (source.getReadingDirection() == ReadingDirection::natural || source.getNumAttributes() == 0)
+            return source;
+
+        const auto mark = juce::String::charToString(source.getReadingDirection() == ReadingDirection::rightToLeft
+                                                         ? static_cast<juce::juce_wchar>(0x200f)
+                                                         : static_cast<juce::juce_wchar>(0x200e));
+        const auto& first = source.getAttribute(0);
+
+        juce::AttributedString result;
+        result.setJustification(source.getJustification());
+        result.setWordWrap(source.getWordWrap());
+        result.setReadingDirection(source.getReadingDirection());
+        result.setLineSpacing(source.getLineSpacing());
+        result.append(mark, first.font, first.colour);
+
+        for (auto i = 0; i < source.getNumAttributes(); i++)
+        {
+            const auto& attribute = source.getAttribute(i);
+            result.append(source.getText().substring(attribute.range.getStart(), attribute.range.getEnd()),
+                          attribute.font,
+                          attribute.colour);
+        }
+
+        return result;
+    }
+
     const juce::TextLayout& TextComponent::getTextLayout(float maxWidth) const
     {
         JIVE_TRACE("max-width", maxWidth);
@@ -266,7 +304,7 @@ namespace jive
             textLayouts.erase(std::begin(textLayouts));
 
         auto& created = textLayouts.emplace_back(CachedTextLayout{ maxWidth, {} });
-        created.layout.createLayout(textLayoutsSource, maxWidth);
+        created.layout.createLayout(withDirectionMark(textLayoutsSource), maxWidth);
 
         return created.layout;
     }
@@ -318,6 +356,7 @@ public:
         testLayoutsAreReusedAcrossWidths();
         testLayoutsFollowChanges();
         testDefaultForeground();
+        testReadingDirection();
     }
 
 private:
@@ -492,6 +531,45 @@ private:
         text.setText("Text");
 
         expect(text.getAttributedString().getAttribute(0).colour == jive::detail::getV4Colour(jive::detail::V4Colour::defaultText));
+    }
+
+    [[nodiscard]] static auto getFullStopX(const juce::TextLayout& layout)
+    {
+        const auto& runs = layout.getLine(0).runs;
+        const auto* last = *std::max_element(runs.begin(), runs.end(), [](const auto* a, const auto* b) {
+            return a->stringRange.getEnd() < b->stringRange.getEnd();
+        });
+
+        return last->glyphs.getReference(last->glyphs.size() - 1).anchor.x;
+    }
+
+    void testReadingDirection()
+    {
+        beginTest("the reading direction decides which end trailing punctuation sits");
+
+        const auto arabic = juce::String{ juce::CharPointer_UTF8{ "\xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7." } };
+
+        for (const auto direction : { juce::AttributedString::ReadingDirection::leftToRight,
+                                      juce::AttributedString::ReadingDirection::rightToLeft })
+        {
+            jive::TextComponent text;
+            jive::LookAndFeel lookAndFeel{ text };
+            lookAndFeel.addStyles(jive::StyleSelector::makeInlineStyleSelector(text),
+                                  jive::Styles{}.withReadingDirection(direction));
+            text.sendLookAndFeelChange();
+            text.setText(arabic);
+
+            expect(text.getAttributedString().getReadingDirection() == direction);
+
+            const auto& layout = text.getTextLayout(1000.0f);
+            const auto fullStopX = getFullStopX(layout);
+            const auto width = layout.getLine(0).getLineBoundsX();
+
+            if (direction == juce::AttributedString::ReadingDirection::leftToRight)
+                expectGreaterThan(fullStopX, (width.getStart() + width.getEnd()) / 2.0f);
+            else
+                expectLessThan(fullStopX, (width.getStart() + width.getEnd()) / 2.0f);
+        }
     }
 };
 

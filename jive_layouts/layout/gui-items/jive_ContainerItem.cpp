@@ -141,6 +141,18 @@ namespace jive
         callLayoutChildrenWithRecursionLock();
     }
 
+    float ContainerItem::calculateIdealHeight(float width) const
+    {
+        if (width >= idealWidth.get())
+            return idealHeight.get();
+
+        const auto horizontalInsets = box.getPadding().getLeftAndRight() + box.getBorder().getLeftAndRight();
+        const auto verticalInsets = box.getPadding().getTopAndBottom() + box.getBorder().getTopAndBottom();
+
+        return calculateIdealSize(getContentConstraints().withWidth(juce::jmax(0.0f, width - horizontalInsets))).getHeight()
+             + verticalInsets;
+    }
+
     void ContainerItem::invalidateIdealSize()
     {
         idealSizeIsOutOfDate = true;

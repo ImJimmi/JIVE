@@ -73,6 +73,10 @@ namespace jive
         // state changing, e.g. when a child's text is laid out differently.
         void invalidateIdealSize();
 
+        // The height the container would ideally be if it were the given
+        // width, e.g. for text in it to wrap.
+        [[nodiscard]] float calculateIdealHeight(float width) const;
+
     protected:
         virtual juce::Rectangle<float> calculateIdealSize(juce::Rectangle<float> constraints) const = 0;
 

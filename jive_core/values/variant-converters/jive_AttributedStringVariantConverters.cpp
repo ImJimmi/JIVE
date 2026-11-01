@@ -3,23 +3,35 @@
 namespace juce
 {
     const Array<var> VariantConverter<AttributedString::ReadingDirection>::options = {
-        "natural",
-        "left-to-right",
-        "right-to-left",
+        "ltr",
+        "rtl",
     };
 
     AttributedString::ReadingDirection VariantConverter<AttributedString::ReadingDirection>::fromVar(const var& v)
     {
         jassert(options.contains(v));
-        return static_cast<AttributedString::ReadingDirection>(options.indexOf(v));
+
+        if (v == "ltr")
+            return AttributedString::ReadingDirection::leftToRight;
+        if (v == "rtl")
+            return AttributedString::ReadingDirection::rightToLeft;
+
+        return AttributedString::ReadingDirection::natural;
     }
 
     var VariantConverter<AttributedString::ReadingDirection>::toVar(const AttributedString::ReadingDirection& direction)
     {
-        const auto index = static_cast<int>(direction);
+        switch (direction)
+        {
+        case AttributedString::ReadingDirection::leftToRight:
+            return "ltr";
+        case AttributedString::ReadingDirection::rightToLeft:
+            return "rtl";
+        case AttributedString::ReadingDirection::natural:
+            break;
+        }
 
-        jassert(options.size() >= index);
-        return options[index];
+        return {};
     }
 
     const Array<var> VariantConverter<AttributedString::WordWrap>::options = {

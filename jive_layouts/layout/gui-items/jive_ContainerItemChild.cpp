@@ -8,7 +8,8 @@ namespace jive
     {
     public:
         explicit Pimpl(jive::GuiItemDecorator& item)
-            : state{ item.state }
+            : decorator{ item }
+            , state{ item.state }
             , order{ state, ids::order() }
             , width{ state, ids::width() }
             , height{ state, ids::height() }
@@ -100,7 +101,7 @@ namespace jive
                 else
                 {
                     item.minHeight = juce::jmax(item.minHeight,
-                                                static_cast<float>(property));
+                                                calculateIdealHeight(juce::jmax(item.width, item.minWidth)));
                 }
             }
         }
@@ -156,7 +157,7 @@ namespace jive
                 else
                 {
                     item.minHeight = juce::jmax(item.minHeight,
-                                                static_cast<float>(property));
+                                                calculateIdealHeight(juce::jmax(item.width, item.minWidth)));
                 }
             }
         }
@@ -175,6 +176,15 @@ namespace jive
             };
         }
 
+        [[nodiscard]] float calculateIdealHeight(float itemWidth) const
+        {
+            if (auto* container = decorator.getTopLevelDecorator().toType<ContainerItem>(); container != nullptr && itemWidth > 0.0f)
+                return container->calculateIdealHeight(itemWidth);
+
+            return idealHeight.get();
+        }
+
+        const jive::GuiItemDecorator& decorator;
         const juce::ValueTree state;
         const PassiveProperty<int> order;
         const PassiveProperty<Length> width;

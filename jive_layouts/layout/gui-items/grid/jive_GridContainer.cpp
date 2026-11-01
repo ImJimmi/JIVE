@@ -173,8 +173,36 @@ namespace jive
         };
     }
 
-    static void layOutItems(const juce::Grid& grid, juce::Rectangle<int> bounds)
+    [[nodiscard]] static juce::Array<GridItem*> getGridItems(GuiItem& container)
     {
+        juce::Array<GridItem*> gridItems;
+
+        for (auto* child : container.getChildren())
+        {
+            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(child))
+            {
+                if (auto* const gridItem = decoratedItem->toType<GridItem>())
+                    gridItems.add(gridItem);
+            }
+        }
+
+        return gridItems;
+    }
+
+    // Like in CSS, an item's size is relative to its grid area rather than to
+    // the whole grid, so its constraints are applied again once the area is
+    // known. Otherwise, content wider than its area (like text that should
+    // wrap) would be as wide as the grid, and only as tall as it is there.
+    // Being narrower can make items taller, so the areas are then measured
+    // again.
+    static void layOutItems(GuiItem& container, juce::Grid grid, juce::Rectangle<int> bounds)
+    {
+        const auto gridItems = getGridItems(container);
+        const auto initialAreas = calculateItemAreas(grid, bounds);
+
+        for (auto i = 0; i < grid.items.size(); i++)
+            grid.items.getReference(i) = gridItems[i]->toJuceGridItem(initialAreas[i], LayoutStrategy::real);
+
         const auto areas = calculateItemAreas(grid, bounds);
 
         for (auto i = 0; i < grid.items.size(); i++)
@@ -303,7 +331,7 @@ namespace jive
         do
         {
             changesDuringLayout = false;
-            layOutItems(buildGrid(bounds, LayoutStrategy::real), bounds);
+            layOutItems(*this, buildGrid(bounds, LayoutStrategy::real), bounds);
         }
         while (changesDuringLayout);
     }
@@ -361,14 +389,8 @@ namespace jive
                                juce::Rectangle<int> bounds,
                                LayoutStrategy strategy)
     {
-        for (auto* child : container.getChildren())
-        {
-            if (auto* const decoratedItem = dynamic_cast<GuiItemDecorator*>(child))
-            {
-                if (auto* const gridItem = decoratedItem->toType<GridItem>())
-                    grid.items.add(gridItem->toJuceGridItem(bounds.toFloat(), strategy));
-            }
-        }
+        for (auto* gridItem : getGridItems(container))
+            grid.items.add(gridItem->toJuceGridItem(bounds.toFloat(), strategy));
     }
 
     void GridContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
@@ -503,6 +525,7 @@ public:
         testAutoSize();
         testFractionalTracksAutoSize();
         testNestedText();
+        testWrappedTextInFractionalColumns();
     }
 
 private:
@@ -1322,8 +1345,45 @@ private:
                                        ->getTextComponent()
                                        .getAttributedString(),
                                    static_cast<float>(wrappedText.getWidth()));
-        expectEquals(wrappedLayout.getNumLines(), 2);
+        expectEquals(wrappedLayout.getNumLines(), 3);
         expectEquals(jive::boxModel(*container.getChildren()[0]).getHeight(), std::ceil(wrappedLayout.getHeight()));
+    }
+    void testWrappedTextInFractionalColumns()
+    {
+        beginTest("wrapped text in fractional columns");
+
+        const juce::String longText{ "the quick brown fox jumps over the lazy dog, again and again and again" };
+        juce::ValueTree state{
+            "Window",
+            {
+                { "width", 400 },
+                { "height", 250 },
+                { "padding", 30 },
+                { "display", "grid" },
+                { "grid-template-columns", "1fr 1fr" },
+            },
+            {
+                juce::ValueTree{ "Component", {}, { juce::ValueTree{ "Text", { { "text", longText } } } } },
+                juce::ValueTree{ "Component", {}, { juce::ValueTree{ "Text", { { "text", longText } } } } },
+            },
+        };
+        jive::Interpreter interpreter;
+        const auto window = interpreter.interpret(state);
+
+        const auto content = jive::boxModel(*window).getContentBounds().toNearestInt();
+        const auto columnWidth = content.getWidth() / 2;
+
+        for (auto i = 0; i < 2; i++)
+        {
+            const auto& column = *window->getChildren()[i]->getComponent();
+            expectEquals(column.getX(), content.getX() + columnWidth * i);
+            expectEquals(column.getWidth(), columnWidth);
+
+            const auto& text = *window->getChildren()[i]->getChildren()[0]->getComponent();
+            expectEquals(text.getWidth(), columnWidth);
+            expectGreaterThan(text.getHeight(), 28);
+            expectGreaterOrEqual(column.getHeight(), text.getHeight());
+        }
     }
 };
 
