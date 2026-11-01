@@ -46,7 +46,7 @@ To choose a language, we set the `"lang"` property on an element with the path t
 ```
 
 <p align="center">
-  <img src="./assets/04-01.png" width="462px"/>
+  <img src="./assets/05-01.png" width="462px"/>
 </p>
 
 ### Multi-Language Support
@@ -69,7 +69,7 @@ Unlike with `juce::translate`, which only supports one language at a time, JIVE 
 ```
 
 <p align="center">
-  <img src="./assets/04-02.png" width="462px"/>
+  <img src="./assets/05-02.png" width="462px"/>
 </p>
 
 ### Right-to-Left Languages
@@ -93,7 +93,7 @@ JIVE doesn't automatically account for languages that read right-to-left. You'll
 ```
 
 <p align="center">
-  <img src="./assets/04-03.png" width="462px"/>
+  <img src="./assets/05-03.png" width="462px"/>
 </p>
 
 ## Recommended Practices
