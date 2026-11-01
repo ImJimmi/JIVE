@@ -6,7 +6,8 @@
 namespace juce
 {
     class AudioProcessor;
-}
+    class AudioProcessorValueTreeState;
+} // namespace juce
 
 namespace jive
 {
@@ -38,6 +39,14 @@ namespace jive
         [[nodiscard]] const ComponentFactory& getComponentFactory() const;
         [[nodiscard]] ComponentFactory& getComponentFactory();
         void setComponentFactory(const ComponentFactory& newFactory);
+
+#if JIVE_IS_PLUGIN_PROJECT
+        /** Attaches every widget to the parameter in the given state named by
+            its "parameter" property, or by its id if it has no "parameter"
+            property, including any widgets built or changed later.
+        */
+        void autoAttachParameters(juce::AudioProcessorValueTreeState& parameters);
+#endif
 
         template <typename Decorator>
         void addDecorator(const juce::Identifier& itemType)
@@ -77,6 +86,11 @@ namespace jive
                                                                      GuiItem* const parent);
         void insertInterpretedChild(GuiItem& parentItem, const juce::ValueTree& tree, int index);
         void setChildItems(GuiItem& item);
+#if JIVE_IS_PLUGIN_PROJECT
+        void attachParameters(GuiItem& item);
+        void attachParameter(GuiItem& item);
+        void reattachParameter(GuiItem& item);
+#endif
 
         // File sources
         [[nodiscard]] juce::ValueTree loadExternalSources(juce::ValueTree tree);
@@ -89,6 +103,9 @@ namespace jive
         std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>> customDecorators;
 
         juce::WeakReference<GuiItem> observedItem = nullptr;
+#if JIVE_IS_PLUGIN_PROJECT
+        juce::AudioProcessorValueTreeState* apvts = nullptr;
+#endif
         mutable juce::OwnedArray<FileObserver> fileObservers;
         // An empty SourceFile is the root that relative paths are found in.
         SourceDirectories::ReferenceCountedPointer sourceDirectories = new SourceDirectories{

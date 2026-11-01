@@ -1,8 +1,12 @@
 #include "jive_Interpreter.h"
 
+#include <jive_layouts/layout/gui-items/content/jive_Text.h>
 #include <jive_layouts/layout/gui-items/jive_ContainerItem.h>
 #include <jive_layouts/layout/gui-items/top-level/jive_PluginEditor.h>
 #include <jive_layouts/layout/gui-items/top-level/jive_Window.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Button.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_ComboBox.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Slider.h>
 
 namespace jive
 {
@@ -20,6 +24,60 @@ namespace jive
     {
         componentFactory = newFactory;
     }
+
+#if JIVE_IS_PLUGIN_PROJECT
+    void Interpreter::autoAttachParameters(juce::AudioProcessorValueTreeState& parameters)
+    {
+        apvts = &parameters;
+
+        if (observedItem != nullptr)
+            attachParameters(*observedItem);
+    }
+
+    void Interpreter::attachParameters(GuiItem& item)
+    {
+        attachParameter(item);
+
+        for (auto* child : item.getChildren())
+            attachParameters(*child);
+    }
+
+    [[nodiscard]] static auto canAttachToParameter(GuiItem& item)
+    {
+        auto* decorator = dynamic_cast<GuiItemDecorator*>(&item);
+
+        return decorator != nullptr
+            && (decorator->toType<Slider>() != nullptr
+                || decorator->toType<Button>() != nullptr
+                || decorator->toType<ComboBox>() != nullptr
+                || decorator->toType<Text>() != nullptr);
+    }
+
+    [[nodiscard]] static auto getParameterID(const GuiItem& item)
+    {
+        return item.state.getProperty(ids::parameter(), item.state[ids::id()]).toString();
+    }
+
+    void Interpreter::attachParameter(GuiItem& item)
+    {
+        if (apvts == nullptr || !canAttachToParameter(item))
+            return;
+
+        if (auto* parameter = apvts->getParameter(getParameterID(item)))
+            item.attachToParameter(parameter, apvts->undoManager);
+    }
+
+    // Unlike a new item, one whose parameter or id changed may still be
+    // attached to the parameter it used to match.
+    void Interpreter::reattachParameter(GuiItem& item)
+    {
+        if (apvts == nullptr || !canAttachToParameter(item))
+            return;
+
+        item.attachToParameter(apvts->getParameter(getParameterID(item)),
+                               apvts->undoManager);
+    }
+#endif
 
     static void decorateWithTopLevelItem(std::unique_ptr<GuiItem>& item,
                                          [[maybe_unused]] juce::AudioProcessor* pluginProcessor)
@@ -440,6 +498,16 @@ namespace jive
     void Interpreter::valueTreePropertyChanged(juce::ValueTree& tree,
                                                const juce::Identifier& property)
     {
+#if JIVE_IS_PLUGIN_PROJECT
+        if (observedItem != nullptr && (property == ids::parameter() || property == ids::id()))
+        {
+            if (auto* item = findItem(*observedItem, tree))
+                reattachParameter(*item);
+
+            return;
+        }
+#endif
+
         if (observedItem == nullptr || ignoreValueTreeChanges || property != ids::templatePath())
             return;
 
@@ -573,6 +641,9 @@ namespace jive
         {
             tree.setProperty(ids::setupInProgress(), true, nullptr);
             item = decorate(std::move(item), customDecorators);
+#if JIVE_IS_PLUGIN_PROJECT
+            attachParameter(*item);
+#endif
             setChildItems(*item);
 
             tree.setProperty(ids::setupInProgress(), false, nullptr);

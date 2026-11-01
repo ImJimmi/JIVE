@@ -568,6 +568,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& parameter()
+    {
+        static const juce::Identifier identifier{ "parameter" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& placement()
     {
         static const juce::Identifier identifier{ "placement" };
