@@ -109,17 +109,22 @@ namespace jive
         }
     }
 
+    bool Image::isInlineSVG() const
+    {
+        return state.getType().toString().compareIgnoreCase("svg") == 0;
+    }
+
+    juce::ValueTree Image::createSerialisableCopy() const
+    {
+        auto stringSafe = state.createCopy();
+        removeUnserialisableProperties(stringSafe);
+        return stringSafe;
+    }
+
     Drawable Image::getDrawable() const
     {
-        const auto isInlineSVG = state.getType().toString().compareIgnoreCase("svg") == 0;
-
-        if (isInlineSVG)
-        {
-            auto stringSafe = state.createCopy();
-            removeUnserialisableProperties(stringSafe);
-
-            return Drawable{ stringSafe.toXmlString() };
-        }
+        if (isInlineSVG())
+            return Drawable{ createSerialisableCopy().toXmlString() };
 
         return loadImage(findImageFile());
     }
@@ -173,27 +178,8 @@ namespace jive
     {
         forwardPropertyChange(tree, id, source, placement);
 
-        if (state.getType().toString().compareIgnoreCase("svg") == 0)
-        {
-            if (!changingChild && childComponent != nullptr)
-            {
-                updateImageComponentDrawable();
-
-                childComponent->setBounds(getComponent()->getLocalBounds());
-
-                if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-                {
-                    drawable->
-#if JIVE_JUCE_9
-                        setDrawableTransformToFit
-#else
-                        setTransformToFit
-#endif
-                        (getComponent()->getLocalBounds().toFloat(),
-                         placement.getOr(juce::RectanglePlacement::centred));
-                }
-            }
-        }
+        if (isInlineSVG())
+            updateImageComponentDrawable();
     }
 
     float Image::calculateRequiredWidth() const
@@ -240,7 +226,10 @@ namespace jive
 
     void Image::updateImageComponentDrawable()
     {
-        const auto drawable = getDrawable();
+        auto svg = isInlineSVG() ? createSerialisableCopy() : juce::ValueTree{};
+        getImageComponent().setSVGElements(svg);
+
+        const auto drawable = svg.isValid() ? Drawable{ svg.toXmlString() } : getDrawable();
         std::unique_ptr<juce::Drawable> result;
         juce::Rectangle<float> intrinsicBounds;
         juce::Rectangle<float> viewBox;
@@ -296,6 +285,190 @@ public:
         testSVGShadowFollowsShapes();
         testSVGSourceReplaced();
         testSVGCurrentColourFollowsForeground();
+        testSVGElementsStyledBySelectors();
+        testSVGElementStylesOverrideTheSVGs();
+        testSVGElementStylesFollowAncestors();
+        testSVGElementGradientSpansElement();
+        testSVGElementChangesRedraw();
+    }
+
+    void testSVGElementChangesRedraw()
+    {
+        beginTest("svg / changes to an element inside an SVG are redrawn");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <g>
+                        <rect width="10" height="20" fill="#FF0000" />
+                    </g>
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = [svgComponent] {
+            return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        };
+        expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::red);
+        expect(snapshot().getPixelAt(15, 10) != juce::Colours::red);
+
+        state.getChild(0).getChild(0).setProperty("transform", "translate(10, 0)", nullptr);
+        expect(snapshot().getPixelAt(5, 10) != juce::Colours::red);
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colours::red);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementsStyledBySelectors()
+    {
+        beginTest("svg / elements inside an SVG can be styled by type, ID and class");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("#square", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".bar", jive::Styles{}.withFill(juce::Colours::blue));
+        lookAndFeel.addStyles("svg > line", jive::Styles{}.withStroke(juce::Colours::lime));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="30" height="40">
+                    <rect id="square" width="10" height="20" fill="black" />
+                    <rect class="bar" x="10" width="10" height="20" />
+                    <rect x="20" width="10" height="20" fill="#FFFF00" />
+                    <line x1="0" y1="30" x2="30" y2="30" stroke-width="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(5, 10), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(15, 10), juce::Colours::blue);
+        expectEquals(snapshot.getPixelAt(25, 10), juce::Colour{ 0xFFFFFF00 });
+        expectEquals(snapshot.getPixelAt(15, 30), juce::Colours::lime);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementStylesOverrideTheSVGs()
+    {
+        beginTest("svg / an element's own style takes precedence over the SVG's");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("svg", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".blue", jive::Styles{}.withFill(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="10" height="20" fill="black" />
+                    <g>
+                        <rect class="blue" x="10" width="10" height="20" />
+                    </g>
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(5, 10), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(15, 10), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementStylesFollowAncestors()
+    {
+        beginTest("svg / an element's styles follow changes to its ancestors");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles(".red rect", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".blue rect", jive::Styles{}.withFill(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component class="red" width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="black" />
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = [svgComponent] {
+            return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        };
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::red);
+
+        state.setProperty("class", "blue", nullptr);
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::blue);
+
+        state.setProperty("class", "", nullptr);
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::black);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementGradientSpansElement()
+    {
+        beginTest("svg / a gradient on an element inside an SVG spans the SVG's element");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("#shape",
+                              jive::Styles{}.withFill(jive::Fill::fromString("linear-gradient(to right, red, blue)").value()));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 10 10" width="100" height="100">
+                    <rect id="shape" width="10" height="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectGreaterThan(snapshot.getPixelAt(5, 50).getRed(), snapshot.getPixelAt(5, 50).getBlue());
+        expectGreaterThan(snapshot.getPixelAt(95, 50).getBlue(), snapshot.getPixelAt(95, 50).getRed());
+
+        root.removeChildComponent(parentComponent);
     }
 
     void testSVGCurrentColourFollowsForeground()

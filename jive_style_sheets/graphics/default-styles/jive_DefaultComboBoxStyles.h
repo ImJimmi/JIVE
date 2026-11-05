@@ -257,7 +257,7 @@ namespace jive::default_styles
     }
 
     [[nodiscard]] static auto paintComboBox(juce::Graphics& g,
-                                            const juce::ComboBox& comboBox,
+                                            juce::ComboBox& comboBox,
                                             const Styles& styles)
     {
         paintComponent(g, comboBox, styles);

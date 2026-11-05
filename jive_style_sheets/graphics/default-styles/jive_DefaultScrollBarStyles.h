@@ -7,7 +7,7 @@
 namespace jive::default_styles
 {
     inline void paintScrollBar(juce::Graphics& g,
-                               const juce::ScrollBar& scrollBar,
+                               juce::ScrollBar& scrollBar,
                                const Styles& styles,
                                int thumbStart,
                                int thumbSize)

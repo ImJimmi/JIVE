@@ -3,7 +3,7 @@
 namespace jive::default_styles
 {
     inline void paintGroupComponent(juce::Graphics& g,
-                                    const juce::GroupComponent& group,
+                                    juce::GroupComponent& group,
                                     const Styles& styles)
     {
         const auto groupBounds = getGroupBounds(group, styles);
@@ -16,8 +16,7 @@ namespace jive::default_styles
                              borderWidth,
                              getBackgroundFill(group, styles),
                              juce::Colours::transparentBlack);
-        const_cast<juce::GroupComponent*>(&group)
-            ->getProperties()
+        group.getProperties()
             .set(ids::shadowPath(),
                  getShape(borderRadius, groupBounds).toString());
 

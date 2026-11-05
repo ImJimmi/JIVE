@@ -7,14 +7,14 @@ namespace jive_examples::widgets
     // Draws a slider as a row of lights, lit from zero to its value. Only the
     // shape is decided here: the colours are the slider's thumb and background
     // styles, so themes and style sheets still apply.
-    inline void paintSegmentedSlider(const juce::Component& component,
+    inline void paintSegmentedSlider(juce::Component& component,
                                      const jive::Styles& styles,
                                      juce::Graphics& g)
     {
         static constexpr auto segmentPitch = 10.0f;
         static constexpr auto gap = 3.0f;
 
-        const auto& slider = dynamic_cast<const juce::Slider&>(component);
+        auto& slider = dynamic_cast<juce::Slider&>(component);
         const auto range = slider.getNormalisableRange();
         const auto [low, high] = std::minmax({
             range.convertTo0to1(juce::jlimit(range.start, range.end, 0.0)),
@@ -22,7 +22,7 @@ namespace jive_examples::widgets
         });
         const auto bounds = slider
                                 .getLookAndFeel()
-                                .getSliderLayout(const_cast<juce::Slider&>(slider))
+                                .getSliderLayout(slider)
                                 .sliderBounds.toFloat();
         const auto length = slider.isHorizontal() ? bounds.getWidth() : bounds.getHeight();
         const auto numSegments = juce::jmax(1, static_cast<int>(length / segmentPitch));

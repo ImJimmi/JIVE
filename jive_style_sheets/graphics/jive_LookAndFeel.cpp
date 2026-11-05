@@ -131,7 +131,7 @@ namespace jive
         stylersVersion++;
     }
 
-    void LookAndFeel::drawComponent(juce::Graphics& g, const juce::Component& component) const
+    void LookAndFeel::drawComponent(juce::Graphics& g, juce::Component& component) const
     {
         draw(g,
              component,

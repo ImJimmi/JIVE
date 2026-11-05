@@ -34,7 +34,7 @@ namespace jive::default_styles
     }
 
     inline void paintLinearProgressBar(juce::Graphics& g,
-                                       const juce::ProgressBar& bar,
+                                       juce::ProgressBar& bar,
                                        double progress,
                                        const juce::String&,
                                        const Styles& styles)
@@ -51,8 +51,7 @@ namespace jive::default_styles
             paintLinearProgressBarTrack(g, bar, { spinnerProgress * 0.7, 0.3 + spinnerProgress * 0.7 }, styles);
         }
 
-        const_cast<juce::ProgressBar*>(&bar)
-            ->getProperties()
+        bar.getProperties()
             .set(ids::shadowPath(),
                  getShape(getBorderRadius(bar, styles),
                           bar.getLocalBounds().toFloat())
@@ -83,7 +82,7 @@ namespace jive::default_styles
     }
 
     inline void paintCircularProgressBar(juce::Graphics& g,
-                                         const juce::ProgressBar& bar,
+                                         juce::ProgressBar& bar,
                                          double progress,
                                          const juce::String&,
                                          const Styles& styles)
@@ -108,13 +107,12 @@ namespace jive::default_styles
             paintCircularProgressBarTrack(g, bar, trackThickness, { spinnerProgress, spinnerProgress + 0.2 }, styles);
         }
 
-        const_cast<juce::ProgressBar*>(&bar)
-            ->getProperties()
+        bar.getProperties()
             .set(ids::shadowPath(), backgroundPath.toString());
     }
 
     inline void paintProgressBar(juce::Graphics& g,
-                                 const juce::ProgressBar& bar,
+                                 juce::ProgressBar& bar,
                                  double progress,
                                  const juce::String& text,
                                  const Styles& styles)

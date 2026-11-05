@@ -15,7 +15,7 @@ namespace jive_examples::text
         {
             window = interpreter.interpret(jive::SourceFile{ "public/views/Main.xml" });
             interpreter.onLoad = [this](jive::GuiItem& root) {
-                bindControls();
+                bindControls(root);
                 inspector.inspect(*root.getComponent());
             };
             interpreter.onLoad(*window);
@@ -103,9 +103,9 @@ namespace jive_examples::text
                 languageExampleState.setProperty(jive::ids::lang(), "public/locales/french.strings", nullptr);
         }
 
-        void bindControls()
+        void bindControls(jive::GuiItem& root)
         {
-            theme = bindThemeComboBox(window->state);
+            theme = bindThemeComboBox(root.state);
 
             fontSize = bindFontControl<float>("font-size-slider", jive::ids::value());
             fontFamily = bindFontControl<int>("font-family-combo-box", jive::ids::selected());

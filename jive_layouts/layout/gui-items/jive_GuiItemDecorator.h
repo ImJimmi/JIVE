@@ -70,4 +70,13 @@ namespace jive
 
     [[nodiscard]] std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
                                                     const std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>>& customDecorators);
+
+    template <typename ItemType>
+    [[nodiscard]] ItemType* findItemWithIDAndType(GuiItem& root, const juce::Identifier& id)
+    {
+        if (auto* decorator = dynamic_cast<jive::GuiItemDecorator*>(findItemWithID(root, id)))
+            return decorator->toType<ItemType>();
+
+        return nullptr;
+    }
 } // namespace jive

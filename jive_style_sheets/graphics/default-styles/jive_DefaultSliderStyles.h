@@ -3,12 +3,12 @@
 namespace jive::default_styles
 {
     inline void paintBarSlider(juce::Graphics& g,
-                               const juce::Slider& slider,
+                               juce::Slider& slider,
                                const Styles& styles)
     {
         const auto bounds = slider
                                 .getLookAndFeel()
-                                .getSliderLayout(*const_cast<juce::Slider*>(&slider))
+                                .getSliderLayout(slider)
                                 .sliderBounds.toFloat();
         drawRoundedRectangle(g,
                              bounds,
@@ -42,12 +42,12 @@ namespace jive::default_styles
     }
 
     inline void paintLinearSlider(juce::Graphics& g,
-                                  const juce::Slider& slider,
+                                  juce::Slider& slider,
                                   const Styles& styles)
     {
         const auto bounds = slider
                                 .getLookAndFeel()
-                                .getSliderLayout(*const_cast<juce::Slider*>(&slider))
+                                .getSliderLayout(slider)
                                 .sliderBounds.toFloat();
         const auto style = slider.getSliderStyle();
         const auto isMultiValue = slider.isTwoValue() || slider.isThreeValue();
@@ -67,7 +67,7 @@ namespace jive::default_styles
                              || style == juce::Slider::SliderStyle::ThreeValueHorizontal;
         const auto thumbWidth = static_cast<float>(slider
                                                        .getLookAndFeel()
-                                                       .getSliderThumbRadius(*const_cast<juce::Slider*>(&slider)));
+                                                       .getSliderThumbRadius(slider));
         const auto trackWidth = thumbWidth * 0.6f;
         const juce::Point startPoint{
             slider.isHorizontal() ? bounds.getX() : bounds.getCentreX(),
@@ -164,16 +164,16 @@ namespace jive::default_styles
             backgroundTrack.addEllipse(thumb);
         }
 
-        const_cast<juce::Slider*>(&slider)->getProperties().set(ids::shadowPath(), backgroundTrack.toString());
+        slider.getProperties().set(ids::shadowPath(), backgroundTrack.toString());
     }
 
     inline void paintRotarySlider(juce::Graphics& g,
-                                  const juce::Slider& slider,
+                                  juce::Slider& slider,
                                   const Styles& styles)
     {
         const auto bounds = slider
                                 .getLookAndFeel()
-                                .getSliderLayout(*const_cast<juce::Slider*>(&slider))
+                                .getSliderLayout(slider)
                                 .sliderBounds.toFloat()
                                 .reduced(10);
         const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
@@ -182,7 +182,7 @@ namespace jive::default_styles
         const auto toAngle = rotaryParams.startAngleRadians + sliderPos * (rotaryParams.endAngleRadians - rotaryParams.startAngleRadians);
         const auto thumbWidth = static_cast<float>(slider
                                                        .getLookAndFeel()
-                                                       .getSliderThumbRadius(*const_cast<juce::Slider*>(&slider)));
+                                                       .getSliderThumbRadius(slider));
         const auto trackWidth = thumbWidth * 0.6f;
         const auto arcRadius = radius - trackWidth * 0.5f;
 
@@ -232,6 +232,6 @@ namespace jive::default_styles
         g.fillEllipse(thumb);
 
         backgroundArc.addEllipse(thumb);
-        const_cast<juce::Slider*>(&slider)->getProperties().set(ids::shadowPath(), backgroundArc.toString());
+        slider.getProperties().set(ids::shadowPath(), backgroundArc.toString());
     }
 } // namespace jive::default_styles

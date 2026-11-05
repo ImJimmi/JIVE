@@ -123,6 +123,35 @@ A few components aren't created by any element, so they have their own type name
 | `Popup`      | A combo box's popup menu.                                                                     |
 | `Option`     | The items in a combo box's popup menu. Each one also matches its `<Option>`'s ID and classes. |
 
+#### SVG elements
+
+The elements inside an inline `<svg>` can be matched by selectors too, as if they were components, so rules can set the `fill` and `stroke` of individual shapes:
+
+```xml
+<svg viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="24" />
+    <line class="needle" x1="32" y1="32" x2="32" y2="8" stroke-width="4" />
+</svg>
+```
+
+```json
+{
+    "svg": {
+        "fill": "#537D8D",
+
+        "line": {
+            "stroke": "#E5D352"
+        }
+    }
+}
+```
+
+Elements match by type (their tag name, like `line`), `id`, and `class`, and through their ancestors, so selectors like `svg > line`, `.knob .needle`, and `svg:hover circle` all work. The elements themselves are never hovered, focused, and so on, so pseudo-classes only apply to the components around them.
+
+A style that matches an element, or that it inherits from the `<svg>` or one of its ancestors, takes precedence over its `fill` and `stroke` attributes, as the `<svg>`'s styles do. The exception is an element whose attributes make it transparent (both `fill="none"` and no stroke), which only takes styles that match it directly.
+
+Elements filled or stroked with a `url(...)`, such as an SVG gradient, keep it. Styles only apply to elements inside inline SVGs. An `<Image>`'s SVG source is styled as a whole.
+
 ### Precedence
 
 When more than one rule sets the same property on a component, the most specific selector wins, as in CSS: IDs beat classes and pseudo-classes, which beat types. A list of selectors is as specific as the most specific selector in it. Properties at the top level of a style sheet beat any selector.
@@ -166,7 +195,7 @@ Inherited properties apply to the descendants of any component they're set on, u
 | `"border-radius"`         | The radius of the component's rounded corners.<br>See CSS [`border-radius`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius) for supported values.                                                                                                                                                                                                                                                                                             |
 | `"border-width"`          | The width of the component's border.<br>See CSS [`border-width`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-width) for supported values.<br>_Can also be specified as a property on GUI items._                                                                                                                                                                                                                                                  |
 | `"direction"`             | The reading direction of text.<br>See CSS [`direction`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/direction) for supported values.                                                                                                                                                                                                                                                                                                                     |
-| `"fill"`                  | The fill colour of SVG shapes.<br>JIVE replaces the fill property of any matching SVG elements that have `fill="currentColor"` with the value specified by this property.<br>See CSS [`fill`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/fill) for supported values.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                       |
+| `"fill"`                  | The fill of SVG shapes.<br>Applies to every shape in an SVG, and to the elements inside an inline SVG that match a rule directly (see [SVG elements](#svg-elements)).<br>Can be a colour, or a gradient (see [Fills](#fills) below).<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                  |
 | `"font-ascent-override"`  | Overrides the font's ascent, as a proportion of its height.<br>**Requires JUCE 8 or above.**<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                          |
 | `"font-descent-override"` | Overrides the font's descent, as a proportion of its height.<br>**Requires JUCE 8 or above.**<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                         |
 | `"font-family"`           | The name of the font to use.<br>JUCE requires any non-standard fonts to be registered with [`juce::Typeface::createSystemTypefaceFor()`](https://docs.juce.com/master/classjuce_1_1Typeface.html#a24b3cafbfaca34528b6c366dce5e7ba7) and the returned value to be kept in-scope while the font is in use. See the [05-widgets example](../examples/05-widgets/) for a working example.<br>_Components will inherit this value from their parents if no rule matches them directly._ |
@@ -179,7 +208,7 @@ Inherited properties apply to the descendants of any component they're set on, u
 | `"line-spacing"`          | Extra spacing between lines of text.<br>_Components will inherit this value from their parents if no rule matches them directly._<br>_Can also be specified as a property on GUI items._                                                                                                                                                                                                                                                                                           |
 | `"opacity"`               | The opacity of the component and its children, from `0` to `1`.<br>See CSS [`opacity`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/opacity) for supported values.                                                                                                                                                                                                                                                                                        |
 | `"shadow"`                | The component's drop shadow.<br>See CSS [`box-shadow`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/box-shadow) for supported values.                                                                                                                                                                                                                                                                                                                     |
-| `"stroke"`                | The stroke colour of SVG shapes.<br>JIVE replaces the stroke property of any matching SVG elements that have `stroke="currentColor"` with the value specified by this property.<br>See CSS [`stroke`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/fill) for supported values.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                               |
+| `"stroke"`                | The stroke of SVG shapes.<br>Applies to every shape in an SVG, and to the elements inside an inline SVG that match a rule directly (see [SVG elements](#svg-elements)).<br>Can be a colour, or a gradient (see [Fills](#fills) below).<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                |
 | `"text-align"`            | The justification of text.<br>One of `centred-left`, `top-left`, `centred-top`, `top-right`, `centred-right`, `bottom-right`, `centred-bottom`, `bottom-left`, or `centred`.<br>Defaults to `centred-left`, or `centred-right` when `"direction"` is `rtl`.                                                                                                                                                                                                                                                                                                       |
 | `"thumb"`                 | The thumb colour of sliders, knobs, or progress bars.<br>See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `"track"`                 | The track colour of sliders, knobs, or progress bars.<br>See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                                 |

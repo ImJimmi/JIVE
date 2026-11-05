@@ -288,7 +288,8 @@ namespace jive
         if (root == nullptr)
             return;
 
-        if (file.getPath().contains(root->state.getProperty(ids::templatePath(), "jive::no-source-found").toString())
+        if ((root->state.hasProperty(ids::templatePath())
+             && file.getPath() == root->state[ids::sourceFile()].toString())
             || file.getPath() == root->state.getProperty(ids::topLevelSourceFile(), "jive::no-source-found").toString())
         {
             // Don't descend into an item that's about to be entirely replaced.

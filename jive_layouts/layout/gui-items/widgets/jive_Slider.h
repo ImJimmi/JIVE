@@ -23,6 +23,8 @@ namespace jive
         juce::Slider& getSlider();
         const juce::Slider& getSlider() const;
 
+        [[nodiscard]] double getNormalisedValue() const;
+
     protected:
         enum class DefaultSize
         {

@@ -218,6 +218,24 @@ namespace jive
 
         return nullptr;
     }
+
+    std::vector<GuiItem*> findItemsWithClass(GuiItem& root, juce::StringRef className)
+    {
+        std::vector<GuiItem*> result;
+
+        const auto classes = juce::StringArray::fromTokens(root.state[ids::classes()].toString(), " ", "");
+
+        if (classes.contains(className))
+            result.emplace_back(&root);
+
+        for (auto* child : root.getChildren())
+        {
+            const auto others = findItemsWithClass(*child, className);
+            result.insert(std::end(result), std::begin(others), std::end(others));
+        }
+
+        return result;
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS

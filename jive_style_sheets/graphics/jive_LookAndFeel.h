@@ -33,7 +33,7 @@ namespace jive
     public:
         // Should draw the current state of the given component to the graphics
         // context provided, using the set of styles provided.
-        using ComponentPainter = std::function<void(const juce::Component&,
+        using ComponentPainter = std::function<void(juce::Component&,
                                                     const Styles&,
                                                     juce::Graphics&)>;
 
@@ -154,7 +154,7 @@ namespace jive
 
         // A generic component drawer - useful for drawing simple components
         // that just have a background, border, corner radius, etc.
-        virtual void drawComponent(juce::Graphics&, const juce::Component&) const;
+        virtual void drawComponent(juce::Graphics&, juce::Component&) const;
 
         // Draws a popup menu's background that's associated with the given
         // combo box (as opposed to a standalone menu, or one associated with a
@@ -279,7 +279,7 @@ namespace jive
 
         template <typename Component, typename DefaultStyleDrawer>
         void draw(juce::Graphics& g,
-                  const Component& component,
+                  Component& component,
                   DefaultStyleDrawer drawDefaultStyle) const
         {
             const auto styles = findMostApplicableStyles(component);
@@ -289,11 +289,13 @@ namespace jive
                 painter.has_value())
             {
                 (*painter)(component, styles, g);
-                return;
+            }
+            else
+            {
+                drawDefaultStyle(styles);
             }
 
-            drawDefaultStyle(styles);
-            updateShadow<std::remove_const_t<Component>>(*const_cast<Component*>(&component), styles);
+            updateShadow<Component>(component, styles);
         }
 
         void applyOpacity(ComponentStylesCache&) const;

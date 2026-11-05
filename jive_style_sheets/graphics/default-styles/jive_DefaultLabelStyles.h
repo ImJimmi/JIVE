@@ -26,7 +26,7 @@ namespace jive::default_styles
     }
 
     inline void paintLabel(juce::Graphics& g,
-                           const juce::Label& label,
+                           juce::Label& label,
                            const Styles& styles)
     {
         paintComponent(g, label, styles);

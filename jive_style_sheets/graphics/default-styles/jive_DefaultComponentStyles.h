@@ -49,7 +49,7 @@ namespace jive::default_styles
 
     template <typename Component>
     inline void paintComponent(juce::Graphics& g,
-                               const Component& component,
+                               Component& component,
                                const Styles& styles)
     {
         const auto bounds = component.getLocalBounds().toFloat();
@@ -63,8 +63,7 @@ namespace jive::default_styles
                              getBorderFill(component, styles));
 
         const auto shape = getShape(borderRadius, bounds);
-        const_cast<Component*>(&component)
-            ->getProperties()
+        component.getProperties()
             .set(ids::shadowPath(),
                  shape.toString());
     }

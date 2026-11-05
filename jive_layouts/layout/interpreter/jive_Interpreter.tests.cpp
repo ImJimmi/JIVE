@@ -1333,6 +1333,35 @@ static jive::UnitTest relativeSourceReloadTest{
     },
 };
 
+static jive::UnitTest fileRelativeSourceReloadTest{
+    "jive",
+    "jive::Interpreter",
+    "Relative sources: views referenced relative to their file are reloaded when they change",
+    [](auto& test) {
+        const auto directory = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+                                   .getParentDirectory()
+                                   .getChildFile("file-relative-sources-tests/");
+        directory.deleteRecursively();
+        directory.getChildFile("views").createDirectory();
+
+        directory.getChildFile("views/Main.xml").replaceWithText(R"(<Window width="200" height="200"><Component template="./Child.xml"/></Window>)");
+        const auto childView = directory.getChildFile("views/Child.xml");
+        childView.replaceWithText(R"(<Component><Text id="greeting">Hello</Text></Component>)");
+
+        const jive::SourceRoot root{ directory };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(jive::SourceFile{ "views/Main.xml" });
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Hello" });
+
+        childView.replaceWithText(R"(<Component><Text id="greeting">Goodbye</Text></Component>)");
+        childView.setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        test.expectEquals(getDisplayedText(*item, "greeting"), juce::String{ "Goodbye" });
+
+        directory.deleteRecursively();
+    },
+};
+
 static jive::UnitTest rootRelativeSourcesTest{
     "jive",
     "jive::Interpreter",

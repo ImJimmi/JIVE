@@ -54,7 +54,7 @@ namespace jive
                        xAxis),
             std::visit(Visitor{
                            [&bounds](const Centre&) {
-                               return bounds.getCentreX();
+                               return bounds.getCentreY();
                            },
                            [&bounds](const Top& top) {
                                return bounds.getY() + top.inset.toPixels(bounds.getHeight());
@@ -206,7 +206,14 @@ namespace jive
         {
             result.isRadial = true;
             result.point1 = radialPosition.toPoint(bounds);
-            result.point2 = bounds.getBottomRight();
+
+            const auto farthestCorner = std::max({
+                result.point1.getDistanceFrom(bounds.getTopLeft()),
+                result.point1.getDistanceFrom(bounds.getTopRight()),
+                result.point1.getDistanceFrom(bounds.getBottomLeft()),
+                result.point1.getDistanceFrom(bounds.getBottomRight()),
+            });
+            result.point2 = result.point1.translated(farthestCorner, 0.0f);
         }
 
         std::vector<const ColourStop*> autoStops;
@@ -385,10 +392,10 @@ namespace jive
             args.remove(0);
         }
 
-        if (args[0].startsWith("at"))
+        if (auto parts = juce::StringArray::fromTokens(args[0], " ", "");
+            parts.contains("at"))
         {
-            auto parts = juce::StringArray::fromTokens(args[0], " ", "");
-            parts.remove(0);
+            parts.removeRange(0, parts.indexOf("at") + 1);
             gradient.radialPosition = *RadialPosition::fromArgs(parts);
 
             args.remove(0);
@@ -698,6 +705,27 @@ static jive::UnitTest linearGradientKeywordsTest{
         expectEndPoints(test, "to bottom right", { 60.0f, -30.0f }, { 140.0f, 130.0f });
         expectEndPoints(test, "to bottom left", { 140.0f, -30.0f }, { 60.0f, 130.0f });
         expectEndPoints(test, "to top left", { 140.0f, 130.0f }, { 60.0f, -30.0f });
+    },
+};
+
+static jive::UnitTest radialGradientRadiusTest{
+    "jive",
+    "jive::Gradient",
+    "Radial gradients reach the last colour at the farthest corner",
+    [](auto& test) {
+        const auto expectRadius = [&test](const juce::String& position, float expected) {
+            const auto gradient = jive::Gradient::fromString("radial-gradient(circle at " + position + ", red, blue)")
+                                      ->toJuceColourGradient({ 200.0f, 100.0f });
+            const auto radius = gradient.point1.getDistanceFrom(gradient.point2);
+
+            test.expect(std::abs(radius - expected) < 0.01f,
+                        position + " has radius " + juce::String{ radius });
+        };
+
+        expectRadius("center", std::hypot(100.0f, 50.0f));
+        expectRadius("center bottom", std::hypot(100.0f, 100.0f));
+        expectRadius("left top", std::hypot(200.0f, 100.0f));
+        expectRadius("right bottom", std::hypot(200.0f, 100.0f));
     },
 };
 #endif

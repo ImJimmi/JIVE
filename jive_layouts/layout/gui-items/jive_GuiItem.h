@@ -70,6 +70,8 @@ namespace jive
 
         std::shared_ptr<juce::Component> component;
 
+        JUCE_DECLARE_WEAK_REFERENCEABLE(GuiItem)
+
     private:
         friend class GuiItemDecorator;
 
@@ -84,7 +86,6 @@ namespace jive
 
         bool layoutRecursionLock = false;
 
-        JUCE_DECLARE_WEAK_REFERENCEABLE(GuiItem)
         JUCE_LEAK_DETECTOR(GuiItem)
     };
 
@@ -92,4 +93,5 @@ namespace jive
     [[nodiscard]] const BoxModel& boxModel(const GuiItem& decoratedItem);
 
     [[nodiscard]] GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id);
+    [[nodiscard]] std::vector<GuiItem*> findItemsWithClass(GuiItem& root, juce::StringRef className);
 } // namespace jive

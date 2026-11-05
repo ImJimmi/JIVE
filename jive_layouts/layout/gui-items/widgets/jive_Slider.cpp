@@ -169,6 +169,13 @@ namespace jive
         return *dynamic_cast<const juce::Slider*>(getComponent().get());
     }
 
+    double Slider::getNormalisedValue() const
+    {
+        return getSlider()
+            .getNormalisableRange()
+            .convertTo0to1(getSlider().getValue());
+    }
+
     void Slider::updateStyle()
     {
         Orientation ori;
