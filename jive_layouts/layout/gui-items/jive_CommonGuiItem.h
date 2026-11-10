@@ -1,10 +1,11 @@
 #pragma once
 
 #include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
-#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {
+    using FocusOrder = Number<int, struct FocusOrderTag>;
+
     class CommonGuiItem
         : public GuiItemDecorator
         , private juce::ComponentListener
@@ -49,7 +50,7 @@ namespace jive
         PassiveProperty<bool> focusable;
         PassiveProperty<bool> clickingGrabsFocus;
         PassiveProperty<bool> focusOutline;
-        PassiveProperty<int> focusOrder;
+        PassiveProperty<FocusOrder> focusOrder;
         PassiveProperty<juce::String> classes;
         PassiveProperty<juce::MouseCursor::StandardCursorType> cursor;
         PassiveProperty<Length> width;

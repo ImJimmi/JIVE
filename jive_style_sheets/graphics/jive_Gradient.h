@@ -129,5 +129,6 @@ namespace juce
     {
         static var toVar(const jive::Gradient& gradient);
         static jive::Gradient fromVar(const var& value);
+        static String getSyntax();
     };
 } // namespace juce

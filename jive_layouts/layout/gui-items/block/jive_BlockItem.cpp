@@ -40,6 +40,38 @@ namespace jive
         state.removeListener(this);
     }
 
+    juce::Rectangle<int> BlockItem::calculateBounds() const
+    {
+        juce::Rectangle<int> bounds;
+        const auto& parentBoxModel = boxModel(*getParent());
+        const auto parentBounds = parentBoxModel.getContentBounds();
+
+        // The size is calculated here rather than taken from the box model, as
+        // the box model may not have seen a change to the width or height yet.
+        auto itemWidth = boxModel(*this).getWidth();
+        auto itemHeight = boxModel(*this).getHeight();
+
+        if (!width.isAuto())
+        {
+            itemWidth = width.calculateCurrent().toPixels(parentBounds.getWidth());
+            bounds.setWidth(juce::roundToInt(itemWidth));
+        }
+        if (!height.isAuto())
+        {
+            itemHeight = height.calculateCurrent().toPixels(parentBounds.getHeight());
+            bounds.setHeight(juce::roundToInt(itemHeight));
+        }
+
+        return bounds.withPosition(parentBoxModel
+                                       .getContentBounds()
+                                       .getPosition()
+                                       .roundToInt()
+                                   + juce::Point{
+                                       calculateX(itemWidth),
+                                       calculateY(itemHeight),
+                                   });
+    }
+
     void BlockItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
     {
         forwardPropertyChange(tree, property, x, y, anchor, width, height);
@@ -71,38 +103,6 @@ namespace jive
                   .calculateCurrent()
                   .y
                   .toPixels(itemHeight));
-    }
-
-    juce::Rectangle<int> BlockItem::calculateBounds() const
-    {
-        juce::Rectangle<int> bounds;
-        const auto& parentBoxModel = boxModel(*getParent());
-        const auto parentBounds = parentBoxModel.getContentBounds();
-
-        // The size is calculated here rather than taken from the box model, as
-        // the box model may not have seen a change to the width or height yet.
-        auto itemWidth = boxModel(*this).getWidth();
-        auto itemHeight = boxModel(*this).getHeight();
-
-        if (!width.isAuto())
-        {
-            itemWidth = width.calculateCurrent().toPixels(parentBounds.getWidth());
-            bounds.setWidth(juce::roundToInt(itemWidth));
-        }
-        if (!height.isAuto())
-        {
-            itemHeight = height.calculateCurrent().toPixels(parentBounds.getHeight());
-            bounds.setHeight(juce::roundToInt(itemHeight));
-        }
-
-        return bounds.withPosition(parentBoxModel
-                                       .getContentBounds()
-                                       .getPosition()
-                                       .roundToInt()
-                                   + juce::Point{
-                                       calculateX(itemWidth),
-                                       calculateY(itemHeight),
-                                   });
     }
 } // namespace jive
 

@@ -1087,6 +1087,16 @@ namespace juce
     {
         return options[static_cast<int>(theme)];
     }
+
+    bool VariantConverter<jive::Theme>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<jive::Theme>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
 } // namespace juce
 
 #if JIVE_UNIT_TESTS
@@ -1196,10 +1206,10 @@ private:
             parent.addAndMakeVisible(child);
             lookAndFeel.addStyles(".large", jive::Styles{}.withFontPointSize(30.0f));
 
-            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get(), 14.0f);
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get().value, 14.0f);
 
             parent.getProperties().set("class", "large");
-            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get(), 30.0f);
+            expectEquals(lookAndFeel.findMostApplicableStyles(child).fontPointSize.get().value, 30.0f);
         }
 
         beginTest("styles / are resolved again when an ancestor's ID changes");

@@ -96,9 +96,9 @@ namespace jive
         getButton().setClickingTogglesState(toggleOnClick.exists() ? toggleOnClick.get() : getCheckbox() != nullptr);
 
         radioGroup.onValueChange = [this]() {
-            getButton().setRadioGroupId(radioGroup);
+            getButton().setRadioGroupId(radioGroup.get());
         };
-        getButton().setRadioGroupId(radioGroup);
+        getButton().setRadioGroupId(radioGroup.get());
 
         triggerEvent.onValueChange = [this]() {
             getButton().setTriggeredOnMouseDown(triggerEvent == TriggerEvent::mouseDown);
@@ -249,6 +249,21 @@ namespace juce
 
         jassert(options.size() >= index);
         return options[index];
+    }
+
+    bool VariantConverter<jive::Button::TriggerEvent>::isValid(const var& v)
+    {
+        return v.isVoid() || options.contains(v);
+    }
+
+    String VariantConverter<jive::Button::TriggerEvent>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    jive::Button::TriggerEvent VariantConverter<jive::Button::TriggerEvent>::defaultValue()
+    {
+        return jive::Button::TriggerEvent::mouseUp;
     }
 } // namespace juce
 

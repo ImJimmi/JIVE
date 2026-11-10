@@ -5,10 +5,12 @@
 #include "jive_Shadow.h"
 
 #include <jive_core/algorithms/jive_Interpolate.h>
+#include <jive_core/errors/jive_ErrorHandling.h>
 #include <jive_core/geometry/jive_BorderRadii.h>
 #include <jive_core/kinetics/jive_Transitions.h>
 #include <jive_core/time/jive_Timer.h>
 #include <jive_core/values/jive_Identifiers.h>
+#include <jive_core/values/jive_Number.h>
 #include <jive_core/values/variant-converters/jive_VariantConvertion.h>
 
 #include <juce_graphics/juce_graphics.h>
@@ -20,6 +22,14 @@ namespace jive
     // about what you want to define. When receiving a Styles object, you should
     // decide on a sensible default if a style is undefined, or use some other
     // sort of error handling in that case.
+    using FontAscentOverride = Number<float, struct FontAscentOverrideTag>;
+    using FontDescentOverride = Number<float, struct FontDescentOverrideTag>;
+    using FontKerning = Number<float, struct FontKerningTag>;
+    using FontScale = Number<float, struct FontScaleTag>;
+    using FontSize = Number<float, struct FontSizeTag>;
+    using LineSpacing = Number<float, struct LineSpacingTag>;
+    using Opacity = Number<float, struct OpacityTag>;
+
     struct Styles
     {
         template <typename T>
@@ -148,18 +158,18 @@ namespace jive
         StyleProperty<juce::AttributedString::ReadingDirection> direction{ ids::direction() };
         StyleProperty<Fill> fill{ ids::fill() };
 #if JUCE_MAJOR_VERSION >= 8
-        StyleProperty<float> fontAscentOverride{ ids::fontAscentOverride() };
-        StyleProperty<float> fontDescentOverride{ ids::fontDescentOverride() };
+        StyleProperty<FontAscentOverride> fontAscentOverride{ ids::fontAscentOverride() };
+        StyleProperty<FontDescentOverride> fontDescentOverride{ ids::fontDescentOverride() };
 #endif
-        StyleProperty<float> fontExtraKerningFactor{ ids::fontKerning() };
+        StyleProperty<FontKerning> fontExtraKerningFactor{ ids::fontKerning() };
         StyleProperty<juce::String> fontFamily{ ids::fontFamily() };
-        StyleProperty<float> fontHorizontalScale{ ids::fontScale() };
-        StyleProperty<float> fontPointSize{ ids::fontSize() };
+        StyleProperty<FontScale> fontHorizontalScale{ ids::fontScale() };
+        StyleProperty<FontSize> fontPointSize{ ids::fontSize() };
         StyleProperty<std::unordered_set<juce::Font::FontStyleFlags>> fontStyleFlags{ ids::fontStyles() };
         StyleProperty<Fill> foreground{ ids::foreground() };
         StyleProperty<Icon> icon{ ids::icon() };
-        StyleProperty<float> lineSpacing{ ids::lineSpacing() };
-        StyleProperty<float> opacity{ ids::opacity() };
+        StyleProperty<LineSpacing> lineSpacing{ ids::lineSpacing() };
+        StyleProperty<Opacity> opacity{ ids::opacity() };
         StyleProperty<Shadow> shadow{ ids::shadow() };
         StyleProperty<Fill> stroke{ ids::stroke() };
         StyleProperty<juce::Justification> textAlign{ ids::textAlign() };
@@ -197,61 +207,82 @@ namespace jive
         };
 
         [[nodiscard]] Styles& with(const juce::Identifier& propertyName,
-                                   const juce::var& value)
+                                   const juce::var& value,
+                                   const Object::ReferenceCountedPointer& source = nullptr,
+                                   const SourceFile& sourceFile = {})
         {
             if (propertyName == accent.id)
-                return withAccent(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withAccent, propertyName, value, source, sourceFile);
             if (propertyName == background.id)
-                return withBackground(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withBackground, propertyName, value, source, sourceFile);
             if (propertyName == borderFill.id)
-                return withBorderFill(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withBorderFill, propertyName, value, source, sourceFile);
             if (propertyName == borderRadius.id)
-                return withBorderRadius(fromVar<BorderRadii<float>>(value));
+                return withValid<BorderRadii<float>>(&Styles::withBorderRadius, propertyName, value, source, sourceFile);
             if (propertyName == borderWidth.id)
-                return withBorderWidth(fromVar<juce::BorderSize<float>>(value));
+                return withValid<juce::BorderSize<float>>(&Styles::withBorderWidth, propertyName, value, source, sourceFile);
             if (propertyName == direction.id)
-                return withReadingDirection(fromVar<juce::AttributedString::ReadingDirection>(value));
+                return withValid<juce::AttributedString::ReadingDirection>(&Styles::withReadingDirection, propertyName, value, source, sourceFile);
             if (propertyName == fill.id)
-                return withFill(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withFill, propertyName, value, source, sourceFile);
 #if JUCE_MAJOR_VERSION >= 8
             if (propertyName == fontAscentOverride.id)
-                return withFontAscentOverride(fromVar<float>(value));
+                return withValid<FontAscentOverride>(&Styles::withFontAscentOverride, propertyName, value, source, sourceFile);
             if (propertyName == fontDescentOverride.id)
-                return withFontDescentOverride(fromVar<float>(value));
+                return withValid<FontDescentOverride>(&Styles::withFontDescentOverride, propertyName, value, source, sourceFile);
 #endif
             if (propertyName == fontExtraKerningFactor.id)
-                return withFontExtraKerningFactor(fromVar<float>(value));
+                return withValid<FontKerning>(&Styles::withFontExtraKerningFactor, propertyName, value, source, sourceFile);
             if (propertyName == fontFamily.id)
                 return withFontFamily(value.toString());
             if (propertyName == fontHorizontalScale.id)
-                return withFontHorizontalScale(fromVar<float>(value));
+                return withValid<FontScale>(&Styles::withFontHorizontalScale, propertyName, value, source, sourceFile);
             if (propertyName == fontPointSize.id)
-                return withFontPointSize(fromVar<float>(value));
+                return withValid<FontSize>(&Styles::withFontPointSize, propertyName, value, source, sourceFile);
             if (propertyName == fontStyleFlags.id)
-                return withFontStyleFlags(fromVar<std::unordered_set<juce::Font::FontStyleFlags>>(value));
+                return withValid<std::unordered_set<juce::Font::FontStyleFlags>>(&Styles::withFontStyleFlags, propertyName, value, source, sourceFile);
             if (propertyName == foreground.id)
-                return withForeground(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withForeground, propertyName, value, source, sourceFile);
             if (propertyName == icon.id)
-                return withIcon(fromVar<Icon>(value));
+                return withValid<Icon>(&Styles::withIcon, propertyName, value, source, sourceFile);
             if (propertyName == lineSpacing.id)
-                return withLineSpacing(fromVar<float>(value));
+                return withValid<LineSpacing>(&Styles::withLineSpacing, propertyName, value, source, sourceFile);
             if (propertyName == opacity.id)
-                return withOpacity(value.toString().endsWithChar('%')
-                                       ? value.toString().getFloatValue() / 100.0f
-                                       : fromVar<float>(value));
+                return withValid<Opacity>(&Styles::withOpacity, propertyName, value, source, sourceFile);
             if (propertyName == shadow.id)
-                return withShadow(fromVar<Shadow>(value));
+                return withValid<Shadow>(&Styles::withShadow, propertyName, value, source, sourceFile);
             if (propertyName == stroke.id)
-                return withStroke(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withStroke, propertyName, value, source, sourceFile);
             if (propertyName == textAlign.id)
-                return withTextAlignment(fromVar<juce::Justification>(value));
+                return withValid<juce::Justification>(&Styles::withTextAlignment, propertyName, value, source, sourceFile);
             if (propertyName == thumb.id)
-                return withThumb(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withThumb, propertyName, value, source, sourceFile);
             if (propertyName == track.id)
-                return withTrack(fromVar<Fill>(value));
+                return withValid<Fill>(&Styles::withTrack, propertyName, value, source, sourceFile);
 
             jassertfalse;
             return *this;
+        }
+
+        template <typename T, typename Setter>
+        [[nodiscard]] Styles& withValid(Setter setter,
+                                        const juce::Identifier& propertyName,
+                                        const juce::var& value,
+                                        const Object::ReferenceCountedPointer& source,
+                                        const SourceFile& sourceFile)
+        {
+            if (isValidVar<T>(value))
+                return (this->*setter)(fromVar<T>(value));
+
+            if constexpr (hasVariantSyntax<T>())
+                logValueError(source, propertyName, "Expected " + juce::VariantConverter<T>::getSyntax(), sourceFile);
+            else
+                logValueError(source, propertyName, "", sourceFile);
+
+            if constexpr (hasVariantDefault<T>())
+                return (this->*setter)(juce::VariantConverter<T>::defaultValue());
+            else
+                return *this;
         }
 
         [[nodiscard]] Styles& withAccent(const Fill& value)
@@ -297,20 +328,20 @@ namespace jive
         }
 
 #if JUCE_MAJOR_VERSION >= 8
-        [[nodiscard]] Styles& withFontAscentOverride(float value)
+        [[nodiscard]] Styles& withFontAscentOverride(FontAscentOverride value)
         {
             fontAscentOverride = value;
             return *this;
         }
 
-        [[nodiscard]] Styles& withFontDescentOverride(float value)
+        [[nodiscard]] Styles& withFontDescentOverride(FontDescentOverride value)
         {
             fontDescentOverride = value;
             return *this;
         }
 #endif
 
-        [[nodiscard]] Styles& withFontExtraKerningFactor(float value)
+        [[nodiscard]] Styles& withFontExtraKerningFactor(FontKerning value)
         {
             fontExtraKerningFactor = value;
             return *this;
@@ -322,13 +353,13 @@ namespace jive
             return *this;
         }
 
-        [[nodiscard]] Styles& withFontHorizontalScale(float value)
+        [[nodiscard]] Styles& withFontHorizontalScale(FontScale value)
         {
             fontHorizontalScale = value;
             return *this;
         }
 
-        [[nodiscard]] Styles& withFontPointSize(float value)
+        [[nodiscard]] Styles& withFontPointSize(FontSize value)
         {
             fontPointSize = value;
             return *this;
@@ -352,13 +383,13 @@ namespace jive
             return *this;
         }
 
-        [[nodiscard]] Styles& withLineSpacing(float value)
+        [[nodiscard]] Styles& withLineSpacing(LineSpacing value)
         {
             lineSpacing = value;
             return *this;
         }
 
-        [[nodiscard]] Styles& withOpacity(float value)
+        [[nodiscard]] Styles& withOpacity(Opacity value)
         {
             opacity = value;
             return *this;
@@ -483,31 +514,32 @@ namespace jive
         template <>
         [[nodiscard]] std::optional<float> find(const juce::String& styleName) const
         {
-            const StyleProperty<float>* property = nullptr;
+            const auto current = [this](const auto& property) -> std::optional<float> {
+                if (!property.hasValue())
+                    return std::nullopt;
+
+                return calculateCurrent(property);
+            };
 
             if (styleName == "font-size")
-                property = &fontPointSize;
-            else if (styleName == "font-scale")
-                property = &fontHorizontalScale;
-            else if (styleName == "font-kerning")
-                property = &fontExtraKerningFactor;
-            else if (styleName == "line-spacing")
-                property = &lineSpacing;
-            else if (styleName == "opacity")
-                property = &opacity;
+                return current(fontPointSize);
+            if (styleName == "font-scale")
+                return current(fontHorizontalScale);
+            if (styleName == "font-kerning")
+                return current(fontExtraKerningFactor);
+            if (styleName == "line-spacing")
+                return current(lineSpacing);
+            if (styleName == "opacity")
+                return current(opacity);
 #if JUCE_MAJOR_VERSION >= 8
-            else if (styleName == "font-ascent-override")
-                property = &fontAscentOverride;
-            else if (styleName == "font-descent-override")
-                property = &fontDescentOverride;
+            if (styleName == "font-ascent-override")
+                return current(fontAscentOverride);
+            if (styleName == "font-descent-override")
+                return current(fontDescentOverride);
 #endif
 
-            jassert(property != nullptr);
-
-            if (property == nullptr || !property->hasValue())
-                return std::nullopt;
-
-            return calculateCurrent(*property);
+            jassertfalse;
+            return std::nullopt;
         }
 
         template <>
@@ -662,3 +694,33 @@ namespace jive
         }
     };
 } // namespace jive
+
+namespace juce
+{
+    template <>
+    struct VariantConverter<jive::Opacity>
+    {
+        static jive::Opacity fromVar(const var& v)
+        {
+            if (v.isString() && v.toString().trim().endsWithChar('%'))
+                return v.toString().getFloatValue() / 100.0f;
+
+            return static_cast<float>(v);
+        }
+
+        static var toVar(jive::Opacity opacity)
+        {
+            return opacity.value;
+        }
+
+        static bool isValid(const var& v)
+        {
+            return v.isVoid() || jive::isNumber(v, { "%" });
+        }
+
+        static String getSyntax()
+        {
+            return "a number or percentage";
+        }
+    };
+} // namespace juce

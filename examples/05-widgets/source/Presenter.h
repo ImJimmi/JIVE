@@ -254,7 +254,7 @@ namespace jive_examples::widgets
         }
 
         // Declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts = registerFonts();
+        const std::array<juce::Typeface::Ptr, 6> fonts = registerFonts();
 
         const jive::SourceFile mainView{ "public/views/Main.xml" };
         const std::array<std::pair<juce::String, juce::String>, 2> pages{ {

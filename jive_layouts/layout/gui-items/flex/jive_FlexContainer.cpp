@@ -3,6 +3,7 @@
 #include "jive_FlexItem.h"
 
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {

@@ -48,6 +48,13 @@ namespace juce
     {
         return value.toString();
     }
+
+    bool VariantConverter<jive::Length>::isValid(const var& v)
+    {
+        return v.isVoid()
+            || v.toString().trim().equalsIgnoreCase("auto")
+            || jive::isNumber(v, { "px", "%" });
+    }
 } // namespace juce
 
 #if JIVE_UNIT_TESTS

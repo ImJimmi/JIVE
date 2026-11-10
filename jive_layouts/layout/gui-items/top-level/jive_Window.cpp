@@ -56,10 +56,20 @@ namespace jive
         setResizable(canBeResized.getOr(true), useCornerResizer.getOr(false));
 
         const auto updateResizeLimits = [this]() {
-            setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f))),
-                            static_cast<int>(std::ceil(minHeight.getOr(1.0f))),
-                            static_cast<int>(std::floor(maxWidth.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))),
-                            static_cast<int>(std::floor(maxHeight.getOr(static_cast<float>(std::numeric_limits<juce::int16>::max())))));
+            const auto userAreas = juce::Desktop::getInstance().getDisplays().getRectangleList(true);
+            const auto windowCentre = getScreenBounds().getCentre();
+            const auto display = std::find_if(std::begin(userAreas),
+                                              std::end(userAreas),
+                                              [windowCentre](const auto& userArea) {
+                                                  return userArea.contains(windowCentre);
+                                              });
+            const auto area = (display != std::end(userAreas) ? *display : userAreas.getBounds()).toFloat();
+            const auto unlimited = static_cast<float>(std::numeric_limits<juce::int16>::max());
+
+            setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f).toPixels(area.getWidth()))),
+                            static_cast<int>(std::ceil(minHeight.getOr(1.0f).toPixels(area.getHeight()))),
+                            static_cast<int>(std::floor(maxWidth.getOr(unlimited).toPixels(area.getWidth()))),
+                            static_cast<int>(std::floor(maxHeight.getOr(unlimited).toPixels(area.getHeight()))));
         };
         minWidth.onValueChange = updateResizeLimits;
         minHeight.onValueChange = updateResizeLimits;

@@ -62,7 +62,7 @@ namespace jive
         juce::RelativeTime delay;
 
     private:
-        template <typename ValueType, Inheritance, Accumulation, bool, Responsiveness>
+        template <typename ValueType, Inheritance, Accumulation, bool, Responsiveness, bool>
         friend class Property;
         friend class Transitions;
 

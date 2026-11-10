@@ -4,6 +4,7 @@
 #include "jive_FlexVariantConverters.h"
 #include "jive_GridVariantConverters.h"
 #include "jive_MiscVariantConverters.h"
+#include "jive_VariantValidation.h"
 
 #include <juce_data_structures/juce_data_structures.h>
 
@@ -55,4 +56,5 @@ namespace jive
                                fromVar<SecondValue>(next(*value.getArray())),
                                fromVar<OtherValues>(next(*value.getArray()))...);
     }
+
 } // namespace jive

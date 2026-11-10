@@ -87,7 +87,7 @@ namespace jive
         {
             juce::FlexItem flexItem{ *layoutDummy };
 
-            flexItem.flexShrink = flexShrink.exists() ? flexShrink.calculateCurrent() : 1.0f;
+            flexItem.flexShrink = flexShrink.exists() ? flexShrink.calculateCurrent().value : 1.0f;
 
             if (strategy == LayoutStrategy::real)
             {

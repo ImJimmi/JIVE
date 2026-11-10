@@ -16,7 +16,6 @@ public:
         testCallback();
         testHereditaryValues();
         testObservations();
-        testFunctionalProperties();
         testDynamicObjectSource();
         testObjectValues();
         testTransitions();
@@ -250,21 +249,6 @@ private:
         }
     }
 
-    void testFunctionalProperties()
-    {
-        beginTest("functional properties");
-
-        juce::ValueTree state{ "State" };
-        jive::Property<int> value{ state, "value" };
-        expect(!value.isFunctional());
-
-        value = [] {
-            return 300;
-        };
-        expect(value.isFunctional());
-        expectEquals(value.get(), 300);
-    }
-
     void testDynamicObjectSource()
     {
         juce::ValueTree state{
@@ -303,13 +287,6 @@ private:
             expect(value.exists());
             value.clear();
             expect(!value.exists());
-
-            expect(!value.isFunctional());
-            value = []() {
-                return 999;
-            };
-            expect(value.isFunctional());
-            expectEquals(value.get(), 999);
 
             value = 7648;
             expectEquals<juce::String>(value.toString(), "7648");

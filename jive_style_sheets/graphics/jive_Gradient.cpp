@@ -648,6 +648,11 @@ namespace juce
 
         return gradient;
     }
+
+    String VariantConverter<jive::Gradient>::getSyntax()
+    {
+        return "linear-gradient(), or radial-gradient()";
+    }
 } // namespace juce
 
 #if JIVE_UNIT_TESTS

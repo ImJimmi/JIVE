@@ -70,5 +70,19 @@ namespace juce
         {
             return var{ transitions.get() };
         }
+
+        static bool isValid(const var& v)
+        {
+            if (!v.isString())
+                return true;
+
+            const auto tokens = StringArray::fromTokens(v.toString(), ",", "");
+
+            return std::all_of(std::begin(tokens),
+                               std::end(tokens),
+                               [](const auto& token) {
+                                   return jive::Transition::fromString(token.trim()).has_value();
+                               });
+        }
     };
 } // namespace juce

@@ -26,61 +26,115 @@ namespace jive
         , width{ state, ids::width() }
         , height{ state, ids::height() }
         , propertyUpdaters{
-            { name.id, [this] {
-                 getComponent()->setName(name);
-             } },
-            { title.id, [this] {
-                 getComponent()->setTitle(translate(title));
-             } },
-            { id.id, [this] {
-                 getComponent()->setComponentID(id.get().toString());
-             } },
-            { description.id, [this] {
-                 getComponent()->setDescription(translate(description));
-             } },
-            { tooltip.id, [this] {
-                 getComponent()->setHelpText(translate(tooltip));
-             } },
-            { lang.id, [this] {
-                 updateLocalisedStrings();
-             } },
-            { enabled.id, [this] {
-                 getComponent()->setEnabled(enabled.getOr(true));
-             } },
-            { accessible.id, [this] {
-                 getComponent()->setAccessible(accessible.getOr(true));
-             } },
-            { visibility.id, [this] {
-                 getComponent()->setVisible(visibility.getOr(true));
-             } },
-            { alwaysOnTop.id, [this] {
-                 getComponent()->setAlwaysOnTop(alwaysOnTop);
-             } },
-            { bufferedToImage.id, [this] {
-                 getComponent()->setBufferedToImage(bufferedToImage);
-             } },
-            { opaque.id, [this] {
-                 getComponent()->setOpaque(opaque);
-             } },
-            { focusable.id, [this] {
-                 getComponent()->setWantsKeyboardFocus(focusable);
-             } },
-            { focusOutline.id, [this] {
-                 getComponent()->setHasFocusOutline(focusOutline);
-             } },
-            { clickingGrabsFocus.id, [this] {
-                 getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus.getOr(true));
-             } },
-            { focusOrder.id, [this] {
-                 getComponent()->setExplicitFocusOrder(focusOrder.getOr(state.getParent().indexOf(state) + 1));
-             } },
-            { classes.id, [this] {
-                 getComponent()->getProperties().set(ids::classes(), classes.get());
-                 getComponent()->repaint();
-             } },
-            { cursor.id, [this] {
-                 getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
-             } },
+            {
+                name.id,
+                [this] {
+                    getComponent()->setName(name);
+                },
+            },
+            {
+                title.id,
+                [this] {
+                    getComponent()->setTitle(translate(title));
+                },
+            },
+            {
+                id.id,
+                [this] {
+                    getComponent()->setComponentID(id.get().toString());
+                },
+            },
+            {
+                description.id,
+                [this] {
+                    getComponent()->setDescription(translate(description));
+                },
+            },
+            {
+                tooltip.id,
+                [this] {
+                    getComponent()->setHelpText(translate(tooltip));
+                },
+            },
+            {
+                lang.id,
+                [this] {
+                    updateLocalisedStrings();
+                },
+            },
+            {
+                enabled.id,
+                [this] {
+                    getComponent()->setEnabled(enabled.getOr(true));
+                },
+            },
+            {
+                accessible.id,
+                [this] {
+                    getComponent()->setAccessible(accessible.getOr(true));
+                },
+            },
+            {
+                visibility.id,
+                [this] {
+                    getComponent()->setVisible(visibility.getOr(true));
+                },
+            },
+            {
+                alwaysOnTop.id,
+                [this] {
+                    getComponent()->setAlwaysOnTop(alwaysOnTop);
+                },
+            },
+            {
+                bufferedToImage.id,
+                [this] {
+                    getComponent()->setBufferedToImage(bufferedToImage);
+                },
+            },
+            {
+                opaque.id,
+                [this] {
+                    getComponent()->setOpaque(opaque);
+                },
+            },
+            {
+                focusable.id,
+                [this] {
+                    getComponent()->setWantsKeyboardFocus(focusable);
+                },
+            },
+            {
+                focusOutline.id,
+                [this] {
+                    getComponent()->setHasFocusOutline(focusOutline);
+                },
+            },
+            {
+                clickingGrabsFocus.id,
+                [this] {
+                    getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus.getOr(true));
+                },
+            },
+            {
+                focusOrder.id,
+                [this] {
+                    getComponent()->setExplicitFocusOrder(focusOrder.getOr(state.getParent().indexOf(state) + 1));
+                },
+            },
+            {
+                classes.id,
+                [this] {
+                    getComponent()->getProperties().set(ids::classes(), classes.get());
+                    getComponent()->repaint();
+                },
+            },
+            {
+                cursor.id,
+                [this] {
+                    getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
+                },
+            },
         }
     {
         getComponent()->addComponentListener(this);
@@ -88,13 +142,6 @@ namespace jive
 
         for (const auto& updater : propertyUpdaters)
             updater.second();
-
-        if (isTopLevel())
-        {
-            // Top-level items must have an explicit size!
-            jassert(!boxModel.hasAutoWidth());
-            jassert(!boxModel.hasAutoHeight());
-        }
 
         getComponent()->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
                                 juce::roundToInt(boxModel.getOuterBounds().getHeight()));

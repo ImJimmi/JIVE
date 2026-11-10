@@ -9,6 +9,8 @@ namespace juce
     {
         static FlexBox::AlignContent fromVar(const var& v);
         static var toVar(FlexBox::AlignContent direction);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexBox::AlignContent> options;
@@ -19,6 +21,8 @@ namespace juce
     {
         static FlexBox::AlignItems fromVar(const var& v);
         static var toVar(FlexBox::AlignItems direction);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexBox::AlignItems> options;
@@ -29,6 +33,8 @@ namespace juce
     {
         static FlexBox::Direction fromVar(const var& v);
         static var toVar(FlexBox::Direction direction);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexBox::Direction> options;
@@ -39,6 +45,8 @@ namespace juce
     {
         static FlexBox::JustifyContent fromVar(const var& v);
         static var toVar(FlexBox::JustifyContent direction);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexBox::JustifyContent> options;
@@ -49,6 +57,8 @@ namespace juce
     {
         static FlexBox::Wrap fromVar(const var& v);
         static var toVar(FlexBox::Wrap direction);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexBox::Wrap> options;
@@ -59,6 +69,8 @@ namespace juce
     {
         static FlexItem::AlignSelf fromVar(const var& v);
         static var toVar(FlexItem::AlignSelf alignSelf);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, FlexItem::AlignSelf> options;

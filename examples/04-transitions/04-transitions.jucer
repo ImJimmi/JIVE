@@ -26,9 +26,12 @@
       <FILE id="UoNWzv" name="Theme.h" compile="0" resource="0" file="../shared/shared/Theme.h"/>
     </GROUP>
     <GROUP id="kyTnVw" name="resources">
-      <FILE id="1G2wGb" name="rubik-mono-one.ttf" compile="0" resource="1" file="../resources/rubik-mono-one.ttf"/>
-      <FILE id="pAWYKv" name="rubik.ttf" compile="0" resource="1" file="../resources/rubik.ttf"/>
-      <FILE id="rIJib2" name="source-code-pro.ttf" compile="0" resource="1" file="../resources/source-code-pro.ttf"/>
+      <FILE id="22KnPK" name="Rubik-Regular.ttf" compile="0" resource="1" file="../resources/Rubik-Regular.ttf"/>
+      <FILE id="A3c1Uz" name="Rubik-Bold.ttf" compile="0" resource="1" file="../resources/Rubik-Bold.ttf"/>
+      <FILE id="whh7Tg" name="Rubik-Italic.ttf" compile="0" resource="1" file="../resources/Rubik-Italic.ttf"/>
+      <FILE id="cmN984" name="Rubik-BoldItalic.ttf" compile="0" resource="1" file="../resources/Rubik-BoldItalic.ttf"/>
+      <FILE id="izsXxz" name="RubikMonoOne-Regular.ttf" compile="0" resource="1" file="../resources/RubikMonoOne-Regular.ttf"/>
+      <FILE id="jzslvq" name="SourceCodePro-Regular.ttf" compile="0" resource="1" file="../resources/SourceCodePro-Regular.ttf"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_USE_CURL="0"/>

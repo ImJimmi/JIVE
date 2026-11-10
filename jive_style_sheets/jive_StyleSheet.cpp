@@ -308,7 +308,6 @@ namespace jive
             if (importing.contains(file))
             {
                 DBG("Style sheet '" << file.getPath() << "' imports itself");
-                jassertfalse;
                 return false;
             }
 
@@ -433,7 +432,7 @@ namespace jive
 
             styles = styles
                          .value_or(Styles{})
-                         .with(propertyName, value);
+                         .with(propertyName, value, &object, styleFile);
         }
     }
 
@@ -650,6 +649,57 @@ private:
 
             expectEquals(settledColourAt(button, 50, 12),
                          juce::Colours::orange);
+        }
+
+        beginTest("individual properties / invalid value");
+        {
+            struct CapturingLogger : juce::Logger
+            {
+                void logMessage(const juce::String& message) final
+                {
+                    messages.add(message);
+                }
+
+                juce::StringArray messages;
+            };
+
+            CapturingLogger logger;
+            auto* const previousLogger = juce::Logger::getCurrentLogger();
+            juce::Logger::setCurrentLogger(&logger);
+            style.setProperty("background", "not-a-colour");
+            juce::Logger::setCurrentLogger(previousLogger);
+
+            expectEquals(settledColourAt(button, 50, 12),
+                         jive::parseColour(jive::themes::steel::raisinBlack));
+            expect(logger.messages.joinIntoString("\n")
+                       .contains("Invalid value 'not-a-colour' for property 'background'. Expected a colour"));
+        }
+
+        beginTest("individual properties / invalid number");
+        {
+            struct CapturingLogger : juce::Logger
+            {
+                void logMessage(const juce::String& message) final
+                {
+                    messages.add(message);
+                }
+
+                juce::StringArray messages;
+            };
+
+            CapturingLogger logger;
+            auto* const previousLogger = juce::Logger::getCurrentLogger();
+            juce::Logger::setCurrentLogger(&logger);
+            style.setProperty("font-size", "big");
+            style.setProperty("opacity", "half");
+            juce::Logger::setCurrentLogger(previousLogger);
+
+            const auto log = logger.messages.joinIntoString("\n");
+            expect(log.contains("Invalid value 'big' for property 'font-size'. Expected a number"));
+            expect(log.contains("Invalid value 'half' for property 'opacity'. Expected a number or percentage"));
+
+            style.removeProperty("font-size");
+            style.removeProperty("opacity");
         }
 
         beginTest("individual properties / property removed");

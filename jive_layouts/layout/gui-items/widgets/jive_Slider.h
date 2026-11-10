@@ -4,6 +4,11 @@
 
 namespace jive
 {
+    using Sensitivity = Number<double, struct SensitivityTag>;
+    using VelocitySensitivity = Number<double, struct VelocitySensitivityTag>;
+    using VelocityThreshold = Number<int, struct VelocityThresholdTag>;
+    using VelocityOffset = Number<double, struct VelocityOffsetTag>;
+
     class Slider
         : public GuiItemDecorator
         , private juce::Slider::Listener
@@ -55,11 +60,11 @@ namespace jive
         PassiveProperty<Length> height;
         PassiveProperty<float> minWidth;
         PassiveProperty<float> minHeight;
-        PassiveProperty<double> sensitivity;
+        PassiveProperty<Sensitivity> sensitivity;
         PassiveProperty<bool> isInVelocityMode;
-        PassiveProperty<double> velocitySensitivity;
-        PassiveProperty<int> velocityThreshold;
-        PassiveProperty<double> velocityOffset;
+        PassiveProperty<VelocitySensitivity> velocitySensitivity;
+        PassiveProperty<VelocityThreshold> velocityThreshold;
+        PassiveProperty<VelocityOffset> velocityOffset;
         PassiveProperty<bool> snapToMouse;
         PassiveProperty<bool> focusable;
 

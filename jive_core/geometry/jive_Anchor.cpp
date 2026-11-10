@@ -1,5 +1,7 @@
 #include "jive_Anchor.h"
 
+#include <jive_core/values/variant-converters/jive_VariantValidation.h>
+
 namespace jive
 {
     [[nodiscard]] static std::optional<Anchor> findNamedAnchor(const juce::String& name)
@@ -67,6 +69,14 @@ namespace juce
     jive::Anchor VariantConverter<jive::Anchor>::fromVar(const var& value)
     {
         return jive::Anchor::fromString(value.toString());
+    }
+
+    bool VariantConverter<jive::Anchor>::isValid(const var& v)
+    {
+        if (v.isVoid() || jive::findNamedAnchor(v.toString().trim()).has_value())
+            return true;
+
+        return jive::areAllNumbers(v, 1, 2, { "px", "%" });
     }
 } // namespace juce
 

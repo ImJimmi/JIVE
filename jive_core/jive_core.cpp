@@ -3,6 +3,7 @@
 #include "algorithms/jive_Bezier.cpp"
 #include "algorithms/jive_Find.cpp"
 #include "algorithms/jive_Interpolate.cpp"
+#include "errors/jive_ErrorHandling.cpp"
 #include "files/jive_SourceFile.cpp"
 #include "files/jive_SourceRoot.cpp"
 #include "geometry/jive_Anchor.cpp"

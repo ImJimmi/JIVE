@@ -23,6 +23,8 @@ namespace std
 
 namespace jive
 {
+    using Order = Number<int, struct OrderTag>;
+
     class ContainerItem
         : public GuiItemDecorator
         , private BoxModel::Listener

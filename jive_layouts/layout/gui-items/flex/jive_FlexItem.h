@@ -4,6 +4,10 @@
 
 namespace jive
 {
+    using FlexGrow = Number<float, struct FlexGrowTag>;
+    using FlexShrink = Number<float, struct FlexShrinkTag>;
+    using FlexBasis = Number<float, struct FlexBasisTag>;
+
     class FlexItem
         : public ContainerItem::Child
         , private juce::ValueTree::Listener
@@ -20,10 +24,10 @@ namespace jive
     private:
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        PassiveProperty<int> order;
-        PassiveProperty<float> flexGrow;
-        PassiveProperty<float> flexShrink;
-        PassiveProperty<float> flexBasis;
+        PassiveProperty<Order> order;
+        PassiveProperty<FlexGrow> flexGrow;
+        PassiveProperty<FlexShrink> flexShrink;
+        PassiveProperty<FlexBasis> flexBasis;
         PassiveProperty<juce::FlexItem::AlignSelf> alignSelf;
         const PassiveProperty<juce::FlexBox::Direction> parentDirection;
         const PassiveProperty<juce::FlexBox::AlignItems> parentAlignItems;

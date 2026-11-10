@@ -12,11 +12,14 @@ target_sources(jive_core
                       algorithms/jive_Bezier.h
                       algorithms/jive_Find.cpp
                       algorithms/jive_Find.h
+                      algorithms/jive_ForEach.h
                       algorithms/jive_Interpolate.cpp
                       algorithms/jive_Interpolate.h
                       algorithms/jive_TransferFunction.h
                       algorithms/jive_Visitor.h
                       compile-time-helpers/jive_JuceVersion.h
+                      errors/jive_ErrorHandling.cpp
+                      errors/jive_ErrorHandling.h
                       files/jive_FileObserver.h
                       files/jive_SourceFile.cpp
                       files/jive_SourceFile.h
@@ -55,6 +58,7 @@ target_sources(jive_core
                       values/jive_Colours.h
                       values/jive_Event.cpp
                       values/jive_Event.h
+                      values/jive_Number.h
                       values/jive_Object.cpp
                       values/jive_Object.h
                       values/jive_Property.cpp
@@ -71,6 +75,7 @@ target_sources(jive_core
                       values/variant-converters/jive_MiscVariantConverters.h
                       values/variant-converters/jive_VariantConvertion.cpp
                       values/variant-converters/jive_VariantConvertion.h
+                      values/variant-converters/jive_VariantValidation.h
 )
 
 target_include_directories(jive_core

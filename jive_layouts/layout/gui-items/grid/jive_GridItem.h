@@ -20,7 +20,7 @@ namespace jive
     private:
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        PassiveProperty<int> order;
+        PassiveProperty<Order> order;
         PassiveProperty<juce::GridItem::JustifySelf> justifySelf;
         PassiveProperty<juce::GridItem::AlignSelf> alignSelf;
         PassiveProperty<juce::GridItem::StartAndEndProperty> gridColumn;

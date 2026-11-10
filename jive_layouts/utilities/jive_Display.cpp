@@ -1,5 +1,7 @@
 #include "jive_Display.h"
 
+#include <jive_core/values/variant-converters/jive_VariantValidation.h>
+
 namespace juce
 {
     const Array<var> VariantConverter<jive::Display>::options = {
@@ -23,5 +25,15 @@ namespace juce
 
         jassert(options.size() >= index);
         return options[index];
+    }
+
+    bool VariantConverter<jive::Display>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<jive::Display>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
     }
 } // namespace juce

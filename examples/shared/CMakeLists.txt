@@ -2,9 +2,12 @@ juce_add_binary_data(examples-shared-resources
 NAMESPACE
     "shared_resources"
 SOURCES
-    ../resources/rubik.ttf
-    ../resources/rubik-mono-one.ttf
-    ../resources/source-code-pro.ttf
+    ../resources/Rubik-Regular.ttf
+    ../resources/Rubik-Bold.ttf
+    ../resources/Rubik-Italic.ttf
+    ../resources/Rubik-BoldItalic.ttf
+    ../resources/RubikMonoOne-Regular.ttf
+    ../resources/SourceCodePro-Regular.ttf
 )
 
 add_library(examples-shared-lib INTERFACE)

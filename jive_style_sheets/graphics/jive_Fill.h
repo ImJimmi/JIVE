@@ -270,5 +270,7 @@ namespace juce
     public:
         static jive::Fill fromVar(const var& v);
         static var toVar(const jive::Fill& fill);
+        static bool isValid(const var& v);
+        static String getSyntax();
     };
 } // namespace juce

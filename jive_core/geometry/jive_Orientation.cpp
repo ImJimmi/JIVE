@@ -1,5 +1,7 @@
 #include "jive_Orientation.h"
 
+#include <jive_core/values/variant-converters/jive_VariantValidation.h>
+
 namespace juce
 {
     const Array<var> VariantConverter<jive::Orientation>::options = {
@@ -19,5 +21,15 @@ namespace juce
 
         jassert(options.size() >= index);
         return options[index];
+    }
+
+    bool VariantConverter<jive::Orientation>::isValid(const var& v)
+    {
+        return v.toString().trim().equalsIgnoreCase("auto") || jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<jive::Orientation>::getSyntax()
+    {
+        return jive::oneOfSyntax(options, { "auto" });
     }
 } // namespace juce

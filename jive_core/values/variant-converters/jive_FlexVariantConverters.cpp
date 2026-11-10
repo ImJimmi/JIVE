@@ -1,4 +1,5 @@
 #include "jive_FlexVariantConverters.h"
+#include "jive_VariantValidation.h"
 
 namespace juce
 {
@@ -178,5 +179,65 @@ namespace juce
 
         jassertfalse;
         return "auto";
+    }
+
+    bool VariantConverter<FlexBox::AlignContent>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexBox::AlignContent>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<FlexBox::AlignItems>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexBox::AlignItems>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<FlexBox::Direction>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexBox::Direction>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<FlexBox::JustifyContent>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexBox::JustifyContent>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<FlexBox::Wrap>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexBox::Wrap>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<FlexItem::AlignSelf>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<FlexItem::AlignSelf>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
     }
 } // namespace juce

@@ -37,5 +37,6 @@ namespace juce
     {
         static var toVar(const jive::Anchor& anchor);
         static jive::Anchor fromVar(const var& value);
+        static bool isValid(const var& v);
     };
 } // namespace juce

@@ -4,6 +4,8 @@
 
 namespace jive
 {
+    using TitleBarHeight = Number<float, struct TitleBarHeightTag>;
+
     class Window
         : public TopLevelGuiItem
         , public DocumentWindow
@@ -28,16 +30,16 @@ namespace jive
         PassiveProperty<bool> isNative;
         PassiveProperty<bool> canBeResized;
         PassiveProperty<bool> useCornerResizer;
-        PassiveProperty<float> minWidth;
-        PassiveProperty<float> minHeight;
-        PassiveProperty<float> maxWidth;
-        PassiveProperty<float> maxHeight;
+        PassiveProperty<Length> minWidth;
+        PassiveProperty<Length> minHeight;
+        PassiveProperty<Length> maxWidth;
+        PassiveProperty<Length> maxHeight;
         PassiveProperty<bool> draggable;
         PassiveProperty<bool> fullScreen;
         PassiveProperty<bool> minimised;
         PassiveProperty<bool> visibility;
         PassiveProperty<juce::String> name;
-        PassiveProperty<float> windowTitleBarHeight;
+        PassiveProperty<TitleBarHeight> windowTitleBarHeight;
         PassiveProperty<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;

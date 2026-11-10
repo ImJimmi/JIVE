@@ -73,9 +73,9 @@ namespace jive
         updateStyle();
 
         sensitivity.onValueChange = [this]() {
-            getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity));
+            getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity.get()));
         };
-        getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity));
+        getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity.get()));
 
         isInVelocityMode.onValueChange = [this]() {
             getSlider().setVelocityBasedMode(isInVelocityMode);
@@ -83,15 +83,15 @@ namespace jive
         getSlider().setVelocityBasedMode(isInVelocityMode);
 
         velocitySensitivity.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
         velocityThreshold.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
         velocityOffset.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
-        getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+        getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
 
         snapToMouse.onValueChange = [this]() {
             getSlider().setSliderSnapsToMousePosition(snapToMouse);

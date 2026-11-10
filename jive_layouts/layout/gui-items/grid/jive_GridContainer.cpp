@@ -4,6 +4,7 @@
 
 #include <jive_layouts/layout/gui-items/content/jive_Text.h>
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {

@@ -9,6 +9,8 @@ namespace juce
     {
         static GridItem::JustifySelf fromVar(const var& v);
         static var toVar(GridItem::JustifySelf justification);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, GridItem::JustifySelf> options;
@@ -19,6 +21,8 @@ namespace juce
     {
         static GridItem::AlignSelf fromVar(const var& v);
         static var toVar(GridItem::AlignSelf alignment);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, GridItem::AlignSelf> options;
@@ -29,6 +33,7 @@ namespace juce
     {
         static GridItem::Span fromVar(const var& v);
         static var toVar(GridItem::Span span);
+        static bool isValid(const var& v);
     };
 
     template <>
@@ -36,6 +41,7 @@ namespace juce
     {
         static GridItem::Property fromVar(const var& v);
         static var toVar(GridItem::Property startAndEnd);
+        static bool isValid(const var& v);
     };
 
     template <>
@@ -43,6 +49,7 @@ namespace juce
     {
         static GridItem::StartAndEndProperty fromVar(const var& v);
         static var toVar(GridItem::StartAndEndProperty startAndEnd);
+        static bool isValid(const var& v);
     };
 
     template <>
@@ -50,6 +57,8 @@ namespace juce
     {
         static Grid::JustifyItems fromVar(const var& v);
         static var toVar(Grid::JustifyItems justification);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, Grid::JustifyItems> options;
@@ -60,6 +69,8 @@ namespace juce
     {
         static Grid::AlignItems fromVar(const var& v);
         static var toVar(Grid::AlignItems alignment);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, Grid::AlignItems> options;
@@ -70,6 +81,8 @@ namespace juce
     {
         static Grid::JustifyContent fromVar(const var& v);
         static var toVar(Grid::JustifyContent alignment);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, Grid::JustifyContent> options;
@@ -80,6 +93,8 @@ namespace juce
     {
         static Grid::AlignContent fromVar(const var& v);
         static var toVar(Grid::AlignContent alignment);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, Grid::AlignContent> options;
@@ -90,6 +105,8 @@ namespace juce
     {
         static Grid::AutoFlow fromVar(const var& v);
         static var toVar(Grid::AutoFlow flow);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const std::unordered_map<String, Grid::AutoFlow> options;
@@ -100,6 +117,7 @@ namespace juce
     {
         static Grid::TrackInfo fromVar(const var& v);
         static var toVar(const Grid::TrackInfo& info);
+        static bool isValid(const var& v);
     };
 
     template <>
@@ -107,5 +125,6 @@ namespace juce
     {
         static Grid::Px fromVar(const var& v);
         static var toVar(const Grid::Px& px);
+        static bool isValid(const var& v);
     };
 } // namespace juce

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jive_core/algorithms/jive_Interpolate.h>
+#include <jive_core/values/variant-converters/jive_VariantValidation.h>
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -108,6 +109,19 @@ namespace juce
                 juce::String{ radii.bottomLeft },
             }
                 .joinIntoString(" ");
+        }
+
+        static bool isValid(const var& value)
+        {
+            return value.isVoid() || jive::areAllNumbers(value, 1, 4, { "px" });
+        }
+
+        static String getSyntax()
+        {
+            return "1-4 numbers (\"<all>\", "
+                   "\"<top-left-and-bottom-right> <top-right-and-bottom-left>\", "
+                   "\"<top-left> <top-right-and-bottom-left> <bottom-right>\", "
+                   "\"<top-left> <top-right> <bottom-right> <bottom-left>\")";
         }
 
         static jive::BorderRadii<Arithmetic> fromVar(const var& value)

@@ -1,4 +1,5 @@
 #include "jive_AttributedStringVariantConverters.h"
+#include "jive_VariantValidation.h"
 
 namespace juce
 {
@@ -52,5 +53,25 @@ namespace juce
 
         jassert(options.size() >= index);
         return options[index];
+    }
+
+    bool VariantConverter<AttributedString::ReadingDirection>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<AttributedString::ReadingDirection>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<AttributedString::WordWrap>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<AttributedString::WordWrap>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
     }
 } // namespace juce

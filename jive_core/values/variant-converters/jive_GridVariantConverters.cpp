@@ -1,4 +1,5 @@
 #include "jive_GridVariantConverters.h"
+#include "jive_VariantValidation.h"
 
 namespace juce
 {
@@ -334,5 +335,123 @@ namespace juce
     var VariantConverter<Grid::Px>::toVar(const Grid::Px& px)
     {
         return String{ static_cast<double>(px.pixels) } + "px";
+    }
+
+    bool VariantConverter<GridItem::JustifySelf>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<GridItem::JustifySelf>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<GridItem::AlignSelf>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<GridItem::AlignSelf>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<Grid::JustifyItems>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<Grid::JustifyItems>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<Grid::AlignItems>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<Grid::AlignItems>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<Grid::JustifyContent>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<Grid::JustifyContent>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<Grid::AlignContent>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<Grid::AlignContent>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<Grid::AutoFlow>::isValid(const var& v)
+    {
+        return jive::isOneOf(v, options);
+    }
+
+    String VariantConverter<Grid::AutoFlow>::getSyntax()
+    {
+        return jive::oneOfSyntax(options);
+    }
+
+    bool VariantConverter<GridItem::Span>::isValid(const var& v)
+    {
+        const auto tokens = StringArray::fromTokens(v.toString(), false);
+
+        return tokens.size() == 2
+            && tokens[0] == "span"
+            && tokens[1].containsOnly("0123456789")
+            && tokens[1].isNotEmpty();
+    }
+
+    bool VariantConverter<GridItem::Property>::isValid(const var& v)
+    {
+        if (v.isVoid() || v.isInt())
+            return true;
+
+        const auto value = v.toString().trim();
+
+        if (value.startsWith("span"))
+            return VariantConverter<GridItem::Span>::isValid(value);
+
+        return value.isNotEmpty() && !value.containsAnyOf(" /");
+    }
+
+    bool VariantConverter<GridItem::StartAndEndProperty>::isValid(const var& v)
+    {
+        if (v.isVoid())
+            return true;
+
+        const auto tokens = StringArray::fromTokens(v.toString(), "/", "");
+
+        return tokens.size() == 2
+            && VariantConverter<GridItem::Property>::isValid(tokens[0].trim())
+            && VariantConverter<GridItem::Property>::isValid(tokens[1].trim());
+    }
+
+    bool VariantConverter<Grid::TrackInfo>::isValid(const var& v)
+    {
+        if (v.isVoid() || v.toString().trim() == "auto")
+            return true;
+
+        return jive::isNumber(v, { "fr", "px" });
+    }
+
+    bool VariantConverter<Grid::Px>::isValid(const var& v)
+    {
+        return v.isVoid() || jive::isNumber(v, { "px" });
     }
 } // namespace juce

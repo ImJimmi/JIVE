@@ -6,6 +6,7 @@
 #include "variant-converters/jive_VariantConvertion.h"
 
 #include <jive_core/algorithms/jive_Visitor.h>
+#include <jive_core/errors/jive_ErrorHandling.h>
 #include <jive_core/kinetics/jive_Transitions.h>
 
 namespace jive
@@ -24,7 +25,8 @@ namespace jive
               Inheritance inheritance = Inheritance::doNotInherit,
               Accumulation accumulation = Accumulation::doNotAccumulate,
               bool autoParseStrings = isReferenceCountedObjectPointer<ValueType>::value,
-              Responsiveness responsiveness = Responsiveness::respondToChanges>
+              Responsiveness responsiveness = Responsiveness::respondToChanges,
+              bool replaceInvalidValues = true>
     class Property final
         : protected juce::ValueTree::Listener
         , protected Object::Listener
@@ -124,15 +126,6 @@ namespace jive
             set(source, toVar(newValue));
         }
 
-        void set(std::function<ValueType()> function)
-        {
-            set(source, juce::var{
-                            [function](const auto&) {
-                                return toVar(function());
-                            },
-                        });
-        }
-
         void setAuto()
         {
             set(source, "auto");
@@ -157,28 +150,33 @@ namespace jive
             return !getVar(source, id).isVoid();
         }
 
+        [[nodiscard]] auto hasValidValue() const
+        {
+            if constexpr (hasVariantValidator<ValueType>())
+            {
+                return juce::VariantConverter<ValueType>::isValid(getVar(source, id));
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        [[nodiscard]] static std::optional<ValueType> getDefaultValue()
+        {
+            if constexpr (hasVariantDefault<ValueType>())
+            {
+                return juce::VariantConverter<ValueType>::defaultValue();
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }
+
         [[nodiscard]] auto isAuto() const
         {
             return (!exists()) || toString().trim().equalsIgnoreCase("auto");
-        }
-
-        [[nodiscard]] auto isFunctional() const
-        {
-            if (!exists())
-                return false;
-
-            return std::visit(Visitor{
-                                  [this](const juce::ValueTree& sourceTree) {
-                                      return sourceTree[id].isMethod();
-                                  },
-                                  [this](const Object::ReferenceCountedPointer& sourceObject) {
-                                      if (sourceObject != nullptr)
-                                          return sourceObject->getProperty(id).isMethod();
-
-                                      return false;
-                                  },
-                              },
-                              source);
         }
 
         [[nodiscard]] auto toString() const
@@ -252,18 +250,6 @@ namespace jive
             return *this;
         }
 
-        auto& operator=(std::function<ValueType()> function)
-        {
-            set(function);
-            return *this;
-        }
-
-        auto& operator=(std::function<ValueType(std::vector<juce::var>)> function)
-        {
-            set(function);
-            return *this;
-        }
-
         /** For properties that ignore changes, lets whoever is listening to
             the source on their behalf pass on changes so that transitions are
             kept up to date and onValueChange is still called.
@@ -286,6 +272,9 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyChanged,
                                       const juce::Identifier& property) override
         {
+            if (ignoreListenerCallbacks)
+                return;
+
             if (property != id)
             {
                 if (property == ids::transition() && isSource(treeWhosePropertyChanged))
@@ -293,6 +282,7 @@ namespace jive
 
                 return;
             }
+
             if (!respondToPropertyChanges(treeWhosePropertyChanged))
                 return;
 
@@ -305,6 +295,9 @@ namespace jive
         void propertyChanged(Object&,
                              const juce::Identifier& property) override
         {
+            if (ignoreListenerCallbacks)
+                return;
+
             if constexpr (std::is_same<ValueType, Object::ReferenceCountedPointer>())
             {
                 if (std::holds_alternative<juce::ValueTree>(source))
@@ -421,15 +414,9 @@ namespace jive
             }
             else
             {
-                auto var = root.hasProperty(id) ? root[id] : getVar(getFirstDescendantWithProperty(root), id);
-
-                if (var.isMethod())
-                {
-                    juce::var::NativeFunctionArgs args{ var, nullptr, 0 };
-                    var = var.getNativeFunction()(args);
-                }
-
-                return fromVar<ValueType>(var);
+                return fromVar<ValueType>(root.hasProperty(id)
+                                              ? root[id]
+                                              : getVar(getFirstDescendantWithProperty(root), id));
             }
         }
 
@@ -449,12 +436,6 @@ namespace jive
             }
             else
             {
-                if (root->hasMethod(id))
-                {
-                    juce::var::NativeFunctionArgs args{ juce::var{}, nullptr, 0 };
-                    return fromVar<ValueType>(root->invokeMethod(id, args));
-                }
-
                 return fromVar<ValueType>(root->getProperty(id));
             }
         }
@@ -634,8 +615,19 @@ namespace jive
         Source source;
 
     private:
+        void transitionProgressed(const juce::String& propertyName,
+                                  const Transition&) final
+        {
+            jassertquiet(propertyName == transitionSourceID.toString());
+
+            if (onTransitionProgressed != nullptr)
+                onTransitionProgressed();
+        }
+
         void initialise()
         {
+            checkValue();
+
             listenerTarget = findListenerTarget(source);
 
             if (!isValid(listenerTarget))
@@ -661,17 +653,37 @@ namespace jive
                 updateTransition();
         }
 
-        void transitionProgressed(const juce::String& propertyName,
-                                  const Transition&) final
+        void checkValue()
         {
-            jassertquiet(propertyName == transitionSourceID.toString());
+            if constexpr (replaceInvalidValues)
+            {
+                if (hasValidValue())
+                    return;
 
-            if (onTransitionProgressed != nullptr)
-                onTransitionProgressed();
+                std::visit([this](auto src) {
+                    if constexpr (hasVariantSyntax<ValueType>())
+                    {
+                        logValueError(src, id, "Expected " + juce::VariantConverter<ValueType>::getSyntax());
+                    }
+                    else
+                    {
+                        logValueError(src, id);
+                    }
+                },
+                           source);
+
+                juce::ScopedValueSetter svs{ ignoreListenerCallbacks, true };
+
+                if (auto defaultValue = getDefaultValue())
+                    set(*defaultValue);
+                else
+                    clear();
+            }
         }
 
         void valueChanged()
         {
+            checkValue();
             observeHeldObject();
 
             if constexpr (!std::is_same<ValueType, Transitions::ReferenceCountedPointer>())
@@ -785,6 +797,7 @@ namespace jive
         Transition* currentTransition = nullptr;
         Transition* observedTransition = nullptr;
         Object::ReferenceCountedPointer observedObject;
+        bool ignoreListenerCallbacks = false;
     };
 
     template <typename ValueType,
@@ -793,7 +806,8 @@ namespace jive
                                      Inheritance::doNotInherit,
                                      accumulation,
                                      isReferenceCountedObjectPointer<ValueType>::value,
-                                     Responsiveness::ignoreChanges>;
+                                     Responsiveness::ignoreChanges,
+                                     true>;
 
     // Passes a change on to the given passive properties, stopping at the one
     // it was for as its callback could have destroyed the properties' owner.

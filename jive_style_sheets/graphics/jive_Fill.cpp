@@ -761,6 +761,22 @@ namespace juce
 
         return jive::toVar(fill.toJuceFillType().colour);
     }
+
+    bool VariantConverter<jive::Fill>::isValid(const var& v)
+    {
+        if (v.isString() && jive::Gradient::fromString(v.toString()).has_value())
+            return true;
+
+        if (v.hasProperty(jive::ids::gradient()))
+            return true;
+
+        return VariantConverter<Colour>::isValid(v);
+    }
+
+    String VariantConverter<jive::Fill>::getSyntax()
+    {
+        return "colour (" + VariantConverter<Colour>::getSyntax() + ") or gradient (" + VariantConverter<jive::Gradient>::getSyntax() + ")";
+    }
 } // namespace juce
 
 #if JIVE_UNIT_TESTS

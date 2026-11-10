@@ -83,5 +83,6 @@ namespace juce
     {
         static var toVar(const jive::Length& length);
         static jive::Length fromVar(const var& value);
+        static bool isValid(const var& v);
     };
 } // namespace juce

@@ -76,7 +76,7 @@ namespace jive_examples
 
     private:
         // Declared before anything that gets interpreted.
-        const std::array<juce::Typeface::Ptr, 3> fonts = registerFonts();
+        const std::array<juce::Typeface::Ptr, 6> fonts = registerFonts();
 
     protected:
         jive::Interpreter interpreter;

@@ -4,6 +4,8 @@
 
 namespace jive
 {
+    using RadioGroup = Number<int, struct RadioGroupTag>;
+
     class Button
         : public GuiItemDecorator
         , private juce::Button::Listener
@@ -52,7 +54,7 @@ namespace jive
         PassiveProperty<bool> toggleable;
         PassiveProperty<bool> toggled;
         PassiveProperty<bool> toggleOnClick;
-        PassiveProperty<int> radioGroup;
+        PassiveProperty<RadioGroup> radioGroup;
         PassiveProperty<TriggerEvent> triggerEvent;
         PassiveProperty<juce::String> tooltip;
         PassiveProperty<juce::String, Accumulation::accumulate> text;
@@ -84,6 +86,9 @@ namespace juce
     public:
         static jive::Button::TriggerEvent fromVar(const var& v);
         static var toVar(const jive::Button::TriggerEvent& event);
+        static bool isValid(const var& v);
+        static String getSyntax();
+        static jive::Button::TriggerEvent defaultValue();
 
     private:
         static const Array<var> options;

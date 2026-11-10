@@ -334,6 +334,8 @@ namespace juce
     public:
         static jive::Theme fromVar(const var& v);
         static var toVar(const jive::Theme& theme);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const Array<var> options;

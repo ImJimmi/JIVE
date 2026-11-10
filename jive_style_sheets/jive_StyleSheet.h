@@ -49,7 +49,7 @@ namespace jive
 
         StyleProperty style;
         PassiveProperty<juce::BorderSize<float>> border;
-        PassiveProperty<float> lineSpacing;
+        PassiveProperty<LineSpacing> lineSpacing;
         std::unordered_map<juce::String, juce::Uuid> uuids;
         std::unordered_map<juce::String, StyleProperty> observedObjects;
 
