@@ -533,14 +533,25 @@ private:
         expect(text.getAttributedString().getAttribute(0).colour == jive::detail::getV4Colour(jive::detail::V4Colour::defaultText));
     }
 
-    [[nodiscard]] static auto getFullStopX(const juce::TextLayout& layout)
+    [[nodiscard]] static auto getFullStopX(const juce::TextLayout& layout, const juce::Font& font)
     {
-        const auto& runs = layout.getLine(0).runs;
-        const auto* last = *std::max_element(runs.begin(), runs.end(), [](const auto* a, const auto* b) {
-            return a->stringRange.getEnd() < b->stringRange.getEnd();
-        });
+        juce::AttributedString fullStop;
+        fullStop.append(".", font);
 
-        return last->glyphs.getReference(last->glyphs.size() - 1).anchor.x;
+        juce::TextLayout fullStopLayout;
+        fullStopLayout.createLayout(fullStop, 1000.0f);
+        const auto fullStopGlyph = fullStopLayout.getLine(0).runs.getFirst()->glyphs.getReference(0).glyphCode;
+
+        for (const auto* run : layout.getLine(0).runs)
+        {
+            for (const auto& glyph : run->glyphs)
+            {
+                if (glyph.glyphCode == fullStopGlyph)
+                    return glyph.anchor.x;
+            }
+        }
+
+        return std::numeric_limits<float>::quiet_NaN();
     }
 
     void testReadingDirection()
@@ -562,7 +573,7 @@ private:
             expect(text.getAttributedString().getReadingDirection() == direction);
 
             const auto& layout = text.getTextLayout(1000.0f);
-            const auto fullStopX = getFullStopX(layout);
+            const auto fullStopX = getFullStopX(layout, text.getAttributedString().getAttribute(0).font);
             const auto width = layout.getLine(0).getLineBoundsX();
 
             if (direction == juce::AttributedString::ReadingDirection::leftToRight)

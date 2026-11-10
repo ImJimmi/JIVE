@@ -52,9 +52,11 @@ namespace jive
         auto next = [i = 0](const juce::Array<juce::var>& values) mutable {
             return values.getReference(i++);
         };
-        return std::make_tuple(fromVar<FirstValue>(next(*value.getArray())),
-                               fromVar<SecondValue>(next(*value.getArray())),
-                               fromVar<OtherValues>(next(*value.getArray()))...);
+        return std::tuple<FirstValue, SecondValue, OtherValues...>{
+            fromVar<FirstValue>(next(*value.getArray())),
+            fromVar<SecondValue>(next(*value.getArray())),
+            fromVar<OtherValues>(next(*value.getArray()))...,
+        };
     }
 
 } // namespace jive

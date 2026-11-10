@@ -672,7 +672,7 @@ private:
             expectEquals(settledColourAt(button, 50, 12),
                          jive::parseColour(jive::themes::steel::raisinBlack));
             expect(logger.messages.joinIntoString("\n")
-                       .contains("Invalid value 'not-a-colour' for property 'background'. Expected a colour"));
+                       .contains("Invalid value 'not-a-colour' for property 'background'. Expected colour"));
         }
 
         beginTest("individual properties / invalid number");
