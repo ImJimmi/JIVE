@@ -1832,7 +1832,10 @@ private:
             {
                 const auto styles = lookAndFeel.findMostApplicableStyles(*component);
                 expect(!styles.shadow.hasValue());
-                expect(styles.borderWidth.hasValue() && styles.borderWidth.get().isEmpty());
+                expect(styles.borderWidth.hasValue());
+
+                const auto border = styles.borderWidth.get();
+                expect(juce::approximatelyEqual(border.getTop() + border.getLeft() + border.getBottom() + border.getRight(), 0.0f));
             }
         }
     }

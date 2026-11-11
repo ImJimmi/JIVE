@@ -234,15 +234,24 @@ namespace jive
     // A layout created at some maximum width breaks its lines in the same
     // places at any narrower width that its longest line still fits in, so it
     // can be reused at any of those widths instead of shaping the text again.
-    // Text that isn't wrapped is laid out the same at every width.
+    // Text that isn't wrapped is laid out the same at every width, except on
+    // Windows with JUCE 7, so those layouts are only reused at the same width.
     [[nodiscard]] static auto canBeReusedAt(const juce::TextLayout& layout,
                                             float createdAtMaxWidth,
                                             float maxWidth,
                                             juce::AttributedString::WordWrap wordWrap)
     {
-        return wordWrap == juce::AttributedString::WordWrap::none
-            || juce::exactlyEqual(maxWidth, createdAtMaxWidth)
-            || (layout.getWidth() <= maxWidth && maxWidth <= createdAtMaxWidth);
+        if (juce::exactlyEqual(maxWidth, createdAtMaxWidth))
+            return true;
+
+        if (wordWrap == juce::AttributedString::WordWrap::none)
+#if JUCE_MAJOR_VERSION < 8 && JUCE_WINDOWS
+            return false;
+#else
+            return true;
+#endif
+
+        return layout.getWidth() <= maxWidth && maxWidth <= createdAtMaxWidth;
     }
 
     // JUCE only uses the reading direction for text without any strong
@@ -578,8 +587,10 @@ private:
 
             if (direction == juce::AttributedString::ReadingDirection::leftToRight)
                 expectGreaterThan(fullStopX, (width.getStart() + width.getEnd()) / 2.0f);
+    #if JUCE_MAJOR_VERSION >= 8
             else
                 expectLessThan(fullStopX, (width.getStart() + width.getEnd()) / 2.0f);
+    #endif
         }
     }
 };

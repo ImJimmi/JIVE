@@ -18,8 +18,10 @@ defaults:
 jobs:
   run-tests:
     strategy:
+      fail-fast: false
       matrix:
         platform: [macos-latest, windows-latest]
+        juce: [7.0.12, 8.0.15, master, develop]
         include:
           - platform: macos-latest
             platform-name: macOS
@@ -31,13 +33,32 @@ jobs:
             platform-shell: cmd
             package-manager: choco
 
-    name: Test ${{ matrix.platform-name }}
+          - juce: master
+            upload-coverage: true
+
+          - juce: 7.0.12
+            platform: macos-latest
+            macos-deployment-target: "14.0"
+            juce-cmake-options: >-
+              -D CMAKE_OSX_DEPLOYMENT_TARGET=14.0
+              -D "CMAKE_CXX_FLAGS=-Wno-error=unused-but-set-variable -Wno-error=switch-enum -Wno-error=main"
+
+    name: Test ${{ matrix.platform-name }} (JUCE ${{ matrix.juce }})
     runs-on: ${{ matrix.platform }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos-deployment-target }}
 
     steps:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
+
+      - name: Checkout JUCE
+        uses: actions/checkout@v6
+        with:
+          repository: juce-framework/JUCE
+          ref: ${{ matrix.juce }}
+          path: juce
 
       - name: Install Ninja
         run: ${{ matrix.package-manager }} install ninja
@@ -52,12 +73,12 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CPM_CACHE_DIR }}
-          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
+          key: cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
           restore-keys: |
-            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}
-            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
-            cpm-${{ runner.os }}-main
-            cpm-${{ runner.os }}
+            cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}
+            cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}
+            cpm-${{ runner.os }}-${{ matrix.juce }}-main
+            cpm-${{ runner.os }}-${{ matrix.juce }}
 
       - name: CMake Generate
         run: |
@@ -71,13 +92,15 @@ jobs:
             -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
             -D CMAKE_POLICY_DEFAULT_CMP0141=NEW \
             -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \
-            ${{ matrix.additional-cmake-options }}
+            -D CPM_JUCE_SOURCE="${GITHUB_WORKSPACE//\\//}/juce" \
+            ${{ matrix.additional-cmake-options }} \
+            ${{ matrix.juce-cmake-options }}
 
       - name: Cache CPM dependencies
         uses: actions/cache/save@v5
         with:
           path: ${{ env.CPM_CACHE_DIR }}
-          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
+          key: cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
 
       - name: CMake Build
         run: |
@@ -96,12 +119,12 @@ jobs:
             -O ctest.log
 
       - name: Install lcov
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && matrix.upload-coverage
         working-directory: ${{github.workspace}}/build
         run: brew install lcov
 
       - name: Generate Coverage Report
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && matrix.upload-coverage
         working-directory: ${{github.workspace}}/build
         run: |
           lcov \
@@ -115,7 +138,7 @@ jobs:
             --ignore-errors format
 
       - name: Upload Coverage Report
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && matrix.upload-coverage
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
@@ -127,7 +150,7 @@ jobs:
       - name: Stage Artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: "${{ matrix.platform-name }} #${{ github.event.pull_request.number }}"
+          name: "${{ matrix.platform-name }} JUCE ${{ matrix.juce }} #${{ github.event.pull_request.number }}"
           path: ${{ env.CMAKE_BUILD_DIRECTORY }}/ctest.log
           if-no-files-found: ignore
           retention-days: 7
