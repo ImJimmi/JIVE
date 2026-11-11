@@ -62,10 +62,21 @@ namespace jive
                        juce::StringRef message,
                        const SourceFile& sourceFile)
     {
+        logValueError(object != nullptr ? object->getProperty(id) : juce::var{},
+                      id,
+                      message,
+                      sourceFile);
+    }
+
+    void logValueError(const juce::var& value,
+                       juce::Identifier id,
+                       juce::StringRef message,
+                       const SourceFile& sourceFile)
+    {
         juce::String buffer;
 
-        if (object != nullptr && object->hasProperty(id))
-            buffer << "Invalid value '" << object->getProperty(id).toString() << "' ";
+        if (!value.isVoid())
+            buffer << "Invalid value '" << value.toString() << "' ";
         else
             buffer << "Missing value ";
 

@@ -547,7 +547,8 @@ namespace juce
             if (Colours::findColourForName(text, notFound) != notFound)
                 return true;
 
-            return text.isNotEmpty() && text.containsOnly(hexDigits);
+            const auto hex = text.startsWithIgnoreCase("0x") ? text.substring(2) : text;
+            return hex.isNotEmpty() && hex.containsOnly(hexDigits);
         }
 
         static String getSyntax()

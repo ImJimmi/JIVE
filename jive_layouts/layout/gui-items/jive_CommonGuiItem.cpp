@@ -143,6 +143,14 @@ namespace jive
         for (const auto& updater : propertyUpdaters)
             updater.second();
 
+        if (isTopLevel())
+        {
+            if (boxModel.hasAutoWidth())
+                logValueError(state, ids::width(), "Top-level items must have an explicit width");
+            if (boxModel.hasAutoHeight())
+                logValueError(state, ids::height(), "Top-level items must have an explicit height");
+        }
+
         getComponent()->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
                                 juce::roundToInt(boxModel.getOuterBounds().getHeight()));
 
@@ -440,6 +448,30 @@ private:
         const auto& boxModel = jive::boxModel(*item);
         expectEquals(boxModel.getWidth(), 400.f);
         expectEquals(boxModel.getHeight(), 300.f);
+
+        beginTest("top-level items without an explicit size are reported");
+        {
+            jive::CapturingLogger logger;
+            auto unsizedItem = interpreter.interpret(juce::ValueTree{ "Component", { { "height", "auto" } } });
+
+            expect(logger.getLog().contains("for property 'width': Component. Top-level items must have an explicit width"));
+            expect(logger.getLog().contains("for property 'height': Component. Top-level items must have an explicit height"));
+        }
+        {
+            jive::CapturingLogger logger;
+            auto sizedItem = interpreter.interpret(juce::ValueTree{
+                "Component",
+                {
+                    { "width", 10 },
+                    { "height", 10 },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            });
+
+            expect(logger.getLog().isEmpty());
+        }
     }
 
     void testName()

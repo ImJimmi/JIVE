@@ -1,10 +1,13 @@
 #include "jive_VariantConvertion.h"
 
 #if JIVE_UNIT_TESTS
+    #include <jive_core/geometry/jive_Anchor.h>
     #include <jive_core/logging/jive_StringStreams.h>
     #include <jive_core/values/jive_Number.h>
     #include <jive_core/values/jive_Property.h>
     #include <juce_gui_basics/juce_gui_basics.h>
+
+    #include <clocale>
 
 class VarConversionUnitTest : public juce::UnitTest
 {
@@ -88,9 +91,18 @@ private:
         expect(jive::isValidVar<juce::BorderSize<float>>("1 2px 3"));
         expect(!jive::isValidVar<juce::BorderSize<float>>("1 2 3 4 5"));
         expect(!jive::isValidVar<juce::BorderSize<float>>("wide"));
+        expect(!jive::isValidVar<juce::BorderSize<float>>("1,2"));
+        expect(jive::isValidVar<jive::Anchor>("10px 20px"));
+        expect(!jive::isValidVar<jive::Anchor>("10px,20px"));
+        expect(!jive::isValidVar<jive::Anchor>("10px\t20px"));
+        expect(!jive::isValidVar<juce::Rectangle<float>>("1\t2\t3\t4"));
         expect(jive::isValidVar<juce::Colour>("#ABC"));
         expect(jive::isValidVar<juce::Colour>("hotpink"));
         expect(!jive::isValidVar<juce::Colour>("#ABCDE"));
+        expect(jive::isValidVar<juce::Colour>("0xff6495ed"));
+        expect(jive::isValidVar<juce::Colour>("0XFF6495ED"));
+        expect(!jive::isValidVar<juce::Colour>("0x"));
+        expectEquals(jive::fromVar<juce::Colour>("0xff6495ed"), juce::Colour{ 0xff6495ed });
         expect(jive::isValidVar<juce::Array<juce::Grid::TrackInfo>>("1fr auto 20px"));
         expect(!jive::isValidVar<juce::Array<juce::Grid::TrackInfo>>("1fr big"));
         expect(jive::isValidVar<juce::GridItem::StartAndEndProperty>("1 / span 2"));
@@ -105,8 +117,26 @@ private:
         expect(jive::isValidVar<Number>("-12.5"));
         expect(jive::isValidVar<Number>({}));
         expect(!jive::isValidVar<Number>("big"));
-        expect(!jive::isValidVar<Number>("12px"));
+        expect(jive::isValidVar<Number>("12px"));
+        expect(!jive::isValidVar<Number>("12em"));
+        expect(!jive::isValidVar<Number>("-"));
+        expect(!jive::isValidVar<Number>("."));
+        expect(!jive::isValidVar<Number>("1,5"));
         expectEquals(jive::fromVar<Number>("12.5").value, 12.5f);
+        expectEquals(jive::fromVar<Number>("12px").value, 12.0f);
+
+        beginTest("validation - numbers don't depend on the C locale");
+        {
+            const juce::String previousLocale{ std::setlocale(LC_NUMERIC, nullptr) };
+
+            if (std::setlocale(LC_NUMERIC, "de_DE.UTF-8") != nullptr)
+            {
+                expect(jive::isValidVar<Number>("1.5"));
+                expect(!jive::isValidVar<Number>("1,5"));
+            }
+
+            std::setlocale(LC_NUMERIC, previousLocale.toRawUTF8());
+        }
 
         beginTest("validation - invalid property values are removed");
         {

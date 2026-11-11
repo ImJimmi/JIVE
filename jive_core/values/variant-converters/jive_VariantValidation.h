@@ -40,6 +40,18 @@ namespace jive
     {
     };
 
+    template <typename Value, typename = void>
+    struct hasVariantParser : std::false_type
+    {
+    };
+
+    template <typename Value>
+    struct hasVariantParser<Value,
+                            std::void_t<decltype(juce::VariantConverter<Value>::tryFromVar(std::declval<const juce::var&>()))>>
+        : std::is_convertible<decltype(juce::VariantConverter<Value>::tryFromVar(std::declval<const juce::var&>())), std::optional<Value>>
+    {
+    };
+
     template <typename Value>
     [[nodiscard]] bool isValidVar(const juce::var& value)
     {
@@ -47,6 +59,19 @@ namespace jive
             return juce::VariantConverter<Value>::isValid(value);
         else
             return true;
+    }
+
+    // Converters whose validation is as costly as their conversion can provide
+    // tryFromVar() so that a value is only parsed once.
+    template <typename Value>
+    [[nodiscard]] std::optional<Value> tryFromVar(const juce::var& value)
+    {
+        if constexpr (hasVariantParser<Value>())
+            return juce::VariantConverter<Value>::tryFromVar(value);
+        else if (isValidVar<Value>(value))
+            return juce::VariantConverter<Value>::fromVar(value);
+        else
+            return std::nullopt;
     }
 
     [[nodiscard]] inline bool isNumber(const juce::String& text,
@@ -66,11 +91,13 @@ namespace jive
         if (number.isEmpty())
             return false;
 
-        const auto* start = number.toRawUTF8();
-        char* end = nullptr;
-        std::strtod(start, &end);
+        if (!number.containsAnyOf("0123456789"))
+            return false;
 
-        return end != start && *end == '\0';
+        auto end = number.getCharPointer();
+        juce::CharacterFunctions::readDoubleValue(end);
+
+        return end.isEmpty();
     }
 
     [[nodiscard]] inline bool isNumber(const juce::var& value,
@@ -90,7 +117,7 @@ namespace jive
         if (!value.isString())
             return minTokens <= 1 && isNumber(value, allowedSuffixes);
 
-        auto tokens = juce::StringArray::fromTokens(value.toString(), " ,", "");
+        auto tokens = juce::StringArray::fromTokens(value.toString(), " ", "");
         tokens.removeEmptyStrings();
 
         return juce::isPositiveAndNotGreaterThan(tokens.size() - minTokens, maxTokens - minTokens)

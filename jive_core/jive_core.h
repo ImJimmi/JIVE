@@ -27,7 +27,6 @@ END_JUCE_MODULE_DECLARATION */
 
 #include "algorithms/jive_Bezier.h"
 #include "algorithms/jive_Find.h"
-#include "algorithms/jive_ForEach.h"
 #include "algorithms/jive_Interpolate.h"
 #include "algorithms/jive_TransferFunction.h"
 #include "algorithms/jive_Visitor.h"
@@ -48,6 +47,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "logging/jive_ConsoleProgressBar.h"
 #include "logging/jive_ScopeIndentedLogger.h"
 #include "logging/jive_StringStreams.h"
+#include "testing/jive_CapturingLogger.h"
 #include "testing/jive_TestZip.h"
 #include "testing/jive_UnitTest.h"
 #include "time/jive_TimeParser.h"

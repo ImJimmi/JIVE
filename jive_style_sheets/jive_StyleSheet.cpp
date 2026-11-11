@@ -28,6 +28,7 @@ namespace jive
         {
             styleFile = SourceFile{ state[ids::styleFile()].toString() };
             parsedFile = style.get();
+            ruleFiles = dynamic_cast<RuleFiles*>(state[ids::styleRuleFiles()].getObject());
 
             juce::Array<SourceFile> files;
 
@@ -146,8 +147,10 @@ namespace jive
         {
             fileObservers.clear();
             parsedFile = nullptr;
+            ruleFiles = nullptr;
             state.removeProperty(ids::styleFile(), nullptr);
             state.removeProperty(ids::styleFiles(), nullptr);
+            state.removeProperty(ids::styleRuleFiles(), nullptr);
         }
 
         if (!style.exists())
@@ -325,6 +328,7 @@ namespace jive
         }
 
         juce::Array<SourceFile> files;
+        std::map<std::pair<const Object*, juce::String>, SourceFile> ruleFiles;
 
     private:
         [[nodiscard]] static bool isImport(const juce::Identifier& name, const juce::var& value)
@@ -377,11 +381,18 @@ namespace jive
                     import(getOrCreateObject(target, name), value.toString(), file);
                 else if (const auto* nested = dynamic_cast<Object*>(value.getDynamicObject()))
                     addRules(getOrCreateObject(target, name), *nested, file);
-                else if (name == ids::icon())
-                    target.setProperty(name, findIconFile(value, &sourceDirectories, file));
                 else
-                    target.setProperty(name, value);
+                    addRule(target, name, value, file);
             }
+        }
+
+        void addRule(Object& target, const juce::Identifier& name, const juce::var& value, const SourceFile& file)
+        {
+            target.setProperty(name,
+                               name == ids::icon()
+                                   ? findIconFile(value, &sourceDirectories, file)
+                                   : value);
+            ruleFiles[{ &target, name.toString() }] = file;
         }
 
         const SourceDirectories& sourceDirectories;
@@ -403,43 +414,56 @@ namespace jive
                 paths.add(importedFile.getPath());
 
             styleFile = file;
+            ruleFiles = new RuleFiles{ std::move(importer.ruleFiles) };
             parsedFile = object;
             state.setProperty(ids::styleFile(), file.getPath(), nullptr);
             state.setProperty(ids::styleFiles(), paths, nullptr);
+            state.setProperty(ids::styleRuleFiles(), ruleFiles.get(), nullptr);
             watch(importer.files);
             style.set(object);
         }
     }
 
-    static void appendStyleProperties(Object& object,
-                                      std::optional<Styles>& styles,
-                                      const std::unordered_map<juce::String, juce::var>& tokens,
-                                      const SourceDirectories* sourceDirectories,
-                                      const SourceFile& styleFile)
+    SourceFile StyleSheet::findRuleFile(const Object& object, const juce::String& propertyName) const
+    {
+        if (ruleFiles == nullptr)
+            return styleFile;
+
+        if (const auto ruleFile = ruleFiles->files.find({ &object, propertyName });
+            ruleFile != std::end(ruleFiles->files))
+        {
+            return ruleFile->second;
+        }
+
+        return styleFile;
+    }
+
+    void StyleSheet::appendStyleProperties(Object& object, std::optional<Styles>& styles) const
     {
         for (const auto& propertyName : Styles::propertyNames)
         {
             if (!object.hasProperty(propertyName))
                 continue;
 
+            const auto ruleFile = findRuleFile(object, propertyName);
             auto value = object.getProperty(propertyName);
 
             if (value.isString() && value.toString().containsChar('$'))
                 value = resolveTokens(value.toString(), tokens);
 
             if (propertyName == ids::icon().toString())
-                value = findIconFile(value, sourceDirectories, styleFile);
+                value = findIconFile(value, sourceDirectories.get().get(), ruleFile);
 
             styles = styles
                          .value_or(Styles{})
-                         .with(propertyName, value, &object, styleFile);
+                         .with(propertyName, value, ruleFile);
         }
     }
 
     void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
-        appendStyleProperties(object, styles, tokens, sourceDirectories.get().get(), styleFile);
+        appendStyleProperties(object, styles);
 
         if (&object == style.get().get() && object.hasProperty(ids::transition()))
         {
@@ -474,7 +498,7 @@ namespace jive
         appendFromChild = [this, &appendFromChild](Object& child,
                                                    const juce::String& selector) {
             std::optional<Styles> styles;
-            appendStyleProperties(child, styles, tokens, sourceDirectories.get().get(), styleFile);
+            appendStyleProperties(child, styles);
 
             if (styles.has_value())
                 uuids[selector] = lookAndFeel.addStyles(StyleSelector{ selector, &component }, *styles);
@@ -653,48 +677,28 @@ private:
 
         beginTest("individual properties / invalid value");
         {
-            struct CapturingLogger : juce::Logger
+            juce::String log;
             {
-                void logMessage(const juce::String& message) final
-                {
-                    messages.add(message);
-                }
-
-                juce::StringArray messages;
-            };
-
-            CapturingLogger logger;
-            auto* const previousLogger = juce::Logger::getCurrentLogger();
-            juce::Logger::setCurrentLogger(&logger);
-            style.setProperty("background", "not-a-colour");
-            juce::Logger::setCurrentLogger(previousLogger);
+                jive::CapturingLogger logger;
+                style.setProperty("background", "not-a-colour");
+                log = logger.getLog();
+            }
 
             expectEquals(settledColourAt(button, 50, 12),
                          jive::parseColour(jive::themes::steel::raisinBlack));
-            expect(logger.messages.joinIntoString("\n")
-                       .contains("Invalid value 'not-a-colour' for property 'background'. Expected colour"));
+            expect(log.contains("Invalid value 'not-a-colour' for property 'background'. Expected colour"));
         }
 
         beginTest("individual properties / invalid number");
         {
-            struct CapturingLogger : juce::Logger
+            juce::String log;
             {
-                void logMessage(const juce::String& message) final
-                {
-                    messages.add(message);
-                }
+                jive::CapturingLogger logger;
+                style.setProperty("font-size", "big");
+                style.setProperty("opacity", "half");
+                log = logger.getLog();
+            }
 
-                juce::StringArray messages;
-            };
-
-            CapturingLogger logger;
-            auto* const previousLogger = juce::Logger::getCurrentLogger();
-            juce::Logger::setCurrentLogger(&logger);
-            style.setProperty("font-size", "big");
-            style.setProperty("opacity", "half");
-            juce::Logger::setCurrentLogger(previousLogger);
-
-            const auto log = logger.messages.joinIntoString("\n");
             expect(log.contains("Invalid value 'big' for property 'font-size'. Expected a number"));
             expect(log.contains("Invalid value 'half' for property 'opacity'. Expected a number or percentage"));
 
@@ -1580,6 +1584,34 @@ private:
             expect(settledBackground(lookAndFeel, button) == juce::Colours::yellow);
         }
 
+        beginTest("imports / invalid values are reported in the imported style sheet that has them");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./invalid.json" ] })");
+            directory.getChildFile("invalid.json").replaceWithText(R"({ "Button": { "background": "nope" } })");
+            juce::ValueTree state;
+
+            jive::CapturingLogger logger;
+            auto sheet = createStyleSheet(state);
+
+            expect(logger.getLog().contains("Invalid value 'nope' for property 'background' in "));
+            expect(logger.getLog().contains("invalid.json"));
+            expect(!logger.getLog().contains("root.json"));
+        }
+
+        beginTest("imports / recreated style sheets keep reporting invalid values in the imported style sheet");
+        {
+            directory.getChildFile("root.json").replaceWithText(R"({ "imports": [ "./invalid.json" ] })");
+            directory.getChildFile("invalid.json").replaceWithText(R"({ "Button": { "background": "nope" } })");
+            juce::ValueTree state;
+            auto sheet = createStyleSheet(state);
+
+            jive::CapturingLogger logger;
+            sheet = jive::StyleSheet::create(button, state);
+
+            expect(logger.getLog().contains("invalid.json"));
+            expect(!logger.getLog().contains("root.json"));
+        }
+
         directory.deleteRecursively();
     }
 
@@ -2278,6 +2310,30 @@ private:
             expectEquals((int)gradient->stops.size(), 2);
             expect(gradient->stops[0].colour == juce::Colours::lime);
             expect(gradient->stops[1].colour == juce::Colours::red);
+        }
+
+        beginTest("tokens / invalid values are reported with the token's value");
+        {
+            juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "$accent", "nope" },
+                            { "background", "$accent" },
+                        },
+                    },
+                },
+            };
+            jive::LookAndFeel lookAndFeel{ button };
+
+            jive::CapturingLogger logger;
+            auto sheet = jive::StyleSheet::create(button, state);
+
+            expect(logger.getLog().contains("Invalid value 'nope' for property 'background'"));
         }
     }
 

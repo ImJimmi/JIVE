@@ -12,7 +12,6 @@ target_sources(jive_core
                       algorithms/jive_Bezier.h
                       algorithms/jive_Find.cpp
                       algorithms/jive_Find.h
-                      algorithms/jive_ForEach.h
                       algorithms/jive_Interpolate.cpp
                       algorithms/jive_Interpolate.h
                       algorithms/jive_TransferFunction.h
@@ -48,6 +47,7 @@ target_sources(jive_core
                       logging/jive_ScopeIndentedLogger.h
                       logging/jive_StringStreams.cpp
                       logging/jive_StringStreams.h
+                      testing/jive_CapturingLogger.h
                       testing/jive_TestZip.h
                       testing/jive_UnitTest.h
                       time/jive_TimeParser.h

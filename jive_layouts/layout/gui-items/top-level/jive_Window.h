@@ -20,6 +20,10 @@ namespace jive
     private:
         int getStyleFlags() const;
         void applyTheme();
+        [[nodiscard]] juce::Rectangle<int> getDisplayArea() const;
+        void updateResizeLimits();
+        void moved() override;
+        void parentSizeChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
         // Attached to the window itself, which outlives every component a
@@ -43,6 +47,8 @@ namespace jive
         PassiveProperty<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;
+
+        juce::Rectangle<int> resizeLimitsArea;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Window)
     };

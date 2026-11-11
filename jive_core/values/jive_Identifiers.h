@@ -712,6 +712,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& styleRuleFiles()
+    {
+        static const juce::Identifier identifier{ "jive::style-rule-files" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& templatePath()
     {
         static const juce::Identifier identifier{ "template" };

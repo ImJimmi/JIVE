@@ -55,26 +55,13 @@ namespace jive
         };
         setResizable(canBeResized.getOr(true), useCornerResizer.getOr(false));
 
-        const auto updateResizeLimits = [this]() {
-            const auto userAreas = juce::Desktop::getInstance().getDisplays().getRectangleList(true);
-            const auto windowCentre = getScreenBounds().getCentre();
-            const auto display = std::find_if(std::begin(userAreas),
-                                              std::end(userAreas),
-                                              [windowCentre](const auto& userArea) {
-                                                  return userArea.contains(windowCentre);
-                                              });
-            const auto area = (display != std::end(userAreas) ? *display : userAreas.getBounds()).toFloat();
-            const auto unlimited = static_cast<float>(std::numeric_limits<juce::int16>::max());
-
-            setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f).toPixels(area.getWidth()))),
-                            static_cast<int>(std::ceil(minHeight.getOr(1.0f).toPixels(area.getHeight()))),
-                            static_cast<int>(std::floor(maxWidth.getOr(unlimited).toPixels(area.getWidth()))),
-                            static_cast<int>(std::floor(maxHeight.getOr(unlimited).toPixels(area.getHeight()))));
+        const auto onSizeLimitChange = [this]() {
+            updateResizeLimits();
         };
-        minWidth.onValueChange = updateResizeLimits;
-        minHeight.onValueChange = updateResizeLimits;
-        maxWidth.onValueChange = updateResizeLimits;
-        maxHeight.onValueChange = updateResizeLimits;
+        minWidth.onValueChange = onSizeLimitChange;
+        minHeight.onValueChange = onSizeLimitChange;
+        maxWidth.onValueChange = onSizeLimitChange;
+        maxHeight.onValueChange = onSizeLimitChange;
         updateResizeLimits();
 
         draggable.onValueChange = [this]() {
@@ -161,6 +148,49 @@ namespace jive
         state.removeListener(this);
         setLookAndFeel(nullptr);
         getComponent()->setLookAndFeel(nullptr);
+    }
+
+    juce::Rectangle<int> Window::getDisplayArea() const
+    {
+        const auto userAreas = juce::Desktop::getInstance().getDisplays().getRectangleList(true);
+        const auto windowCentre = getScreenBounds().getCentre();
+        const auto distanceToWindow = [windowCentre](const auto& userArea) {
+            return userArea.getConstrainedPoint(windowCentre).getDistanceSquaredFrom(windowCentre);
+        };
+        const auto display = std::min_element(std::begin(userAreas),
+                                              std::end(userAreas),
+                                              [&distanceToWindow](const auto& a, const auto& b) {
+                                                  return distanceToWindow(a) < distanceToWindow(b);
+                                              });
+
+        return display != std::end(userAreas) ? *display : juce::Rectangle<int>{};
+    }
+
+    void Window::updateResizeLimits()
+    {
+        resizeLimitsArea = getDisplayArea();
+
+        const auto area = resizeLimitsArea.toFloat();
+        const auto unlimited = static_cast<float>(std::numeric_limits<juce::int16>::max());
+
+        setResizeLimits(static_cast<int>(std::ceil(minWidth.getOr(1.0f).toPixels(area.getWidth()))),
+                        static_cast<int>(std::ceil(minHeight.getOr(1.0f).toPixels(area.getHeight()))),
+                        static_cast<int>(std::floor(maxWidth.getOr(unlimited).toPixels(area.getWidth()))),
+                        static_cast<int>(std::floor(maxHeight.getOr(unlimited).toPixels(area.getHeight()))));
+    }
+
+    void Window::moved()
+    {
+        DocumentWindow::moved();
+
+        if (getDisplayArea() != resizeLimitsArea)
+            updateResizeLimits();
+    }
+
+    void Window::parentSizeChanged()
+    {
+        DocumentWindow::parentSizeChanged();
+        updateResizeLimits();
     }
 
     void Window::applyTheme()
@@ -398,6 +428,29 @@ private:
             expectEquals(window.getConstrainer()->getMinimumHeight(), 369);
             expectEquals(window.getConstrainer()->getMaximumWidth(), 1122);
             expectEquals(window.getConstrainer()->getMaximumHeight(), 3344);
+        }
+        {
+            juce::ValueTree tree{
+                "Window",
+                {
+                    { "max-width", "50%" },
+                    { "width", 100 },
+                    { "height", 100 },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                                .toType<jive::Window>();
+
+            const auto userAreas = juce::Desktop::getInstance().getDisplays().getRectangleList(true);
+            const auto windowCentre = window.getScreenBounds().getCentre();
+
+            for (const auto& userArea : userAreas)
+            {
+                if (userArea.contains(windowCentre))
+                    expectEquals(window.getConstrainer()->getMaximumWidth(), userArea.getWidth() / 2);
+            }
         }
     }
 

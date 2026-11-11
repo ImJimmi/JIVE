@@ -762,15 +762,26 @@ namespace juce
         return jive::toVar(fill.toJuceFillType().colour);
     }
 
-    bool VariantConverter<jive::Fill>::isValid(const var& v)
+    std::optional<jive::Fill> VariantConverter<jive::Fill>::tryFromVar(const var& v)
     {
-        if (v.isString() && jive::Gradient::fromString(v.toString()).has_value())
-            return true;
+        if (v.isString())
+        {
+            if (auto gradient = jive::Gradient::fromString(v.toString()))
+                return jive::Fill{ *gradient };
+        }
 
         if (v.hasProperty(jive::ids::gradient()))
-            return true;
+            return jive::Fill{ VariantConverter<jive::Gradient>::fromVar(v) };
 
-        return VariantConverter<Colour>::isValid(v);
+        if (VariantConverter<Colour>::isValid(v))
+            return jive::Fill{ VariantConverter<Colour>::fromVar(v) };
+
+        return std::nullopt;
+    }
+
+    bool VariantConverter<jive::Fill>::isValid(const var& v)
+    {
+        return tryFromVar(v).has_value();
     }
 
     String VariantConverter<jive::Fill>::getSyntax()
@@ -796,6 +807,20 @@ static jive::UnitTest fillInterpolationTest{
                                       jive::Fill{ juce::Colours::aliceblue },
                                       0.7)
                     == jive::Fill{ juce::Colours::aliceblue });
+    },
+};
+
+static jive::UnitTest fillParsingTest{
+    "jive",
+    "jive::Fill",
+    "Fills are parsed in one go, giving nothing for invalid values",
+    [](auto& test) {
+        const auto gradient = jive::tryFromVar<jive::Fill>("linear-gradient(90deg, red, blue)");
+        test.expect(gradient.has_value() && gradient->getJiveGradient().has_value());
+
+        test.expect(jive::tryFromVar<jive::Fill>("red") == jive::Fill{ juce::Colours::red });
+        test.expect(jive::tryFromVar<jive::Fill>(juce::int64{ 0xff6495ed }) == jive::Fill{ juce::Colour{ 0xff6495ed } });
+        test.expect(!jive::tryFromVar<jive::Fill>("nope").has_value());
     },
 };
 #endif

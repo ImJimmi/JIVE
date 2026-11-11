@@ -636,9 +636,7 @@ namespace jive
 
         tree = loadExternalSources(tree);
 
-        std::unique_ptr<GuiItem> item;
-
-        item = createUndecoratedItem(tree, parent);
+        auto item = createUndecoratedItem(tree, parent);
 
         if (item != nullptr)
         {

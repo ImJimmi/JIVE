@@ -61,8 +61,16 @@ namespace jive
         PassiveProperty<float> minWidth;
         PassiveProperty<float> minHeight;
         PassiveProperty<bool> focusable;
-        PassiveProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
-        PassiveProperty<juce::FlexBox::AlignItems> flexAlignItems;
+        template <typename ValueType>
+        using DisplayDependentProperty = Property<ValueType,
+                                                  Inheritance::doNotInherit,
+                                                  Accumulation::doNotAccumulate,
+                                                  false,
+                                                  Responsiveness::ignoreChanges,
+                                                  false>;
+
+        DisplayDependentProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
+        DisplayDependentProperty<juce::FlexBox::AlignItems> flexAlignItems;
         PassiveProperty<juce::BorderSize<float>> padding;
 
         bool hasAutomaticPadding{ false };

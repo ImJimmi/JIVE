@@ -55,7 +55,7 @@ namespace juce
 
         static bool isValid(const var& v)
         {
-            return v.isVoid() || v.isBool() || jive::isNumber(v);
+            return v.isVoid() || v.isBool() || jive::isNumber(v, { "px" });
         }
 
         static String getSyntax()

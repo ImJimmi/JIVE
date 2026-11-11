@@ -15,4 +15,9 @@ namespace jive
                        juce::Identifier id,
                        juce::StringRef message = "",
                        const SourceFile& sourceFile = {});
+
+    void logValueError(const juce::var& value,
+                       juce::Identifier id,
+                       juce::StringRef message = "",
+                       const SourceFile& sourceFile = {});
 } // namespace jive

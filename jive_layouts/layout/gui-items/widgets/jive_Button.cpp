@@ -290,6 +290,7 @@ public:
         testDefaultSize();
         testDefaultPadding();
         testStretching();
+        testGridContent();
         testCheckboxTextInset();
         testEvents();
     }
@@ -652,6 +653,20 @@ private:
                          </Component>
                      )"),
                      juce::Point{ 200.0f, 200.0f });
+    }
+
+    void testGridContent()
+    {
+        beginTest("grid buttons keep their grid values");
+
+        auto item = interpreter.interpret(jive::parseXML(R"(
+            <Component width="200" height="200">
+                <Button display="grid" justify-content="space-evenly" align-items="start"/>
+            </Component>
+        )"));
+        const auto buttonState = item->state.getChild(0);
+        expectEquals(buttonState["justify-content"].toString(), juce::String{ "space-evenly" });
+        expectEquals(buttonState["align-items"].toString(), juce::String{ "start" });
     }
 
     void testCheckboxTextInset()

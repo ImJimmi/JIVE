@@ -208,57 +208,56 @@ namespace jive
 
         [[nodiscard]] Styles& with(const juce::Identifier& propertyName,
                                    const juce::var& value,
-                                   const Object::ReferenceCountedPointer& source = nullptr,
                                    const SourceFile& sourceFile = {})
         {
             if (propertyName == accent.id)
-                return withValid<Fill>(&Styles::withAccent, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withAccent, propertyName, value, sourceFile);
             if (propertyName == background.id)
-                return withValid<Fill>(&Styles::withBackground, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withBackground, propertyName, value, sourceFile);
             if (propertyName == borderFill.id)
-                return withValid<Fill>(&Styles::withBorderFill, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withBorderFill, propertyName, value, sourceFile);
             if (propertyName == borderRadius.id)
-                return withValid<BorderRadii<float>>(&Styles::withBorderRadius, propertyName, value, source, sourceFile);
+                return withValid<BorderRadii<float>>(&Styles::withBorderRadius, propertyName, value, sourceFile);
             if (propertyName == borderWidth.id)
-                return withValid<juce::BorderSize<float>>(&Styles::withBorderWidth, propertyName, value, source, sourceFile);
+                return withValid<juce::BorderSize<float>>(&Styles::withBorderWidth, propertyName, value, sourceFile);
             if (propertyName == direction.id)
-                return withValid<juce::AttributedString::ReadingDirection>(&Styles::withReadingDirection, propertyName, value, source, sourceFile);
+                return withValid<juce::AttributedString::ReadingDirection>(&Styles::withReadingDirection, propertyName, value, sourceFile);
             if (propertyName == fill.id)
-                return withValid<Fill>(&Styles::withFill, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withFill, propertyName, value, sourceFile);
 #if JUCE_MAJOR_VERSION >= 8
             if (propertyName == fontAscentOverride.id)
-                return withValid<FontAscentOverride>(&Styles::withFontAscentOverride, propertyName, value, source, sourceFile);
+                return withValid<FontAscentOverride>(&Styles::withFontAscentOverride, propertyName, value, sourceFile);
             if (propertyName == fontDescentOverride.id)
-                return withValid<FontDescentOverride>(&Styles::withFontDescentOverride, propertyName, value, source, sourceFile);
+                return withValid<FontDescentOverride>(&Styles::withFontDescentOverride, propertyName, value, sourceFile);
 #endif
             if (propertyName == fontExtraKerningFactor.id)
-                return withValid<FontKerning>(&Styles::withFontExtraKerningFactor, propertyName, value, source, sourceFile);
+                return withValid<FontKerning>(&Styles::withFontExtraKerningFactor, propertyName, value, sourceFile);
             if (propertyName == fontFamily.id)
                 return withFontFamily(value.toString());
             if (propertyName == fontHorizontalScale.id)
-                return withValid<FontScale>(&Styles::withFontHorizontalScale, propertyName, value, source, sourceFile);
+                return withValid<FontScale>(&Styles::withFontHorizontalScale, propertyName, value, sourceFile);
             if (propertyName == fontPointSize.id)
-                return withValid<FontSize>(&Styles::withFontPointSize, propertyName, value, source, sourceFile);
+                return withValid<FontSize>(&Styles::withFontPointSize, propertyName, value, sourceFile);
             if (propertyName == fontStyleFlags.id)
-                return withValid<std::unordered_set<juce::Font::FontStyleFlags>>(&Styles::withFontStyleFlags, propertyName, value, source, sourceFile);
+                return withValid<std::unordered_set<juce::Font::FontStyleFlags>>(&Styles::withFontStyleFlags, propertyName, value, sourceFile);
             if (propertyName == foreground.id)
-                return withValid<Fill>(&Styles::withForeground, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withForeground, propertyName, value, sourceFile);
             if (propertyName == icon.id)
-                return withValid<Icon>(&Styles::withIcon, propertyName, value, source, sourceFile);
+                return withValid<Icon>(&Styles::withIcon, propertyName, value, sourceFile);
             if (propertyName == lineSpacing.id)
-                return withValid<LineSpacing>(&Styles::withLineSpacing, propertyName, value, source, sourceFile);
+                return withValid<LineSpacing>(&Styles::withLineSpacing, propertyName, value, sourceFile);
             if (propertyName == opacity.id)
-                return withValid<Opacity>(&Styles::withOpacity, propertyName, value, source, sourceFile);
+                return withValid<Opacity>(&Styles::withOpacity, propertyName, value, sourceFile);
             if (propertyName == shadow.id)
-                return withValid<Shadow>(&Styles::withShadow, propertyName, value, source, sourceFile);
+                return withValid<Shadow>(&Styles::withShadow, propertyName, value, sourceFile);
             if (propertyName == stroke.id)
-                return withValid<Fill>(&Styles::withStroke, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withStroke, propertyName, value, sourceFile);
             if (propertyName == textAlign.id)
-                return withValid<juce::Justification>(&Styles::withTextAlignment, propertyName, value, source, sourceFile);
+                return withValid<juce::Justification>(&Styles::withTextAlignment, propertyName, value, sourceFile);
             if (propertyName == thumb.id)
-                return withValid<Fill>(&Styles::withThumb, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withThumb, propertyName, value, sourceFile);
             if (propertyName == track.id)
-                return withValid<Fill>(&Styles::withTrack, propertyName, value, source, sourceFile);
+                return withValid<Fill>(&Styles::withTrack, propertyName, value, sourceFile);
 
             jassertfalse;
             return *this;
@@ -268,16 +267,15 @@ namespace jive
         [[nodiscard]] Styles& withValid(Setter setter,
                                         const juce::Identifier& propertyName,
                                         const juce::var& value,
-                                        const Object::ReferenceCountedPointer& source,
                                         const SourceFile& sourceFile)
         {
-            if (isValidVar<T>(value))
-                return (this->*setter)(fromVar<T>(value));
+            if (const auto parsed = tryFromVar<T>(value))
+                return (this->*setter)(*parsed);
 
             if constexpr (hasVariantSyntax<T>())
-                logValueError(source, propertyName, "Expected " + juce::VariantConverter<T>::getSyntax(), sourceFile);
+                logValueError(value, propertyName, "Expected " + juce::VariantConverter<T>::getSyntax(), sourceFile);
             else
-                logValueError(source, propertyName, "", sourceFile);
+                logValueError(value, propertyName, "", sourceFile);
 
             if constexpr (hasVariantDefault<T>())
                 return (this->*setter)(juce::VariantConverter<T>::defaultValue());
