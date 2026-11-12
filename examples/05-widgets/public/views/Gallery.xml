@@ -73,6 +73,10 @@
                 <Image class="icon" source="public/images/star.svg" width="22" height="22" />
             </Component>
 
+            <Label>TextBox</Label>
+            <TextBox id="name-text-box" placeholder="Your name" />
+            <Text id="greeting">Hello, stranger</Text>
+
             <Label>Hyperlink</Label>
             <Component flex-direction="row">
                 <Hyperlink url="https://github.com/ImJimmi/JIVE">github.com/ImJimmi/JIVE</Hyperlink>

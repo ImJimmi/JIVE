@@ -121,11 +121,11 @@ namespace jive::themes
                           .withBorderFill(high_contrast::yellow));
 
         // Text fields
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor, TextBox"),
                       jive::Styles{}
                           .withBackground(high_contrast::black)
                           .withBorderFill(high_contrast::white));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor:focus"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor:focus, TextBox:focus"),
                       jive::Styles{}
                           .withBorderFill(high_contrast::yellow));
 

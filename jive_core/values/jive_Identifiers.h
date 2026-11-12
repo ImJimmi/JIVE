@@ -406,6 +406,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& integratedTitleBar()
+    {
+        static const juce::Identifier identifier{ "integrated-title-bar" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& interval()
     {
         static const juce::Identifier identifier{ "interval" };
@@ -514,6 +520,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& multiLine()
+    {
+        static const juce::Identifier identifier{ "multi-line" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& native()
     {
         static const juce::Identifier identifier{ "native" };
@@ -574,6 +586,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& placeholder()
+    {
+        static const juce::Identifier identifier{ "placeholder" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& placement()
     {
         static const juce::Identifier identifier{ "placement" };
@@ -595,6 +613,12 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& radioGroup()
     {
         static const juce::Identifier identifier{ "radio-group" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& readOnly()
+    {
+        static const juce::Identifier identifier{ "read-only" };
         return identifier;
     }
 
@@ -763,6 +787,12 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& title()
     {
         static const juce::Identifier identifier{ "title" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& titleBar()
+    {
+        static const juce::Identifier identifier{ "title-bar" };
         return identifier;
     }
 

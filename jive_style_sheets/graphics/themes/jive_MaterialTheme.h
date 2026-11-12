@@ -130,11 +130,11 @@ namespace jive::themes
                       jive::Styles{}
                           .withBackground(material::surfaceContainerHighestPressed));
 
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor, TextBox"),
                       jive::Styles{}
                           .withBackground(material::surfaceContainerHighest)
                           .withBorderRadius(material::fieldBorderRadius));
-        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor:focus"),
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("TextEditor:focus, TextBox:focus"),
                       jive::Styles{}
                           .withBackground(material::secondaryContainer));
 

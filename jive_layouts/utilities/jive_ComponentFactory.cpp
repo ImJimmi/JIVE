@@ -95,6 +95,12 @@ namespace jive
             },
         });
         creators.insert({
+            "TextBox",
+            []() {
+                return std::make_shared<juce::TextEditor>();
+            },
+        });
+        creators.insert({
             "Window",
             []() {
                 return std::make_shared<IgnoredComponent>();

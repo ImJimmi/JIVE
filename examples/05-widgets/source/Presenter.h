@@ -142,6 +142,11 @@ namespace jive_examples::widgets
                 for (auto i = 0; i < stars.getNumChildren(); i++)
                     light(stars.getChild(i), i < rating);
             });
+
+            onChange("name-text-box", [this] {
+                const auto name = jive::findElementWithID(editor->state, "name-text-box")["text"].toString().trim();
+                setProperty("greeting", "text", "Hello, " + (name.isEmpty() ? juce::String{ "stranger" } : name));
+            });
         }
 
         void align(int index)

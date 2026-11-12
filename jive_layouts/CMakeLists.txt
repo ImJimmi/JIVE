@@ -46,6 +46,8 @@ target_sources(jive_layouts
                       layout/gui-items/widgets/jive_Slider.h
                       layout/gui-items/widgets/jive_Spinner.cpp
                       layout/gui-items/widgets/jive_Spinner.h
+                      layout/gui-items/widgets/jive_TextBox.cpp
+                      layout/gui-items/widgets/jive_TextBox.h
                       layout/gui-items/jive_CommonGuiItem.cpp
                       layout/gui-items/jive_CommonGuiItem.h
                       layout/gui-items/jive_ContainerItem.cpp
@@ -69,6 +71,14 @@ target_sources(jive_layouts
                       utilities/jive_Overflow.h
                       jive_layouts.h
 )
+
+if (APPLE)
+    target_sources(jive_layouts
+    INTERFACE
+        layout/gui-items/top-level/jive_Window_mac.h
+        layout/gui-items/top-level/jive_Window_mac.mm
+    )
+endif()
 
 if (JIVE_BUILD_TEST_RUNNER)
     target_sources(jive_layouts

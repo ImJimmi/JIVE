@@ -32,7 +32,7 @@ The properties at the top level of a style sheet apply to the component that dec
 
 ```jsonc
 {
-  "background" : "blue",
+  "background": "blue",
   "font-family": "Comic Sans",
   "font-size": 14,
 }
@@ -48,20 +48,20 @@ Selector properties can also be specified to add rules for other components that
 
     // Nested rule for all Buttons that have the "primary" class.
     ".primary": {
-      "background": "green"
-    }
+      "background": "green",
+    },
   },
 
   // Combined selector to add rules for all components with BOTH
   // "primary" and "large" classes.
   ".primary.large": {
-    "font-size": 16
+    "font-size": 16,
   },
 
   // ID selector to add rules for a specific element
   "#save-button": {
-    "border": "yellow"
-  }
+    "border": "yellow",
+  },
 }
 ```
 
@@ -73,7 +73,7 @@ Style sheets can also have pseudo classes to add rules for elements in specific 
 
   // Add rules for when the root component is hovered.
   ":hover": {
-    "background": "skyblue"
+    "background": "skyblue",
   },
 
   "Button": {
@@ -81,14 +81,14 @@ Style sheets can also have pseudo classes to add rules for elements in specific 
 
     // Nested selector to add rules for Buttons that have been toggled-on
     ":checked": {
-      "background": "green"
-    }
+      "background": "green",
+    },
   },
 
   // Combined selector to add rules for sliders that have keyboard focus
   "Slider:focus": {
-    "border": "yellow"
-  }
+    "border": "yellow",
+  },
 }
 ```
 
@@ -116,12 +116,12 @@ Each element only matches its own name: `"Button"` doesn't match checkboxes or h
 
 A few components aren't created by any element, so they have their own type names instead:
 
-| Type         | Matches                                                                                       |
-| ------------ | --------------------------------------------------------------------------------------------- |
-| `ScrollBar`  | Scroll bars, such as a `juce::Viewport`'s.                                                    |
-| `TextEditor` | Text editors, such as the one an editable combo box shows.                                    |
-| `Popup`      | A combo box's popup menu.                                                                     |
-| `Option`     | The items in a combo box's popup menu. Each one also matches its `<Option>`'s ID and classes. |
+| Type         | Matches                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `ScrollBar`  | Scroll bars, such as a `juce::Viewport`'s.                                                                    |
+| `TextEditor` | Text editors, such as the one an editable combo box shows. Themes style these and `<TextBox>` elements alike. |
+| `Popup`      | A combo box's popup menu.                                                                                     |
+| `Option`     | The items in a combo box's popup menu. Each one also matches its `<Option>`'s ID and classes.                 |
 
 #### SVG elements
 
@@ -136,13 +136,13 @@ The elements inside an inline `<svg>` can be matched by selectors too, as if the
 
 ```json
 {
-    "svg": {
-        "fill": "#537D8D",
+  "svg": {
+    "fill": "#537D8D",
 
-        "line": {
-            "stroke": "#E5D352"
-        }
+    "line": {
+      "stroke": "#E5D352"
     }
+  }
 }
 ```
 
@@ -209,7 +209,7 @@ Inherited properties apply to the descendants of any component they're set on, u
 | `"opacity"`               | The opacity of the component and its children, from `0` to `1`.<br>See CSS [`opacity`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/opacity) for supported values.                                                                                                                                                                                                                                                                                        |
 | `"shadow"`                | The component's drop shadow.<br>See CSS [`box-shadow`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/box-shadow) for supported values.                                                                                                                                                                                                                                                                                                                     |
 | `"stroke"`                | The stroke of SVG shapes.<br>Applies to every shape in an SVG, and to the elements inside an inline SVG that match a rule directly (see [SVG elements](#svg-elements)).<br>Can be a colour, or a gradient (see [Fills](#fills) below).<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                |
-| `"text-align"`            | The justification of text.<br>One of `centred-left`, `top-left`, `centred-top`, `top-right`, `centred-right`, `bottom-right`, `centred-bottom`, `bottom-left`, or `centred`.<br>Defaults to `centred-left`, or `centred-right` when `"direction"` is `rtl`.                                                                                                                                                                                                                                                                                                       |
+| `"text-align"`            | The justification of text.<br>One of `centred-left`, `top-left`, `centred-top`, `top-right`, `centred-right`, `bottom-right`, `centred-bottom`, `bottom-left`, or `centred`.<br>Defaults to `centred-left`, or `centred-right` when `"direction"` is `rtl`.                                                                                                                                                                                                                        |
 | `"thumb"`                 | The thumb colour of sliders, knobs, or progress bars.<br>See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `"track"`                 | The track colour of sliders, knobs, or progress bars.<br>See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `"transition"`            | The rules for how a property transitions from one value to another.<br>**Only read at the top level of a style sheet.**<br>See CSS [`transition`](https://www.w3schools.com/css/css3_transitions.asp) for supported values. _Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                              |

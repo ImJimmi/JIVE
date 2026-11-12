@@ -200,6 +200,22 @@ Choices are added to combo boxes with `<Option>`, `<Header>`, and `<Separator>` 
 </ComboBox>
 ```
 
+### Text Boxes
+
+The following properties apply only to `<TextBox>` elements.
+
+| Property        | Description                                                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"multi-line"`  | Whether the text box takes several lines of text, with the return key starting a new line.<br>See [`juce::TextEditor::setMultiLine()`](https://docs.juce.com/master/classjuce_1_1TextEditor.html). |
+| `"on-change"`   | The event triggered when the user changes the text.                                                                                                                                                |
+| `"placeholder"` | The text shown while the text box is empty.<br>See [`juce::TextEditor::setTextToShowWhenEmpty()`](https://docs.juce.com/master/classjuce_1_1TextEditor.html).                                      |
+| `"read-only"`   | Whether the user is prevented from changing the text.<br>See [`juce::TextEditor::setReadOnly()`](https://docs.juce.com/master/classjuce_1_1TextEditor.html).                                       |
+| `"text"`        | The text in the text box. Typing updates this property.<br>See [`juce::TextEditor::setText()`](https://docs.juce.com/master/classjuce_1_1TextEditor.html).                                         |
+
+```xml
+<TextBox placeholder="Preset name"/>
+```
+
 ### Sliders
 
 The following properties apply only to `<Slider>`, `<Knob>`, and `<Spinner>` elements.

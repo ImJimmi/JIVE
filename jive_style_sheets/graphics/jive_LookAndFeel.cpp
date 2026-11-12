@@ -352,10 +352,19 @@ namespace jive
              });
     }
 
+    // The caret takes the colour of its text editor's text.
     void Caret::paint(juce::Graphics& g)
     {
-        dynamic_cast<LookAndFeel&>(getLookAndFeel())
-            .drawComponent(g, *this);
+        const auto& jiveLookAndFeel = dynamic_cast<LookAndFeel&>(getLookAndFeel());
+
+        if (const auto* textEditor = findParentComponentOfClass<juce::TextEditor>())
+        {
+            g.setFillType(getForegroundFill(*textEditor, jiveLookAndFeel.findMostApplicableStyles(*textEditor)));
+            g.fillRect(getLocalBounds());
+            return;
+        }
+
+        jiveLookAndFeel.drawComponent(g, *this);
     }
 
     juce::CaretComponent* LookAndFeel::createCaretComponent(juce::Component* keyFocusOwner)
@@ -700,6 +709,7 @@ namespace jive
         destination.shadow = destination.shadow.hasValue() ? destination.shadow : source.shadow;
         destination.textAlign = destination.textAlign.hasValue() ? destination.textAlign : source.textAlign;
         destination.thumb = destination.thumb.hasValue() ? destination.thumb : source.thumb;
+        destination.titleBar = destination.titleBar.hasValue() ? destination.titleBar : source.titleBar;
         destination.track = destination.track.hasValue() ? destination.track : source.track;
     }
 
@@ -898,6 +908,7 @@ namespace jive
         updateStyleProperty(destination.stroke, source.stroke, transitions);
         updateStyleProperty(destination.textAlign, source.textAlign, transitions);
         updateStyleProperty(destination.thumb, source.thumb, transitions);
+        updateStyleProperty(destination.titleBar, source.titleBar, transitions);
         updateStyleProperty(destination.track, source.track, transitions);
 
         destination.transitions = source.transitions;

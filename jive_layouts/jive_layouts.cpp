@@ -22,6 +22,7 @@
 #include "layout/gui-items/widgets/jive_ProgressBar.cpp"
 #include "layout/gui-items/widgets/jive_Slider.cpp"
 #include "layout/gui-items/widgets/jive_Spinner.cpp"
+#include "layout/gui-items/widgets/jive_TextBox.cpp"
 #include "layout/interpreter/jive_Interpreter.cpp"
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"

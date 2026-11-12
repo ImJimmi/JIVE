@@ -18,6 +18,7 @@
 #include <jive_layouts/layout/gui-items/widgets/jive_ProgressBar.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Slider.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Spinner.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_TextBox.h>
 #include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
@@ -216,6 +217,8 @@ namespace jive
             return std::make_unique<Spinner>(std::move(item));
         if (name == "Text")
             return std::make_unique<Text>(std::move(item));
+        if (name == "TextBox")
+            return std::make_unique<TextBox>(std::move(item));
 
         return item;
     }
