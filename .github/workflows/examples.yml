@@ -61,6 +61,9 @@ jobs:
             project: Projucer
             target-suffix: -projucer-android
 
+          - project: CMake
+            run-e2e-tests: true
+
           - example: 05-widgets
             project: CMake
             target-suffix: _All
@@ -143,3 +146,27 @@ jobs:
             --output-on-failure \
             -C ${{ env.BUILD_TYPE }} \
             -R pluginval
+
+      - name: Setup uv
+        if: matrix.run-e2e-tests
+        uses: astral-sh/setup-uv@v6
+
+      - name: Resolve Python path
+        id: python
+        if: matrix.run-e2e-tests
+        working-directory: tests/e2e
+        run: echo "path=$(uv run python -c 'import os, sys; print(os.path.realpath(sys.executable))')" >> "$GITHUB_OUTPUT"
+
+      - name: Setup accessibility
+        if: matrix.run-e2e-tests
+        uses: xa11y/setup-a11y@v1
+        with:
+          macos-tcc-client: ${{ steps.python.outputs.path }}
+
+      - name: Run end-to-end tests
+        if: matrix.run-e2e-tests
+        working-directory: tests/e2e
+        env:
+          JIVE_BUILD_DIR: ${{ github.workspace }}/${{ env.CMAKE_BUILD_DIRECTORY }}
+          JIVE_BUILD_CONFIG: ${{ env.BUILD_TYPE }}
+        run: uv run pytest -v
