@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if (POLICY CMP0141)
+        cmake_policy(SET CMP0141 NEW)
+    endif ()
+    set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+endif ()
+
 project(JIVE
         VERSION 2.0.0
 )
@@ -27,6 +36,9 @@ if (JIVE_BUILD_BENCHMARKS
     OR JIVE_BUILD_TEST_RUNNER
     OR JIVE_BUILD_EXAMPLES
 )
+    set_property(GLOBAL PROPERTY USE_FOLDERS YES)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
+
     include(cmake/CPM.cmake)
     CPMUsePackageLock(package-lock.cmake)
     CPMGetPackage(JUCE)
