@@ -2,6 +2,10 @@
 
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
 
+#if JUCE_MAC
+    #include "jive_Window_mac.h"
+#endif
+
 #ifndef JUCE_APPLICATION_NAME
     #define JUCE_APPLICATION_NAME ""
 #endif
@@ -10,6 +14,8 @@ namespace jive
 {
     Window::Window(std::unique_ptr<GuiItem> itemToDecorate)
         : TopLevelGuiItem{ std::move(itemToDecorate) }
+        , integratedTitleBar{ state, ids::integratedTitleBar() }
+        , windowTitleBarHeight{ state, ids::titleBarHeight() }
         , hasShadow{ state, ids::shadow() }
         , isNative{ state, ids::native() }
         , canBeResized{ state, ids::resizable() }
@@ -23,7 +29,6 @@ namespace jive
         , minimised{ state, ids::minimised() }
         , visibility{ state, ids::visibility() }
         , name{ state, ids::name() }
-        , windowTitleBarHeight{ state, ids::titleBarHeight() }
         , windowTitleBarButtons{ state, ids::titleBarButtons() }
         , width{ state, ids::width() }
         , height{ state, ids::height() }
@@ -90,8 +95,13 @@ namespace jive
 
         windowTitleBarHeight.onValueChange = [this]() {
             setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
+            updateIntegratedTitleBar();
         };
         setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
+
+        integratedTitleBar.onValueChange = [this]() {
+            updateIntegratedTitleBar();
+        };
 
 #if JUCE_MAC
         static constexpr auto leftAlignButtons = true;
@@ -116,6 +126,9 @@ namespace jive
         const auto windowHeight = juce::roundToInt(boxModel.getHeight());
         centreWithSize(windowWidth, windowHeight);
 
+        getComponent()->addMouseListener(&titleBarDragger, true);
+        updateIntegratedTitleBar();
+
         // Shown once the code that created the window has finished setting it
         // up, so that its first frame is complete.
         juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<Window>{ this }] {
@@ -129,8 +142,10 @@ namespace jive
         item = std::move(newItem);
         state = item->state;
 
+        component->removeMouseListener(&titleBarDragger);
         component = item->getComponent();
         component->setLookAndFeel(&jiveLookAndFeel);
+        component->addMouseListener(&titleBarDragger, true);
         applyTheme();
 
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
@@ -147,7 +162,140 @@ namespace jive
     {
         state.removeListener(this);
         setLookAndFeel(nullptr);
+        getComponent()->removeMouseListener(&titleBarDragger);
         getComponent()->setLookAndFeel(nullptr);
+    }
+
+    void Window::paint(juce::Graphics& g)
+    {
+        DocumentWindow::paint(g);
+
+#if JUCE_MAC
+        // A new peer is created whenever the window's style changes. Its title
+        // bar is configured after this paint rather than during it.
+        if (auto* peer = getPeer(); peer != nullptr && peer->getNativeHandle() != integratedTitleBarHandle)
+        {
+            integratedTitleBarHandle = peer->getNativeHandle();
+            juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<Window>{ this }] {
+                if (safeThis != nullptr)
+                    safeThis->updateIntegratedTitleBar();
+            });
+        }
+#endif
+
+        updateTitleBarColour();
+    }
+
+    void Window::resized()
+    {
+        DocumentWindow::resized();
+
+#if JUCE_MAC
+        if (integratedTitleBar.getOr(true) && windowTitleBarHeight.exists())
+        {
+            if (auto* peer = getPeer())
+                macos::layoutTitleBarButtons(peer->getNativeHandle(), windowTitleBarHeight.get());
+        }
+#endif
+    }
+
+    void Window::updateIntegratedTitleBar()
+    {
+#if JUCE_MAC
+        if (auto* peer = getPeer(); peer != nullptr && isUsingNativeTitleBar())
+        {
+            macos::setIntegratedTitleBar(peer->getNativeHandle(), integratedTitleBar.getOr(true));
+            resized();
+        }
+#endif
+    }
+
+#if JUCE_WINDOWS
+    [[nodiscard]] static std::optional<juce::Colour> toColour(const std::optional<Fill>& fill)
+    {
+        if (!fill.has_value())
+            return std::nullopt;
+
+        if (const auto gradient = fill->getJiveGradient())
+            return gradient->toJuceColourGradient().getColour(0);
+
+        return fill->toJuceFillType().colour;
+    }
+#endif
+
+    void Window::updateTitleBarColour()
+    {
+#if JUCE_WINDOWS
+        auto* const peer = getPeer();
+
+        if (peer == nullptr || !isUsingNativeTitleBar())
+            return;
+
+        const auto colour = toColour(jiveLookAndFeel.findMostApplicableStyles(*getComponent()).find<Fill>("title-bar"));
+
+        if (colour == appliedTitleBarColour && peer->getNativeHandle() == titleBarColourHandle)
+            return;
+
+        using SetWindowAttribute = long(__stdcall*)(void*, unsigned long, const void*, unsigned long);
+        static juce::DynamicLibrary dwmapi{ "dwmapi.dll" };
+        static const auto setWindowAttribute = reinterpret_cast<SetWindowAttribute>(dwmapi.getFunction("DwmSetWindowAttribute"));
+
+        if (setWindowAttribute == nullptr)
+            return;
+
+        static constexpr unsigned long captionColourAttribute = 35;
+        static constexpr unsigned long defaultColour = 0xFFFFFFFF;
+        const auto colourRef = colour.has_value()
+                                 ? static_cast<unsigned long>(colour->getRed())
+                                       | (static_cast<unsigned long>(colour->getGreen()) << 8)
+                                       | (static_cast<unsigned long>(colour->getBlue()) << 16)
+                                 : defaultColour;
+        setWindowAttribute(peer->getNativeHandle(), captionColourAttribute, &colourRef, sizeof(colourRef));
+
+        appliedTitleBarColour = colour;
+        titleBarColourHandle = peer->getNativeHandle();
+#endif
+    }
+
+    Window::TitleBarDragger::TitleBarDragger(Window& owner)
+        : window{ owner }
+    {
+    }
+
+#if JUCE_MAC
+    [[nodiscard]] static bool isInteractive(const juce::Component* component, const juce::Component& root)
+    {
+        for (; component != nullptr && component != &root; component = component->getParentComponent())
+        {
+            if (dynamic_cast<const juce::Button*>(component) != nullptr
+                || dynamic_cast<const juce::Slider*>(component) != nullptr
+                || dynamic_cast<const juce::ComboBox*>(component) != nullptr
+                || dynamic_cast<const juce::TextEditor*>(component) != nullptr
+                || dynamic_cast<const juce::ScrollBar*>(component) != nullptr)
+                return true;
+        }
+
+        return false;
+    }
+#endif
+
+    void Window::TitleBarDragger::mouseDown(const juce::MouseEvent& event)
+    {
+#if JUCE_MAC
+        static constexpr auto defaultTitleBarHeight = 28.0f;
+        const auto& content = *window.getComponent();
+
+        if (!window.integratedTitleBar.getOr(true)
+            || !window.isUsingNativeTitleBar()
+            || event.getEventRelativeTo(window.getComponent().get()).position.y >= window.windowTitleBarHeight.getOr(defaultTitleBarHeight)
+            || isInteractive(event.originalComponent, content))
+            return;
+
+        if (auto* peer = window.getPeer())
+            macos::performWindowDrag(peer->getNativeHandle());
+#else
+        juce::ignoreUnused(event, window);
+#endif
     }
 
     juce::Rectangle<int> Window::getDisplayArea() const
@@ -220,7 +368,8 @@ namespace jive
                               visibility,
                               name,
                               windowTitleBarHeight,
-                              windowTitleBarButtons);
+                              windowTitleBarButtons,
+                              integratedTitleBar);
     }
 } // namespace jive
 
@@ -249,6 +398,7 @@ public:
         testMinimised();
         testName();
         testTitleBarHeight();
+        testIntegratedTitleBar();
         testTheme();
         testShownOnceCreated();
     }
@@ -604,6 +754,37 @@ private:
                                 .toType<jive::Window>();
             expectEquals(window.getTitleBarHeight(), 100);
         }
+    }
+
+    void testIntegratedTitleBar()
+    {
+        beginTest("integrated-title-bar");
+
+    #if JUCE_MAC
+        juce::ValueTree tree{
+            "Window",
+            {
+                { "native", true },
+                { "width", 200 },
+                { "height", 150 },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                            .toType<jive::Window>();
+        expectEquals(window.getPeer()->getFrameSize().getTop(), 0);
+        expectEquals(item->getComponent()->getWidth(), 200);
+        expectEquals(item->getComponent()->getHeight(), 150);
+
+        tree.setProperty("integrated-title-bar", false, nullptr);
+        expectGreaterThan(window.getPeer()->getFrameSize().getTop(), 0);
+        expectEquals(item->getComponent()->getHeight(), 150);
+
+        tree.setProperty("integrated-title-bar", true, nullptr);
+        expectEquals(window.getPeer()->getFrameSize().getTop(), 0);
+        expectEquals(item->getComponent()->getHeight(), 150);
+    #endif
     }
 
     // Theme changes transition, so this settles them before reading the

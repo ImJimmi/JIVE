@@ -21,7 +21,7 @@ namespace jive
 
             auto callbacks = event.get()->getProperty(ids::callbacks());
 
-            callbacks.append(juce::var{
+            callbacks.append(juce::var::NativeFunction{
                 [weakThis = juce::WeakReference{ this }](const juce::var::NativeFunctionArgs&) {
                     if (weakThis != nullptr && weakThis->onTrigger != nullptr)
                         weakThis->onTrigger();

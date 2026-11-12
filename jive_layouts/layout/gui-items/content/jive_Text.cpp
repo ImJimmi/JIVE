@@ -22,7 +22,7 @@ namespace jive
         };
 
         state.setProperty(ids::idealHeight(),
-                          juce::var{ [this](const juce::var::NativeFunctionArgs& args) {
+                          juce::var::NativeFunction{ [this](const juce::var::NativeFunctionArgs& args) {
                               const auto& layout = getTextComponent().getTextLayout(args.arguments[0]);
                               return std::ceil(layout.getHeight());
                           } },

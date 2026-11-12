@@ -174,6 +174,7 @@ namespace jive
         StyleProperty<Fill> stroke{ ids::stroke() };
         StyleProperty<juce::Justification> textAlign{ ids::textAlign() };
         StyleProperty<Fill> thumb{ ids::thumb() };
+        StyleProperty<Fill> titleBar{ ids::titleBar() };
         StyleProperty<Fill> track{ ids::track() };
 
         Transitions::ReferenceCountedPointer transitions;
@@ -203,6 +204,7 @@ namespace jive
             "stroke",
             "text-align",
             "thumb",
+            "title-bar",
             "track",
         };
 
@@ -256,6 +258,8 @@ namespace jive
                 return withValid<juce::Justification>(&Styles::withTextAlignment, propertyName, value, sourceFile);
             if (propertyName == thumb.id)
                 return withValid<Fill>(&Styles::withThumb, propertyName, value, sourceFile);
+            if (propertyName == titleBar.id)
+                return withValid<Fill>(&Styles::withTitleBar, propertyName, value, sourceFile);
             if (propertyName == track.id)
                 return withValid<Fill>(&Styles::withTrack, propertyName, value, sourceFile);
 
@@ -417,6 +421,12 @@ namespace jive
             return *this;
         }
 
+        [[nodiscard]] Styles& withTitleBar(const Fill& value)
+        {
+            titleBar = value;
+            return *this;
+        }
+
         [[nodiscard]] Styles& withTrack(const Fill& value)
         {
             track = value;
@@ -456,6 +466,8 @@ namespace jive
                 property = &stroke;
             else if (styleName == "thumb")
                 property = &thumb;
+            else if (styleName == "title-bar")
+                property = &titleBar;
             else if (styleName == "track")
                 property = &track;
 
@@ -614,6 +626,7 @@ namespace jive
                                        styles.stroke,
                                        styles.textAlign,
                                        styles.thumb,
+                                       styles.titleBar,
                                        styles.track);
             };
 
@@ -668,6 +681,7 @@ namespace jive
             function(stroke);
             function(textAlign);
             function(thumb);
+            function(titleBar);
             function(track);
         }
 

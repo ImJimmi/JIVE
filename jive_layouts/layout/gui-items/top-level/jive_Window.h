@@ -17,14 +17,23 @@ namespace jive
 
         void replaceDecoratedItem(std::unique_ptr<GuiItem> newItem) override;
 
+        void paint(juce::Graphics& g) override;
+        void resized() override;
+
     private:
         int getStyleFlags() const;
         void applyTheme();
         [[nodiscard]] juce::Rectangle<int> getDisplayArea() const;
         void updateResizeLimits();
+        void updateIntegratedTitleBar();
+        void updateTitleBarColour();
         void moved() override;
         void parentSizeChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        // Read by resized(), which the look-and-feel below triggers.
+        PassiveProperty<bool> integratedTitleBar;
+        PassiveProperty<TitleBarHeight> windowTitleBarHeight;
 
         // Attached to the window itself, which outlives every component a
         // reload swaps in, so that transitions keep being repainted.
@@ -43,12 +52,30 @@ namespace jive
         PassiveProperty<bool> minimised;
         PassiveProperty<bool> visibility;
         PassiveProperty<juce::String> name;
-        PassiveProperty<TitleBarHeight> windowTitleBarHeight;
         PassiveProperty<juce::DocumentWindow::TitleBarButtons> windowTitleBarButtons;
         PassiveProperty<Length> width;
         PassiveProperty<Length> height;
 
         juce::Rectangle<int> resizeLimitsArea;
+
+        class TitleBarDragger : public juce::MouseListener
+        {
+        public:
+            explicit TitleBarDragger(Window& owner);
+
+            void mouseDown(const juce::MouseEvent& event) final;
+
+        private:
+            Window& window;
+        };
+
+        TitleBarDragger titleBarDragger{ *this };
+#if JUCE_MAC
+        void* integratedTitleBarHandle = nullptr;
+#elif JUCE_WINDOWS
+        std::optional<juce::Colour> appliedTitleBarColour;
+        void* titleBarColourHandle = nullptr;
+#endif
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Window)
     };

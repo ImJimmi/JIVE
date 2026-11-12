@@ -193,7 +193,7 @@ private:
         auto text = state.getChild(0);
         const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
         text.setProperty("jive::ideal-height",
-                         juce::var{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
+                         juce::var::NativeFunction{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
                              (*numIdealHeightCalculations)++;
                              return calculateIdealHeight(args);
                          } },
