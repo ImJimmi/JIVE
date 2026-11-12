@@ -49,12 +49,12 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos-deployment-target }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
 
       - name: Checkout JUCE
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: juce-framework/JUCE
           ref: ${{ matrix.juce }}
@@ -67,10 +67,10 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.13.0
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Restore CPM dependencies
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CPM_CACHE_DIR }}
           key: cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
@@ -97,7 +97,7 @@ jobs:
             ${{ matrix.juce-cmake-options }}
 
       - name: Cache CPM dependencies
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.CPM_CACHE_DIR }}
           key: cpm-${{ runner.os }}-${{ matrix.juce }}-${{ github.ref_name || github.head_ref }}-${{ github.run_number }}-${{ github.run_attempt }}
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload Coverage Report
         if: runner.os == 'macOS' && matrix.upload-coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
           files: ./build/coverage.info
@@ -148,7 +148,7 @@ jobs:
           verbose: true
 
       - name: Stage Artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: "${{ matrix.platform-name }} JUCE ${{ matrix.juce }} #${{ github.event.pull_request.number }}"
           path: ${{ env.CMAKE_BUILD_DIRECTORY }}/ctest.log
@@ -161,7 +161,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install clang-format
         run: brew install clang-format

@@ -61,4 +61,20 @@ function(add_projucer_target TARGET JUCER_FILE)
         WORKING_DIRECTORY ${WORKING_DIRECTORY}/Builds/MacOSX
         COMMENT "Building Xcode project"
     )
+
+    add_custom_target(${TARGET}-ios
+        COMMAND ${XCODEBUILD_COMMAND}
+            -alltargets
+            -configuration Debug
+            -sdk iphonesimulator
+            CODE_SIGNING_ALLOWED=NO
+        WORKING_DIRECTORY ${WORKING_DIRECTORY}/Builds/iOS
+        COMMENT "Building Xcode (iOS) project"
+    )
+
+    add_custom_target(${TARGET}-android
+        COMMAND ./gradlew assembleDebug
+        WORKING_DIRECTORY ${WORKING_DIRECTORY}/Builds/Android
+        COMMENT "Building Android Studio project"
+    )
 endfunction()

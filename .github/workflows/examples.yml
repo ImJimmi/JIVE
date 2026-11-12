@@ -21,11 +21,15 @@ jobs:
       fail-fast: false
       matrix:
         example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets]
-        platform: [macos-latest, windows-latest]
+        platform: [macos-latest, windows-latest, ios, android]
         project: [CMake, Projucer]
         exclude:
           - platform: windows-latest
             project: Projucer
+          - platform: ios
+            project: CMake
+          - platform: android
+            project: CMake
         include:
           - platform: macos-latest
             platform-name: macOS
@@ -35,9 +39,27 @@ jobs:
             platform-name: Windows
             package-manager: choco
 
+          - platform: ios
+            platform-name: iOS
+            runner: macos-latest
+            package-manager: brew
+
+          - platform: android
+            platform-name: Android
+            runner: macos-latest
+            package-manager: brew
+
           - project: Projucer
             target-suffix: -projucer
             cmake-options: -D JIVE_ENABLE_PROJUCER_PROJECTS=ON
+
+          - platform: ios
+            project: Projucer
+            target-suffix: -projucer-ios
+
+          - platform: android
+            project: Projucer
+            target-suffix: -projucer-android
 
           - example: 05-widgets
             project: CMake
@@ -46,7 +68,7 @@ jobs:
             run-pluginval: true
 
     name: ${{ matrix.example }} (${{ matrix.project }}, ${{ matrix.platform-name }})
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner || matrix.platform }}
 
     steps:
       - uses: actions/checkout@v6
@@ -56,6 +78,27 @@ jobs:
       - name: Setup devcmd
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1.13.0
+
+      - name: Setup Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Create Android debug keystore
+        if: matrix.platform == 'android'
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v \
+            -keystore ~/.android/debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.9
