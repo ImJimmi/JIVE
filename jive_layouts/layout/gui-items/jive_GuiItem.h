@@ -33,6 +33,9 @@ namespace jive
         [[nodiscard]] virtual GuiItem* getParent();
 
         [[nodiscard]] bool isTopLevel() const;
+
+        [[nodiscard]] const LookAndFeel& getLookAndFeel() const;
+        [[nodiscard]] LookAndFeel& getLookAndFeel();
         [[nodiscard]] virtual bool isContainer() const;
         [[nodiscard]] virtual bool isContent() const;
 

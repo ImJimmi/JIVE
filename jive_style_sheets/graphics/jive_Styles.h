@@ -447,158 +447,6 @@ namespace jive
         template <typename T>
         [[nodiscard]] std::optional<T> find(const juce::String& styleName) const;
 
-        template <>
-        [[nodiscard]] std::optional<Fill> find(const juce::String& styleName) const
-        {
-            const StyleProperty<Fill>* property = nullptr;
-
-            if (styleName == "accent")
-                property = &accent;
-            else if (styleName == "background")
-                property = &background;
-            else if (styleName == "border")
-                property = &borderFill;
-            else if (styleName == "fill")
-                property = &fill;
-            else if (styleName == "foreground")
-                property = &foreground;
-            else if (styleName == "stroke")
-                property = &stroke;
-            else if (styleName == "thumb")
-                property = &thumb;
-            else if (styleName == "title-bar")
-                property = &titleBar;
-            else if (styleName == "track")
-                property = &track;
-
-            jassert(property != nullptr);
-
-            if (property == nullptr || !property->hasValue())
-                return std::nullopt;
-
-            return calculateCurrent(*property);
-        }
-
-        template <>
-        [[nodiscard]] std::optional<juce::BorderSize<float>> find(const juce::String& styleName) const
-        {
-            const StyleProperty<juce::BorderSize<float>>* property = nullptr;
-
-            if (styleName == "border-width")
-                property = &borderWidth;
-
-            jassert(property != nullptr);
-
-            if (property == nullptr || !property->hasValue())
-                return std::nullopt;
-
-            return calculateCurrent(*property);
-        }
-
-        template <>
-        [[nodiscard]] std::optional<BorderRadii<float>> find(const juce::String& styleName) const
-        {
-            const StyleProperty<BorderRadii<float>>* property = nullptr;
-
-            if (styleName == "border-radius")
-                property = &borderRadius;
-
-            jassert(property != nullptr);
-
-            if (property == nullptr || !property->hasValue())
-                return std::nullopt;
-
-            return calculateCurrent(*property);
-        }
-
-        template <>
-        [[nodiscard]] std::optional<juce::String> find(const juce::String& styleName) const
-        {
-            if (styleName == "font-family" && fontFamily.hasValue())
-                return fontFamily.get();
-
-            jassertfalse;
-            return std::nullopt;
-        }
-
-        template <>
-        [[nodiscard]] std::optional<float> find(const juce::String& styleName) const
-        {
-            const auto current = [this](const auto& property) -> std::optional<float> {
-                if (!property.hasValue())
-                    return std::nullopt;
-
-                return calculateCurrent(property);
-            };
-
-            if (styleName == "font-size")
-                return current(fontPointSize);
-            if (styleName == "font-scale")
-                return current(fontHorizontalScale);
-            if (styleName == "font-kerning")
-                return current(fontExtraKerningFactor);
-            if (styleName == "line-spacing")
-                return current(lineSpacing);
-            if (styleName == "opacity")
-                return current(opacity);
-#if JUCE_MAJOR_VERSION >= 8
-            if (styleName == "font-ascent-override")
-                return current(fontAscentOverride);
-            if (styleName == "font-descent-override")
-                return current(fontDescentOverride);
-#endif
-
-            jassertfalse;
-            return std::nullopt;
-        }
-
-        template <>
-        [[nodiscard]] std::optional<std::unordered_set<juce::Font::FontStyleFlags>> find(const juce::String& styleName) const
-        {
-            if (styleName == "font-styles" && fontStyleFlags.hasValue())
-                return fontStyleFlags.get();
-
-            jassertfalse;
-            return std::nullopt;
-        }
-
-        template <>
-        [[nodiscard]] std::optional<Shadow> find(const juce::String& styleName) const
-        {
-            const StyleProperty<Shadow>* property = nullptr;
-
-            if (styleName == "shadow")
-                property = &shadow;
-
-            if (property == nullptr || !property->hasValue())
-            {
-                jassertfalse;
-                return std::nullopt;
-            }
-
-            return calculateCurrent(*property);
-        }
-
-        template <>
-        [[nodiscard]] std::optional<juce::AttributedString::ReadingDirection> find(const juce::String& styleName) const
-        {
-            if (styleName == "direction" && direction.hasValue())
-                return direction.get();
-
-            jassertfalse;
-            return std::nullopt;
-        }
-
-        template <>
-        [[nodiscard]] std::optional<juce::Justification> find(const juce::String& styleName) const
-        {
-            if (styleName == "text-align" && textAlign.hasValue())
-                return textAlign.get();
-
-            jassertfalse;
-            return std::nullopt;
-        }
-
         [[nodiscard]] auto operator==(const Styles& other) const
         {
             static constexpr auto tie = [](const Styles& styles) {
@@ -705,6 +553,158 @@ namespace jive
             return property.interpolated(proportion);
         }
     };
+
+    template <>
+    [[nodiscard]] inline std::optional<Fill> Styles::find<Fill>(const juce::String& styleName) const
+    {
+        const StyleProperty<Fill>* property = nullptr;
+
+        if (styleName == "accent")
+            property = &accent;
+        else if (styleName == "background")
+            property = &background;
+        else if (styleName == "border")
+            property = &borderFill;
+        else if (styleName == "fill")
+            property = &fill;
+        else if (styleName == "foreground")
+            property = &foreground;
+        else if (styleName == "stroke")
+            property = &stroke;
+        else if (styleName == "thumb")
+            property = &thumb;
+        else if (styleName == "title-bar")
+            property = &titleBar;
+        else if (styleName == "track")
+            property = &track;
+
+        jassert(property != nullptr);
+
+        if (property == nullptr || !property->hasValue())
+            return std::nullopt;
+
+        return calculateCurrent(*property);
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<juce::BorderSize<float>> Styles::find<juce::BorderSize<float>>(const juce::String& styleName) const
+    {
+        const StyleProperty<juce::BorderSize<float>>* property = nullptr;
+
+        if (styleName == "border-width")
+            property = &borderWidth;
+
+        jassert(property != nullptr);
+
+        if (property == nullptr || !property->hasValue())
+            return std::nullopt;
+
+        return calculateCurrent(*property);
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<BorderRadii<float>> Styles::find<BorderRadii<float>>(const juce::String& styleName) const
+    {
+        const StyleProperty<BorderRadii<float>>* property = nullptr;
+
+        if (styleName == "border-radius")
+            property = &borderRadius;
+
+        jassert(property != nullptr);
+
+        if (property == nullptr || !property->hasValue())
+            return std::nullopt;
+
+        return calculateCurrent(*property);
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<juce::String> Styles::find<juce::String>(const juce::String& styleName) const
+    {
+        if (styleName == "font-family" && fontFamily.hasValue())
+            return fontFamily.get();
+
+        jassertfalse;
+        return std::nullopt;
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<float> Styles::find<float>(const juce::String& styleName) const
+    {
+        const auto current = [this](const auto& property) -> std::optional<float> {
+            if (!property.hasValue())
+                return std::nullopt;
+
+            return calculateCurrent(property);
+        };
+
+        if (styleName == "font-size")
+            return current(fontPointSize);
+        if (styleName == "font-scale")
+            return current(fontHorizontalScale);
+        if (styleName == "font-kerning")
+            return current(fontExtraKerningFactor);
+        if (styleName == "line-spacing")
+            return current(lineSpacing);
+        if (styleName == "opacity")
+            return current(opacity);
+#if JUCE_MAJOR_VERSION >= 8
+        if (styleName == "font-ascent-override")
+            return current(fontAscentOverride);
+        if (styleName == "font-descent-override")
+            return current(fontDescentOverride);
+#endif
+
+        jassertfalse;
+        return std::nullopt;
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<std::unordered_set<juce::Font::FontStyleFlags>> Styles::find<std::unordered_set<juce::Font::FontStyleFlags>>(const juce::String& styleName) const
+    {
+        if (styleName == "font-styles" && fontStyleFlags.hasValue())
+            return fontStyleFlags.get();
+
+        jassertfalse;
+        return std::nullopt;
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<Shadow> Styles::find<Shadow>(const juce::String& styleName) const
+    {
+        const StyleProperty<Shadow>* property = nullptr;
+
+        if (styleName == "shadow")
+            property = &shadow;
+
+        if (property == nullptr || !property->hasValue())
+        {
+            jassertfalse;
+            return std::nullopt;
+        }
+
+        return calculateCurrent(*property);
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<juce::AttributedString::ReadingDirection> Styles::find<juce::AttributedString::ReadingDirection>(const juce::String& styleName) const
+    {
+        if (styleName == "direction" && direction.hasValue())
+            return direction.get();
+
+        jassertfalse;
+        return std::nullopt;
+    }
+
+    template <>
+    [[nodiscard]] inline std::optional<juce::Justification> Styles::find<juce::Justification>(const juce::String& styleName) const
+    {
+        if (styleName == "text-align" && textAlign.hasValue())
+            return textAlign.get();
+
+        jassertfalse;
+        return std::nullopt;
+    }
 } // namespace jive
 
 namespace juce

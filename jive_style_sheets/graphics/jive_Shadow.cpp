@@ -456,10 +456,17 @@ namespace jive
 
         auto* laf = dynamic_cast<LookAndFeel*>(&component->getLookAndFeel());
 
+        juce::Component* topMostAncestor = nullptr;
+
         for (auto* otherParent = component->getParentComponent();
-             otherParent != nullptr && dynamic_cast<juce::TopLevelWindow*>(otherParent) == nullptr;
+             otherParent != nullptr;
              otherParent = otherParent->getParentComponent())
         {
+            topMostAncestor = otherParent;
+
+            if (dynamic_cast<juce::TopLevelWindow*>(otherParent) != nullptr)
+                break;
+
             juce::FillType background{ juce::Colours::black };
 
             if (laf != nullptr)
@@ -470,20 +477,18 @@ namespace jive
             }
 
             if (!background.isInvisible())
-            {
-                parent = otherParent;
-                parent->addChildComponent(this, 0);
-                jassert(dynamic_cast<juce::TopLevelWindow*>(parent.getComponent()) == nullptr);
-                updateAncestors();
-                updateBounds();
-                return;
-            }
+                break;
         }
 
-        if (auto* thisParent = getParentComponent())
+        parent = topMostAncestor;
+
+        if (parent != nullptr)
+            parent->addChildComponent(this, 0);
+        else if (auto* thisParent = getParentComponent())
             thisParent->removeChildComponent(this);
 
         updateAncestors();
+        updateBounds();
     }
 } // namespace jive
 
@@ -585,6 +590,30 @@ static jive::UnitTest shadowIncludesSpreadTest{
         const auto snapshot = root.createComponentSnapshot(root.getLocalBounds());
         test.expect(snapshot.getPixelAt(62, 50) == juce::Colours::red);
         test.expect(snapshot.getPixelAt(50, 37) == juce::Colours::red);
+    },
+};
+
+static jive::UnitTest shadowFallsBackToTopLevelTest{
+    "jive",
+    "jive::ShadowComponent",
+    "Falls back to the top-most ancestor when none have a background",
+    [](auto& test) {
+        juce::Component root;
+        root.setSize(200, 200);
+
+        jive::LookAndFeel lookAndFeel{ root };
+
+        juce::Component container;
+        container.setBounds(10, 10, 100, 100);
+        root.addAndMakeVisible(container);
+
+        juce::Component target;
+        target.setBounds(5, 5, 20, 20);
+        container.addAndMakeVisible(target);
+
+        jive::ShadowComponent shadow{ target };
+
+        test.expect(shadow.getParentComponent() == &root);
     },
 };
 #endif

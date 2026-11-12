@@ -28,6 +28,7 @@ namespace jive
         item = std::move(newItem);
         state = item->state;
         component = item->getComponent();
+        resetDefaultPadding();
 
         showMainComponent();
         applyTheme();

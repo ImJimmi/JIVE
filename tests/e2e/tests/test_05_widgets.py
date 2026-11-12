@@ -30,7 +30,10 @@ def test_slider_drives_progress_bar(window: xa11y.Locator):
 
 def test_text_editor_updates_greeting(window: xa11y.Locator):
     # JUCE's TextEditor exposes no writable accessibility value, so type real keystrokes.
-    xa11y.input_sim().click(window.descendant("text_field").first().element())
+    window.activate()
+    text_box = window.descendant("text_field, text_area").first()
+    xa11y.input_sim().click(text_box.element())
+    text_box.wait_focused()
     xa11y.input_sim().type_text("Ada")
 
     window.descendant("static_text[value^='Hello']").wait_until(has_value("Hello, Ada"))

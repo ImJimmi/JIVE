@@ -57,6 +57,7 @@ namespace jive
 #endif
         isNative.onValueChange = [this]() {
             setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
+            applyDefaultPadding(getDefaultTopPadding());
         };
         setUsingNativeTitleBar(isNative.getOr(nativeByDefault));
 
@@ -103,11 +104,13 @@ namespace jive
 
         windowTitleBarHeight.onValueChange = [this]() {
             setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
+            applyDefaultPadding(getDefaultTopPadding());
             updateIntegratedTitleBar();
         };
         setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
 
         integratedTitleBar.onValueChange = [this]() {
+            applyDefaultPadding(getDefaultTopPadding());
             updateIntegratedTitleBar();
         };
 
@@ -121,6 +124,8 @@ namespace jive
             setTitleBarButtonsRequired(windowTitleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
         };
         setTitleBarButtonsRequired(windowTitleBarButtons.getOr(juce::DocumentWindow::allButtons), leftAlignButtons);
+
+        applyDefaultPadding(getDefaultTopPadding());
 
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
         setContentNonOwned(getComponent().get(),
@@ -154,6 +159,7 @@ namespace jive
         component = item->getComponent();
         component->setLookAndFeel(&jiveLookAndFeel);
         component->addMouseListener(&titleBarDragger, true);
+        resetDefaultPadding(getDefaultTopPadding());
         applyTheme();
 
         static constexpr auto resizeWindowWhenComponentSizeChanges = true;
@@ -206,6 +212,16 @@ namespace jive
                 macos::layoutTitleBarButtons(peer->getNativeHandle(), windowTitleBarHeight.get());
         }
 #endif
+    }
+
+    float Window::getDefaultTopPadding() const
+    {
+#if JUCE_MAC
+        if (isUsingNativeTitleBar() && integratedTitleBar.getOr(true))
+            return windowTitleBarHeight.getOr(defaultMacTitleBarHeight);
+#endif
+
+        return defaultPadding;
     }
 
     void Window::updateIntegratedTitleBar()
@@ -432,9 +448,7 @@ namespace jive
     void Window::applyBackdrop([[maybe_unused]] std::optional<Backdrop> backdrop)
     {
 #if JUCE_MAC
-        auto* const peer = getPeer();
-
-        if (peer == nullptr)
+        if (getPeer() == nullptr)
             return;
 
         if (backdrop.has_value())
@@ -443,7 +457,9 @@ namespace jive
             removeColour(backgroundColourId);
 
         setOpaque(getBackgroundColour().isOpaque());
-        macos::setBackdrop(peer->getNativeHandle(), backdrop);
+
+        if (auto* const peer = getPeer())
+            macos::setBackdrop(peer->getNativeHandle(), backdrop);
 #elif JUCE_WINDOWS
         auto* const peer = getPeer();
 
@@ -613,6 +629,7 @@ public:
         testName();
         testTitleBarHeight();
         testIntegratedTitleBar();
+        testDefaultPadding();
         testBackdrop();
         testTheme();
         testShownOnceCreated();
@@ -999,6 +1016,61 @@ private:
         tree.setProperty("integrated-title-bar", true, nullptr);
         expectEquals(window.getPeer()->getFrameSize().getTop(), 0);
         expectEquals(item->getComponent()->getHeight(), 150);
+    #endif
+    }
+
+    void testDefaultPadding()
+    {
+        const auto getPadding = [](juce::ValueTree tree) {
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            return jive::boxModel(*item).getPadding();
+        };
+
+        beginTest("windows have a default padding");
+        expectEquals(getPadding(juce::ValueTree{
+                         "Window",
+                         {
+                             { "native", false },
+                             { "width", 200 },
+                             { "height", 150 },
+                         },
+                     }),
+                     juce::BorderSize<float>{ 10.0f });
+
+        beginTest("a window's padding overrides the default");
+        expectEquals(getPadding(juce::ValueTree{
+                         "Window",
+                         {
+                             { "padding", "4 12" },
+                             { "width", 200 },
+                             { "height", 150 },
+                         },
+                     }),
+                     juce::BorderSize<float>{ 4.0f, 12.0f, 4.0f, 12.0f });
+
+    #if JUCE_MAC
+        beginTest("a window's default padding clears an integrated title bar");
+        juce::ValueTree tree{
+            "Window",
+            {
+                { "native", true },
+                { "width", 200 },
+                { "height", 150 },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        expectEquals(jive::boxModel(*item).getPadding(),
+                     juce::BorderSize<float>{ 28.0f, 10.0f, 10.0f, 10.0f });
+
+        tree.setProperty("title-bar-height", 40, nullptr);
+        expectEquals(jive::boxModel(*item).getPadding(),
+                     juce::BorderSize<float>{ 40.0f, 10.0f, 10.0f, 10.0f });
+
+        tree.setProperty("integrated-title-bar", false, nullptr);
+        expectEquals(jive::boxModel(*item).getPadding(),
+                     juce::BorderSize<float>{ 10.0f });
     #endif
     }
 

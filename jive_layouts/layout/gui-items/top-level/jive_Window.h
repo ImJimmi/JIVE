@@ -25,6 +25,7 @@ namespace jive
         void applyTheme();
         [[nodiscard]] juce::Rectangle<int> getDisplayArea() const;
         void updateResizeLimits();
+        [[nodiscard]] float getDefaultTopPadding() const;
         void updateIntegratedTitleBar();
         void updateTitleBarColour();
         void updateBackdrop();
@@ -32,6 +33,8 @@ namespace jive
         void moved() override;
         void parentSizeChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        static constexpr auto defaultMacTitleBarHeight = 28.0f;
 
         // Read by resized(), which the look-and-feel below triggers.
         PassiveProperty<bool> integratedTitleBar;

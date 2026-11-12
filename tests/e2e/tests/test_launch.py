@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 import xa11y
 
@@ -20,3 +22,9 @@ def test_shows_heading(window: xa11y.Locator, request: pytest.FixtureRequest):
 @pytest.mark.parametrize("window", HEADINGS.keys(), indirect=True)
 def test_theme_picker_defaults_to_steel(window: xa11y.Locator):
     assert window.descendant("combo_box").first().element().value == "Steel"
+
+
+@pytest.mark.parametrize("process", HEADINGS.keys(), indirect=True)
+def test_keeps_running(process: subprocess.Popen):
+    with pytest.raises(subprocess.TimeoutExpired):
+        process.wait(timeout=5)

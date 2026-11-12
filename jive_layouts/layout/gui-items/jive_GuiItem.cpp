@@ -111,6 +111,19 @@ namespace jive
         return getParent() == nullptr;
     }
 
+    const LookAndFeel& GuiItem::getLookAndFeel() const
+    {
+        if (const auto* itemParent = getParent())
+            return itemParent->getLookAndFeel();
+
+        return dynamic_cast<const LookAndFeel&>(component->getLookAndFeel());
+    }
+
+    LookAndFeel& GuiItem::getLookAndFeel()
+    {
+        return const_cast<LookAndFeel&>(std::as_const(*this).getLookAndFeel());
+    }
+
     const juce::LocalisedStrings* GuiItem::findLocalisedStrings() const
     {
         for (const auto* ancestor = this; ancestor != nullptr; ancestor = ancestor->getParent())

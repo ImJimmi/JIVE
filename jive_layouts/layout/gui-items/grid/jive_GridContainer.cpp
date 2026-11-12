@@ -350,19 +350,13 @@ namespace jive
 
         auto grid = const_cast<GridContainer&>(*this)
                         .buildGrid(integerConstraints, LayoutStrategy::dummy);
-        grid.performLayout(integerConstraints);
 
         juce::Point extremities{ -1.0f, -1.0f };
 
-        for (const auto& gridItem : grid.items)
+        for (const auto& area : calculateItemAreas(grid, integerConstraints))
         {
-            const auto right = gridItem.currentBounds.getRight() + gridItem.margin.right;
-            if (right > extremities.x)
-                extremities.x = right;
-
-            const auto bottom = gridItem.currentBounds.getBottom() + gridItem.margin.bottom;
-            if (bottom > extremities.y)
-                extremities.y = bottom;
+            extremities.x = juce::jmax(extremities.x, area.getRight());
+            extremities.y = juce::jmax(extremities.y, area.getBottom());
         }
 
         auto& currentBoxModel = boxModel(*this);
@@ -527,6 +521,7 @@ public:
         testFractionalTracksAutoSize();
         testNestedText();
         testWrappedTextInFractionalColumns();
+        testCentredItemsInFractionalColumns();
     }
 
 private:
@@ -1296,6 +1291,7 @@ private:
             {
                 { "width", 200 },
                 { "height", 500 },
+                { "padding", 0 },
                 { "align-items", "flex-start" },
             },
             {
@@ -1384,6 +1380,51 @@ private:
             expectEquals(text.getWidth(), columnWidth);
             expectGreaterThan(text.getHeight(), 28);
             expectGreaterOrEqual(column.getHeight(), text.getHeight());
+        }
+    }
+    void testCentredItemsInFractionalColumns()
+    {
+        beginTest("centred items in fractional columns");
+
+        const juce::StringArray names{ "Attack", "Release", "Threshold", "Knee" };
+        juce::ValueTree grid{
+            "Component",
+            {
+                { "display", "grid" },
+                { "grid-template-columns", "1fr 1fr 1fr 1fr" },
+                { "gap", 10 },
+            },
+        };
+
+        for (const auto& name : names)
+            grid.appendChild(juce::ValueTree{ "Component", { { "align-items", "center" } }, { juce::ValueTree{ "Text", { { "text", name } } } } }, nullptr);
+
+        juce::ValueTree state{
+            "Window",
+            {
+                { "width", 450 },
+                { "height", 300 },
+                { "align-items", "center" },
+                { "justify-content", "center" },
+            },
+            { grid },
+        };
+        jive::Interpreter interpreter;
+        const auto window = interpreter.interpret(state);
+        auto& container = *window->getChildren()[0];
+
+        for (auto i = 0; i < names.size(); i++)
+        {
+            auto& textItem = *container.getChildren()[i]->getChildren()[0];
+            const auto font = dynamic_cast<jive::GuiItemDecorator&>(textItem)
+                                  .toType<jive::Text>()
+                                  ->getTextComponent()
+                                  .getAttributedString()
+                                  .getAttribute(0)
+                                  .font;
+            expectGreaterOrEqual(static_cast<float>(textItem.getComponent()->getWidth()),
+                                 std::ceil(jive::calculateStringWidth(names[i], font)),
+                                 names[i]);
         }
     }
 };

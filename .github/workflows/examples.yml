@@ -21,10 +21,12 @@ jobs:
       fail-fast: false
       matrix:
         example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets]
-        platform: [macos-latest, windows-latest, ios, android]
+        platform: [macos-latest, windows-latest, ubuntu-latest, ios, android]
         project: [CMake, Projucer]
         exclude:
           - platform: windows-latest
+            project: Projucer
+          - platform: ubuntu-latest
             project: Projucer
           - platform: ios
             project: CMake
@@ -38,6 +40,9 @@ jobs:
           - platform: windows-latest
             platform-name: Windows
             package-manager: choco
+
+          - platform: ubuntu-latest
+            platform-name: Linux
 
           - platform: ios
             platform-name: iOS
@@ -76,7 +81,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            libasound2-dev \
+            libfontconfig1-dev \
+            libfreetype-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            xvfb
+
       - name: Install Ninja
+        if: runner.os != 'Linux'
         run: ${{ matrix.package-manager }} install ninja
       - name: Setup devcmd
         if: runner.os == 'Windows'
@@ -142,7 +168,7 @@ jobs:
         if: matrix.run-pluginval
         run: |
           cd ${{ env.CMAKE_BUILD_DIRECTORY }}
-          ctest \
+          ${{ runner.os == 'Linux' && 'xvfb-run -a' || '' }} ctest \
             --output-on-failure \
             -C ${{ env.BUILD_TYPE }} \
             -R pluginval
@@ -153,12 +179,12 @@ jobs:
 
       - name: Resolve Python path
         id: python
-        if: matrix.run-e2e-tests
+        if: matrix.run-e2e-tests && runner.os != 'Linux'
         working-directory: tests/e2e
         run: echo "path=$(uv run python -c 'import os, sys; print(os.path.realpath(sys.executable))')" >> "$GITHUB_OUTPUT"
 
       - name: Setup accessibility
-        if: matrix.run-e2e-tests
+        if: matrix.run-e2e-tests && runner.os != 'Linux'
         uses: xa11y/setup-a11y@v1
         with:
           macos-tcc-client: ${{ steps.python.outputs.path }}
@@ -169,4 +195,4 @@ jobs:
         env:
           JIVE_BUILD_DIR: ${{ github.workspace }}/${{ env.CMAKE_BUILD_DIRECTORY }}
           JIVE_BUILD_CONFIG: ${{ env.BUILD_TYPE }}
-        run: uv run pytest -v
+        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}uv run pytest -v

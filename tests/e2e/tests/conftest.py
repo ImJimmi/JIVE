@@ -1,5 +1,6 @@
 import os
 import subprocess
+from contextlib import contextmanager
 import sys
 from pathlib import Path
 
@@ -48,18 +49,33 @@ def find_executable(example: str) -> Path:
     return candidates[0]
 
 
-@pytest.fixture(scope="module")
-def window(request: pytest.FixtureRequest):
-    example = request.param
+@contextmanager
+def launch(example: str):
     process = subprocess.Popen([find_executable(example)])
 
     try:
+        yield process
+    finally:
+        process.terminate()
+        process.wait(timeout=10)
+
+
+@pytest.fixture(scope="module")
+def process(request: pytest.FixtureRequest):
+    with launch(request.param) as process:
+        yield process
+
+
+@pytest.fixture(scope="module")
+def window(request: pytest.FixtureRequest):
+    if sys.platform.startswith("linux"):
+        pytest.skip("JUCE has no accessibility support on Linux")
+
+    example = request.param
+
+    with launch(example) as process:
         app = xa11y.App.by_pid(process.pid, timeout=20)
         locator = app.locator(f"window[name='{EXAMPLES[example]}']")
         locator.wait_visible(timeout=20)
         locator.descendant("combo_box").first().wait_visible(timeout=20)
         yield locator
-    finally:
-        process.terminate()
-        process.wait(timeout=10)
-
