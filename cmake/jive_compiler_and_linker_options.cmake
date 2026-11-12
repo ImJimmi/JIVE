@@ -17,6 +17,7 @@ if (APPLE)
     target_compile_options(jive_compiler_and_linker_options
     INTERFACE
         -Werror
+        -Wno-error=deprecated-declarations
     )
 
     target_link_options(jive_compiler_and_linker_options
