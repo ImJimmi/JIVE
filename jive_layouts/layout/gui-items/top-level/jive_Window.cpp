@@ -4,6 +4,14 @@
 
 #if JUCE_MAC
     #include "jive_Window_mac.h"
+#elif JUCE_WINDOWS
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
 #endif
 
 #ifndef JUCE_APPLICATION_NAME
@@ -184,6 +192,7 @@ namespace jive
 #endif
 
         updateTitleBarColour();
+        updateBackdrop();
     }
 
     void Window::resized()
@@ -231,7 +240,24 @@ namespace jive
         if (peer == nullptr || !isUsingNativeTitleBar())
             return;
 
-        const auto colour = toColour(jiveLookAndFeel.findMostApplicableStyles(*getComponent()).find<Fill>("title-bar"));
+        const auto colour = [this]() -> std::optional<juce::Colour> {
+            const auto styles = jiveLookAndFeel.findMostApplicableStyles(*getComponent());
+
+            if (const auto titleBar = styles.find<Fill>("title-bar"))
+                return toColour(titleBar);
+
+            // By default, the title bar matches the window's background. A
+            // backdrop is left to DWM so the material extends into the title bar.
+            if (const auto background = styles.find<Fill>("background"))
+            {
+                if (background->getBackdrop().has_value())
+                    return std::nullopt;
+
+                return toColour(background);
+            }
+
+            return getBackgroundColour();
+        }();
 
         if (colour == appliedTitleBarColour && peer->getNativeHandle() == titleBarColourHandle)
             return;
@@ -254,6 +280,194 @@ namespace jive
 
         appliedTitleBarColour = colour;
         titleBarColourHandle = peer->getNativeHandle();
+#endif
+    }
+
+#if JUCE_WINDOWS
+    namespace windows
+    {
+        static constexpr auto backdropProperty = L"jive.backdrop";
+        static constexpr auto originalProcProperty = L"jive.backdrop.wndproc";
+
+        static void fillRedirectionSurfaceBlack(HWND hwnd)
+        {
+            RECT clientArea{};
+            GetClientRect(hwnd, &clientArea);
+
+            if (auto* const dc = GetDC(hwnd))
+            {
+                FillRect(dc, &clientArea, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+                ReleaseDC(hwnd, dc);
+            }
+        }
+
+        // DWM only draws the backdrop where the window's GDI redirection
+        // surface is black; JUCE's Direct2D content is composited on top of
+        // it. JUCE validates paint regions without BeginPaint, so the surface
+        // is never erased and stays white. This fills it with black whenever
+        // the window paints.
+        static LRESULT CALLBACK backdropWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+        {
+            const auto originalProc = reinterpret_cast<WNDPROC>(GetPropW(hwnd, originalProcProperty));
+
+            if (GetPropW(hwnd, backdropProperty) != nullptr)
+            {
+                if (message == WM_ERASEBKGND)
+                    return 1;
+
+                if (message == WM_PAINT)
+                    fillRedirectionSurfaceBlack(hwnd);
+            }
+
+            if (message == WM_NCDESTROY)
+            {
+                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(originalProc));
+                RemovePropW(hwnd, backdropProperty);
+                RemovePropW(hwnd, originalProcProperty);
+            }
+
+            return CallWindowProcW(originalProc, hwnd, message, wParam, lParam);
+        }
+
+        static void setBlackRedirectionSurface(HWND hwnd, bool shouldBeBlack)
+        {
+            if (GetPropW(hwnd, originalProcProperty) == nullptr)
+            {
+                const auto originalProc = GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+                SetPropW(hwnd, originalProcProperty, reinterpret_cast<HANDLE>(originalProc));
+                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&backdropWindowProc));
+            }
+
+            if (shouldBeBlack)
+            {
+                SetPropW(hwnd, backdropProperty, reinterpret_cast<HANDLE>(1));
+                fillRedirectionSurfaceBlack(hwnd);
+            }
+            else
+            {
+                RemovePropW(hwnd, backdropProperty);
+            }
+
+            InvalidateRect(hwnd, nullptr, FALSE);
+        }
+
+        static void setBackdrop(void* hwnd,
+                                std::optional<Backdrop> backdrop,
+                                bool darkMode,
+                                bool hasNativeShadow)
+        {
+            struct Margins
+            {
+                int left, right, top, bottom;
+            };
+
+            using SetWindowAttribute = long(__stdcall*)(void*, unsigned long, const void*, unsigned long);
+            using ExtendFrameIntoClientArea = long(__stdcall*)(void*, const Margins*);
+            static juce::DynamicLibrary dwmapi{ "dwmapi.dll" };
+            static const auto setWindowAttribute = reinterpret_cast<SetWindowAttribute>(dwmapi.getFunction("DwmSetWindowAttribute"));
+            static const auto extendFrame = reinterpret_cast<ExtendFrameIntoClientArea>(dwmapi.getFunction("DwmExtendFrameIntoClientArea"));
+
+            if (setWindowAttribute == nullptr || extendFrame == nullptr)
+                return;
+
+            static constexpr unsigned long immersiveDarkModeAttribute = 20;
+            static constexpr unsigned long systemBackdropTypeAttribute = 38;
+            static constexpr int backdropNone = 1;
+            static constexpr int backdropMica = 2;
+            static constexpr int backdropAcrylic = 3;
+
+            const int type = !backdrop.has_value()
+                               ? backdropNone
+                               : (*backdrop == Backdrop::glass ? backdropAcrylic : backdropMica);
+
+            // The material's light/dark variant follows the window's dark-mode flag.
+            const int useDarkMode = darkMode ? 1 : 0;
+            setWindowAttribute(hwnd, immersiveDarkModeAttribute, &useDarkMode, sizeof(useDarkMode));
+
+            // DWM only draws the material behind the client area if the frame
+            // is extended over it. JUCE's Direct2D renderer presents through a
+            // premultiplied-alpha composition swap chain, so transparent pixels
+            // let the material show through. Without a backdrop, restore the
+            // margins JUCE itself uses.
+            const auto margins = backdrop.has_value()
+                                   ? Margins{ -1, -1, -1, -1 }
+                                   : (hasNativeShadow ? Margins{ 1, 1, 0, 0 } : Margins{ 0, 0, 0, 0 });
+            extendFrame(hwnd, &margins);
+
+            setWindowAttribute(hwnd, systemBackdropTypeAttribute, &type, sizeof(type));
+            setBlackRedirectionSurface(static_cast<HWND>(hwnd), backdrop.has_value());
+        }
+    } // namespace windows
+#endif
+
+    void Window::updateBackdrop()
+    {
+#if JUCE_MAC || JUCE_WINDOWS
+        auto* const peer = getPeer();
+
+        if (peer == nullptr)
+            return;
+
+        const auto backdrop = jiveLookAndFeel.findMostApplicableStyles(*getComponent())
+                                  .find<Fill>("background")
+                                  .value_or(Fill{})
+                                  .getBackdrop();
+
+        if (backdrop == appliedBackdrop && peer->getNativeHandle() == backdropHandle)
+            return;
+
+        appliedBackdrop = backdrop;
+        backdropHandle = peer->getNativeHandle();
+
+        // AppKit throws if the view hierarchy or the window's opacity changes
+        // mid-paint, so the backdrop is applied after this paint. Windows does
+        // the same so that changing the background doesn't repaint mid-paint.
+        juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<Window>{ this }, backdrop] {
+            if (safeThis != nullptr)
+                safeThis->applyBackdrop(backdrop);
+        });
+#endif
+    }
+
+    void Window::applyBackdrop([[maybe_unused]] std::optional<Backdrop> backdrop)
+    {
+#if JUCE_MAC
+        auto* const peer = getPeer();
+
+        if (peer == nullptr)
+            return;
+
+        if (backdrop.has_value())
+            setBackgroundColour(juce::Colours::transparentBlack);
+        else
+            removeColour(backgroundColourId);
+
+        setOpaque(getBackgroundColour().isOpaque());
+        macos::setBackdrop(peer->getNativeHandle(), backdrop);
+#elif JUCE_WINDOWS
+        auto* const peer = getPeer();
+
+        if (peer == nullptr)
+            return;
+
+        // The window stays opaque as far as JUCE is concerned: a non-opaque
+        // window becomes a layered window, which DWM can't draw a backdrop
+        // behind (and isn't allowed with a native title bar). The transparent
+        // background is still presented with alpha by the Direct2D renderer.
+        // setBackgroundColour() would make the window non-opaque, so the
+        // colour is set directly.
+        if (backdrop.has_value())
+            setColour(backgroundColourId, juce::Colours::transparentBlack);
+        else
+            removeColour(backgroundColourId);
+
+        setOpaque(true);
+        const auto themeBackground = getLookAndFeel().findColour(backgroundColourId);
+        windows::setBackdrop(peer->getNativeHandle(),
+                             backdrop,
+                             themeBackground.getPerceivedBrightness() < 0.5f,
+                             !isUsingNativeTitleBar() && isDropShadowEnabled());
+        repaint();
 #endif
     }
 
@@ -399,6 +613,7 @@ public:
         testName();
         testTitleBarHeight();
         testIntegratedTitleBar();
+        testBackdrop();
         testTheme();
         testShownOnceCreated();
     }
@@ -784,6 +999,31 @@ private:
         tree.setProperty("integrated-title-bar", true, nullptr);
         expectEquals(window.getPeer()->getFrameSize().getTop(), 0);
         expectEquals(item->getComponent()->getHeight(), 150);
+    #endif
+    }
+
+    void testBackdrop()
+    {
+        beginTest("a backdrop is applied after painting, since AppKit throws if the window changes mid-paint");
+
+    #if JUCE_MAC
+        juce::ValueTree tree{
+            "Window",
+            {
+                { "native", true },
+                { "width", 200 },
+                { "height", 150 },
+                { "style", new jive::Object{ { "background", "glass" } } },
+            },
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                            .toType<jive::Window>();
+        const auto* const peer = window.getPeer();
+        juce::ignoreUnused(window.createComponentSnapshot(window.getLocalBounds()));
+        expect(window.isOpaque());
+        expect(window.getPeer() == peer);
     #endif
     }
 

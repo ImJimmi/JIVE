@@ -27,6 +27,8 @@ namespace jive
         void updateResizeLimits();
         void updateIntegratedTitleBar();
         void updateTitleBarColour();
+        void updateBackdrop();
+        void applyBackdrop(std::optional<Backdrop> backdrop);
         void moved() override;
         void parentSizeChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
@@ -70,6 +72,10 @@ namespace jive
         };
 
         TitleBarDragger titleBarDragger{ *this };
+#if JUCE_MAC || JUCE_WINDOWS
+        std::optional<Backdrop> appliedBackdrop;
+        void* backdropHandle = nullptr;
+#endif
 #if JUCE_MAC
         void* integratedTitleBarHandle = nullptr;
 #elif JUCE_WINDOWS

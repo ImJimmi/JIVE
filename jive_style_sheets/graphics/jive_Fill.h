@@ -19,6 +19,12 @@ namespace jive
 
     struct Styles;
 
+    enum class Backdrop
+    {
+        glass,
+        tinted,
+    };
+
     class Fill
     {
     public:
@@ -33,6 +39,7 @@ namespace jive
         Fill(const juce::ColourGradient&);
         Fill(const juce::FillType&);
         Fill(const Gradient&);
+        Fill(Backdrop);
 
         // If the given string isn't valid, this will fallback to transparent black.
         // Use fromString() and check the optional result for better error handling.
@@ -42,6 +49,7 @@ namespace jive
         [[nodiscard]] bool isColour() const;
         [[nodiscard]] bool isGradient() const;
         [[nodiscard]] std::optional<Gradient> getJiveGradient() const;
+        [[nodiscard]] std::optional<Backdrop> getBackdrop() const;
         [[nodiscard]] juce::FillType toJuceFillType(const juce::Rectangle<float>& bounds = juce::Rectangle<float>{}) const;
 
         Fill& operator=(const juce::Colour&);
@@ -59,11 +67,12 @@ namespace jive
         [[nodiscard]] bool operator==(const juce::ColourGradient&) const;
         [[nodiscard]] bool operator==(const juce::FillType&) const;
         [[nodiscard]] bool operator==(const Gradient&) const;
+        [[nodiscard]] bool operator==(Backdrop) const;
 
         [[nodiscard]] static std::optional<Fill> fromString(const juce::String&);
 
     private:
-        std::variant<juce::FillType, Gradient> fill;
+        std::variant<juce::FillType, Gradient, Backdrop> fill;
     };
 
     template <>

@@ -30,6 +30,11 @@ namespace jive
     {
     }
 
+    Fill::Fill(Backdrop backdrop)
+        : fill{ backdrop }
+    {
+    }
+
     Fill::Fill(const juce::String& fillString)
     {
         *this = fromString(fillString).value_or(juce::Colours::transparentBlack);
@@ -59,10 +64,21 @@ namespace jive
         return std::nullopt;
     }
 
+    std::optional<Backdrop> Fill::getBackdrop() const
+    {
+        if (std::holds_alternative<Backdrop>(fill))
+            return std::get<Backdrop>(fill);
+
+        return std::nullopt;
+    }
+
     juce::FillType Fill::toJuceFillType(const juce::Rectangle<float>& bounds) const
     {
         if (std::holds_alternative<juce::FillType>(fill))
             return std::get<juce::FillType>(fill);
+
+        if (std::holds_alternative<Backdrop>(fill))
+            return juce::FillType{ juce::Colours::transparentBlack };
 
         return juce::FillType{ std::get<Gradient>(fill).toJuceColourGradient(bounds) };
     }
@@ -127,8 +143,26 @@ namespace jive
         return std::holds_alternative<Gradient>(fill) && std::get<Gradient>(fill) == gradient;
     }
 
+    bool Fill::operator==(Backdrop backdrop) const
+    {
+        return getBackdrop() == backdrop;
+    }
+
+    [[nodiscard]] static std::optional<Backdrop> parseBackdrop(const juce::String& text)
+    {
+        if (text == "glass")
+            return Backdrop::glass;
+        if (text == "tinted")
+            return Backdrop::tinted;
+
+        return std::nullopt;
+    }
+
     std::optional<Fill> Fill::fromString(const juce::String& fillString)
     {
+        if (auto backdrop = parseBackdrop(fillString))
+            return Fill{ *backdrop };
+
         if (auto gradient = Gradient::fromString(fillString))
             return Fill{ *gradient };
 
@@ -742,6 +776,8 @@ namespace juce
     {
         if (v.isString())
         {
+            if (auto backdrop = jive::parseBackdrop(v.toString()))
+                return jive::Fill{ *backdrop };
             if (auto gradient = jive::Gradient::fromString(v.toString()))
                 return jive::Fill{ *gradient };
 
@@ -756,6 +792,8 @@ namespace juce
 
     var VariantConverter<jive::Fill>::toVar(const jive::Fill& fill)
     {
+        if (const auto backdrop = fill.getBackdrop())
+            return *backdrop == jive::Backdrop::glass ? "glass" : "tinted";
         if (auto gradient = fill.getJiveGradient())
             return jive::toVar(*gradient);
 
@@ -766,6 +804,8 @@ namespace juce
     {
         if (v.isString())
         {
+            if (auto backdrop = jive::parseBackdrop(v.toString()))
+                return jive::Fill{ *backdrop };
             if (auto gradient = jive::Gradient::fromString(v.toString()))
                 return jive::Fill{ *gradient };
         }
@@ -786,7 +826,7 @@ namespace juce
 
     String VariantConverter<jive::Fill>::getSyntax()
     {
-        return "colour (" + VariantConverter<Colour>::getSyntax() + ") or gradient (" + VariantConverter<jive::Gradient>::getSyntax() + ")";
+        return "colour (" + VariantConverter<Colour>::getSyntax() + "), gradient (" + VariantConverter<jive::Gradient>::getSyntax() + "), glass, or tinted";
     }
 } // namespace juce
 
@@ -821,6 +861,12 @@ static jive::UnitTest fillParsingTest{
         test.expect(jive::tryFromVar<jive::Fill>("red") == jive::Fill{ juce::Colours::red });
         test.expect(jive::tryFromVar<jive::Fill>(juce::int64{ 0xff6495ed }) == jive::Fill{ juce::Colour{ 0xff6495ed } });
         test.expect(!jive::tryFromVar<jive::Fill>("nope").has_value());
+
+        test.expect(jive::tryFromVar<jive::Fill>("glass") == jive::Fill{ jive::Backdrop::glass });
+        test.expect(jive::tryFromVar<jive::Fill>("tinted") == jive::Fill{ jive::Backdrop::tinted });
+        test.expect(jive::Fill{ "glass" }.getBackdrop() == jive::Backdrop::glass);
+        test.expect(jive::Fill{ jive::Backdrop::tinted }.toJuceFillType() == juce::FillType{ juce::Colours::transparentBlack });
+        test.expect(!jive::Fill{ juce::Colours::red }.getBackdrop().has_value());
     },
 };
 #endif

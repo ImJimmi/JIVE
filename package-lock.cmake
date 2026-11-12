@@ -1,5 +1,5 @@
 CPMDeclarePackage(JUCE
-    GIT_TAG 9.0.5
+    GIT_TAG master
     GITHUB_REPOSITORY juce-framework/JUCE
     SYSTEM YES
     EXCLUDE_FROM_ALL YES
