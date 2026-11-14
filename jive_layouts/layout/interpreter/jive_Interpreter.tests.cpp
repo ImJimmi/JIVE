@@ -1210,7 +1210,7 @@ static jive::UnitTest localisedWidgetsTest{
             <Component width="200" height="200" lang="french.strings">
                 <ComboBox id="combo-box" tooltip="pick-a-fruit">
                     <Header>fruit</Header>
-                    <Option>apple</Option>
+                    <Option selected="true">apple</Option>
                 </ComboBox>
                 <Button id="button" tooltip="say-hello" description="say-hello">ok</Button>
             </Component>
@@ -1227,6 +1227,7 @@ static jive::UnitTest localisedWidgetsTest{
             return juce::String{};
         };
         test.expectEquals(comboBox.getItemText(0), juce::String{ "Pomme" });
+        test.expectEquals(comboBox.getText(), juce::String{ "Pomme" });
         test.expectEquals(getHeaderText(), juce::String{ "Fruits" });
         test.expectEquals(comboBox.getTooltip(), juce::String{ "Choisissez un fruit" });
 
@@ -1238,6 +1239,7 @@ static jive::UnitTest localisedWidgetsTest{
 
         item->state.removeProperty("lang", nullptr);
         test.expectEquals(comboBox.getItemText(0), juce::String{ "apple" });
+        test.expectEquals(comboBox.getText(), juce::String{ "apple" });
         test.expectEquals(getHeaderText(), juce::String{ "fruit" });
         test.expectEquals(comboBox.getTooltip(), juce::String{ "pick-a-fruit" });
         test.expectEquals(button.getTooltip(), juce::String{ "say-hello" });

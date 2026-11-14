@@ -1,0 +1,8 @@
+<Editor
+    width="1120"
+    height="850"
+    style="public/styles/Styles.json"
+    lang="public/locales/english.strings"
+>
+    <Component template="public/views/templates/Synth.xml" />
+</Editor>

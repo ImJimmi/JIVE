@@ -1,0 +1,9 @@
+{
+  "background": "linear-gradient(to bottom, #CFE8D6, #F2FBF4)",
+  "fill": "linear-gradient(to bottom, #0B1A11, #1E3A29)",
+  "track": "linear-gradient(to bottom, $leaf, $lime)",
+  "accent": "rgba(74, 222, 128, 0.25)",
+  "border": "rgba(7, 18, 12, 0.35)",
+  "foreground": "#5C7D67",
+  "shadow": "0 4px 14px rgba(0, 0, 0, 0.5)"
+}

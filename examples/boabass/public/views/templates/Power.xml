@@ -1,0 +1,1 @@
+<Button class="power" parameter="{{ parameter }}" toggleable="true" toggle-on-click="true" padding="0" width="30" height="16" tooltip="on-off" />

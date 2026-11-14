@@ -81,6 +81,7 @@ namespace jive
         void componentVisibilityChanged(juce::Component&) final;
         void componentParentHierarchyChanged(juce::Component&) final;
 
+        [[nodiscard]] juce::Path getShape() const;
         void updateBounds();
         void updateVisibility();
         void updateParent();
@@ -90,6 +91,9 @@ namespace jive
         juce::Component::SafePointer<juce::Component> parent;
         std::vector<juce::Component::SafePointer<juce::Component>> ancestors;
         Shadow shadow;
+        juce::Image renderedShadow;
+        juce::Rectangle<int> renderedShadowBounds;
+        juce::Path renderedShadowShape;
     };
 
     // Wraps a shadow component in a reference-counted object so it can be

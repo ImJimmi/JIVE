@@ -12,10 +12,12 @@ END_JUCE_MODULE_DECLARATION */
 
 #include <jive_style_sheets/jive_style_sheets.h>
 
-#ifdef JucePlugin_Name
-    #define JIVE_IS_PLUGIN_PROJECT 1
-#else
-    #define JIVE_IS_PLUGIN_PROJECT 0
+#ifndef JIVE_IS_PLUGIN_PROJECT
+    #ifdef JucePlugin_Name
+        #define JIVE_IS_PLUGIN_PROJECT 1
+    #else
+        #define JIVE_IS_PLUGIN_PROJECT 0
+    #endif
 #endif
 
 namespace juce

@@ -287,6 +287,63 @@ namespace jive
         return result;
     }
 
+#if JUCE_MAJOR_VERSION >= 8
+    [[nodiscard]] static auto getHorizontalAlignment(const juce::AttributedString& source)
+    {
+        if (source.getJustification().testFlags(juce::Justification::horizontallyCentred))
+            return 0.5f;
+
+        if (source.getJustification().testFlags(juce::Justification::right))
+            return 1.0f;
+
+        return 0.0f;
+    }
+
+    // JUCE 8 shares a ligature's advance between the ligature's glyph and
+    // placeholders for the other characters it replaces, and then leaves the
+    // placeholders out of the layout. A run ending in a ligature loses the
+    // rest of its width, so its line measures too narrow and gets clipped.
+    static void restoreTrailingLigatureWidths(juce::TextLayout& layout, const juce::AttributedString& source)
+    {
+        const auto alignment = getHorizontalAlignment(source);
+        auto changed = false;
+
+        for (auto lineIndex = 0; lineIndex < layout.getNumLines(); lineIndex++)
+        {
+            auto& line = layout.getLine(lineIndex);
+            const auto widthBefore = line.getLineBoundsX().getLength();
+
+            for (auto* run : line.runs)
+            {
+                const auto runText = source
+                                         .getText()
+                                         .substring(run->stringRange.getStart(), run->stringRange.getEnd())
+                                         .trimEnd();
+
+                if (run->glyphs.isEmpty() || run->glyphs.size() >= runText.length())
+                    continue;
+
+                const auto byAnchor = [](const auto& a, const auto& b) {
+                    return a.anchor.x < b.anchor.x;
+                };
+                const auto [first, last] = std::minmax_element(std::begin(run->glyphs), std::end(run->glyphs), byAnchor);
+                const auto right = first->anchor.x + juce::GlyphArrangement::getStringWidth(run->font, runText);
+
+                if (right > last->anchor.x + last->width)
+                {
+                    last->width = right - last->anchor.x;
+                    changed = true;
+                }
+            }
+
+            line.lineOrigin.x -= (line.getLineBoundsX().getLength() - widthBefore) * alignment;
+        }
+
+        if (changed)
+            layout.recalculateSize();
+    }
+#endif
+
     const juce::TextLayout& TextComponent::getTextLayout(float maxWidth) const
     {
         JIVE_TRACE("max-width", maxWidth);
@@ -313,7 +370,11 @@ namespace jive
             textLayouts.erase(std::begin(textLayouts));
 
         auto& created = textLayouts.emplace_back(CachedTextLayout{ maxWidth, {} });
-        created.layout.createLayout(withDirectionMark(textLayoutsSource), maxWidth);
+        const auto source = withDirectionMark(textLayoutsSource);
+        created.layout.createLayout(source, maxWidth);
+#if JUCE_MAJOR_VERSION >= 8
+        restoreTrailingLigatureWidths(created.layout, source);
+#endif
 
         return created.layout;
     }
@@ -350,6 +411,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
+    #include <JiveTestFonts.h>
+
 class TextComponentUnitTest : public juce::UnitTest
 {
 public:
@@ -366,6 +429,7 @@ public:
         testLayoutsFollowChanges();
         testDefaultForeground();
         testReadingDirection();
+        testTrailingLigatures();
     }
 
 private:
@@ -591,6 +655,114 @@ private:
             else
                 expectLessThan(fullStopX, (width.getStart() + width.getEnd()) / 2.0f);
     #endif
+        }
+    }
+
+    // Rubik replaces "ff" with a single ligature glyph.
+    struct LigatureText
+    {
+        explicit LigatureText(const juce::String& string,
+                              juce::Justification justification = juce::Justification::centredLeft)
+        {
+            lookAndFeel.addStyles(jive::StyleSelector::makeInlineStyleSelector(text),
+                                  jive::Styles{}
+                                      .withFontFamily("Rubik")
+                                      .withFontPointSize(13.0f)
+                                      .withTextAlignment(justification));
+            text.sendLookAndFeelChange();
+            text.setText(string);
+        }
+
+        [[nodiscard]] juce::Font getFont() const
+        {
+            return text.getAttributedString().getAttribute(0).font;
+        }
+
+        [[nodiscard]] float getNaturalWidth(const juce::String& string) const
+        {
+            return juce::GlyphArrangement::getStringWidth(getFont(), string);
+        }
+
+        const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(jive_test_fonts::RubikRegular_ttf,
+                                                                                     static_cast<std::size_t>(jive_test_fonts::RubikRegular_ttfSize));
+        jive::TextComponent text;
+        jive::LookAndFeel lookAndFeel{ text };
+    };
+
+    [[nodiscard]] static int findRightmostInk(const juce::Image& image)
+    {
+        for (auto x = image.getWidth() - 1; x >= 0; x--)
+        {
+            for (auto y = 0; y < image.getHeight(); y++)
+            {
+                if (image.getPixelAt(x, y).getAlpha() > 0)
+                    return x;
+            }
+        }
+
+        return -1;
+    }
+
+    void testTrailingLigatures()
+    {
+        beginTest("ligatures / a line ending in a ligature is as wide as its text");
+        {
+            LigatureText ligature{ "Cutoff" };
+            const auto naturalWidth = ligature.getNaturalWidth("Cutoff");
+
+            const auto& layout = ligature.text.getTextLayout(65535.0f);
+            expectEquals(layout.getNumLines(), 1);
+            expectWithinAbsoluteError(layout.getWidth(), naturalWidth, 0.05f);
+        }
+
+        beginTest("ligatures / aligned lines ending in a ligature stay within the layout's width");
+        for (const juce::Justification justification : {
+                 juce::Justification::centredLeft,
+                 juce::Justification::centred,
+                 juce::Justification::centredRight,
+             })
+        {
+            LigatureText ligature{ "Cutoff", justification };
+            const auto width = std::ceil(ligature.getNaturalWidth("Cutoff"));
+            const auto& line = ligature.text.getTextLayout(width).getLine(0);
+            const auto bounds = line.getLineBoundsX();
+
+            expectGreaterOrEqual(bounds.getStart(), -0.01f);
+            expectLessOrEqual(bounds.getEnd(), width + 0.01f);
+            expectWithinAbsoluteError(bounds.getLength(), ligature.getNaturalWidth("Cutoff"), 0.05f);
+        }
+
+        beginTest("ligatures / wrapped lines ending in a ligature are as wide as their text");
+        {
+            LigatureText ligature{ "off off off off" };
+            const auto& layout = ligature.text.getTextLayout(std::ceil(ligature.getNaturalWidth("off off")) + 1.0f);
+            expectGreaterThan(layout.getNumLines(), 1);
+
+            for (auto i = 0; i < layout.getNumLines(); i++)
+            {
+                const auto& line = layout.getLine(i);
+                const auto lineText = ligature.text.getAttributedString().getText().substring(line.stringRange.getStart(), line.stringRange.getEnd()).trim();
+                expectWithinAbsoluteError(line.getLineBoundsX().getLength(), ligature.getNaturalWidth(lineText), 0.05f, lineText);
+            }
+        }
+
+        beginTest("ligatures / text sized to its natural width draws every letter");
+        {
+            LigatureText ligature{ "Cutoff" };
+            const auto& naturalLayout = ligature.text.getTextLayout(65535.0f);
+            const auto width = static_cast<int>(std::ceil(naturalLayout.getWidth())) + 1;
+            const auto height = static_cast<int>(std::ceil(naturalLayout.getHeight()));
+            ligature.text.setSize(width, height);
+
+            juce::Image reference{ juce::Image::ARGB, width + 20, height, true };
+            {
+                juce::Graphics g{ reference };
+                g.setColour(juce::Colours::black);
+                g.setFont(ligature.getFont());
+                g.drawSingleLineText("Cutoff", 0, juce::roundToInt(ligature.getFont().getAscent()));
+            }
+
+            expectWithinAbsoluteError(findRightmostInk(paint(ligature.text)), findRightmostInk(reference), 1);
         }
     }
 };

@@ -314,8 +314,13 @@ namespace jive
     {
         GuiItemDecorator::localisedStringsChanged();
 
+        const auto selectedID = getComboBox().getSelectedId();
+
         for (auto* option : options)
             option->updateText();
+
+        if (selectedID != 0)
+            getComboBox().setSelectedId(selectedID, juce::dontSendNotification);
 
         translateHeaders();
         getComboBox().setTooltip(translate(tooltip));

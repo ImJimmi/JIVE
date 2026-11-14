@@ -343,20 +343,12 @@ namespace jive
 
     void ShadowComponent::paint(juce::Graphics& g)
     {
-        if (component == nullptr)
+        if (component == nullptr || getLocalBounds().isEmpty())
             return;
 
         JIVE_TRACE();
 
-        juce::Path shape;
-
-        if (component->getProperties().contains(ids::shadowPath()))
-            shape.restoreFromString(component->getProperties()[ids::shadowPath()].toString());
-        else
-            shape.addRectangle(component->getLocalBounds());
-
-        const auto margin = static_cast<float>(calculateMargin(shadow));
-        shape.applyTransform(juce::AffineTransform::translation(margin, margin));
+        const auto shape = getShape();
 
         auto offsetShape = shape;
         offsetShape.applyTransform(juce::AffineTransform::translation(-shadow.getOffset()));
@@ -367,15 +359,47 @@ namespace jive
         clipRegion.setUsingNonZeroWinding(false);
         g.reduceClipRegion(clipRegion);
 
-        shadow.draw(g, getLocalBounds(), shape);
+        if (!renderedShadow.isValid() || renderedShadowBounds != getLocalBounds() || renderedShadowShape != shape)
+        {
+            renderedShadow = juce::Image{ juce::Image::ARGB, getWidth(), getHeight(), true };
+            juce::Graphics shadowGraphics{ renderedShadow };
+            shadow.draw(shadowGraphics, getLocalBounds(), shape);
+            renderedShadowBounds = getLocalBounds();
+            renderedShadowShape = shape;
+        }
+
+        g.drawImageAt(renderedShadow, 0, 0);
     }
 
+    juce::Path ShadowComponent::getShape() const
+    {
+        juce::Path shape;
+
+        if (component->getProperties().contains(ids::shadowPath()))
+            shape.restoreFromString(component->getProperties()[ids::shadowPath()].toString());
+        else
+            shape.addRectangle(component->getLocalBounds());
+
+        const auto margin = static_cast<float>(calculateMargin(shadow));
+        shape.applyTransform(juce::AffineTransform::translation(margin, margin));
+
+        return shape;
+    }
+
+    // The attached component's painter may change its shadow path while
+    // painting, which is after this shadow (behind it) has already painted.
     void ShadowComponent::setShadow(const Shadow& newShadow)
     {
         if (newShadow == shadow)
+        {
+            if (component != nullptr && renderedShadow.isValid() && getShape() != renderedShadowShape)
+                repaint();
+
             return;
+        }
 
         shadow = newShadow;
+        renderedShadow = {};
         updateBounds();
         repaint();
     }
@@ -614,6 +638,58 @@ static jive::UnitTest shadowFallsBackToTopLevelTest{
         jive::ShadowComponent shadow{ target };
 
         test.expect(shadow.getParentComponent() == &root);
+    },
+};
+static jive::UnitTest shadowRepaintsWhenPathChangesTest{
+    "jive",
+    "jive::ShadowComponent",
+    "Repaints when the attached component's shadow path changes after it painted",
+    [](auto& test) {
+        struct RepaintSpy : juce::CachedComponentImage
+        {
+            void paint(juce::Graphics&) final {}
+            bool invalidateAll() final { return invalidated = true; }
+            bool invalidate(const juce::Rectangle<int>&) final { return invalidated = true; }
+            void releaseResources() final {}
+
+            bool invalidated = false;
+        };
+
+        juce::Component root;
+        root.setComponentID("root");
+        root.setSize(100, 100);
+
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(jive::StyleSelector{ "#root" },
+                              jive::Styles{}.withBackground(juce::Colours::black));
+
+        juce::Component target;
+        target.setBounds(40, 40, 20, 20);
+        juce::Path shape;
+        shape.addRectangle(0.0f, 0.0f, 10.0f, 10.0f);
+        target.getProperties().set(jive::ids::shadowPath(), shape.toString());
+        root.addAndMakeVisible(target);
+
+        const auto style = jive::Shadow{}.setColour(juce::Colours::red);
+        jive::ShadowComponent shadow{ target };
+        shadow.setShadow(style);
+
+        juce::Image image{ juce::Image::ARGB, shadow.getWidth(), shadow.getHeight(), true };
+        juce::Graphics g{ image };
+        shadow.paint(g);
+
+        auto* spy = new RepaintSpy;
+        shadow.setCachedComponentImage(spy);
+        spy->invalidated = false;
+
+        shadow.setShadow(style);
+        test.expect(!spy->invalidated);
+
+        shape.clear();
+        shape.addRectangle(0.0f, 0.0f, 20.0f, 20.0f);
+        target.getProperties().set(jive::ids::shadowPath(), shape.toString());
+        shadow.setShadow(style);
+        test.expect(spy->invalidated);
     },
 };
 #endif

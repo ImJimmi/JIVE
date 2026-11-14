@@ -75,7 +75,7 @@ namespace jive
         if (auto* thisParent = dynamic_cast<const GuiItemDecorator*>(getParent()))
         {
             if (auto* parentContainer = thisParent->getTopLevelDecorator().toType<ContainerItem>())
-                constraints = constraints.getIntersection(parentContainer->getContentConstraints());
+                constraints = constraints.getIntersection(parentContainer->getContentConstraints().withZeroOrigin());
         }
 
         return box
