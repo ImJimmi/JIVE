@@ -255,6 +255,25 @@ Progress bars' ranges are always normalised from `0` to `1`, and are always line
 | --------- | ------------------------------------------ |
 | `"value"` | The normalised progress, from `0` to `1`.. |
 
+### Keyboards
+
+The following properties apply only to `<Keyboard>` elements.
+
+A keyboard's keys always fill its width. Note names count middle C (MIDI note 60) as `C4`.
+
+Style the keys with `Keyboard > WhiteKey` and `Keyboard > BlackKey` selectors, using properties like `background`, `border`, `border-radius`, `foreground` and `font-size`. Keys being played match `:active`, and the key under the mouse matches `:hover`. It's only available when the project uses the `juce_audio_utils` module.
+
+| Property       | Description                                                                                          |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| `"end-note"`   | The highest key shown, as a MIDI note number or a note name such as `C6` or `F#5`. Defaults to `C6`. |
+| `"start-note"` | The lowest key shown, as a MIDI note number or a note name such as `C2` or `Bb1`. Defaults to `C2`.  |
+
+To share a `juce::MidiKeyboardState` with your processor, give it to the interpreter before interpreting:
+
+```cpp
+interpreter.setMidiKeyboardState(keyboardState);
+```
+
 ### Images
 
 The following properties apply only to `<Image>` and `<svg>` elements.

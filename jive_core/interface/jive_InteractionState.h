@@ -28,12 +28,15 @@ namespace jive
             ;
     }
 
+    // Likewise, some are pressed on behalf of something else, such as the
+    // stand-in for a key on a keyboard.
     [[nodiscard]] inline auto isMouseDown(const juce::Component& component)
     {
         if (ignoreInteractions)
             return false;
 
         return component.isMouseButtonDown(true)
+            || static_cast<bool>(component.getProperties()[ids::pressed()])
 #if JIVE_UNIT_TESTS
             || static_cast<bool>(component.getProperties()["jive::active"])
 #endif

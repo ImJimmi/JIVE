@@ -743,17 +743,19 @@ namespace jive
             }
         }
 
-        std::sort(std::begin(allApplicable),
-                  std::end(allApplicable),
-                  [](const auto& first, const auto& second) {
-                      const auto& firstSelector = *std::get<const StyleSelector*>(first);
-                      const auto& secondSelector = *std::get<const StyleSelector*>(second);
+        // As in CSS, of two equally specific rules, the one added last wins.
+        std::reverse(std::begin(allApplicable), std::end(allApplicable));
+        std::stable_sort(std::begin(allApplicable),
+                         std::end(allApplicable),
+                         [](const auto& first, const auto& second) {
+                             const auto& firstSelector = *std::get<const StyleSelector*>(first);
+                             const auto& secondSelector = *std::get<const StyleSelector*>(second);
 
-                      if (firstSelector == secondSelector)
-                          return std::get<GenerationOffset>(first) < std::get<GenerationOffset>(second);
+                             if (firstSelector == secondSelector)
+                                 return std::get<GenerationOffset>(first) < std::get<GenerationOffset>(second);
 
-                      return firstSelector < secondSelector;
-                  });
+                             return firstSelector < secondSelector;
+                         });
 
         return allApplicable;
     }

@@ -16,6 +16,7 @@ namespace jive::themes
         static constexpr auto neonCyan = "#3DE8FF";
         static constexpr auto neonCyanHover = "#7AF0FF";
         static constexpr auto neonCyanActive = "#22C4DB";
+        static constexpr auto hazeHover = "#FFD6F5";
 
         static constexpr auto duskGradient = "linear-gradient(to bottom, #4B3584, #8E4A92)";
         static constexpr auto neonGradient = "linear-gradient(to right, #FF4FD8, #3DE8FF)";
@@ -155,5 +156,29 @@ namespace jive::themes
                           .withBorderFill(synthwave::neonGradient)
                           .withShadow(synthwave::neonGlow)
                           .withTrack(synthwave::sunsetGradient));
+
+        // Keyboards
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard"),
+                      jive::Styles{}
+                          .withBackground(synthwave::indigo)
+                          .withShadow(synthwave::neonGlow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey"),
+                      jive::Styles{}
+                          .withBackground(synthwave::haze)
+                          .withBorderFill(synthwave::indigo)
+                          .withBorderWidth(juce::BorderSize<float>{ 0.0f, 0.0f, 0.0f, 1.0f })
+                          .withForeground(synthwave::indigo));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:hover"),
+                      jive::Styles{}
+                          .withBackground(synthwave::hazeHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey"),
+                      jive::Styles{}
+                          .withBackground(synthwave::midnight));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey:hover"),
+                      jive::Styles{}
+                          .withBackground(synthwave::indigoHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
+                      jive::Styles{}
+                          .withBackground(synthwave::neonPink));
     }
 } // namespace jive::themes

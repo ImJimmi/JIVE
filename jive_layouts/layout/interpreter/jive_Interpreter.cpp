@@ -25,6 +25,15 @@ namespace jive
         componentFactory = newFactory;
     }
 
+#if JUCE_MODULE_AVAILABLE_juce_audio_utils
+    void Interpreter::setMidiKeyboardState(juce::MidiKeyboardState& state)
+    {
+        componentFactory.set("Keyboard", [&state]() {
+            return std::make_shared<KeyboardComponent>(state);
+        });
+    }
+#endif
+
 #if JIVE_IS_PLUGIN_PROJECT
     void Interpreter::autoAttachParameters(juce::AudioProcessorValueTreeState& parameters)
     {

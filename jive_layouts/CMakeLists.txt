@@ -36,6 +36,8 @@ target_sources(jive_layouts
                       layout/gui-items/widgets/jive_ComboBox.h
                       layout/gui-items/widgets/jive_Hyperlink.cpp
                       layout/gui-items/widgets/jive_Hyperlink.h
+                      layout/gui-items/widgets/jive_Keyboard.cpp
+                      layout/gui-items/widgets/jive_Keyboard.h
                       layout/gui-items/widgets/jive_Knob.cpp
                       layout/gui-items/widgets/jive_Knob.h
                       layout/gui-items/widgets/jive_Label.cpp

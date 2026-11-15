@@ -20,6 +20,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "components/utilities/jive_PaintBeforeShowing.h"
 #include "components/widgets/jive_ComboBoxComponent.h"
 #include "components/widgets/jive_ImageComponent.h"
+#include "components/widgets/jive_KeyboardComponent.h"
 #include "components/widgets/jive_NormalisedProgressBar.h"
 #include "components/widgets/jive_TextComponent.h"
 #include "geometry/jive_BorderRadius.h"

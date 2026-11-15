@@ -836,17 +836,12 @@ namespace juce
 static jive::UnitTest fillInterpolationTest{
     "jive",
     "jive::Fill",
-    "Fills interpolate between colours, and jump straight to the end when either is a gradient",
+    "Fills interpolate between colours",
     [](auto& test) {
         test.expect(jive::interpolate(jive::Fill{ juce::Colours::orange },
                                       jive::Fill{ juce::Colours::cornflowerblue },
                                       0.3)
                     == jive::Fill{ juce::Colours::orange.interpolatedWith(juce::Colours::cornflowerblue, 0.3f) });
-
-        test.expect(jive::interpolate(jive::Fill{ jive::Gradient{} },
-                                      jive::Fill{ juce::Colours::aliceblue },
-                                      0.7)
-                    == jive::Fill{ juce::Colours::aliceblue });
     },
 };
 
@@ -867,6 +862,31 @@ static jive::UnitTest fillParsingTest{
         test.expect(jive::Fill{ "glass" }.getBackdrop() == jive::Backdrop::glass);
         test.expect(jive::Fill{ jive::Backdrop::tinted }.toJuceFillType() == juce::FillType{ juce::Colours::transparentBlack });
         test.expect(!jive::Fill{ juce::Colours::red }.getBackdrop().has_value());
+    },
+};
+static jive::UnitTest fillGradientInterpolationTest{
+    "jive",
+    "jive::Fill",
+    "Gradients interpolate stop by stop, and colours interpolate with gradients",
+    [](auto& test) {
+        const auto start = *jive::Fill::fromString("linear-gradient(0deg, #000000, #FF0000)");
+        const auto end = *jive::Fill::fromString("linear-gradient(90deg, #FFFFFF, #0000FF)");
+        const auto halfway = jive::interpolate(start, end, 0.5).getJiveGradient();
+        test.expect(halfway.has_value());
+        test.expect(halfway->stops[0].colour == juce::Colour{ 0xFF000000 }.interpolatedWith(juce::Colours::white, 0.5f));
+        test.expect(halfway->stops[1].colour == juce::Colour{ 0xFFFF0000 }.interpolatedWith(juce::Colour{ 0xFF0000FF }, 0.5f));
+        test.expectWithinAbsoluteError(std::get<float>(halfway->linearAngle), juce::MathConstants<float>::pi / 4.0f, 0.001f);
+
+        const auto fromColour = jive::interpolate(jive::Fill{ juce::Colours::black }, end, 0.5).getJiveGradient();
+        test.expect(fromColour.has_value());
+        test.expect(fromColour->stops[0].colour == juce::Colours::black.interpolatedWith(juce::Colours::white, 0.5f));
+
+        const auto toColour = jive::interpolate(end, jive::Fill{ juce::Colours::black }, 0.5).getJiveGradient();
+        test.expect(toColour.has_value());
+        test.expect(toColour->stops[1].colour == juce::Colour{ 0xFF0000FF }.interpolatedWith(juce::Colours::black, 0.5f));
+
+        const auto mismatched = *jive::Fill::fromString("linear-gradient(0deg, #000000, #FF0000, #00FF00)");
+        test.expect(jive::interpolate(mismatched, end, 0.5) == end);
     },
 };
 #endif

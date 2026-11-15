@@ -7,6 +7,7 @@
 #include "components/utilities/jive_PaintBeforeShowing.cpp"
 #include "components/widgets/jive_ComboBoxComponent.cpp"
 #include "components/widgets/jive_ImageComponent.cpp"
+#include "components/widgets/jive_KeyboardComponent.cpp"
 #include "components/widgets/jive_NormalisedProgressBar.cpp"
 #include "components/widgets/jive_TextComponent.cpp"
 #include "geometry/jive_BorderRadius.cpp"

@@ -17,6 +17,7 @@
 #include "layout/gui-items/widgets/jive_Button.cpp"
 #include "layout/gui-items/widgets/jive_ComboBox.cpp"
 #include "layout/gui-items/widgets/jive_Hyperlink.cpp"
+#include "layout/gui-items/widgets/jive_Keyboard.cpp"
 #include "layout/gui-items/widgets/jive_Knob.cpp"
 #include "layout/gui-items/widgets/jive_Label.cpp"
 #include "layout/gui-items/widgets/jive_ProgressBar.cpp"

@@ -7,6 +7,7 @@ namespace juce
 {
     class AudioProcessor;
     class AudioProcessorValueTreeState;
+    class MidiKeyboardState;
 } // namespace juce
 
 namespace jive
@@ -46,6 +47,13 @@ namespace jive
             property, including any widgets built or changed later.
         */
         void autoAttachParameters(juce::AudioProcessorValueTreeState& parameters);
+#endif
+
+#if JUCE_MODULE_AVAILABLE_juce_audio_utils
+        /** Makes every <Keyboard> built from now on show and play the notes in
+            the given state, such as the one a processor reads its MIDI from.
+        */
+        void setMidiKeyboardState(juce::MidiKeyboardState& state);
 #endif
 
         template <typename Decorator>

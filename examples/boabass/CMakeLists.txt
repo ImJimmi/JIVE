@@ -38,7 +38,6 @@ foreach (TARGET jive-boabass jive-boabass-app)
                            source/audio/Presets.h
                            source/audio/Voice.h
                            source/components/EnvelopeView.h
-                           source/components/Keyboard.h
                            source/components/Meter.h
                            source/graphics/ComboBoxPainter.h
                            source/graphics/KnobPainter.h

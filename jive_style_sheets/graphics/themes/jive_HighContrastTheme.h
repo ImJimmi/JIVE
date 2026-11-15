@@ -146,5 +146,28 @@ namespace jive::themes
                           .withBackground(high_contrast::black)
                           .withBorderFill(high_contrast::white)
                           .withTrack(high_contrast::yellow));
+
+        // Keyboards
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::black));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::white)
+                          .withBorderFill(high_contrast::black)
+                          .withBorderWidth(juce::BorderSize<float>{ 0.0f, 0.0f, 0.0f, 1.0f })
+                          .withForeground(high_contrast::black));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:hover"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::yellowHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::black));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey:hover"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::darkGrey));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
+                      jive::Styles{}
+                          .withBackground(high_contrast::yellow));
     }
 } // namespace jive::themes

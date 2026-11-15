@@ -155,5 +155,28 @@ namespace jive::themes
                           .withBackground(material::secondaryContainer)
                           .withBorderRadius(material::fullBorderRadius)
                           .withTrack(material::primary));
+
+        // Keyboards
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard"),
+                      jive::Styles{}
+                          .withBackground(material::outline));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey"),
+                      jive::Styles{}
+                          .withBackground(material::surface)
+                          .withBorderFill(material::outline)
+                          .withBorderWidth(juce::BorderSize<float>{ 0.0f, 0.0f, 0.0f, 1.0f })
+                          .withForeground(material::onSurfaceVariant));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:hover"),
+                      jive::Styles{}
+                          .withBackground(material::secondaryContainer));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey"),
+                      jive::Styles{}
+                          .withBackground(material::onSurface));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey:hover"),
+                      jive::Styles{}
+                          .withBackground(material::onSurfaceVariant));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
+                      jive::Styles{}
+                          .withBackground(material::primary));
     }
 } // namespace jive::themes

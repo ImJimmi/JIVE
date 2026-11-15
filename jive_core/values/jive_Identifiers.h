@@ -172,6 +172,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& endNote()
+    {
+        static const juce::Identifier identifier{ "end-note" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& externalSourceChild()
     {
         static const juce::Identifier identifier{ "jive::external-source-child" };
@@ -598,6 +604,12 @@ namespace jive::ids
         return identifier;
     }
 
+    [[nodiscard]] inline const juce::Identifier& pressed()
+    {
+        static const juce::Identifier identifier{ "jive::pressed" };
+        return identifier;
+    }
+
     [[nodiscard]] inline const juce::Identifier& radialPosition()
     {
         static const juce::Identifier identifier{ "radial-position" };
@@ -703,6 +715,12 @@ namespace jive::ids
     [[nodiscard]] inline const juce::Identifier& sourceFile()
     {
         static const juce::Identifier identifier{ "jive::source-file" };
+        return identifier;
+    }
+
+    [[nodiscard]] inline const juce::Identifier& startNote()
+    {
+        static const juce::Identifier identifier{ "start-note" };
         return identifier;
     }
 

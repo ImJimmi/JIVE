@@ -91,7 +91,38 @@ namespace jive
                 };
             }
 
-            return end;
+            const auto shape = end.getJiveGradient().has_value()
+                                 ? end.getJiveGradient()
+                                 : start.getJiveGradient();
+
+            if (!shape.has_value())
+                return end;
+
+            const auto startGradient = asGradient(start, *shape);
+            const auto endGradient = asGradient(end, *shape);
+
+            if (!startGradient.has_value() || !endGradient.has_value())
+                return end;
+
+            return Fill{ interpolate(*startGradient, *endGradient, proportion) };
+        }
+
+    private:
+        // A colour blends with a gradient as a gradient of that one colour.
+        [[nodiscard]] static std::optional<Gradient> asGradient(const Fill& fill, const Gradient& shape)
+        {
+            if (const auto gradient = fill.getJiveGradient())
+                return gradient;
+
+            if (!fill.isColour())
+                return std::nullopt;
+
+            auto gradient = shape;
+
+            for (auto& stop : gradient.stops)
+                stop.colour = fill.toJuceFillType().colour;
+
+            return gradient;
         }
     };
 

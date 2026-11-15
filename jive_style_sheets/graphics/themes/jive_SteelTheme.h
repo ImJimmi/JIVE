@@ -16,6 +16,7 @@ namespace jive::themes
         static constexpr auto pictonBlueHover = "#6FC4F5";
         static constexpr auto pictonBlueActive = "#3092CB";
         static constexpr auto azure = "#E6F9FF";
+        static constexpr auto azureHover = "#C6ECFF";
 
         static constexpr auto charcoalGunmetalGradient = "linear-gradient(172.5deg, #3F4B5D, #2C3542)";
         static constexpr auto pictonSphereGradient = "radial-gradient(at 30% 30%, #AED5EC 0%, #4FADE4 30%, #4392C0 60%, #214960 100%)";
@@ -166,5 +167,29 @@ namespace jive::themes
                           .withBorderRadius(100)
                           .withShadow(steel::widgetShadow)
                           .withTrack(steel::pictonLeftToRightGradient));
+
+        // Keyboards
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard"),
+                      jive::Styles{}
+                          .withBackground(steel::charcoal)
+                          .withShadow(steel::widgetShadow));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey"),
+                      jive::Styles{}
+                          .withBackground(steel::azure)
+                          .withBorderFill(steel::charcoal)
+                          .withBorderWidth(juce::BorderSize<float>{ 0.0f, 0.0f, 0.0f, 1.0f })
+                          .withForeground(steel::charcoal));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::azureHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlack));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > BlackKey:hover"),
+                      jive::Styles{}
+                          .withBackground(steel::raisinBlackHover));
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
+                      jive::Styles{}
+                          .withBackground(steel::pictonBlue));
     }
 } // namespace jive::themes

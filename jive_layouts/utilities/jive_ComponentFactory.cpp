@@ -3,6 +3,7 @@
 #include <jive_style_sheets/components/accessibility/jive_IgnoredComponent.h>
 #include <jive_style_sheets/components/widgets/jive_ComboBoxComponent.h>
 #include <jive_style_sheets/components/widgets/jive_ImageComponent.h>
+#include <jive_style_sheets/components/widgets/jive_KeyboardComponent.h>
 #include <jive_style_sheets/components/widgets/jive_NormalisedProgressBar.h>
 #include <jive_style_sheets/components/widgets/jive_TextComponent.h>
 
@@ -52,6 +53,14 @@ namespace jive
                 return std::make_shared<ImageComponent>();
             },
         });
+#if JUCE_MODULE_AVAILABLE_juce_audio_utils
+        creators.insert({
+            "Keyboard",
+            []() {
+                return std::make_shared<KeyboardComponent>();
+            },
+        });
+#endif
         creators.insert({
             "Knob",
             []() {
@@ -120,7 +129,7 @@ namespace jive
 
     void ComponentFactory::set(juce::Identifier name, ComponentCreator creator)
     {
-        creators.insert({ name, creator });
+        creators.insert_or_assign(name, creator);
     }
 } // namespace jive
 
@@ -165,6 +174,11 @@ private:
             return std::make_unique<Card>();
         });
         expect(dynamic_cast<Card*>(factory.create("Card").get()) != nullptr);
+
+        factory.set("Button", []() {
+            return std::make_unique<Card>();
+        });
+        expect(dynamic_cast<Card*>(factory.create("Button").get()) != nullptr);
     }
 };
 

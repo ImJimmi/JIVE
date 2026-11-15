@@ -1,7 +1,6 @@
 #pragma once
 
 #include "components/EnvelopeView.h"
-#include "components/Keyboard.h"
 #include "components/Meter.h"
 #include "graphics/ComboBoxPainter.h"
 #include "graphics/KnobPainter.h"
@@ -26,9 +25,7 @@ namespace boabass
             , parameters{ processorParameters }
             , level{ outputLevel }
         {
-            interpreter.getComponentFactory().set("Keyboard", [&keyboardState] {
-                return std::make_shared<Keyboard>(keyboardState);
-            });
+            interpreter.setMidiKeyboardState(keyboardState);
             interpreter.getComponentFactory().set("Envelope", [] {
                 return std::make_shared<EnvelopeView>();
             });

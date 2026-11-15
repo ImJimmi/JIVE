@@ -13,6 +13,7 @@
 #include <jive_layouts/layout/gui-items/widgets/jive_Button.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_ComboBox.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Hyperlink.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Keyboard.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Knob.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Label.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_ProgressBar.h>
@@ -205,6 +206,10 @@ namespace jive
             return std::make_unique<Hyperlink>(std::move(item));
         if (name == "Image" || name.compareIgnoreCase("svg") == 0)
             return std::make_unique<Image>(std::move(item));
+#if JUCE_MODULE_AVAILABLE_juce_audio_utils
+        if (name == "Keyboard")
+            return std::make_unique<Keyboard>(std::move(item));
+#endif
         if (name == "Knob")
             return std::make_unique<Knob>(std::move(item));
         if (name == "Label")

@@ -23,6 +23,8 @@ target_sources(jive_style_sheets
                       components/widgets/jive_ComboBoxComponent.h
                       components/widgets/jive_ImageComponent.cpp
                       components/widgets/jive_ImageComponent.h
+                      components/widgets/jive_KeyboardComponent.cpp
+                      components/widgets/jive_KeyboardComponent.h
                       components/widgets/jive_NormalisedProgressBar.cpp
                       components/widgets/jive_NormalisedProgressBar.h
                       components/widgets/jive_TextComponent.cpp
@@ -36,6 +38,7 @@ target_sources(jive_style_sheets
                       graphics/default-styles/jive_DefaultComboBoxStyles.h
                       graphics/default-styles/jive_DefaultComponentStyles.h
                       graphics/default-styles/jive_DefaultGroupComponentStyles.h
+                      graphics/default-styles/jive_DefaultKeyboardStyles.h
                       graphics/default-styles/jive_DefaultLabelStyles.h
                       graphics/default-styles/jive_DefaultProgressBarStyles.h
                       graphics/default-styles/jive_DefaultScrollBarStyles.h

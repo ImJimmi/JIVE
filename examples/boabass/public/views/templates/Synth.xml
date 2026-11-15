@@ -139,5 +139,5 @@
         </Component>
     </Component>
 
-    <Keyboard id="keyboard" flex-grow="1" min-height="80" />
+    <Keyboard id="keyboard" flex-grow="1" start-note="C1" end-note="C5" />
 </Component>

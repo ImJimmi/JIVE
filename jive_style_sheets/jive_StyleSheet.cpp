@@ -458,24 +458,18 @@ namespace jive
                          .value_or(Styles{})
                          .with(propertyName, value, ruleFile);
         }
+
+        if (object.hasProperty(ids::transition()))
+        {
+            if (auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object[ids::transition()]))
+                styles = styles.value_or(Styles{}).withTransitions(transitions);
+        }
     }
 
     void StyleSheet::addInlineStyles(Object& object)
     {
         std::optional<Styles> styles;
         appendStyleProperties(object, styles);
-
-        if (&object == style.get().get() && object.hasProperty(ids::transition()))
-        {
-            auto transitions = fromVar<Transitions::ReferenceCountedPointer>(object[ids::transition()]);
-
-            if (transitions != nullptr)
-            {
-                styles = styles
-                             .value_or(Styles{})
-                             .withTransitions(transitions);
-            }
-        }
 
         if (styles.has_value())
         {
@@ -509,7 +503,12 @@ namespace jive
                 {
                     const auto nestedName = name.toString();
                     const auto combinator = nestedName.startsWith(":") ? "" : " ";
-                    appendFromChild(*nested, selector + combinator + nestedName);
+                    juce::StringArray combined;
+
+                    for (const auto& part : juce::StringArray::fromTokens(selector, ",", ""))
+                        combined.add(part.trim() + combinator + nestedName);
+
+                    appendFromChild(*nested, combined.joinIntoString(", "));
                 }
             }
         };
@@ -540,6 +539,7 @@ public:
         testIndividualStyleProperties();
         testTransitions();
         testTransitionDetails();
+        testSelectorTransitions();
         testSelectorBasedStyles();
         testMultiTierSelectors();
         testDynamicStyles();
@@ -753,6 +753,53 @@ private:
             snapshot = button.createComponentSnapshot(button.getLocalBounds());
             expectEquals(snapshot.getPixelAt(50, 12), juce::Colours::blue);
         }
+    }
+
+    void testSelectorTransitions()
+    {
+        beginTest("transitions / rules nested under a selector");
+
+        juce::Component parent;
+        parent.getProperties().set("jive::type", "Component");
+        juce::Component child;
+        child.getProperties().set("jive::type", "Child");
+        parent.addAndMakeVisible(child);
+        juce::ValueTree state{
+            "Component",
+            {
+                {
+                    "style",
+                    new jive::Object{
+                        {
+                            "Child",
+                            new jive::Object{
+                                { "background", "red" },
+                                { "transition", "background 1s linear" },
+                                {
+                                    ":hover",
+                                    new jive::Object{
+                                        { "background", "blue" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        jive::LookAndFeel lookAndFeel{ parent };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        auto sheet = jive::StyleSheet::create(parent, state);
+        expectEquals(resolvedColour(lookAndFeel, child, "background"), juce::Colours::red);
+
+        child.getProperties().set("jive::hover", true);
+        expectEquals(resolvedColour(lookAndFeel, child, "background"), juce::Colours::red);
+
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+        expectEquals(resolvedColour(lookAndFeel, child, "background"), juce::Colours::red.interpolatedWith(juce::Colours::blue, 0.5f));
+
+        jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+        expectEquals(resolvedColour(lookAndFeel, child, "background"), juce::Colours::blue);
     }
 
     // Resolves the most-applicable styles for the given component and returns
@@ -3080,6 +3127,54 @@ private:
             const auto snapshot3 = button3.createComponentSnapshot(button3.getLocalBounds());
             expectEquals(snapshot3.getPixelAt(40, 12),
                          jive::parseColour(jive::themes::steel::raisinBlack));
+        }
+
+        beginTest("selector-based styles / state nested under comma-separated selectors applies to each");
+        {
+            juce::Component parent;
+            parent.setSize(200, 100);
+
+            juce::TextButton idle;
+            idle.getProperties().set("jive::type", "Button");
+            idle.getProperties().set("class", "a");
+            idle.setBounds(10, 10, 80, 25);
+            parent.addAndMakeVisible(idle);
+
+            juce::TextButton pressed;
+            pressed.getProperties().set("jive::type", "Button");
+            pressed.getProperties().set("class", "b");
+            pressed.getProperties().set("jive::active", true);
+            pressed.setBounds(100, 10, 80, 25);
+            parent.addAndMakeVisible(pressed);
+
+            juce::ValueTree state{
+                "Component",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            {
+                                ".a, .b",
+                                new jive::Object{
+                                    {
+                                        ":active",
+                                        new jive::Object{
+                                            { "background", "yellow" },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            jive::LookAndFeel lookAndFeel{ parent };
+            auto sheet = jive::StyleSheet::create(parent, state);
+
+            expect(idle.createComponentSnapshot(idle.getLocalBounds()).getPixelAt(40, 12) != juce::Colours::yellow);
+            expectEquals(pressed.createComponentSnapshot(pressed.getLocalBounds()).getPixelAt(40, 12),
+                         juce::Colours::yellow);
         }
 
         beginTest("selector-based styles / precedence - more specific selector wins");
