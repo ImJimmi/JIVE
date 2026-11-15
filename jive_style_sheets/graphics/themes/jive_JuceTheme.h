@@ -28,5 +28,13 @@ namespace jive::themes
         laf.addStyles(StyleSelector::makeSystemStyleSelector("Hyperlink:hover:active"),
                       jive::Styles{}
                           .withForeground(hyperlink.darker(1.3f)));
+
+        // Tooltips
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Tooltip"),
+                      jive::Styles{}
+                          .withBackground(laf.findColour(juce::TooltipWindow::backgroundColourId))
+                          .withBorderFill(laf.findColour(juce::TooltipWindow::outlineColourId))
+                          .withBorderWidth(juce::BorderSize{ 1.0f })
+                          .withForeground(laf.findColour(juce::TooltipWindow::textColourId)));
     }
 } // namespace jive::themes

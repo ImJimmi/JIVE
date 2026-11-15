@@ -16,7 +16,7 @@
                 <Text>The component with an ID</Text>
 
                 <Button class="selector" toggle-on-click="true" padding="4 12">Button.primary</Button>
-                <Text>Components matching every part</Text>
+                <Text>Matching every part</Text>
 
                 <Button class="selector" toggle-on-click="true" padding="4 12">#toolbar Button</Button>
                 <Text>Anywhere inside another</Text>

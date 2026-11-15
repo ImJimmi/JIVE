@@ -35,6 +35,8 @@ namespace jive
         // whichever window it's in is about to be shown.
         PaintBeforeShowing paintBeforeShowing{ *this };
 
+        jive::TooltipWindow tooltipWindow{ this };
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
     };
 } // namespace jive

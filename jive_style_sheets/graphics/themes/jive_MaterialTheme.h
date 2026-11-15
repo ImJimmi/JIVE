@@ -25,6 +25,8 @@ namespace jive::themes
         static constexpr auto secondaryContainerHover = "#D8CEE8";
         static constexpr auto secondaryContainerPressed = "#D0C6DF";
         static constexpr auto onSecondaryContainer = "#1D192B";
+        static constexpr auto inverseSurface = "#322F35";
+        static constexpr auto inverseOnSurface = "#F5EFF7";
 
         static const jive::BorderRadii borderRadius{ 12.0f };
         static const jive::BorderRadii fieldBorderRadius{ 4.0f };
@@ -178,5 +180,12 @@ namespace jive::themes
         laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
                       jive::Styles{}
                           .withBackground(material::primary));
+
+        // Tooltips
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Tooltip"),
+                      jive::Styles{}
+                          .withBackground(material::inverseSurface)
+                          .withBorderRadius(material::fieldBorderRadius)
+                          .withForeground(material::inverseOnSurface));
     }
 } // namespace jive::themes

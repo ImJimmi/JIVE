@@ -181,5 +181,12 @@ namespace jive::themes
         laf.addStyles(StyleSelector::makeSystemStyleSelector("Keyboard > WhiteKey:active, Keyboard > BlackKey:active"),
                       jive::Styles{}
                           .withBackground(synthwave::neonPink));
+
+        // Tooltips
+        laf.addStyles(StyleSelector::makeSystemStyleSelector("Tooltip"),
+                      jive::Styles{}
+                          .withBackground(synthwave::midnight)
+                          .withBorderFill(synthwave::neonPink)
+                          .withForeground(synthwave::haze));
     }
 } // namespace jive::themes

@@ -1,13 +1,13 @@
 <Component>
     <Text margin="0 0 25 0">Colours can be hex, rgb(), hsl() or named, any colour can be swapped for a linear or radial gradient, and shadows use CSS's box-shadow syntax. The controls edit the #card rule in Styles.json, which is everything the card needs; its text and icon inherit the foreground and fill. In JUCE, this card would be a paint() override full of ColourGradient, Path and DropShadow calls.</Text>
 
-    <Component display="grid" grid-template-columns="420px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
+    <Component display="grid" grid-template-columns="460px 1fr" grid-template-rows="1fr" gap="30" flex-grow="1">
         <Component>
             <Text class="heading" margin="0 0 10 0">#card</Text>
 
             <Component display="grid" grid-template-columns="auto 1fr 40px" gap="10 15" align-items="center">
                 <Label>background</Label>
-                <ComboBox id="background-combo-box" grid-column="2 / span 2" grid-row="1 / 2">
+                <ComboBox id="background-combo-box" tooltip="Any colour, or a linear or radial gradient" grid-column="2 / span 2" grid-row="1 / 2">
                     <Option>linear-gradient(135deg, skyblue, blueviolet)</Option>
                     <Option>#4FADE4</Option>
                     <Option>rgb(116, 182, 112)</Option>
@@ -29,7 +29,7 @@
                 <Text id="border-width-label" class="value" accessible="false">2px</Text>
 
                 <Label>border-radius</Label>
-                <Slider id="border-radius-slider" min="0" max="70" interval="1" value="16" />
+                <Slider id="border-radius-slider" tooltip="Rounds the card's corners" min="0" max="70" interval="1" value="16" />
                 <Text id="border-radius-label" class="value" accessible="false">16px</Text>
 
                 <Label>shadow</Label>
@@ -65,7 +65,7 @@
                 </Component>
             </Component>
 
-            <Component class="code" padding="15">
+            <Component class="code" padding="15" height="210">
                 <Text class="rule" rule="#card" />
             </Component>
         </Component>

@@ -10,6 +10,7 @@
 #include "components/widgets/jive_KeyboardComponent.cpp"
 #include "components/widgets/jive_NormalisedProgressBar.cpp"
 #include "components/widgets/jive_TextComponent.cpp"
+#include "components/widgets/jive_TooltipWindow.cpp"
 #include "geometry/jive_BorderRadius.cpp"
 #include "geometry/jive_BorderWidth.cpp"
 #include "geometry/jive_Geometry.cpp"

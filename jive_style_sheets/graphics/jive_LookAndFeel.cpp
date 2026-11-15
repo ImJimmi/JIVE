@@ -996,6 +996,12 @@ namespace jive
         return withoutTransitions(styles);
     }
 
+    Styles LookAndFeel::findTooltipStyles(const juce::Component& standIn) const
+    {
+        const juce::ScopedValueSetter ignoringInteractions{ ignoreInteractions, true };
+        return withoutTransitions(findMostApplicableStyles(standIn));
+    }
+
     Styles LookAndFeel::findPopupItemStyles(const juce::ComboBox& comboBox,
                                             const juce::PopupMenu::Item& item,
                                             const InteractionState& interactionState) const

@@ -113,12 +113,16 @@ namespace jive::macos
         containerFrame.origin.y = NSHeight([window frame]) - titleBarHeight;
         [container setFrame:containerFrame];
 
+        const auto inset = (titleBarHeight - NSHeight([closeButton frame])) / 2.0;
+        const auto offsetX = inset - NSMinX([closeButton frame]);
+
         for (const auto buttonType : { NSWindowCloseButton, NSWindowMiniaturizeButton, NSWindowZoomButton })
         {
             if (auto* const button = [window standardWindowButton:buttonType])
             {
                 auto origin = [button frame].origin;
-                origin.y = (titleBarHeight - NSHeight([button frame])) / 2.0;
+                origin.x += offsetX;
+                origin.y = inset;
                 [button setFrameOrigin:origin];
             }
         }

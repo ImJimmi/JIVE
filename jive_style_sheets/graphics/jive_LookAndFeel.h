@@ -131,6 +131,10 @@ namespace jive
                                                  const juce::PopupMenu::Item&,
                                                  const InteractionState&) const;
 
+        // Finds the styles for a tooltip from its stand-in, as though the
+        // component it belongs to were at rest.
+        [[nodiscard]] Styles findTooltipStyles(const juce::Component& standIn) const;
+
         // Searches all the painters given to this object to find the one
         // (if any) that's most applicable to the given component.
         [[nodiscard]] std::optional<ComponentPainter> findMostApplicablePainter(const juce::Component&) const;

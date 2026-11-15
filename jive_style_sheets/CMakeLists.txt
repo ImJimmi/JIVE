@@ -29,6 +29,8 @@ target_sources(jive_style_sheets
                       components/widgets/jive_NormalisedProgressBar.h
                       components/widgets/jive_TextComponent.cpp
                       components/widgets/jive_TextComponent.h
+                      components/widgets/jive_TooltipWindow.cpp
+                      components/widgets/jive_TooltipWindow.h
                       geometry/jive_BorderRadius.cpp
                       geometry/jive_BorderRadius.h
                       geometry/jive_BorderWidth.cpp

@@ -41,6 +41,7 @@ namespace jive
 
         void updateStyle();
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
+        void localisedStringsChanged() override;
 
     private:
         void sliderValueChanged(juce::Slider* slider) override;
@@ -67,6 +68,7 @@ namespace jive
         PassiveProperty<VelocityOffset> velocityOffset;
         PassiveProperty<bool> snapToMouse;
         PassiveProperty<bool> focusable;
+        PassiveProperty<juce::String> tooltip;
 
         Event onChange;
 

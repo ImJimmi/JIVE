@@ -23,6 +23,7 @@ END_JUCE_MODULE_DECLARATION */
 #include "components/widgets/jive_KeyboardComponent.h"
 #include "components/widgets/jive_NormalisedProgressBar.h"
 #include "components/widgets/jive_TextComponent.h"
+#include "components/widgets/jive_TooltipWindow.h"
 #include "geometry/jive_BorderRadius.h"
 #include "geometry/jive_Geometry.h"
 #include "graphics/jive_ComponentTypePredicates.h"

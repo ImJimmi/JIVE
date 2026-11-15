@@ -12,6 +12,12 @@ namespace jive
         , private juce::ValueTree::Listener
     {
     public:
+#if JUCE_MAC
+        static constexpr auto defaultTitleBarHeight = 52.0f;
+#else
+        static constexpr auto defaultTitleBarHeight = 26.0f;
+#endif
+
         explicit Window(std::unique_ptr<GuiItem> itemToDecorate);
         ~Window() override;
 
@@ -33,8 +39,6 @@ namespace jive
         void moved() override;
         void parentSizeChanged() override;
         void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
-
-        static constexpr auto defaultMacTitleBarHeight = 28.0f;
 
         // Read by resized(), which the look-and-feel below triggers.
         PassiveProperty<bool> integratedTitleBar;
@@ -75,6 +79,7 @@ namespace jive
         };
 
         TitleBarDragger titleBarDragger{ *this };
+        jive::TooltipWindow tooltipWindow{ this };
 #if JUCE_MAC || JUCE_WINDOWS
         std::optional<Backdrop> appliedBackdrop;
         void* backdropHandle = nullptr;

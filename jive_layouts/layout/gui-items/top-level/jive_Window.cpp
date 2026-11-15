@@ -103,11 +103,11 @@ namespace jive
         setName(name.getOr(JUCE_APPLICATION_NAME));
 
         windowTitleBarHeight.onValueChange = [this]() {
-            setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
+            setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(defaultTitleBarHeight)));
             applyDefaultPadding(getDefaultTopPadding());
             updateIntegratedTitleBar();
         };
-        setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(26)));
+        setTitleBarHeight(juce::roundToInt(windowTitleBarHeight.getOr(defaultTitleBarHeight)));
 
         integratedTitleBar.onValueChange = [this]() {
             applyDefaultPadding(getDefaultTopPadding());
@@ -206,10 +206,10 @@ namespace jive
         DocumentWindow::resized();
 
 #if JUCE_MAC
-        if (integratedTitleBar.getOr(true) && windowTitleBarHeight.exists())
+        if (integratedTitleBar.getOr(true) && isUsingNativeTitleBar())
         {
             if (auto* peer = getPeer())
-                macos::layoutTitleBarButtons(peer->getNativeHandle(), windowTitleBarHeight.get());
+                macos::layoutTitleBarButtons(peer->getNativeHandle(), windowTitleBarHeight.getOr(defaultTitleBarHeight));
         }
 #endif
     }
@@ -218,7 +218,7 @@ namespace jive
     {
 #if JUCE_MAC
         if (isUsingNativeTitleBar() && integratedTitleBar.getOr(true))
-            return windowTitleBarHeight.getOr(defaultMacTitleBarHeight);
+            return windowTitleBarHeight.getOr(defaultTitleBarHeight);
 #endif
 
         return defaultPadding;
@@ -512,12 +512,11 @@ namespace jive
     void Window::TitleBarDragger::mouseDown(const juce::MouseEvent& event)
     {
 #if JUCE_MAC
-        static constexpr auto defaultTitleBarHeight = 28.0f;
         const auto& content = *window.getComponent();
 
         if (!window.integratedTitleBar.getOr(true)
             || !window.isUsingNativeTitleBar()
-            || event.getEventRelativeTo(window.getComponent().get()).position.y >= window.windowTitleBarHeight.getOr(defaultTitleBarHeight)
+            || event.getEventRelativeTo(window.getComponent().get()).position.y >= window.windowTitleBarHeight.getOr(Window::defaultTitleBarHeight)
             || isInteractive(event.originalComponent, content))
             return;
 
@@ -965,7 +964,7 @@ private:
             auto item = interpreter.interpret(tree);
             auto& window = *dynamic_cast<jive::GuiItemDecorator&>(*item)
                                 .toType<jive::Window>();
-            expectEquals(window.getTitleBarHeight(), 26);
+            expectEquals(window.getTitleBarHeight(), juce::roundToInt(jive::Window::defaultTitleBarHeight));
 
             tree.setProperty("title-bar-height", 32, nullptr);
             expectEquals(window.getTitleBarHeight(), 32);
@@ -1062,7 +1061,7 @@ private:
         jive::Interpreter interpreter;
         auto item = interpreter.interpret(tree);
         expectEquals(jive::boxModel(*item).getPadding(),
-                     juce::BorderSize<float>{ 28.0f, 10.0f, 10.0f, 10.0f });
+                     juce::BorderSize<float>{ jive::Window::defaultTitleBarHeight, 10.0f, 10.0f, 10.0f });
 
         tree.setProperty("title-bar-height", 40, nullptr);
         expectEquals(jive::boxModel(*item).getPadding(),

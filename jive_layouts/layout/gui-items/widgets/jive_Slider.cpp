@@ -28,6 +28,7 @@ namespace jive
         , velocityOffset{ state, ids::velocityOffset() }
         , snapToMouse{ state, ids::snapToMouse() }
         , focusable{ state, ids::focusable() }
+        , tooltip{ state, ids::tooltip() }
         , onChange{ state, ids::onChange() }
     {
         state.addListener(this);
@@ -98,6 +99,11 @@ namespace jive
         };
         getSlider().setSliderSnapsToMousePosition(snapToMouse);
 
+        tooltip.onValueChange = [this]() {
+            getSlider().setTooltip(translate(tooltip));
+        };
+        getSlider().setTooltip(translate(tooltip));
+
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
 
@@ -141,7 +147,14 @@ namespace jive
                               velocitySensitivity,
                               velocityThreshold,
                               velocityOffset,
-                              snapToMouse);
+                              snapToMouse,
+                              tooltip);
+    }
+
+    void Slider::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+        getSlider().setTooltip(translate(tooltip));
     }
 
     bool Slider::isContainer() const
@@ -262,6 +275,7 @@ public:
         testTextBox();
         testAutoSize();
         testEvents();
+        testTooltip();
     }
 
 private:
@@ -630,6 +644,40 @@ private:
             const auto& slider = getSlider(*parent->getChildren()[0]);
             expectEquals(slider.getWidth(), 100);
             expectEquals(slider.getHeight(), 10);
+        }
+    }
+
+    void testTooltip()
+    {
+        beginTest("tooltip");
+
+        {
+            juce::ValueTree tree{
+                "Slider",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getTooltip().isEmpty());
+
+            tree.setProperty("tooltip", "Drag me!", nullptr);
+            expectEquals(slider.getTooltip(), juce::String{ "Drag me!" });
+        }
+        {
+            juce::ValueTree tree{
+                "Slider",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "tooltip", "OneTwoThree" },
+                },
+            };
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getTooltip(), juce::String{ "OneTwoThree" });
         }
     }
 
