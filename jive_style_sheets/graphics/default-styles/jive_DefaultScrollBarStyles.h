@@ -14,23 +14,22 @@ namespace jive::default_styles
     {
         paintComponent(g, scrollBar, styles);
 
+        const auto borderRadius = getBorderRadius(scrollBar, styles, BorderRadii{ 4.0f });
+        default_styles::drawRoundedRectangle(g,
+                                             scrollBar.getLocalBounds().toFloat(),
+                                             borderRadius,
+                                             {},
+                                             getTrackFill(scrollBar, styles),
+                                             juce::Colours::transparentBlack);
+
         const auto thumbBounds = scrollBar.isVertical()
                                    ? juce::Rectangle{ 0, thumbStart, scrollBar.getWidth(), thumbSize }
                                    : juce::Rectangle{ thumbStart, 0, thumbSize, scrollBar.getHeight() };
 
         g.setFillType(getThumbFill(scrollBar, styles));
         default_styles::drawRoundedRectangle(g,
-                                             thumbBounds
-                                                 .toFloat()
-                                                 .reduced(scrollBar.isVertical() ? 1.0f : 0.0f,
-                                                          scrollBar.isVertical() ? 0.0f : 1.0f),
-                                             getBorderRadius(scrollBar,
-                                                             styles,
-                                                             BorderRadii{
-                                                                 static_cast<float>(juce::jmin(scrollBar.getWidth(),
-                                                                                               scrollBar.getHeight()))
-                                                                     / 4.0f,
-                                                             }),
+                                             thumbBounds.toFloat().reduced(1.0f),
+                                             borderRadius,
                                              {},
                                              getThumbFill(scrollBar, styles),
                                              juce::Colours::transparentBlack);

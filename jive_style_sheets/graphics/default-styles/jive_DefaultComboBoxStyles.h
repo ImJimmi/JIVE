@@ -274,19 +274,16 @@ namespace jive::default_styles
             return;
         }
 
-        const auto arrowBounds = iconBounds.withSizeKeepingCentre(iconBounds.getWidth() * 0.65f,
-                                                                  iconBounds.getHeight() * 0.65f);
+        // The same shallow chevron as JUCE's: 14 wide and 5 tall at its default size.
+        const auto arrowWidth = iconBounds.getWidth() * 0.7f;
+        const auto arrowHeight = arrowWidth * 5.0f / 14.0f;
+        const auto centre = iconBounds.getCentre();
         juce::Path path;
-        path.startNewSubPath(arrowBounds.getX(), arrowBounds.getY() + arrowBounds.proportionOfHeight(0.275f));
-        path.lineTo(arrowBounds.getCentreX(), arrowBounds.getBottom() - arrowBounds.proportionOfHeight(0.225f));
-        path.lineTo(arrowBounds.getRight(), arrowBounds.getY() + arrowBounds.proportionOfHeight(0.275f));
+        path.startNewSubPath(centre.getX() - arrowWidth / 2.0f, centre.getY() - 2.0f * arrowHeight / 5.0f);
+        path.lineTo(centre.getX(), centre.getY() + 3.0f * arrowHeight / 5.0f);
+        path.lineTo(centre.getX() + arrowWidth / 2.0f, centre.getY() - 2.0f * arrowHeight / 5.0f);
 
         g.setFillType(getArrowFill(comboBox, styles));
-        g.strokePath(path,
-                     juce::PathStrokeType{
-                         2.0f,
-                         juce::PathStrokeType::mitered,
-                         juce::PathStrokeType::rounded,
-                     });
+        g.strokePath(path, juce::PathStrokeType{ 2.0f });
     }
 } // namespace jive::default_styles

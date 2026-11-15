@@ -132,13 +132,14 @@ namespace jive::themes
         // Scroll bars
         laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar"),
                       jive::Styles{}
-                          .withForeground(high_contrast::white));
+                          .withThumb(high_contrast::white)
+                          .withTrack(high_contrast::grey));
         laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar:hover"),
                       jive::Styles{}
-                          .withForeground(high_contrast::yellow));
+                          .withThumb(high_contrast::yellow));
         laf.addStyles(StyleSelector::makeSystemStyleSelector("ScrollBar:active"),
                       jive::Styles{}
-                          .withForeground(high_contrast::yellowActive));
+                          .withThumb(high_contrast::yellowActive));
 
         // Progress bars
         laf.addStyles(StyleSelector::makeSystemStyleSelector("ProgressBar"),

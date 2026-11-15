@@ -24,6 +24,7 @@
 #include "layout/gui-items/widgets/jive_Slider.cpp"
 #include "layout/gui-items/widgets/jive_Spinner.cpp"
 #include "layout/gui-items/widgets/jive_TextBox.cpp"
+#include "layout/gui-items/widgets/jive_Viewport.cpp"
 #include "layout/interpreter/jive_Interpreter.cpp"
 #include "utilities/jive_ComponentFactory.cpp"
 #include "utilities/jive_Display.cpp"

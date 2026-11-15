@@ -180,10 +180,8 @@ namespace jive::default_styles
         const auto rotaryParams = slider.getRotaryParameters();
         const auto sliderPos = static_cast<float>(slider.getNormalisableRange().convertTo0to1(slider.getValue()));
         const auto toAngle = rotaryParams.startAngleRadians + sliderPos * (rotaryParams.endAngleRadians - rotaryParams.startAngleRadians);
-        const auto thumbWidth = static_cast<float>(slider
-                                                       .getLookAndFeel()
-                                                       .getSliderThumbRadius(slider));
-        const auto trackWidth = thumbWidth * 0.6f;
+        const auto trackWidth = juce::jmin(8.0f, radius * 0.5f);
+        const auto thumbWidth = trackWidth * 2.0f;
         const auto arcRadius = radius - trackWidth * 0.5f;
 
         juce::Path backgroundArc;

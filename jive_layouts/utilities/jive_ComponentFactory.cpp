@@ -110,6 +110,12 @@ namespace jive
             },
         });
         creators.insert({
+            "Viewport",
+            []() {
+                return std::make_shared<IgnoredComponent>();
+            },
+        });
+        creators.insert({
             "Window",
             []() {
                 return std::make_shared<IgnoredComponent>();

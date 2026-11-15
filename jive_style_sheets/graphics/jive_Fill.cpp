@@ -430,7 +430,7 @@ namespace jive
                                 const Styles& styles,
                                 const Fill& defaultFill)
     {
-        return jive::findForegroundFill(scrollBar, styles, juce::ScrollBar::thumbColourId)
+        return jive::findThumbFill(scrollBar, styles, juce::ScrollBar::thumbColourId)
             .value_or(defaultFill)
             .toJuceFillType(scrollBar.getLocalBounds().toFloat());
     }

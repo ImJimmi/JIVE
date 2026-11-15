@@ -9,6 +9,8 @@
 
 namespace jive
 {
+    class LookAndFeel;
+
     struct KeyboardStateHolder
     {
         juce::MidiKeyboardState ownedState;
@@ -60,6 +62,7 @@ namespace jive
         void createKeys();
         void positionKeys();
         void paintKey(juce::Graphics& g, int note, juce::Rectangle<float> area, bool isDown, bool isOver);
+        void paintShadowIfUnstyled(juce::Graphics& g, const LookAndFeel& lookAndFeel) const;
 
         juce::MidiKeyboardState& state;
         juce::OwnedArray<Key> keys;

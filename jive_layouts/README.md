@@ -282,3 +282,14 @@ The following properties apply only to `<Image>` and `<svg>` elements.
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `"placement"` | How the image is fitted into the element's bounds. Any of `left`, `right`, `centred-x`, `top`, `bottom`, `centred-y`, `stretch`, `fill`, `reduce-only`, `increase-only`, `do-not-resize`, and `centred`, separated by spaces.<br>See [`juce::RectanglePlacement`](https://docs.juce.com/master/classjuce_1_1RectanglePlacement.html) |
 | `"source"`    | The path of the image file to draw (SVG, PNG, JPEG or GIF), found the same way as other [sources](#common).                                                                                                                                                                                                                          |
+
+### Viewports
+
+A `<Viewport>` lays out its children like a `<Component>`, but scrolls them vertically when they don't fit. In a column, it's as tall as its content when there's room, and shrinks when there isn't. Its content never makes its parent taller. In a row or a grid, give it a height or let it stretch.
+
+```xml
+<Viewport flex-grow="1">
+    <Text>Long content...</Text>
+</Viewport>
+```
+

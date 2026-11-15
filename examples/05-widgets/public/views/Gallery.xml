@@ -1,8 +1,8 @@
 <Component>
     <Text margin="0 0 25 0">Widgets in JIVE have a default minimum size and will adapt to their content to ensure they're always displayed correctly. Their colours, fonts, and other basic styles can be controlled with style sheets. Try changing the theme in the top-right of the window to see how they change.</Text>
 
-    <Component class="preview" padding="25" flex-grow="1" justify-content="center">
-        <Component display="grid" grid-template-columns="auto auto 1fr" gap="12 30" align-items="center">
+    <Component class="preview" padding="12" flex-grow="1" justify-content="center">
+        <Viewport display="grid" padding="13" grid-template-columns="auto auto 1fr" gap="12 30" align-items="center">
             <Label>Button</Label>
             <Component flex-direction="row">
                 <Button id="count-button" padding="4 12">Click me</Button>
@@ -81,6 +81,11 @@
             <Component flex-direction="row">
                 <Hyperlink url="https://github.com/ImJimmi/JIVE">github.com/ImJimmi/JIVE</Hyperlink>
             </Component>
-        </Component>
+            <Component />
+
+            <Label>Keyboard</Label>
+            <Keyboard start-note="C3" end-note="C5" height="80" />
+            <Component />
+        </Viewport>
     </Component>
 </Component>

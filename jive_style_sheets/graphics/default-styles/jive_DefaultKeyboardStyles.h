@@ -37,26 +37,37 @@ namespace jive::default_styles
                                           ? juce::BorderSize<float>{}
                                           : juce::BorderSize<float>{ 0.0f, 0.0f, 0.0f, 1.0f };
 
+        const auto background = findBackgroundFill(key, styles);
+        const auto keyColour = getDefaultKeyColour(key, isDown, isOver);
+
         drawRoundedRectangle(g,
                              area,
                              getBorderRadius(key, styles),
                              getBorderWidth(key, styles, defaultBorderWidth),
-                             findBackgroundFill(key, styles)
-                                 .value_or(getDefaultKeyColour(key, isDown, isOver))
-                                 .toJuceFillType(area),
+                             background.value_or(keyColour).toJuceFillType(area),
                              findBorderFill(key, styles)
                                  .value_or(lookAndFeel.findColour(juce::MidiKeyboardComponent::keySeparatorLineColourId))
                                  .toJuceFillType(area));
+
+        // Like JUCE, an unstyled black key has a lighter top, leaving a dark
+        // lip along its sides and bottom.
+        if (key.isBlack() && !background.has_value() && !isDown)
+        {
+            g.setColour(keyColour.brighter());
+            g.fillRect(area.reduced(area.getWidth() / 8.0f, 0.0f).removeFromTop(area.getHeight() * 7.0f / 8.0f));
+        }
 
         if (label.isEmpty())
             return;
 
         const auto font = getFont(key, styles);
-        g.setFont(font.withHeight(juce::jmin(font.getHeight(), area.getWidth() * 0.5f)));
+        g.setFont(font
+                      .withHeight(juce::jmin(font.getHeight(), 12.0f, area.getWidth() * 0.9f))
+                      .withHorizontalScale(0.8f));
         g.setFillType(findForegroundFill(key, styles)
                           .value_or(lookAndFeel.findColour(juce::MidiKeyboardComponent::textLabelColourId))
                           .toJuceFillType(area));
-        g.drawText(label, area.withTrimmedBottom(4.0f), juce::Justification::centredBottom);
+        g.drawText(label, area.withTrimmedLeft(1.0f).withTrimmedBottom(2.0f), juce::Justification::centredBottom);
     }
 } // namespace jive::default_styles
 #endif

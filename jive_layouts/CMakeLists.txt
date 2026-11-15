@@ -50,6 +50,8 @@ target_sources(jive_layouts
                       layout/gui-items/widgets/jive_Spinner.h
                       layout/gui-items/widgets/jive_TextBox.cpp
                       layout/gui-items/widgets/jive_TextBox.h
+                      layout/gui-items/widgets/jive_Viewport.cpp
+                      layout/gui-items/widgets/jive_Viewport.h
                       layout/gui-items/jive_CommonGuiItem.cpp
                       layout/gui-items/jive_CommonGuiItem.h
                       layout/gui-items/jive_ContainerItem.cpp

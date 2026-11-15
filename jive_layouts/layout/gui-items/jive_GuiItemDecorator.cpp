@@ -20,6 +20,7 @@
 #include <jive_layouts/layout/gui-items/widgets/jive_Slider.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_Spinner.h>
 #include <jive_layouts/layout/gui-items/widgets/jive_TextBox.h>
+#include <jive_layouts/layout/gui-items/widgets/jive_Viewport.h>
 #include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
@@ -253,6 +254,9 @@ namespace jive
 
         if (!item->isContent())
             item = decorateWithDisplayBehaviour(std::move(item));
+
+        if (item->state.getType().toString() == "Viewport")
+            item = std::make_unique<Viewport>(std::move(item));
 
         for (const auto* decorateWithCustomDecorations : collectDecoratorCreators(item->state.getType(), customDecorators))
             item = (*decorateWithCustomDecorations)(std::move(item));

@@ -62,6 +62,7 @@ target_sources(jive_style_sheets
                       graphics/jive_StyleSelector.h
                       graphics/jive_Styles.h
                       graphics/themes/jive_HighContrastTheme.h
+                      graphics/themes/jive_JuceTheme.h
                       graphics/themes/jive_MaterialTheme.h
                       graphics/themes/jive_SteelTheme.h
                       graphics/themes/jive_SynthwaveTheme.h

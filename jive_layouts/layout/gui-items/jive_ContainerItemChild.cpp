@@ -2,6 +2,8 @@
 
 #include "jive_CommonGuiItem.h"
 
+#include <jive_layouts/layout/gui-items/widgets/jive_Viewport.h>
+
 namespace jive
 {
     class ContainerItem::Child::Pimpl
@@ -70,7 +72,7 @@ namespace jive
                 // item below it (matching how an intrinsic/ideal size does).
                 item.minWidth = item.width;
             }
-            else if (idealWidth.exists())
+            else if (idealWidth.exists() && !scrollsItsContent())
             {
                 if (idealWidth.get() < parentContentBounds.getWidth())
                     item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
@@ -84,6 +86,19 @@ namespace jive
                 // An explicit size should be firm: don't let flex shrink the
                 // item below it (matching how an intrinsic/ideal size does).
                 item.minHeight = item.height;
+            }
+            else if (scrollsItsContent())
+            {
+                // A viewport starts at its content's height, but can shrink
+                // to nothing, and doesn't make its parent any taller.
+                if constexpr (std::is_same_v<FlexOrGridItem, juce::FlexItem>)
+                {
+                    if (strategy == LayoutStrategy::real && idealHeight.exists())
+                    {
+                        const auto contentWidth = item.width > 0.0f ? item.width : parentContentBounds.getWidth();
+                        item.height = calculateIdealHeight(contentWidth);
+                    }
+                }
             }
             else if (idealHeight.exists())
             {
@@ -120,7 +135,7 @@ namespace jive
                 // item below it (matching how an intrinsic/ideal size does).
                 item.minWidth = item.width;
             }
-            else if (idealWidth.exists())
+            else if (idealWidth.exists() && !scrollsItsContent())
             {
                 if (idealWidth.get() < parentContentBounds.getWidth())
                     item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
@@ -135,7 +150,7 @@ namespace jive
                 // item below it (matching how an intrinsic/ideal size does).
                 item.minHeight = item.height;
             }
-            else if (idealHeight.exists())
+            else if (idealHeight.exists() && !scrollsItsContent())
             {
                 const auto property = state[idealHeight.id];
 
@@ -174,6 +189,12 @@ namespace jive
                 margin.getBottom(),
                 margin.getLeft(),
             };
+        }
+
+        // A viewport's content scrolls, so it doesn't need room for it.
+        [[nodiscard]] bool scrollsItsContent() const
+        {
+            return decorator.getTopLevelDecorator().toType<Viewport>() != nullptr;
         }
 
         [[nodiscard]] float calculateIdealHeight(float itemWidth) const

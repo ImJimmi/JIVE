@@ -91,6 +91,24 @@ namespace jive
 
         lookAndFeel->drawComponent(g, *this);
         juce::MidiKeyboardComponent::paint(g);
+        paintShadowIfUnstyled(g, *lookAndFeel);
+    }
+
+    // Unstyled keys look like JUCE's, so they get its shadow along the top too.
+    void KeyboardComponent::paintShadowIfUnstyled(juce::Graphics& g, const LookAndFeel& lookAndFeel) const
+    {
+        const auto* firstKey = keys.getFirst();
+
+        if (firstKey == nullptr
+            || findBackgroundFill(*firstKey, lookAndFeel.findMostApplicableStyles(*firstKey)).has_value())
+        {
+            return;
+        }
+
+        const auto shadow = lookAndFeel.findColour(shadowColourId);
+        const auto keyboardWidth = getRectangleForKey(getRangeEnd()).getRight();
+        g.setGradientFill({ shadow, 0.0f, 0.0f, shadow.withAlpha(0.0f), 0.0f, 5.0f, false });
+        g.fillRect(0.0f, 0.0f, keyboardWidth, 5.0f);
     }
 
     void KeyboardComponent::resized()

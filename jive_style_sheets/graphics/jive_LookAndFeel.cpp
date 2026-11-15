@@ -8,6 +8,7 @@
 #include "default-styles/jive_DefaultSliderStyles.h"
 #include "jive_Shadow.h"
 #include "themes/jive_HighContrastTheme.h"
+#include "themes/jive_JuceTheme.h"
 #include "themes/jive_MaterialTheme.h"
 #include "themes/jive_SteelTheme.h"
 #include "themes/jive_SynthwaveTheme.h"
@@ -235,6 +236,7 @@ namespace jive
         switch (theme)
         {
         case Theme::juce:
+            themes::applyJuce(*this);
             break;
         case Theme::steel:
             themes::applySteel(*this);
@@ -257,8 +259,9 @@ namespace jive
     juce::Rectangle<int> LookAndFeel::getToggleButtonCheckboxBounds(const juce::ToggleButton& button,
                                                                     const Styles& styles) const
     {
-        auto bounds = button.getLocalBounds().toFloat();
-        const auto boxSize = getFont(button, styles).getHeight() * 1.25f;
+        static constexpr auto inset = 4.0f;
+        auto bounds = button.getLocalBounds().toFloat().withTrimmedLeft(inset);
+        const auto boxSize = getFont(button, styles).getHeight() * 1.1f;
         return bounds
             .removeFromLeft(boxSize)
             .withSizeKeepingCentre(boxSize, boxSize)
@@ -268,8 +271,8 @@ namespace jive
     float LookAndFeel::getToggleButtonTextInset(const juce::ToggleButton& button,
                                                 const Styles& styles) const
     {
-        static constexpr auto gapBetweenCheckboxAndText = 5.0f;
-        return static_cast<float>(getToggleButtonCheckboxBounds(button, styles).getWidth())
+        static constexpr auto gapBetweenCheckboxAndText = 6.0f;
+        return static_cast<float>(getToggleButtonCheckboxBounds(button, styles).getRight())
              + gapBetweenCheckboxAndText;
     }
 
@@ -295,13 +298,8 @@ namespace jive
                  if (button.getToggleState())
                  {
                      g.setFillType(getAccentFill(button, styles));
-                     const auto tick = getTickShape(1.0f);
-                     g.fillPath(tick,
-                                tick.getTransformToScaleToFit(boxBounds
-                                                                  .toFloat()
-                                                                  .withSizeKeepingCentre(juce::jmin(boxBounds.toFloat().getWidth(), 13.0f),
-                                                                                         juce::jmin(boxBounds.toFloat().getHeight(), 13.0f)),
-                                                              true));
+                     const auto tick = getTickShape(0.75f);
+                     g.fillPath(tick, tick.getTransformToScaleToFit(boxBounds.toFloat().reduced(4.0f, 5.0f), false));
                  }
 
                  g.setFillType(getForegroundFill(button, styles));
