@@ -126,6 +126,6 @@ To submit a change:
 - Build and test your changes by enabling the `JIVE_BUILD_EXAMPLES`, `JIVE_BUILD_TEST_RUNNER`, `JIVE_BUILD_BENCHMARKS`, `JIVE_ENABLE_PLUGINVAL`, and `JIVE_ENABLE_PROJUCER_PROJECTS` cmake settings
 - Format your code with [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html)
 - Open a PR to merge your branch into JIVE's `main` branch
-- Link your PR on the [JUCE forum thread](https://forum.juce.com/t/introducing-jive-the-ultimate-juce-extension-for-building-guis/56534) (recommended)
+- Link your PR on the [JUCE forum thread](https://forum.juce.com/t/jive-v2-markup-style-sheets-hot-reloading-templates-imports-auto-attaching-parameters-localisation-and-more/69945) (recommended)
 
 Your code may be rewritten, reformatted, or refactored to match the style and standards of the rest of the codebase.
