@@ -478,7 +478,7 @@ namespace jive
             removeColour(backgroundColourId);
 
         setOpaque(true);
-        const auto themeBackground = getLookAndFeel().findColour(backgroundColourId);
+        const auto themeBackground = juce::Component::getLookAndFeel().findColour(backgroundColourId);
         windows::setBackdrop(peer->getNativeHandle(),
                              backdrop,
                              themeBackground.getPerceivedBrightness() < 0.5f,

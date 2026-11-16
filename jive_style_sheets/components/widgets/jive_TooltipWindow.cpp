@@ -59,12 +59,12 @@ namespace jive
                                                                   juce::Rectangle<int> parentArea)
     {
         auto& tooltip = window.standIn;
-        const auto* lookAndFeel = dynamic_cast<const jive::LookAndFeel*>(&tooltip.getLookAndFeel());
+        const auto* jiveLookAndFeel = dynamic_cast<const jive::LookAndFeel*>(&tooltip.getLookAndFeel());
 
-        if (lookAndFeel == nullptr)
+        if (jiveLookAndFeel == nullptr)
             return tooltip.getLookAndFeel().getTooltipBounds(text, position, parentArea);
 
-        const auto styles = lookAndFeel->findTooltipStyles(tooltip);
+        const auto styles = jiveLookAndFeel->findTooltipStyles(tooltip);
         const auto font = getFont(tooltip, styles);
         const auto lines = juce::StringArray::fromLines(text);
         const auto textWidth = std::transform_reduce(std::begin(lines), std::end(lines), 0.0f, [](auto a, auto b) {
@@ -94,12 +94,12 @@ namespace jive
     void TooltipWindow::Metrics::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)
     {
         auto& tooltip = window.standIn;
-        const auto* lookAndFeel = dynamic_cast<const jive::LookAndFeel*>(&tooltip.getLookAndFeel());
+        const auto* jiveLookAndFeel = dynamic_cast<const jive::LookAndFeel*>(&tooltip.getLookAndFeel());
 
-        if (lookAndFeel == nullptr)
+        if (jiveLookAndFeel == nullptr)
             return tooltip.getLookAndFeel().drawTooltip(g, text, width, height);
 
-        const auto styles = lookAndFeel->findTooltipStyles(tooltip);
+        const auto styles = jiveLookAndFeel->findTooltipStyles(tooltip);
         tooltip.setSize(width, height);
         default_styles::paintComponent(g, tooltip, styles);
         default_styles::paintText(g,

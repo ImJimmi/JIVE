@@ -648,8 +648,14 @@ static jive::UnitTest shadowRepaintsWhenPathChangesTest{
         struct RepaintSpy : juce::CachedComponentImage
         {
             void paint(juce::Graphics&) final {}
-            bool invalidateAll() final { return invalidated = true; }
-            bool invalidate(const juce::Rectangle<int>&) final { return invalidated = true; }
+            bool invalidateAll() final
+            {
+                return invalidated = true;
+            }
+            bool invalidate(const juce::Rectangle<int>&) final
+            {
+                return invalidated = true;
+            }
             void releaseResources() final {}
 
             bool invalidated = false;

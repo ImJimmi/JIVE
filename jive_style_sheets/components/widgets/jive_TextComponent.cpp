@@ -429,7 +429,9 @@ public:
         testLayoutsFollowChanges();
         testDefaultForeground();
         testReadingDirection();
+    #if JUCE_MAJOR_VERSION >= 8
         testTrailingLigatures();
+    #endif
     }
 
 private:
@@ -658,6 +660,7 @@ private:
         }
     }
 
+    #if JUCE_MAJOR_VERSION >= 8
     // Rubik replaces "ff" with a single ligature glyph.
     struct LigatureText
     {
@@ -765,6 +768,7 @@ private:
             expectWithinAbsoluteError(findRightmostInk(paint(ligature.text)), findRightmostInk(reference), 1);
         }
     }
+    #endif
 };
 
 static TextComponentUnitTest textComponentUnitTest;

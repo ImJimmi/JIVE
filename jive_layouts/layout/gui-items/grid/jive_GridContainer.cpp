@@ -1396,8 +1396,8 @@ private:
             },
         };
 
-        for (const auto& name : names)
-            grid.appendChild(juce::ValueTree{ "Component", { { "align-items", "center" } }, { juce::ValueTree{ "Text", { { "text", name } } } } }, nullptr);
+        for (const auto& label : names)
+            grid.appendChild(juce::ValueTree{ "Component", { { "align-items", "center" } }, { juce::ValueTree{ "Text", { { "text", label } } } } }, nullptr);
 
         juce::ValueTree state{
             "Window",

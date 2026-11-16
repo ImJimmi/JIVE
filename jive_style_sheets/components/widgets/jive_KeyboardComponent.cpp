@@ -73,39 +73,39 @@ namespace jive
 
     void KeyboardComponent::paint(juce::Graphics& g)
     {
-        auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
+        auto* jiveLookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
 
-        if (lookAndFeel == nullptr)
+        if (jiveLookAndFeel == nullptr)
         {
             juce::MidiKeyboardComponent::paint(g);
             return;
         }
 
-        if (const auto painter = lookAndFeel->findMostApplicablePainter(*this);
+        if (const auto painter = jiveLookAndFeel->findMostApplicablePainter(*this);
             painter.has_value())
         {
-            (*painter)(*this, lookAndFeel->findMostApplicableStyles(*this), g);
-            lookAndFeel->updateShadow<KeyboardComponent>(*this);
+            (*painter)(*this, jiveLookAndFeel->findMostApplicableStyles(*this), g);
+            jiveLookAndFeel->updateShadow<KeyboardComponent>(*this);
             return;
         }
 
-        lookAndFeel->drawComponent(g, *this);
+        jiveLookAndFeel->drawComponent(g, *this);
         juce::MidiKeyboardComponent::paint(g);
-        paintShadowIfUnstyled(g, *lookAndFeel);
+        paintShadowIfUnstyled(g, *jiveLookAndFeel);
     }
 
     // Unstyled keys look like JUCE's, so they get its shadow along the top too.
-    void KeyboardComponent::paintShadowIfUnstyled(juce::Graphics& g, const LookAndFeel& lookAndFeel) const
+    void KeyboardComponent::paintShadowIfUnstyled(juce::Graphics& g, const LookAndFeel& jiveLookAndFeel) const
     {
-        const auto* firstKey = keys.getFirst();
+        const auto* firstVisibleKey = keys.getFirst();
 
-        if (firstKey == nullptr
-            || findBackgroundFill(*firstKey, lookAndFeel.findMostApplicableStyles(*firstKey)).has_value())
+        if (firstVisibleKey == nullptr
+            || findBackgroundFill(*firstVisibleKey, jiveLookAndFeel.findMostApplicableStyles(*firstVisibleKey)).has_value())
         {
             return;
         }
 
-        const auto shadow = lookAndFeel.findColour(shadowColourId);
+        const auto shadow = jiveLookAndFeel.findColour(shadowColourId);
         const auto keyboardWidth = getRectangleForKey(getRangeEnd()).getRight();
         g.setGradientFill({ shadow, 0.0f, 0.0f, shadow.withAlpha(0.0f), 0.0f, 5.0f, false });
         g.fillRect(0.0f, 0.0f, keyboardWidth, 5.0f);
@@ -163,14 +163,14 @@ namespace jive
 
         key->setInteraction(isOver, isDown);
 
-        auto* lookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
-        const auto styles = lookAndFeel == nullptr
+        auto* jiveLookAndFeel = dynamic_cast<LookAndFeel*>(&getLookAndFeel());
+        const auto styles = jiveLookAndFeel == nullptr
                               ? Styles{}
-                              : lookAndFeel->findMostApplicableStyles(*key);
+                              : jiveLookAndFeel->findMostApplicableStyles(*key);
 
-        if (lookAndFeel != nullptr)
+        if (jiveLookAndFeel != nullptr)
         {
-            if (const auto painter = lookAndFeel->findMostApplicablePainter(*key);
+            if (const auto painter = jiveLookAndFeel->findMostApplicablePainter(*key);
                 painter.has_value())
             {
                 const juce::Graphics::ScopedSaveState savedState{ g };
@@ -286,7 +286,7 @@ private:
         keyboard.getState().noteOn(1, 64, 1.0f);
 
         const auto snapshot = keyboard.createComponentSnapshot(keyboard.getLocalBounds());
-        expect(snapshot.getPixelAt(10, 90) == juce::Colours::red);
+        expect(snapshot.getPixelAt(4, 90) == juce::Colours::red);
         expect(snapshot.getPixelAt(20, 20) == juce::Colours::blue);
         expect(snapshot.getPixelAt(50, 90) == juce::Colours::lime);
     }

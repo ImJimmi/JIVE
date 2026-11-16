@@ -54,12 +54,12 @@ namespace jive
     void Viewport::takePlaceOfContent()
     {
         auto& content = *getComponent();
-        auto* parent = content.getParentComponent();
-        const auto index = parent->getIndexOfChildComponent(&content);
+        auto* parentComponent = content.getParentComponent();
+        const auto index = parentComponent->getIndexOfChildComponent(&content);
 
         viewport.setBounds(content.getBounds());
         viewport.setVisible(content.isVisible());
-        parent->addChildComponent(viewport, index);
+        parentComponent->addChildComponent(viewport, index);
         scrolledArea.addChildComponent(content);
         fitContent();
     }
