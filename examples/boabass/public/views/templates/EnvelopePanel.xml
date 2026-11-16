@@ -1,0 +1,14 @@
+<Component flex-grow="1.2" flex-basis="0">
+    <Component template="./Panel.xml" title="{{ title }}" direction="column">
+        <Snippet name="body">
+            <Envelope class="envelope" prefix="{{ prefix }}" align-self="stretch" height="70" />
+
+            <Component flex-direction="row" justify-content="space-between" align-self="stretch">
+                <Component template="./Knob.xml" label="attack" parameter="{{ prefix }}-attack" size="small" diameter="38" width="60" />
+                <Component template="./Knob.xml" label="decay" parameter="{{ prefix }}-decay" size="small" diameter="38" width="60" />
+                <Component template="./Knob.xml" label="sustain" parameter="{{ prefix }}-sustain" size="small" diameter="38" width="60" />
+                <Component template="./Knob.xml" label="release" parameter="{{ prefix }}-release" size="small" diameter="38" width="60" />
+            </Component>
+        </Snippet>
+    </Component>
+</Component>

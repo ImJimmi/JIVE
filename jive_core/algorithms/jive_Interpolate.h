@@ -1,8 +1,5 @@
 #pragma once
 
-#include <jive_core/geometry/jive_BorderRadii.h>
-#include <jive_core/graphics/jive_Fill.h>
-
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive
@@ -129,38 +126,24 @@ namespace jive
     template <>
     struct Interpolate<juce::Colour>
     {
-        [[nodiscard]] juce::Colour operator()(juce::Colour start, juce::Colour end, double proportion) const
+        [[nodiscard]] juce::Colour operator()(juce::Colour start,
+                                              juce::Colour end,
+                                              double proportion) const
         {
             return start.interpolatedWith(end, static_cast<float>(proportion));
         }
     };
 
-    template <>
-    struct Interpolate<Fill>
-    {
-        [[nodiscard]] Fill operator()(const Fill& start, const Fill& end, double proportion) const
-        {
-            if (start.getColour().has_value() && end.getColour().has_value())
-            {
-                return Fill{
-                    interpolate(*start.getColour(), *end.getColour(), proportion),
-                };
-            }
-
-            return end;
-        }
-    };
-
     template <typename T>
-    struct Interpolate<BorderRadii<T>>
+    struct Interpolate<juce::Point<T>>
     {
-        [[nodiscard]] BorderRadii<T> operator()(BorderRadii<T> start, BorderRadii<T> end, double proportion) const
+        [[nodiscard]] juce::Point<T> operator()(juce::Point<T> start,
+                                                juce::Point<T> end,
+                                                double proportion) const
         {
-            return BorderRadii<T>{
-                interpolate(start.topLeft, end.topLeft, proportion),
-                interpolate(start.topRight, end.topRight, proportion),
-                interpolate(start.bottomRight, end.bottomRight, proportion),
-                interpolate(start.bottomLeft, end.bottomLeft, proportion),
+            return juce::Point<T>{
+                interpolate(start.x, end.x, proportion),
+                interpolate(start.y, end.y, proportion),
             };
         }
     };

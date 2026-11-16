@@ -1,0 +1,54 @@
+{
+  "$lightCoral": "#E77674",
+  "$goldenApricot": "#D8924D",
+  "$oldGold": "#AFAF3F",
+  "$mossGreen": "#74B670",
+  "$pictonBlue": "#4FADE4",
+  "$brightLavender": "#BE89DD",
+  "$tint": "rgba(127, 127, 127, 0.12)",
+  "$line": "rgba(127, 127, 127, 0.35)",
+
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40,
+    "foreground": "$pictonBlue"
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14,
+    "foreground": "$pictonBlue"
+  },
+  ".value": {
+    "font-family": "Source Code Pro"
+  },
+  ".preview": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 1,
+    "border-radius": 15
+  },
+  ".box": {
+    "border-radius": 4
+  },
+  ".box-red": {
+    "background": "$lightCoral"
+  },
+  ".box-orange": {
+    "background": "$goldenApricot"
+  },
+  ".box-yellow": {
+    "background": "$oldGold"
+  },
+  ".box-green": {
+    "background": "$mossGreen"
+  },
+  ".box-blue": {
+    "background": "$pictonBlue"
+  },
+  ".box-purple": {
+    "background": "$brightLavender"
+  }
+}

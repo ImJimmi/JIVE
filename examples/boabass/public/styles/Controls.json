@@ -1,0 +1,90 @@
+{
+  "Knob": {
+    "background": "#1B3626",
+    "track": "linear-gradient(to right, #22A565, $lime)",
+    "thumb": "radial-gradient(at 35% 30%, #3E6E4F 0%, #1C3827 65%, #11251A 100%)",
+    "foreground": "$lime",
+    "border": "rgba(180, 245, 107, 0.18)",
+    "shadow": "0 3px 6px rgba(0, 0, 0, 0.55)",
+
+    ":hover": {
+      "border": "rgba(180, 245, 107, 0.5)",
+      "shadow": "0 0 12px 1px $glow"
+    }
+  },
+
+  "Button": {
+    "background": "$moss",
+    "foreground": "$muted",
+    "border": "$line",
+    "border-width": 1,
+    "border-radius": 6,
+    "font-family": "Rubik Mono One",
+    "font-size": 10,
+
+    ":hover": {
+      "background": "$fern",
+      "foreground": "$ink"
+    }
+  },
+  ".choice:checked": {
+    "background": "linear-gradient(to bottom, #2D7A4B, #1D5535)",
+    "foreground": "$lime",
+    "border": "$leaf",
+    "shadow": "0 0 8px rgba(74, 222, 128, 0.35)"
+  },
+  ".power": {
+    "background": "#26352C",
+    "border": "$line-strong",
+    "border-radius": 8,
+
+    ":hover": {
+      "background": "#2F4236"
+    },
+    ":checked": {
+      "background": "radial-gradient(at 50% 40%, $lime 0%, $leaf 70%)",
+      "border": "$lime",
+      "shadow": "0 0 10px 1px $glow"
+    }
+  },
+  ".arrow": {
+    "foreground": "$leaf",
+    "border-radius": 15
+  },
+
+  "ComboBox": {
+    "background": "linear-gradient(to bottom, #21462F, #142D1E)",
+    "foreground": "$ink",
+    "border": "$line-strong",
+    "border-width": 1,
+    "border-radius": 15,
+    "track": "#0A1810",
+    "accent": "$lime",
+    "shadow": "0 3px 8px rgba(0, 0, 0, 0.45)",
+
+    ":hover": {
+      "background": "linear-gradient(to bottom, #285638, #193624)",
+      "border": "$leaf"
+    },
+    "Popup": {
+      "border-radius": 8,
+      "background": "$pine",
+      "border": "$line-strong",
+      "foreground": "$ink"
+    },
+    "Option:hover": {
+      "background": "$fern",
+      "foreground": "$lime"
+    }
+  },
+  "#preset": {
+    "font-family": "Rubik Mono One",
+    "font-size": 11,
+    "foreground": "$lime"
+  },
+
+  "Meter": {
+    "background": "#15291D",
+    "track": "linear-gradient(to top, $leaf 0%, $lime 70%, #F5D76B 85%, #F2705B 100%)"
+  }
+}

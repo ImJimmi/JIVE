@@ -4,31 +4,24 @@ namespace jive
 {
     GridItem::GridItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
-        , order{ state, "order" }
-        , justifySelf{ state, "justify-self" }
-        , alignSelf{ state, "align-self" }
-        , gridColumn{ state, "grid-column" }
-        , gridRow{ state, "grid-row" }
-        , gridArea{ state, "grid-area" }
+        , order{ state, ids::order() }
+        , justifySelf{ state, ids::justifySelf() }
+        , alignSelf{ state, ids::alignSelf() }
+        , gridColumn{ state, ids::gridColumn() }
+        , gridRow{ state, ids::gridRow() }
+        , gridArea{ state, ids::gridArea() }
+        , idealWidth{ state, ids::idealWidth() }
+        , parentJustifyItems{ state.getParent(), ids::justifyItems() }
+        , parentAlignItems{ state.getParent(), ids::alignItems() }
     {
-        static const juce::GridItem defaultGridItem;
-
-        if (!justifySelf.exists())
-            justifySelf = defaultGridItem.justifySelf;
-        if (!alignSelf.exists())
-            alignSelf = defaultGridItem.alignSelf;
-        if (!gridColumn.exists())
-            gridColumn = defaultGridItem.column;
-        if (!gridRow.exists())
-            gridRow = defaultGridItem.row;
-        if (!gridArea.exists())
-            gridArea = defaultGridItem.area;
-
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
 
-            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+            if (auto* parentDecorator = dynamic_cast<GuiItemDecorator*>(getParent()))
+            {
+                if (auto* containerParent = parentDecorator->getTopLevelDecorator().toType<ContainerItem>())
+                    containerParent->updateIdealSize();
+            }
         };
         order.onValueChange = updateParentLayout;
         justifySelf.onValueChange = updateParentLayout;
@@ -37,26 +30,44 @@ namespace jive
         gridRow.onValueChange = updateParentLayout;
         gridArea.onValueChange = updateParentLayout;
 
-        box.addListener(*this);
+        // A child's ideal width changes when, for example, a text item's font is
+        // resolved after the look-and-feel has been attached. The grid's cached
+        // geometry would otherwise hold the stale size, so invalidate it and
+        // re-resolve the parent's layout when this happens.
+        idealWidth.onValueChange = updateParentLayout;
+
+        state.addListener(this);
     }
 
     GridItem::~GridItem()
     {
-        box.removeListener(*this);
+        state.removeListener(this);
     }
 
     juce::GridItem GridItem::toJuceGridItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
+        if (box.getConstraintsVersion() != cachedItemsConstraintsVersion)
+        {
+            cachedItems.clear();
+            cachedItemsConstraintsVersion = box.getConstraintsVersion();
+        }
+
         const auto key = std::make_pair(parentContentBounds, strategy);
 
         if (cachedItems.find(key) == std::end(cachedItems))
         {
             juce::GridItem gridItem{ *getComponent() };
 
-            gridItem.column = gridColumn;
-            gridItem.row = gridRow;
-            gridItem.area = gridArea;
+            gridItem.column = gridColumn.getOr({
+                juce::GridItem::Keyword::autoValue,
+                juce::GridItem::Keyword::autoValue,
+            });
+            gridItem.row = gridRow.getOr({
+                juce::GridItem::Keyword::autoValue,
+                juce::GridItem::Keyword::autoValue,
+            });
+            gridItem.area = gridArea.getOr("");
 
             applyConstraints(gridItem,
                              parentContentBounds,
@@ -66,8 +77,8 @@ namespace jive
             switch (strategy)
             {
             case LayoutStrategy::real:
-                gridItem.justifySelf = justifySelf;
-                gridItem.alignSelf = alignSelf;
+                gridItem.justifySelf = justifySelf.getOr(juce::GridItem::JustifySelf::autoValue);
+                gridItem.alignSelf = alignSelf.getOr(juce::GridItem::AlignSelf::autoValue);
                 break;
             case LayoutStrategy::dummy:
                 gridItem.justifySelf = juce::GridItem::JustifySelf::stretch;
@@ -79,20 +90,46 @@ namespace jive
                     gridItem.height = gridItem.minHeight;
             }
 
+            if (std::size(cachedItems) >= maxNumCachedItems)
+                cachedItems.clear();
+
             cachedItems[key] = gridItem;
         }
 
-        return cachedItems.find(key)->second;
+        auto gridItem = cachedItems.find(key)->second;
+
+        if (strategy == LayoutStrategy::real && !getTopLevelDecorator().stretchesByDefault())
+        {
+            if (gridItem.justifySelf == juce::GridItem::JustifySelf::autoValue && !parentJustifyItems.exists())
+                gridItem.justifySelf = juce::GridItem::JustifySelf::start;
+            if (gridItem.alignSelf == juce::GridItem::AlignSelf::autoValue && !parentAlignItems.exists())
+                gridItem.alignSelf = juce::GridItem::AlignSelf::start;
+        }
+
+        return gridItem;
     }
 
-    void GridItem::boxModelChanged(BoxModel&)
+    void GridItem::idealSizeChanged()
     {
         cachedItems.clear();
+    }
+
+    void GridItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              order,
+                              justifySelf,
+                              alignSelf,
+                              gridColumn,
+                              gridRow,
+                              gridArea,
+                              idealWidth);
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 static bool compare(juce::GridItem::Property a, juce::GridItem::Property b)
 {
@@ -124,6 +161,7 @@ public:
     void runTest() final
     {
         testComponent();
+        testConstraintsReusedAfterResize();
         testOrder();
         testJustifySelf();
         testAlignSelf();
@@ -140,6 +178,35 @@ public:
     }
 
 private:
+    void testConstraintsReusedAfterResize()
+    {
+        beginTest("an item's constraints aren't recalculated when it has only been resized");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300" display="grid" grid-template-columns="1fr">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto numIdealHeightCalculations = std::make_shared<int>(0);
+        auto text = state.getChild(0);
+        const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
+        text.setProperty("jive::ideal-height",
+                         juce::var::NativeFunction{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
+                             (*numIdealHeightCalculations)++;
+                             return calculateIdealHeight(args);
+                         } },
+                         nullptr);
+
+        state.setProperty("width", 200, nullptr);
+        expectEquals(root->getChildren()[0]->getComponent()->getWidth(), 200);
+
+        *numIdealHeightCalculations = 0;
+        state.setProperty("justify-items", "centre", nullptr);
+        expectEquals(*numIdealHeightCalculations, 0);
+    }
+
     void testComponent()
     {
         beginTest("component");
@@ -693,7 +760,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxWidth, static_cast<float>(juce::GridItem::notAssigned));
+            expectEquals(gridItem.maxWidth, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
 
             state.getChild(0).setProperty("max-width", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
@@ -865,7 +932,7 @@ private:
             auto gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)
                                 .toType<jive::GridItem>()
                                 ->toJuceGridItem({}, jive::LayoutStrategy::real);
-            expectEquals(gridItem.maxHeight, static_cast<float>(juce::GridItem::notAssigned));
+            expectEquals(gridItem.maxHeight, static_cast<float>(std::numeric_limits<juce::uint16>::max()));
 
             state.getChild(0).setProperty("max-height", 30.4f, nullptr);
             gridItem = dynamic_cast<jive::GuiItemDecorator&>(item)

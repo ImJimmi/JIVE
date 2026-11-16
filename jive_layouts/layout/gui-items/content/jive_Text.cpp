@@ -7,52 +7,35 @@ namespace jive
 {
     Text::Text(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , text{ state, "text" }
-        , lineSpacing{ state, "line-spacing" }
-        , justification{ state, "justification" }
-        , wordWrap{ state, "word-wrap" }
-        , direction{ state, "direction" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , text{ state, ids::text() }
+        , wordWrap{ state, ids::wordWrap() }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
-        if (!justification.exists())
-            justification = juce::Justification::centredLeft;
-        if (!wordWrap.exists())
-            wordWrap = juce::AttributedString::WordWrap::byWord;
-        if (!direction.exists())
-            direction = juce::AttributedString::ReadingDirection::natural;
-
         text.onValueChange = [this]() {
-            updateTextComponent();
-        };
-        justification.onValueChange = [this]() {
             updateTextComponent();
         };
         wordWrap.onValueChange = [this]() {
             updateTextComponent();
         };
-        direction.onValueChange = [this]() {
-            updateTextComponent();
-        };
-        lineSpacing.onValueChange = [this]() {
-            updateTextComponent();
-        };
 
-        state.setProperty("ideal-height",
-                          juce::var{ [this](const juce::var::NativeFunctionArgs& args) {
-                              const auto layout = buildTextLayout(args.arguments[0]);
+        state.setProperty(ids::idealHeight(),
+                          juce::var::NativeFunction{ [this](const juce::var::NativeFunctionArgs& args) {
+                              const auto& layout = getTextComponent().getTextLayout(args.arguments[0]);
                               return std::ceil(layout.getHeight());
                           } },
                           nullptr);
 
         updateTextComponent();
         getTextComponent().addListener(*this);
+        state.addListener(this);
     }
 
     Text::~Text()
     {
+        state.removeListener(this);
         getTextComponent().removeListener(*this);
     }
 
@@ -108,49 +91,38 @@ namespace jive
         return dynamic_cast<const TextComponent&>(*getComponent());
     }
 
-    void Text::textFontChanged(TextComponent&)
+    void Text::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
-        updateTextComponent();
+        forwardPropertyChange(tree, id, text, wordWrap);
     }
 
-    juce::TextLayout Text::buildTextLayout(float maxWidth) const
+    void Text::textFontChanged(TextComponent&)
     {
-        for (auto* parentItem = getParent();
-             maxWidth < 0.0f && parentItem != nullptr;
-             parentItem = parentItem->getParent())
-        {
-            if (const auto& parentBoxModel = dynamic_cast<const GuiItemDecorator*>(getParent())->toType<CommonGuiItem>()->boxModel;
-                !parentBoxModel.hasAutoWidth())
-            {
-                maxWidth = parentBoxModel.getContentBounds().getWidth();
-            }
-        }
+        updateTextComponent(false);
+    }
 
-        juce::TextLayout layout;
-        layout.createLayout(getTextComponent().getAttributedString(), maxWidth);
-
-        return layout;
+    void Text::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+        updateTextComponent();
     }
 
     template <typename T>
     [[nodiscard]] static auto nextWholeNumberAbove(T value)
     {
         static_assert(std::is_floating_point<T>());
-        const auto ceiled = std::ceil(value);
+        const auto valueRoundedUp = std::ceil(value);
 
-        if (juce::approximatelyEqual(value, ceiled))
-            return ceiled + static_cast<T>(1);
+        if (juce::approximatelyEqual(value, valueRoundedUp))
+            return valueRoundedUp + static_cast<T>(1);
 
-        return ceiled;
+        return valueRoundedUp;
     }
 
-    void Text::updateTextComponent()
+    void Text::updateTextComponent(bool alwaysReflowParent)
     {
-        getTextComponent().setDirection(direction);
-        getTextComponent().setJustification(justification);
-        getTextComponent().setLineSpacing(lineSpacing);
-        getTextComponent().setText(text);
-        getTextComponent().setWordWrap(wordWrap);
+        getTextComponent().setText(translate(text.getOr("")));
+        getTextComponent().setWordWrap(wordWrap.getOr(juce::AttributedString::WordWrap::byWord));
         getTextComponent().clearAttributes();
 
         for (auto* child : getChildren())
@@ -169,16 +141,36 @@ namespace jive
             }
         }
 
-        idealWidth = nextWholeNumberAbove(buildTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()))
-                                              .getWidth());
+        const auto& naturalLayout = getTextComponent().getTextLayout(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+        const juce::Point naturalSize{ nextWholeNumberAbove(naturalLayout.getWidth()), naturalLayout.getHeight() };
+        const auto lineSpacing = getTextComponent().getLineSpacing();
+        const auto measurementsChanged = naturalSize != previousNaturalSize
+                                      || !juce::exactlyEqual(lineSpacing, previousLineSpacing);
+        previousNaturalSize = naturalSize;
+        previousLineSpacing = lineSpacing;
+
+        idealWidth = naturalSize.x;
+
+        if (auto* child = toType<ContainerItem::Child>())
+            child->idealSizeChanged();
+
+        const auto reflowParent = (alwaysReflowParent || measurementsChanged)
+                               && !static_cast<bool>(state[ids::setupInProgress()]);
 
         if (auto* parentItem = getParent())
         {
             if (!parentItem->isContainer())
                 getTextComponent().setAccessible(false);
 
-            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+            if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*parentItem)
+                                            .getTopLevelDecorator()
+                                            .toType<ContainerItem>())
+            {
+                if (reflowParent)
+                    containerParent->updateIdealSize();
+                else
+                    containerParent->invalidateIdealSize();
+            }
         }
     }
 
@@ -200,8 +192,8 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_core/graphics/jive_FontUtilities.h>
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
+    #include <jive_style_sheets/graphics/jive_FontUtilities.h>
 
 class TextTest : public juce::UnitTest
 {
@@ -214,9 +206,7 @@ public:
     void runTest() final
     {
         testText();
-        testJustification();
         testWordWrap();
-        testReadingDirection();
         testLineSpacing();
         testNested();
         testAutoSize();
@@ -263,51 +253,6 @@ private:
         }
     }
 
-    void testJustification()
-    {
-        beginTest("justification");
-
-        {
-            juce::ValueTree tree{
-                "Text",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "text", "Do not read." },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getNumAttributes(), 1);
-            expect(text.getTextComponent().getAttributedString().getJustification()
-                   == juce::Justification::centredLeft);
-
-            tree.setProperty("justification", "top-left", nullptr);
-            expect(text.getTextComponent().getAttributedString().getJustification()
-                   == juce::Justification::topLeft);
-        }
-        {
-            juce::ValueTree tree{
-                "Text",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "justification", "bottom-right" },
-                    { "text", "Do read." },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getNumAttributes(), 1);
-            expect(text.getTextComponent().getAttributedString().getJustification()
-                   == juce::Justification::bottomRight);
-        }
-    }
-
     void testWordWrap()
     {
         beginTest("word-wrap");
@@ -351,89 +296,110 @@ private:
         }
     }
 
-    void testReadingDirection()
-    {
-        beginTest("direction");
-
-        {
-            juce::ValueTree tree{
-                "Text",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "text", "One step at a time." },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getReadingDirection(),
-                         juce::AttributedString::ReadingDirection::natural);
-
-            tree.setProperty("direction", "left-to-right", nullptr);
-            expectEquals(text.getTextComponent().getAttributedString().getReadingDirection(),
-                         juce::AttributedString::ReadingDirection::leftToRight);
-        }
-        {
-            juce::ValueTree tree{
-                "Text",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "text", "Chicken tendies." },
-                    { "direction", "right-to-left" },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getReadingDirection(),
-                         juce::AttributedString::ReadingDirection::rightToLeft);
-        }
-    }
-
     void testLineSpacing()
     {
         beginTest("line-spacing");
 
         {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
             juce::ValueTree tree{
-                "Text",
+                "Component",
                 {
                     { "width", 222 },
                     { "height", 333 },
-                    { "text", "Bottle o' rum." },
+                    { "align-items", "flex-start" },
+                },
+                {
+                    juce::ValueTree{
+                        "Text",
+                        {
+                            { "text", "Bottle o' rum.\nYo ho ho." },
+                        },
+                    },
                 },
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getLineSpacing(),
-                         0.0f);
+            root.addAndMakeVisible(*item->getComponent());
 
-            tree.setProperty("line-spacing", 1.234f, nullptr);
-            expectEquals(text.getTextComponent().getAttributedString().getLineSpacing(),
-                         1.234f);
+            auto& textItem = *item->getChildren()[0];
+            const auto& text = *dynamic_cast<jive::GuiItemDecorator&>(textItem)
+                                    .toType<jive::Text>();
+            const auto lineSpacing = [&text] {
+                return text.getTextComponent().getAttributedString().getLineSpacing();
+            };
+            expectEquals(lineSpacing(), 0.0f);
+            const auto heightWithoutSpacing = jive::boxModel(textItem).getHeight();
+
+            tree.getChild(0).setProperty("line-spacing", 1.234f, nullptr);
+            expectEquals(lineSpacing(), 1.234f);
+
+            tree.setProperty("line-spacing", 20.0f, nullptr);
+            expectEquals(lineSpacing(), 1.234f);
+
+            tree.getChild(0).removeProperty("line-spacing", nullptr);
+            expectEquals(lineSpacing(), 20.0f);
+            expectGreaterThan(jive::boxModel(textItem).getHeight(), heightWithoutSpacing + 10.0f);
         }
         {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
             juce::ValueTree tree{
-                "Text",
+                "Component",
                 {
                     { "width", 222 },
                     { "height", 333 },
-                    { "text", "First of all..." },
                     { "line-spacing", 4.389f },
+                },
+                {
+                    juce::ValueTree{
+                        "Text",
+                        {
+                            { "text", "First of all..." },
+                        },
+                    },
                 },
             };
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(tree);
-            auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                              .toType<jive::Text>();
-            expectEquals(text.getTextComponent().getAttributedString().getLineSpacing(),
-                         4.389f);
+            root.addAndMakeVisible(*item->getComponent());
+
+            const auto& text = *dynamic_cast<jive::GuiItemDecorator&>(*item->getChildren()[0])
+                                    .toType<jive::Text>();
+            expectEquals(text.getTextComponent().getAttributedString().getLineSpacing(), 4.389f);
+        }
+        {
+            juce::Component root;
+            jive::LookAndFeel lookAndFeel{ root };
+
+            juce::ValueTree tree{
+                "Component",
+                {
+                    { "width", 60 },
+                    { "height", 333 },
+                    { "align-items", "flex-start" },
+                },
+                {
+                    juce::ValueTree{
+                        "Text",
+                        {
+                            { "text", "A single line that has to wrap" },
+                        },
+                    },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(tree);
+            root.addAndMakeVisible(*item->getComponent());
+
+            auto& textItem = *item->getChildren()[0];
+            const auto heightWithoutSpacing = jive::boxModel(textItem).getHeight();
+
+            tree.setProperty("line-spacing", 20.0f, nullptr);
+            expectGreaterThan(jive::boxModel(textItem).getHeight(), heightWithoutSpacing + 10.0f);
         }
     }
 

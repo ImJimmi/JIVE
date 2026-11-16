@@ -15,6 +15,8 @@ namespace jive
         const juce::HyperlinkButton& getHyperlink() const;
 
     private:
-        Property<juce::URL> url;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
+
+        PassiveProperty<juce::URL> url;
     };
 } // namespace jive

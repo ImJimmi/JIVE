@@ -1,24 +1,27 @@
 #include "jive_BoxModel.h"
 
+#include <jive_core/jive_core.h>
+
 namespace jive
 {
     BoxModel::BoxModel(juce::ValueTree stateSource)
         : state{ stateSource }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , minWidth{ state, "min-width" }
-        , minHeight{ state, "min-height" }
-        , maxWidth{ state, "max-width" }
-        , maxHeight{ state, "max-height" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
-        , componentWidth{ state, "component-width" }
-        , componentHeight{ state, "component-height" }
-        , padding{ state, "padding" }
-        , border{ state, "border-width" }
-        , margin{ state, "margin" }
-        , callbackLock{ state, "box-model-callback-lock" }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
+        , maxWidth{ state, ids::maxWidth() }
+        , maxHeight{ state, ids::maxHeight() }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
+        , componentWidth{ state, ids::componentWidth() }
+        , componentHeight{ state, ids::componentHeight() }
+        , padding{ state, ids::padding() }
+        , border{ state, ids::borderWidth() }
+        , margin{ state, ids::margin() }
     {
+        state.addListener(this);
+
         if (!width.exists())
             width.setAuto();
         if (!height.exists())
@@ -27,32 +30,34 @@ namespace jive
         if (width.isAuto())
             componentWidth.clear();
         else
-            componentWidth = width.toPixels(getParentBounds());
+            componentWidth = width.get().toPixels(getParentBounds().getWidth());
 
         if (height.isAuto())
             componentHeight.clear();
         else
-            componentHeight = height.toPixels(getParentBounds());
+            componentHeight = height.get().toPixels(getParentBounds().getHeight());
 
         const auto informBoxModelChanged = [this]() {
             listeners.call(&Listener::boxModelChanged, *this);
         };
         const auto onBoxModelChanged = [this, informBoxModelChanged]() {
-            if (callbackLock.get())
+            if (callbackLock)
                 return;
 
             informBoxModelChanged();
         };
         const auto handleOnValueChange = [this, informBoxModelChanged](auto& property, bool updateWidth, bool updateHeight) {
             property.onValueChange = [this, informBoxModelChanged, &property, updateWidth, updateHeight] {
-                if (callbackLock.get())
+                if (callbackLock)
                     return;
 
+                JIVE_TRACE("property", property.id.toString());
+
                 if (updateWidth && !width.isAuto())
-                    componentWidth = width.toPixels(getParentBounds());
+                    componentWidth = width.get().toPixels(getParentBounds().getWidth());
 
                 if (updateHeight && !height.isAuto())
-                    componentHeight = height.toPixels(getParentBounds());
+                    componentHeight = height.get().toPixels(getParentBounds().getHeight());
 
                 if (!property.isTransitioning())
                 {
@@ -65,6 +70,7 @@ namespace jive
         handleOnValueChange(width, true, false);
         handleOnValueChange(height, false, true);
         handleOnValueChange(padding, false, false);
+        handleOnValueChange(margin, false, false);
         handleOnValueChange(border, false, false);
         handleOnValueChange(minWidth, false, false);
         handleOnValueChange(minHeight, false, false);
@@ -81,10 +87,6 @@ namespace jive
             if (!componentHeight.isTransitioning())
                 onBoxModelChanged();
         };
-        margin.onValueChange = [this, onBoxModelChanged]() {
-            if (!margin.isTransitioning())
-                onBoxModelChanged();
-        };
 
         componentWidth.setTransitionSourceProperty(width.id);
         componentHeight.setTransitionSourceProperty(height.id);
@@ -93,7 +95,15 @@ namespace jive
         componentHeight.onTransitionProgressed = informBoxModelChanged;
         padding.onTransitionProgressed = informBoxModelChanged;
         border.onTransitionProgressed = informBoxModelChanged;
-        margin.onTransitionProgressed = informBoxModelChanged;
+        margin.onTransitionProgressed = [this, informBoxModelChanged] {
+            constraintsVersion++;
+            informBoxModelChanged();
+        };
+    }
+
+    BoxModel::~BoxModel()
+    {
+        state.removeListener(this);
     }
 
     float BoxModel::getWidth() const
@@ -106,10 +116,16 @@ namespace jive
 
     void BoxModel::setWidth(float newWidth)
     {
+        JIVE_TRACE("newWidth", newWidth);
         componentWidth = newWidth;
 
         if (!state.getParent().isValid())
-            width = juce::String{ juce::roundToInt(newWidth) };
+        {
+            width = jive::Length{
+                std::round(newWidth),
+                jive::Length::Unit::absolute,
+            };
+        }
     }
 
     bool BoxModel::hasAutoWidth() const
@@ -127,10 +143,16 @@ namespace jive
 
     void BoxModel::setHeight(float newHeight)
     {
+        JIVE_TRACE("newHeight", newHeight);
         componentHeight = newHeight;
 
         if (!state.getParent().isValid())
-            height = juce::String{ juce::roundToInt(newHeight) };
+        {
+            height = jive::Length{
+                std::round(newHeight),
+                jive::Length::Unit::absolute,
+            };
+        }
     }
 
     bool BoxModel::hasAutoHeight() const
@@ -140,6 +162,7 @@ namespace jive
 
     void BoxModel::setSize(float newWidth, float newHeight)
     {
+        JIVE_TRACE("newWidth", newWidth, "newHeight", newHeight);
         const auto widthChanged = !juce::approximatelyEqual(newWidth, componentWidth.get());
         const auto heightChanged = !juce::approximatelyEqual(newHeight, componentHeight.get());
         std::unique_ptr<ScopedCallbackLock> scopedLock;
@@ -161,7 +184,7 @@ namespace jive
         if (auto* transition = padding.getTransition())
             return transition->calculateCurrent<juce::BorderSize<float>>();
 
-        return padding;
+        return padding.getOr(juce::BorderSize<float>{ 0.0f });
     }
 
     juce::BorderSize<float> BoxModel::getBorder() const
@@ -194,20 +217,38 @@ namespace jive
                                juce::jmax(0.0f, bounds.getHeight()));
     }
 
+    juce::Rectangle<float> BoxModel::getExplicitConstraints() const
+    {
+        return getMaximumBounds()
+            .getIntersection(juce::Rectangle<float>{
+                hasAutoWidth() ? std::numeric_limits<juce::uint16>::max() : getWidth(),
+                hasAutoHeight() ? std::numeric_limits<juce::uint16>::max() : getHeight(),
+            });
+    }
+
     juce::Rectangle<float> BoxModel::getMinimumBounds() const
     {
         return juce::Rectangle<float>{
-            minWidth.toPixels(getParentBounds()),
-            minHeight.toPixels(getParentBounds()),
+            minWidth.get().toPixels(getParentBounds().getWidth()),
+            minHeight.get().toPixels(getParentBounds().getHeight()),
         };
     }
 
     juce::Rectangle<float> BoxModel::getMaximumBounds() const
     {
         return {
-            maxWidth.exists() ? maxWidth.toPixels(getParentBounds()) : -1.0f,
-            maxHeight.exists() ? maxHeight.toPixels(getParentBounds()) : -1.0f,
+            maxWidth.exists()
+                ? maxWidth.get().toPixels(getParentBounds().getWidth())
+                : std::numeric_limits<juce::uint16>::max(),
+            maxHeight.exists()
+                ? maxHeight.get().toPixels(getParentBounds().getHeight())
+                : std::numeric_limits<juce::uint16>::max(),
         };
+    }
+
+    std::uint64_t BoxModel::getConstraintsVersion() const
+    {
+        return constraintsVersion;
     }
 
     void BoxModel::addListener(Listener& listener) const
@@ -222,14 +263,48 @@ namespace jive
 
     juce::Rectangle<float> BoxModel::getParentBounds() const
     {
-        if (state.getParent().isValid())
+        const auto parent = state.getParent();
+
+        if (!parent.isValid())
+            return {};
+
+        return {
+            fromVar<float>(parent[componentWidth.id]),
+            fromVar<float>(parent[componentHeight.id]),
+        };
+    }
+
+    void BoxModel::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (tree == state
+            && (property == width.id
+                || property == height.id
+                || property == minWidth.id
+                || property == minHeight.id
+                || property == maxWidth.id
+                || property == maxHeight.id
+                || property == idealWidth.id
+                || property == idealHeight.id
+                || property == margin.id))
         {
-            const Property<float> parentWidth{ state.getParent(), componentWidth.id };
-            const Property<float> parentHeight{ state.getParent(), componentHeight.id };
-            return { parentWidth.get(), parentHeight.get() };
+            constraintsVersion++;
         }
 
-        return {};
+        forwardPropertyChange(tree,
+                              property,
+                              componentWidth,
+                              componentHeight,
+                              width,
+                              height,
+                              idealWidth,
+                              idealHeight,
+                              padding,
+                              border,
+                              margin,
+                              minWidth,
+                              minHeight,
+                              maxWidth,
+                              maxHeight);
     }
 
     BoxModel::ScopedCallbackLock::ScopedCallbackLock(BoxModel& boxModelToLock)
@@ -250,7 +325,7 @@ namespace jive
 
     void BoxModel::unlock()
     {
-        callbackLock.clear();
+        callbackLock = false;
     }
 } // namespace jive
 
@@ -274,6 +349,7 @@ public:
         testMargin();
         testContentBounds();
         testTransitions();
+        testConstraintsVersion();
     }
 
 private:
@@ -561,6 +637,67 @@ private:
             expectEquals(boxModel.getOuterBounds(), juce::Rectangle{ 100.0f, 100.0f });
             expectEquals(boxModel.getContentBounds(), juce::Rectangle{ 20.0f, 20.0f, 60.0f, 60.0f });
             expectWithinAbsoluteError(listener.callbackCount, 60, 1);
+        }
+    }
+
+    void testConstraintsVersion()
+    {
+        beginTest("constraints version / changes");
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 200 },
+                    { "height", 200 },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            };
+            auto state = parentState.getChild(0);
+            jive::BoxModel boxModel{ state };
+            auto version = boxModel.getConstraintsVersion();
+
+            boxModel.setSize(100.0f, 50.0f);
+            state.setProperty("padding", 10, nullptr);
+            state.setProperty("border-width", 5, nullptr);
+            expectEquals(boxModel.getConstraintsVersion(), version);
+
+            for (const auto* property : {
+                     "width",
+                     "height",
+                     "min-width",
+                     "min-height",
+                     "max-width",
+                     "max-height",
+                     "margin",
+                     "jive::ideal-width",
+                     "jive::ideal-height",
+                 })
+            {
+                state.setProperty(property, 20, nullptr);
+                expectNotEquals(boxModel.getConstraintsVersion(), version, property);
+                version = boxModel.getConstraintsVersion();
+            }
+        }
+
+        beginTest("constraints version / margin transitions");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 100 },
+                    { "margin", 0 },
+                    { "transition", "margin 10s" },
+                },
+            };
+            jive::BoxModel boxModel{ state };
+            state.setProperty("margin", 100, nullptr);
+            const auto version = boxModel.getConstraintsVersion();
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectNotEquals(boxModel.getConstraintsVersion(), version);
         }
     }
 };

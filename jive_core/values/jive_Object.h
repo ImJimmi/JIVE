@@ -10,6 +10,7 @@ namespace jive
     {
     public:
         using ReferenceCountedPointer = juce::ReferenceCountedObjectPtr<Object>;
+        using WeakReference = juce::WeakReference<Object>;
 
         struct Listener
         {
@@ -23,7 +24,7 @@ namespace jive
         Object(std::initializer_list<juce::NamedValueSet::NamedValue> initialProperties);
         Object(const Object& other);
         Object(Object&& other);
-        Object(const juce::DynamicObject& other);
+        Object(const juce::DynamicObject& other, Object* parent = nullptr);
 
 #if JUCE_VERSION >= JIVE_JUCE_VERSION(8, 0, 4)
         void didModifyProperty(const juce::Identifier& name,
@@ -34,13 +35,16 @@ namespace jive
 #else
         void setProperty(const juce::Identifier& propertyName,
                          const juce::var& newValue) override;
-#endif
+        void removeProperty(const juce::Identifier& propertyName) override;
         const juce::NamedValueSet& getProperties() const;
+#endif
 
-        Object* getParent() noexcept;
-        const Object* getParent() const noexcept;
-        Object* getRoot() noexcept;
-        const Object* getRoot() const noexcept;
+        [[nodiscard]] Object* getParent() noexcept;
+        [[nodiscard]] const Object* getParent() const noexcept;
+        [[nodiscard]] Object* getRoot() noexcept;
+        [[nodiscard]] const Object* getRoot() const noexcept;
+
+        [[nodiscard]] juce::String findNameInParent() const;
 
         void addListener(Listener& listener) const;
         void removeListener(Listener& listener) const;
@@ -55,8 +59,16 @@ namespace jive
         Object* parent = nullptr;
 
         JUCE_LEAK_DETECTOR(Object)
+        JUCE_DECLARE_WEAK_REFERENCEABLE(Object)
     };
 
+    /** Parses the given string to a juce::var.
+
+        This has two advantages over juce::JSON::parse:
+        1. It parses to jive::Objects rather than juce::DynamicObjects
+        2. It allows comments (starting with "//" only), which JUCE usually
+           does not allow
+    */
     juce::var parseJSON(const juce::String& jsonString);
 } // namespace jive
 

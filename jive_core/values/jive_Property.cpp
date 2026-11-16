@@ -16,8 +16,8 @@ public:
         testCallback();
         testHereditaryValues();
         testObservations();
-        testFunctionalProperties();
         testDynamicObjectSource();
+        testObjectValues();
         testTransitions();
     }
 
@@ -249,21 +249,6 @@ private:
         }
     }
 
-    void testFunctionalProperties()
-    {
-        beginTest("functional properties");
-
-        juce::ValueTree state{ "State" };
-        jive::Property<int> value{ state, "value" };
-        expect(!value.isFunctional());
-
-        value = [] {
-            return 300;
-        };
-        expect(value.isFunctional());
-        expectEquals(value.get(), 300);
-    }
-
     void testDynamicObjectSource()
     {
         juce::ValueTree state{
@@ -302,13 +287,6 @@ private:
             expect(value.exists());
             value.clear();
             expect(!value.exists());
-
-            expect(!value.isFunctional());
-            value = []() {
-                return 999;
-            };
-            expect(value.isFunctional());
-            expectEquals(value.get(), 999);
 
             value = 7648;
             expectEquals<juce::String>(value.toString(), "7648");
@@ -378,6 +356,97 @@ private:
         }
     }
 
+    void testObjectValues()
+    {
+        beginTest("object values / changing the object's properties calls onValueChange");
+        {
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State", { { "object", object.get() } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / changing the properties of an object that replaced the original calls onValueChange");
+        {
+            // Since JUCE 9, objects with the same properties compare equal, so
+            // setting one over an equal original would leave the original.
+            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            jive::Object::ReferenceCountedPointer replacement = new jive::Object{ { "value", 3 } };
+            juce::ValueTree state{ "State", { { "object", original.get() } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            state.setProperty("object", replacement.get(), nullptr);
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            replacement->setProperty("value", 2);
+            expect(callbackCalled);
+
+            callbackCalled = false;
+            original->setProperty("value", 2);
+            expect(!callbackCalled);
+        }
+
+        beginTest("object values / an object that's set after the property is created is observed");
+        {
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State" };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            state.setProperty("object", object.get(), nullptr);
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / a string that isn't an object is left as it is");
+        {
+            juce::ValueTree state{ "State", { { "object", "styles.json" } } };
+            jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+            expectEquals(state["object"].toString(), juce::String{ "styles.json" });
+
+            auto callbackCalled = false;
+            property.onValueChange = [&callbackCalled] {
+                callbackCalled = true;
+            };
+
+            jive::Object::ReferenceCountedPointer object = new jive::Object{ { "value", 1 } };
+            state.setProperty("object", object.get(), nullptr);
+            expect(property.get() == object);
+
+            callbackCalled = false;
+            object->setProperty("value", 2);
+            expect(callbackCalled);
+        }
+
+        beginTest("object values / an object outliving the property can still be changed");
+        {
+            jive::Object::ReferenceCountedPointer original = new jive::Object{ { "value", 1 } };
+            juce::ValueTree state{ "State", { { "object", original.get() } } };
+
+            {
+                jive::Property<jive::Object::ReferenceCountedPointer> property{ state, "object" };
+                state.setProperty("object", new jive::Object{}, nullptr);
+            }
+
+            original->setProperty("value", 2);
+            expectEquals(static_cast<int>(original->getProperty("value")), 2);
+        }
+    }
+
     void testTransitions()
     {
         beginTest("transitions / initialised");
@@ -443,6 +512,57 @@ private:
             jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
             expectEquals(value.get(), 200.0);
             expectEquals(value.getTransition()->calculateCurrent<double>(), 200.0);
+        }
+        beginTest("transitions / changing the transition takes effect");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+
+            state.setProperty("transition", "value 4s", nullptr);
+            value = 100.0;
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+            expectEquals(value.calculateCurrent(), 25.0);
+        }
+        beginTest("transitions / changing the transition part-way carries on from the current value");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+            value = 100.0;
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(1.0));
+
+            state.setProperty("transition", "value 1s", nullptr);
+            expectEquals(value.calculateCurrent(), 50.0);
+
+            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(0.5));
+            expectEquals(value.calculateCurrent(), 75.0);
+        }
+        beginTest("transitions / removing the transition stops changes from animating");
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "value", 0.0 },
+                    { "transition", "value 2s" },
+                },
+            };
+            jive::Property<double> value{ state, "value" };
+
+            state.removeProperty("transition", nullptr);
+            value = 100.0;
+            expect(value.getTransition() == nullptr);
+            expectEquals(value.calculateCurrent(), 100.0);
         }
     }
 };

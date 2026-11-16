@@ -5,120 +5,32 @@
 
 namespace jive
 {
-    class PassiveView : public View
+    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
+                     const juce::ValueTree& sourceState,
+                     GuiItem* parentItem)
+        : GuiItem{
+            std::shared_ptr<juce::Component>{ std::move(comp) },
+            sourceState,
+            parentItem,
+        }
     {
-    public:
-        explicit PassiveView(const juce::ValueTree& sourceState)
-            : view{ sourceState }
-        {
-        }
-
-    protected:
-        [[nodiscard]] juce::ValueTree initialise() final
-        {
-            return view;
-        }
-
-    private:
-        juce::ValueTree view;
-    };
-
-    View::ReferenceCountedPointer GuiItem::getOrCreateView(juce::ValueTree state)
-    {
-        View::ReferenceCountedPointer view;
-
-        if (state.hasProperty("view-object"))
-        {
-            view = dynamic_cast<View*>(state["view-object"].getObject());
-        }
-        else if (state.hasProperty("make-view"))
-        {
-            const auto buildView = state["make-view"].getNativeFunction();
-            const auto viewObjectProperty = buildView({ juce::var{}, nullptr, 0 });
-
-            if (auto* wrappedState = dynamic_cast<ReferenceCountedValueTreeWrapper*>(viewObjectProperty.getObject()))
-            {
-                if (auto* viewObject = dynamic_cast<View*>(wrappedState->state["view-object"].getObject()))
-                    view = viewObject;
-                else
-                    jassertfalse;
-            }
-            else
-            {
-                jassertfalse;
-            }
-        }
-        else
-        {
-            view = new PassiveView{ state };
-        }
-
-        state.removeProperty("view-object", nullptr);
-        view->state = state;
-
-        return view;
     }
 
     GuiItem::GuiItem(std::shared_ptr<juce::Component> comp,
-                     GuiItem* parentItem,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                     StyleSheet::ReferenceCountedPointer sheet,
-#endif
-                     View::ReferenceCountedPointer sourceView)
-        : state{ sourceView->getState() }
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        , styleSheet{ sheet }
-#endif
+                     const juce::ValueTree& sourceState,
+                     GuiItem* parentItem)
+        : state{ sourceState }
         , component{ comp }
         , parent{ parentItem }
-        , remover{ std::make_unique<Remover>(*this) }
-        , view{ sourceView }
     {
         jassert(component != nullptr);
-    }
-
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
-                     const juce::ValueTree& sourceState,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                     StyleSheet::ReferenceCountedPointer sheet,
-#endif
-                     GuiItem* parentItem)
-        : GuiItem{
-            std::shared_ptr<juce::Component>{ std::move(comp) },
-            parentItem,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-            std::move(sheet),
-#endif
-            getOrCreateView(sourceState),
-        }
-    {
-    }
-
-    GuiItem::GuiItem(std::unique_ptr<juce::Component> comp,
-                     View::ReferenceCountedPointer sourceView,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-                     StyleSheet::ReferenceCountedPointer sheet,
-#endif
-                     GuiItem* parentItem)
-        : GuiItem{
-            std::shared_ptr<juce::Component>{ std::move(comp) },
-            parentItem,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-            std::move(sheet),
-#endif
-            sourceView,
-        }
-    {
     }
 
     GuiItem::GuiItem(const GuiItem& other)
         : GuiItem{
             other.component,
+            other.state,
             other.parent,
-#if JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-            nullptr,
-#endif
-            other.view,
         }
     {
     }
@@ -136,16 +48,6 @@ namespace jive
     std::shared_ptr<juce::Component> GuiItem::getComponent()
     {
         return component;
-    }
-
-    const View::ReferenceCountedPointer GuiItem::getView() const
-    {
-        return view;
-    }
-
-    View::ReferenceCountedPointer GuiItem::getView()
-    {
-        return view;
     }
 
     void GuiItem::insertChild(std::unique_ptr<GuiItem> child, int index)
@@ -209,6 +111,57 @@ namespace jive
         return getParent() == nullptr;
     }
 
+    const LookAndFeel& GuiItem::getLookAndFeel() const
+    {
+        if (const auto* itemParent = getParent())
+            return itemParent->getLookAndFeel();
+
+        return dynamic_cast<const LookAndFeel&>(component->getLookAndFeel());
+    }
+
+    LookAndFeel& GuiItem::getLookAndFeel()
+    {
+        return const_cast<LookAndFeel&>(std::as_const(*this).getLookAndFeel());
+    }
+
+    const juce::LocalisedStrings* GuiItem::findLocalisedStrings() const
+    {
+        for (const auto* ancestor = this; ancestor != nullptr; ancestor = ancestor->getParent())
+        {
+            if (const auto* strings = ancestor->getLocalisedStrings())
+                return strings;
+        }
+
+        return nullptr;
+    }
+
+    juce::String GuiItem::translate(const juce::String& text) const
+    {
+        if (const auto* strings = findLocalisedStrings())
+            return strings->translate(text);
+
+        return juce::translate(text);
+    }
+
+    const juce::LocalisedStrings* GuiItem::getLocalisedStrings() const
+    {
+        return localisedStrings.has_value() ? &*localisedStrings : nullptr;
+    }
+
+    // Children are notified first so that a nested Text has its new text by the
+    // time its parent appends it. Children with their own strings are skipped
+    // because they don't translate with this item's.
+    void GuiItem::notifyLocalisedStringsChanged()
+    {
+        for (auto* child : getChildren())
+        {
+            if (child->getLocalisedStrings() == nullptr)
+                child->notifyLocalisedStringsChanged();
+        }
+
+        localisedStringsChanged();
+    }
+
     bool GuiItem::isContainer() const
     {
         return true;
@@ -217,6 +170,11 @@ namespace jive
     bool GuiItem::isContent() const
     {
         return false;
+    }
+
+    bool GuiItem::stretchesByDefault() const
+    {
+        return true;
     }
 
     void GuiItem::callLayoutChildrenWithRecursionLock()
@@ -243,28 +201,6 @@ namespace jive
     }
 #endif
 
-    GuiItem::Remover::Remover(GuiItem& guiItem)
-        : item{ guiItem }
-        , parent{ item.getParent() }
-    {
-        if (parent != nullptr)
-            parent->state.addListener(this);
-    }
-
-    GuiItem::Remover::~Remover()
-    {
-        if (parent != nullptr)
-            parent->state.removeListener(this);
-    }
-
-    void GuiItem::Remover::valueTreeChildRemoved(juce::ValueTree&,
-                                                 juce::ValueTree& childWhichHasBeenRemoved,
-                                                 int)
-    {
-        if (childWhichHasBeenRemoved == item.state && parent != nullptr)
-            parent->removeChild(item);
-    }
-
     BoxModel& boxModel(GuiItem& item)
     {
         // This is a convenience function that only works if the given GUI item
@@ -284,7 +220,7 @@ namespace jive
 
     GuiItem* findItemWithID(GuiItem& root, const juce::Identifier& id)
     {
-        if (root.state["id"].toString() == id.toString())
+        if (root.state[ids::id()].toString() == id.toString())
             return &root;
 
         for (auto* child : root.getChildren())
@@ -295,10 +231,28 @@ namespace jive
 
         return nullptr;
     }
+
+    std::vector<GuiItem*> findItemsWithClass(GuiItem& root, juce::StringRef className)
+    {
+        std::vector<GuiItem*> result;
+
+        const auto classes = juce::StringArray::fromTokens(root.state[ids::classes()].toString(), " ", "");
+
+        if (classes.contains(className))
+            result.emplace_back(&root);
+
+        for (auto* child : root.getChildren())
+        {
+            const auto others = findItemsWithClass(*child, className);
+            result.insert(std::end(result), std::begin(others), std::end(others));
+        }
+
+        return result;
+    }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class GuiItemUnitTest : public juce::UnitTest
 {
@@ -331,22 +285,19 @@ private:
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
         expectEquals(item->state.getNumChildren(), 0);
 
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(0),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
         expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
 
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(1),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
-        item->state.appendChild(juce::ValueTree{ "Component" }, nullptr);
         item->insertChild(std::make_unique<jive::GuiItem>(std::make_unique<juce::Component>(),
-                                                          item->state.getChild(2),
+                                                          juce::ValueTree{ "Component" },
                                                           item.get()),
                           -1);
         expectEquals(item->getChildren().size(), 3);
@@ -356,14 +307,6 @@ private:
         expect(child0 != nullptr);
         item->removeChild(*child0);
         expectEquals(item->getChildren().size(), 2);
-        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
-
-        item->state.removeChild(0, nullptr);
-        expectEquals(item->getChildren().size(), 2);
-        expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
-
-        item->state.removeChild(0, nullptr);
-        expectEquals(item->getChildren().size(), 1);
         expectEquals(item->getComponent()->getNumChildComponents(), item->getChildren().size());
     }
 

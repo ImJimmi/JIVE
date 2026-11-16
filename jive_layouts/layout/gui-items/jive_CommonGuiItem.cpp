@@ -5,152 +5,219 @@ namespace jive
     CommonGuiItem::CommonGuiItem(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , boxModel{ state }
-#if !JIVE_GUI_ITEMS_HAVE_STYLE_SHEETS
-        , interactionState{ *getComponent(), state }
-#endif
-        , name{ state, "name" }
-        , title{ state, "title" }
-        , id{ state, "id" }
-        , description{ state, "description" }
-        , tooltip{ state, "tooltip" }
-        , enabled{ state, "enabled" }
-        , accessible{ state, "accessible" }
-        , visibility{ state, "visibility" }
-        , alwaysOnTop{ state, "always-on-top" }
-        , bufferedToImage{ state, "buffered-to-image" }
-        , opaque{ state, "opaque" }
-        , focusable{ state, "focusable" }
-        , clickingGrabsFocus{ state, "clicking-grabs-focus" }
-        , focusOutline{ state, "focus-outline" }
-        , focusOrder{ state, "focus-order" }
-        , opacity{ state, "opacity" }
-        , cursor{ state, "cursor" }
-        , display{ state, "display" }
-        , width{ state, "width" }
-        , height{ state, "height" }
+        , name{ state, ids::name() }
+        , title{ state, ids::title() }
+        , id{ state, ids::id() }
+        , description{ state, ids::description() }
+        , tooltip{ state, ids::tooltip() }
+        , lang{ state, ids::lang() }
+        , enabled{ state, ids::enabled() }
+        , accessible{ state, ids::accessible() }
+        , visibility{ state, ids::visibility() }
+        , alwaysOnTop{ state, ids::alwaysOnTop() }
+        , bufferedToImage{ state, ids::bufferedToImage() }
+        , opaque{ state, ids::opaque() }
+        , focusable{ state, ids::focusable() }
+        , clickingGrabsFocus{ state, ids::clickingGrabsFocus() }
+        , focusOutline{ state, ids::focusOutline() }
+        , focusOrder{ state, ids::focusOrder() }
+        , classes{ state, ids::classes() }
+        , cursor{ state, ids::cursor() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , propertyUpdaters{
+            {
+                name.id,
+                [this] {
+                    getComponent()->setName(name);
+                },
+            },
+            {
+                title.id,
+                [this] {
+                    getComponent()->setTitle(translate(title));
+                },
+            },
+            {
+                id.id,
+                [this] {
+                    getComponent()->setComponentID(id.get().toString());
+                },
+            },
+            {
+                description.id,
+                [this] {
+                    getComponent()->setDescription(translate(description));
+                },
+            },
+            {
+                tooltip.id,
+                [this] {
+                    getComponent()->setHelpText(translate(tooltip));
+                },
+            },
+            {
+                lang.id,
+                [this] {
+                    updateLocalisedStrings();
+                },
+            },
+            {
+                enabled.id,
+                [this] {
+                    getComponent()->setEnabled(enabled.getOr(true));
+                },
+            },
+            {
+                accessible.id,
+                [this] {
+                    getComponent()->setAccessible(accessible.getOr(true));
+                },
+            },
+            {
+                visibility.id,
+                [this] {
+                    getComponent()->setVisible(visibility.getOr(true));
+                },
+            },
+            {
+                alwaysOnTop.id,
+                [this] {
+                    getComponent()->setAlwaysOnTop(alwaysOnTop);
+                },
+            },
+            {
+                bufferedToImage.id,
+                [this] {
+                    getComponent()->setBufferedToImage(bufferedToImage);
+                },
+            },
+            {
+                opaque.id,
+                [this] {
+                    getComponent()->setOpaque(opaque);
+                },
+            },
+            {
+                focusable.id,
+                [this] {
+                    getComponent()->setWantsKeyboardFocus(focusable);
+                },
+            },
+            {
+                focusOutline.id,
+                [this] {
+                    getComponent()->setHasFocusOutline(focusOutline);
+                },
+            },
+            {
+                clickingGrabsFocus.id,
+                [this] {
+                    getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus.getOr(true));
+                },
+            },
+            {
+                focusOrder.id,
+                [this] {
+                    getComponent()->setExplicitFocusOrder(focusOrder.getOr(state.getParent().indexOf(state) + 1));
+                },
+            },
+            {
+                classes.id,
+                [this] {
+                    getComponent()->getProperties().set(ids::classes(), classes.get());
+                    getComponent()->repaint();
+                },
+            },
+            {
+                cursor.id,
+                [this] {
+                    getComponent()->setMouseCursor(juce::MouseCursor{ cursor.getOr(juce::MouseCursor::NormalCursor) });
+                },
+            },
+        }
     {
-        if (!enabled.exists())
-            enabled = true;
-        if (!accessible.exists())
-            accessible = true;
-        if (!visibility.exists())
-            visibility = true;
-        if (!clickingGrabsFocus.exists())
-            clickingGrabsFocus = true;
-        if (!focusOrder.exists())
-            focusOrder = state.getParent().indexOf(state) + 1;
-        if (!opacity.exists())
-            opacity = 1.0f;
-        if (!cursor.exists())
-            cursor = juce::MouseCursor::NormalCursor;
-        if (!display.exists())
-            display = Display::flex;
-
         getComponent()->addComponentListener(this);
+        getComponent()->getProperties().set(ids::type(), state.getType().toString());
 
-        name.onValueChange = [this]() {
-            getComponent()->setName(name);
-        };
-        getComponent()->setName(name);
-
-        title.onValueChange = [this]() {
-            getComponent()->setTitle(title);
-        };
-        getComponent()->setTitle(title);
-
-        id.onValueChange = [this]() {
-            getComponent()->setComponentID(id.get().toString());
-        };
-        getComponent()->setComponentID(id.get().toString());
-
-        description.onValueChange = [this]() {
-            getComponent()->setDescription(description);
-        };
-        getComponent()->setDescription(description);
-
-        tooltip.onValueChange = [this]() {
-            getComponent()->setHelpText(tooltip);
-        };
-        getComponent()->setHelpText(tooltip);
-
-        enabled.onValueChange = [this]() {
-            getComponent()->setEnabled(enabled);
-        };
-        getComponent()->setEnabled(enabled);
-
-        accessible.onValueChange = [this]() {
-            getComponent()->setAccessible(accessible);
-        };
-        getComponent()->setAccessible(accessible);
-
-        visibility.onValueChange = [this]() {
-            getComponent()->setVisible(visibility);
-        };
-        getComponent()->setVisible(visibility);
-
-        alwaysOnTop.onValueChange = [this]() {
-            getComponent()->setAlwaysOnTop(alwaysOnTop);
-        };
-        getComponent()->setAlwaysOnTop(alwaysOnTop);
-
-        bufferedToImage.onValueChange = [this]() {
-            getComponent()->setBufferedToImage(bufferedToImage);
-        };
-        getComponent()->setBufferedToImage(bufferedToImage);
-
-        opaque.onValueChange = [this]() {
-            getComponent()->setOpaque(opaque);
-        };
-        getComponent()->setOpaque(opaque);
-
-        focusable.onValueChange = [this]() {
-            getComponent()->setWantsKeyboardFocus(focusable);
-        };
-        getComponent()->setWantsKeyboardFocus(focusable);
-
-        focusOutline.onValueChange = [this]() {
-            getComponent()->setHasFocusOutline(focusOutline);
-        };
-        getComponent()->setHasFocusOutline(focusOutline);
-
-        clickingGrabsFocus.onValueChange = [this]() {
-            getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
-        };
-        getComponent()->setMouseClickGrabsKeyboardFocus(clickingGrabsFocus);
-
-        focusOrder.onValueChange = [this]() {
-            getComponent()->setExplicitFocusOrder(focusOrder);
-        };
-        getComponent()->setExplicitFocusOrder(focusOrder);
-
-        const auto updateOpacity = [this] {
-            getComponent()->setAlpha(opacity.calculateCurrent());
-        };
-        opacity.onValueChange = updateOpacity;
-        opacity.onTransitionProgressed = updateOpacity;
-        getComponent()->setAlpha(opacity);
-
-        cursor.onValueChange = [this]() {
-            getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
-        };
-        getComponent()->setMouseCursor(juce::MouseCursor{ cursor });
+        for (const auto& updater : propertyUpdaters)
+            updater.second();
 
         if (isTopLevel())
         {
-            // Top-level items must have an explicit size!
-            jassert(!boxModel.hasAutoWidth());
-            jassert(!boxModel.hasAutoHeight());
+            if (boxModel.hasAutoWidth())
+                logValueError(state, ids::width(), "Top-level items must have an explicit width");
+            if (boxModel.hasAutoHeight())
+                logValueError(state, ids::height(), "Top-level items must have an explicit height");
         }
 
         getComponent()->setSize(juce::roundToInt(boxModel.getOuterBounds().getWidth()),
                                 juce::roundToInt(boxModel.getOuterBounds().getHeight()));
 
         boxModel.addListener(*this);
+        state.addListener(this);
     }
 
     CommonGuiItem::~CommonGuiItem()
     {
+        state.removeListener(this);
         getComponent()->removeComponentListener(this);
+    }
+
+    void CommonGuiItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (tree != state)
+            return;
+
+        updateProperty(property);
+    }
+
+    void CommonGuiItem::updateProperty(const juce::Identifier& property)
+    {
+        if (const auto updater = std::find_if(std::begin(propertyUpdaters),
+                                              std::end(propertyUpdaters),
+                                              [&property](const auto& entry) {
+                                                  return entry.first == property;
+                                              });
+            updater != std::end(propertyUpdaters))
+        {
+            updater->second();
+        }
+    }
+
+    void CommonGuiItem::updateLocalisedStrings()
+    {
+        stringsFileObserver = nullptr;
+
+        const auto* sourceDirectories = dynamic_cast<SourceDirectories*>(state[ids::sourceDirectories()].getObject());
+        const auto file = lang.exists() && sourceDirectories != nullptr
+                            ? sourceDirectories->find(lang, findSourceFile(state))
+                            : SourceFile{};
+
+        if (!file.exists())
+        {
+            setLocalisedStrings(std::nullopt);
+            return;
+        }
+
+        const auto loadStrings = [this, file] {
+            setLocalisedStrings(juce::LocalisedStrings{ file.loadAsString(), false });
+        };
+        loadStrings();
+
+        if (const auto fileOnDisk = file.getFileOnDisk(); fileOnDisk != juce::File{})
+        {
+            stringsFileObserver = std::make_unique<FileObserver>(fileOnDisk);
+            stringsFileObserver->onFileModified = loadStrings;
+        }
+    }
+
+    void CommonGuiItem::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+
+        for (const auto& property : { title.id, description.id, tooltip.id })
+            updateProperty(property);
     }
 
     void CommonGuiItem::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized,
@@ -164,6 +231,7 @@ namespace jive
             return;
 
         const auto componentBounds = getComponent()->getBounds().toFloat();
+        JIVE_TRACE("x", componentBounds.getX(), "y", componentBounds.getY(), "width", componentBounds.getWidth(), "height", componentBounds.getHeight());
 
         if (!width.isTransitioning() && !height.isTransitioning())
             boxModel.setSize(componentBounds.getWidth(), componentBounds.getHeight());
@@ -178,7 +246,8 @@ namespace jive
         if (&componentThatChangedVisiblity != getComponent().get())
             return;
 
-        visibility = getComponent()->isVisible();
+        if (getComponent()->isVisible() != visibility.getOr(true))
+            visibility = getComponent()->isVisible();
     }
 
     void CommonGuiItem::componentNameChanged(juce::Component& componentThatChangedName)
@@ -246,6 +315,7 @@ namespace jive
 
     void CommonGuiItem::componentParentHierarchyChanged(juce::Component& componentThatsParentChanged)
     {
+        JIVE_TRACE();
         if (&componentThatsParentChanged != getComponent().get())
             return;
 
@@ -254,29 +324,46 @@ namespace jive
             if (hasWidgetRole(*parentComponent))
                 getComponent()->setAccessible(false);
             else
-                getComponent()->setAccessible(accessible);
+                getComponent()->setAccessible(accessible.getOr(true));
         }
+
+        // JUCE also reports changes that don't move the component, such as its
+        // window being shown, and a new sheet would restyle it for nothing.
+        if (getComponent()->getParentComponent() == styledParent
+            && &getComponent()->getLookAndFeel() == styledLookAndFeel)
+        {
+            return;
+        }
+
+        styledParent = getComponent()->getParentComponent();
+        styledLookAndFeel = &getComponent()->getLookAndFeel();
+        setStyleSheet(StyleSheet::create(*getComponent(), state));
     }
 
     void CommonGuiItem::boxModelChanged(BoxModel& boxModelThatChanged)
     {
+        JIVE_TRACE();
         jassertquiet(&boxModelThatChanged == &boxModel);
 
-        getComponent()->removeComponentListener(this);
-        getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
-                                juce::roundToInt(boxModel.getHeight()));
-        getComponent()->addComponentListener(this);
-        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        if (!static_cast<bool>(state[ids::setupInProgress()]))
+        {
+            getComponent()->removeComponentListener(this);
+            getComponent()->setSize(juce::roundToInt(boxModel.getWidth()),
+                                    juce::roundToInt(boxModel.getHeight()));
+            getComponent()->addComponentListener(this);
+            getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        }
     }
 
     void CommonGuiItem::childrenChanged()
     {
-        getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
+        if (!static_cast<bool>(state[ids::setupInProgress()]))
+            getTopLevelDecorator().callLayoutChildrenWithRecursionLock();
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class CommonGuiItemUnitTest : public juce::UnitTest
 {
@@ -306,8 +393,10 @@ public:
         testClickingGrabsFocus();
         testFocusOutline();
         testEnablement();
-        testOpacity();
         testCursor();
+        testClass();
+        testType();
+        testParentHierarchy();
     }
 
 private:
@@ -359,6 +448,30 @@ private:
         const auto& boxModel = jive::boxModel(*item);
         expectEquals(boxModel.getWidth(), 400.f);
         expectEquals(boxModel.getHeight(), 300.f);
+
+        beginTest("top-level items without an explicit size are reported");
+        {
+            jive::CapturingLogger logger;
+            auto unsizedItem = interpreter.interpret(juce::ValueTree{ "Component", { { "height", "auto" } } });
+
+            expect(logger.getLog().contains("for property 'width': Component. Top-level items must have an explicit width"));
+            expect(logger.getLog().contains("for property 'height': Component. Top-level items must have an explicit height"));
+        }
+        {
+            jive::CapturingLogger logger;
+            auto sizedItem = interpreter.interpret(juce::ValueTree{
+                "Component",
+                {
+                    { "width", 10 },
+                    { "height", 10 },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            });
+
+            expect(logger.getLog().isEmpty());
+        }
     }
 
     void testName()
@@ -392,6 +505,25 @@ private:
             jive::Interpreter interpreter;
             auto item = interpreter.interpret(state);
             expectEquals<juce::String>(item->getComponent()->getName(), "Ford Prefect");
+        }
+        {
+            juce::ValueTree state{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "name", "Arthur Dent" },
+                },
+                {
+                    juce::ValueTree{ "Component" },
+                },
+            };
+            jive::Interpreter interpreter;
+            auto item = interpreter.interpret(state);
+
+            state.getChild(0).setProperty("name", "Trillian", nullptr);
+            expectEquals<juce::String>(item->getComponent()->getName(), "Arthur Dent");
+            expectEquals<juce::String>(item->getChildren()[0]->getComponent()->getName(), "Trillian");
         }
     }
 
@@ -872,46 +1004,6 @@ private:
         }
     }
 
-    void testOpacity()
-    {
-        beginTest("opacity");
-
-        {
-            juce::ValueTree state{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(state);
-            expect(item->getComponent()->getAlpha() == 1.f);
-
-            state.setProperty("opacity", 0.42f, nullptr);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
-
-            state.setProperty("transition", "opacity 10s", nullptr);
-            state.setProperty("opacity", 0.92f, nullptr);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.42f, 1.f / 256.f);
-            jive::FakeTime::incrementTime(juce::RelativeTime::seconds(4.0));
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.62f, 1.f / 256.f);
-        }
-        {
-            juce::ValueTree state{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "opacity", 0.123f },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(state);
-            expectWithinAbsoluteError(item->getComponent()->getAlpha(), 0.123f, 1.f / 256.f);
-        }
-    }
-
     void testCursor()
     {
         beginTest("cursor");
@@ -944,6 +1036,90 @@ private:
             auto item = interpreter.interpret(state);
             expect(item->getComponent()->getMouseCursor() == juce::MouseCursor::WaitCursor);
         }
+    }
+
+    void testClass()
+    {
+        beginTest("class / changing it repaints the component, so styles for the new class show");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles(".on",
+                              jive::Styles{}
+                                  .withBackground(juce::Colours::red));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <Component width="20" height="20" />
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        // A buffered component only repaints the areas that have been
+        // invalidated, so a snapshot shows whether a repaint was requested.
+        auto& child = *parent->getChildren()[0];
+        child.getComponent()->setBufferedToImage(true);
+        expect(parentComponent->createComponentSnapshot({ 20, 20 }).getPixelAt(10, 10) != juce::Colours::red);
+
+        child.state.setProperty("class", "on", nullptr);
+        expectEquals(parentComponent->createComponentSnapshot({ 20, 20 }).getPixelAt(10, 10), juce::Colours::red);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testType()
+    {
+        beginTest("type / type selectors match the element's name");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("Card", jive::Styles{}.withBackground(juce::Colours::red));
+        lookAndFeel.addStyles("Button", jive::Styles{}.withBackground(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        interpreter.getComponentFactory().set("Card", [] {
+            return std::make_shared<juce::Component>();
+        });
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <Card width="20" height="20" />
+                <Checkbox width="20" height="20" />
+            </Component>
+        )"));
+        root.addAndMakeVisible(*parent->getComponent());
+
+        const auto& card = *parent->getChildren()[0]->getComponent();
+        const auto& checkbox = *parent->getChildren()[1]->getComponent();
+        expect(lookAndFeel.findMostApplicableStyles(card).find<jive::Fill>("background") == juce::Colours::red);
+        expect(lookAndFeel.findMostApplicableStyles(checkbox).find<jive::Fill>("background") != juce::Colours::blue);
+
+        root.removeChildComponent(parent->getComponent().get());
+    }
+
+    void testParentHierarchy()
+    {
+        beginTest("parent hierarchy / a change that doesn't move the component, such as its window being shown, doesn't restyle it");
+
+        jive::Interpreter interpreter;
+        auto window = interpreter.interpret(jive::parseXML(R"(
+            <Window width="100" height="100">
+                <Spinner />
+            </Window>
+        )"));
+
+        // A slider recreates its buttons whenever it's restyled.
+        auto& spinner = *window->getChildren()[0]->getComponent();
+        const juce::Component::SafePointer<juce::Component> button{ spinner.getChildComponent(0) };
+        expect(button != nullptr);
+
+        window->getComponent()->getTopLevelComponent()->setVisible(true);
+        expect(button != nullptr);
     }
 };
 

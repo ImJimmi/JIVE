@@ -9,12 +9,13 @@ namespace jive
     BlockContainer::BlockContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
     {
-        jassert(state.hasProperty("display"));
-        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::block));
+        jassert(state.hasProperty(ids::display()));
+        jassert(state[ids::display()] == juce::VariantConverter<Display>::toVar(Display::block));
     }
 
     void BlockContainer::layOutChildren()
     {
+        JIVE_TRACE();
         GuiItemDecorator::layOutChildren();
 
         for (auto child : getChildren())
@@ -31,7 +32,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class BlockContainerTest : public juce::UnitTest
 {

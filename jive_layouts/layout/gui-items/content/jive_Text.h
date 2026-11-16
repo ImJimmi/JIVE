@@ -1,7 +1,5 @@
 #pragma once
 
-#include <jive_components/jive_components.h>
-
 #include <jive_layouts/layout/gui-items/jive_GuiItemDecorator.h>
 
 namespace jive
@@ -9,6 +7,7 @@ namespace jive
     class Text
         : public GuiItemDecorator
         , private TextComponent::Listener
+        , private juce::ValueTree::Listener
     {
     public:
         explicit Text(std::unique_ptr<GuiItem> itemToDecorate);
@@ -27,25 +26,27 @@ namespace jive
         TextComponent& getTextComponent();
         const TextComponent& getTextComponent() const;
 
+    protected:
+        void localisedStringsChanged() override;
+
     private:
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
         void textFontChanged(TextComponent& text) final;
 
-        juce::TextLayout buildTextLayout(float maxWidth = -1.0f) const;
+        void updateTextComponent(bool alwaysReflowParent = true);
 
-        void updateTextComponent();
-
-        Property<juce::String> text;
-        Property<float, Inheritance::inheritFromAncestors> lineSpacing;
-        Property<juce::Justification> justification;
-        Property<juce::AttributedString::WordWrap> wordWrap;
-        Property<juce::AttributedString::ReadingDirection> direction;
-        Property<float> idealWidth;
-        Property<float> idealHeight;
+        PassiveProperty<juce::String> text;
+        PassiveProperty<juce::AttributedString::WordWrap> wordWrap;
+        PassiveProperty<float> idealWidth;
+        PassiveProperty<float> idealHeight;
 
 #if JIVE_IS_PLUGIN_PROJECT
         juce::RangedAudioParameter* parameter;
         std::unique_ptr<juce::ParameterAttachment> parameterAttachment;
 #endif
+
+        juce::Point<float> previousNaturalSize{ -1.0f, -1.0f };
+        float previousLineSpacing = 0.0f;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Text)
     };

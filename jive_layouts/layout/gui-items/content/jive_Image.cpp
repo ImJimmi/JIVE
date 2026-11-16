@@ -1,33 +1,33 @@
 #include "jive_Image.h"
 
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_style_sheets/graphics/jive_CurrentColour.h>
 
 namespace jive
 {
     Image::Image(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , source{ state, "source" }
-        , placement{ state, "placement" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , source{ state, ids::source() }
+        , placement{ state, ids::placement() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
         , boxModel{ toType<CommonGuiItem>()->boxModel }
     {
         const BoxModel::ScopedCallbackLock boxModelLock{ jive::boxModel(*this) };
 
-        if (!placement.exists())
-            placement = juce::RectanglePlacement::centred;
-
         source.onValueChange = [this]() {
-            setChildComponent(createChildComponent());
+            observeImageFile();
+            updateImageComponentDrawable();
         };
         placement.onValueChange = [this]() {
             if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-                image->setImagePlacement(placement);
+                image->setImagePlacement(placement.getOr(juce::RectanglePlacement::centred));
         };
 
-        setChildComponent(createChildComponent());
+        observeImageFile();
+        updateImageComponentDrawable();
         boxModel.addListener(*this);
         state.addListener(this);
     }
@@ -51,14 +51,92 @@ namespace jive
         return true;
     }
 
+    static void removeUnserialisableProperties(juce::ValueTree tree)
+    {
+        for (auto i = 0; i < tree.getNumProperties(); i++)
+        {
+            const auto name = tree.getPropertyName(i);
+
+            if (tree[name].isArray()
+                || tree[name].isMethod()
+                || tree[name].isObject())
+            {
+                tree.removeProperty(name, nullptr);
+                i--;
+            }
+        }
+
+        for (auto i = 0; i < tree.getNumChildren(); i++)
+            removeUnserialisableProperties(tree.getChild(i));
+    }
+
+    static Drawable loadImage(const SourceFile& file)
+    {
+        if (!file.exists())
+            return {};
+
+        const auto data = file.loadAsData();
+
+        if (const auto image = juce::ImageFileFormat::loadFrom(data.getData(), data.getSize()); image.isValid())
+            return Drawable{ image };
+
+        if (const auto svg = juce::parseXML(data.toString()); svg != nullptr && svg->hasTagName("svg"))
+            return Drawable{ data.toString() };
+
+        return {};
+    }
+
+    SourceFile Image::findImageFile() const
+    {
+        const auto* sourceDirectories = dynamic_cast<SourceDirectories*>(state[ids::sourceDirectories()].getObject());
+
+        if (sourceDirectories == nullptr || !state[ids::source()].isString())
+            return {};
+
+        return sourceDirectories->find(state[ids::source()].toString(), findSourceFile(state));
+    }
+
+    void Image::observeImageFile()
+    {
+        imageFileObserver = nullptr;
+
+        if (const auto fileOnDisk = findImageFile().getFileOnDisk(); fileOnDisk != juce::File{})
+        {
+            imageFileObserver = std::make_unique<FileObserver>(fileOnDisk);
+            imageFileObserver->onFileModified = [this] {
+                updateImageComponentDrawable();
+            };
+        }
+    }
+
+    bool Image::isInlineSVG() const
+    {
+        return state.getType().toString().compareIgnoreCase("svg") == 0;
+    }
+
+    juce::ValueTree Image::createSerialisableCopy() const
+    {
+        auto stringSafe = state.createCopy();
+        removeUnserialisableProperties(stringSafe);
+        return stringSafe;
+    }
+
     Drawable Image::getDrawable() const
     {
-        const auto isInlineSVG = state.getType().toString().compareIgnoreCase("svg") == 0;
+        if (isInlineSVG())
+            return Drawable{ createSerialisableCopy().toXmlString() };
 
-        if (isInlineSVG)
-            return Drawable{ state.toXmlString() };
+        return loadImage(findImageFile());
+    }
 
-        return source.get();
+    ImageComponent& Image::getImageComponent()
+    {
+        return dynamic_cast<ImageComponent&>(*getComponent());
+    }
+
+    const ImageComponent& Image::getImageComponent() const
+    {
+        return dynamic_cast<const ImageComponent&>(*getComponent());
     }
 
     void Image::componentMovedOrResized(juce::Component& componentThatWasMovedOrResized, bool, bool)
@@ -72,8 +150,14 @@ namespace jive
 
             if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
             {
-                drawable->setTransformToFit(getComponent()->getLocalBounds().toFloat(),
-                                            placement.get());
+                drawable->
+#if JIVE_JUCE_9
+                    setDrawableTransformToFit
+#else
+                    setTransformToFit
+#endif
+                    (getComponent()->getLocalBounds().toFloat(),
+                     placement.getOr(juce::RectanglePlacement::centred));
             }
         }
     }
@@ -86,148 +170,96 @@ namespace jive
         if (childComponent != nullptr)
             childComponent->setBounds(getComponent()->getLocalBounds());
 
-        idealWidth = juce::String{ calculateRequiredWidth() };
-        idealHeight = juce::String{ calculateRequiredHeight() };
+        idealWidth = calculateRequiredWidth();
+        idealHeight = calculateRequiredHeight();
     }
 
-    void Image::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&)
+    void Image::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
-        if (state.getType().toString().compareIgnoreCase("svg") == 0)
-        {
-            if (!changingChild && childComponent != nullptr)
-            {
-                setChildComponent(createChildComponent());
+        forwardPropertyChange(tree, id, source, placement);
 
-                childComponent->setBounds(getComponent()->getLocalBounds());
-
-                if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-                {
-                    drawable->setTransformToFit(getComponent()->getLocalBounds().toFloat(),
-                                                placement.get());
-                }
-            }
-        }
-    }
-
-    float Image::calculateAspectRatio(const juce::ImageComponent& image) const
-    {
-        return image.getImage().getBounds().toFloat().getAspectRatio();
-    }
-
-    float Image::calculateRequiredWidth(const juce::ImageComponent& image) const
-    {
-        if (boxModel.hasAutoHeight())
-            return static_cast<float>(image.getImage().getWidth());
-
-        return boxModel.getHeight() * calculateAspectRatio(image);
-    }
-
-    float Image::calculateRequiredWidth(const juce::Drawable& drawable) const
-    {
-        const auto drawableBounds = drawable.getDrawableBounds();
-
-        if (boxModel.hasAutoHeight())
-            return drawableBounds.getWidth();
-
-        const auto scale = boxModel.getHeight() / drawableBounds.getHeight();
-        return drawableBounds.getWidth() * scale;
+        if (isInlineSVG())
+            updateImageComponentDrawable();
     }
 
     float Image::calculateRequiredWidth() const
     {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateRequiredWidth(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateRequiredWidth(*image);
-
-        return 0.0f;
-    }
-
-    float Image::calculateRequiredHeight(const juce::ImageComponent& image) const
-    {
-        if (boxModel.hasAutoWidth())
-            return static_cast<float>(image.getImage().getHeight());
-
-        return boxModel.getWidth() / calculateAspectRatio(image);
-    }
-
-    float Image::calculateRequiredHeight(const juce::Drawable& drawable) const
-    {
-        const auto drawableBounds = drawable.getDrawableBounds();
-
-        if (boxModel.hasAutoWidth())
-            return drawableBounds.getHeight();
-
-        const auto scale = boxModel.getWidth() / drawableBounds.getWidth();
-        return drawableBounds.getHeight() * scale;
+        return getImageComponent().getMinimumRequiredWidth();
     }
 
     float Image::calculateRequiredHeight() const
     {
-        if (auto* drawable = dynamic_cast<juce::Drawable*>(childComponent.get()))
-            return calculateRequiredHeight(*drawable);
-
-        if (auto* image = dynamic_cast<juce::ImageComponent*>(childComponent.get()))
-            return calculateRequiredHeight(*image);
-
-        return 0.0f;
+        return getImageComponent().getMinimumRequiredHeight();
     }
 
-    std::unique_ptr<juce::ImageComponent> Image::createImageComponent(const juce::Image& image) const
+    static juce::Rectangle<float> getViewBox(const juce::XmlElement& svg)
     {
-        auto imageComponent = std::make_unique<juce::ImageComponent>();
+        juce::StringArray values;
+        values.addTokens(svg.getStringAttribute("viewBox"), " ,", "");
+        values.removeEmptyStrings();
 
-        imageComponent->setImage(image);
-        imageComponent->setImagePlacement(placement);
+        if (values.size() != 4)
+            return {};
 
-        return imageComponent;
+        return {
+            values[0].getFloatValue(),
+            values[1].getFloatValue(),
+            values[2].getFloatValue(),
+            values[3].getFloatValue(),
+        };
     }
 
-    std::unique_ptr<juce::Drawable> Image::createSVG(const juce::String& svgString) const
+    static bool hasExplicitLength(const juce::XmlElement& svg, juce::StringRef attribute)
     {
-        const auto xml = juce::parseXML(svgString);
-        return juce::Drawable::createFromSVG(*xml);
+        const auto length = svg.getStringAttribute(attribute).trim();
+
+        return length.isNotEmpty() && !length.equalsIgnoreCase("auto");
     }
 
-    std::unique_ptr<juce::Component> Image::createChildComponent() const
+    static juce::Rectangle<float> getIntrinsicBounds(const juce::XmlElement& svg)
     {
-        const auto drawable = getDrawable();
+        if (hasExplicitLength(svg, "width") || hasExplicitLength(svg, "height"))
+            return {};
+
+        return getViewBox(svg);
+    }
+
+    void Image::updateImageComponentDrawable()
+    {
+        auto svg = isInlineSVG() ? createSerialisableCopy() : juce::ValueTree{};
+        getImageComponent().setSVGElements(svg);
+
+        const auto drawable = svg.isValid() ? Drawable{ svg.toXmlString() } : getDrawable();
+        std::unique_ptr<juce::Drawable> result;
+        juce::Rectangle<float> intrinsicBounds;
+        juce::Rectangle<float> viewBox;
 
         if (drawable.isImage())
-            return createImageComponent(drawable);
+            result = std::make_unique<juce::DrawableImage>(static_cast<juce::Image>(drawable));
 
         if (drawable.isSVG())
-            return createSVG(drawable);
-
-        return nullptr;
-    }
-
-    void Image::setChildComponent(std::unique_ptr<juce::Component> newComponent)
-    {
-        const juce::ScopedValueSetter svs{ changingChild, true };
-
-        if (newComponent == nullptr)
         {
-            childComponent = nullptr;
-            return;
+            const auto svgString = replaceCurrentColourWithStandIn(static_cast<juce::String>(drawable));
+            const auto xml = juce::parseXML(svgString);
+#if JIVE_JUCE_9
+            result = juce::Drawable::createFromSVGString(svgString);
+#else
+            result = juce::Drawable::createFromSVG(*xml);
+#endif
+
+            intrinsicBounds = getIntrinsicBounds(*xml);
+            viewBox = getViewBox(*xml);
         }
 
-        childComponent.reset();
-        childComponent = std::move(newComponent);
+        getImageComponent().setDrawable(std::move(result), intrinsicBounds, viewBox);
 
-        getComponent()->addAndMakeVisible(*childComponent);
-        childComponent->setBounds(getComponent()->getLocalBounds());
-
-        idealWidth = juce::String{ calculateRequiredWidth() };
-        idealHeight = juce::String{ calculateRequiredHeight() };
-
-        getComponent()->addComponentListener(this);
+        idealWidth = juce::String{ calculateRequiredWidth() } + "px";
+        idealHeight = juce::String{ calculateRequiredHeight() } + "px";
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class ImageTest : public juce::UnitTest
 {
@@ -240,105 +272,599 @@ public:
     void runTest() final
     {
         testImage();
-        testPlacement();
-        testAutoSize();
+        testImageFile();
         testChildComponent();
         testSVG();
         testInlineSVG();
+        testSVGFillRespected();
+        testSVGFillInherited();
+        testSVGContentStaysPutWhenResized();
+        testInlineSVGAutoSize();
+        testSVGViewBoxScaledToFit();
+        testSVGGradientFillSpansElement();
+        testSVGShadowFollowsShapes();
+        testSVGSourceReplaced();
+        testSVGCurrentColourFollowsForeground();
+        testSVGElementsStyledBySelectors();
+        testSVGElementStylesOverrideTheSVGs();
+        testSVGElementStylesFollowAncestors();
+        testSVGElementGradientSpansElement();
+        testSVGElementChangesRedraw();
+    }
+
+    void testSVGElementChangesRedraw()
+    {
+        beginTest("svg / changes to an element inside an SVG are redrawn");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <g>
+                        <rect width="10" height="20" fill="#FF0000" />
+                    </g>
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = [svgComponent] {
+            return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        };
+        expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::red);
+        expect(snapshot().getPixelAt(15, 10) != juce::Colours::red);
+
+        state.getChild(0).getChild(0).setProperty("transform", "translate(10, 0)", nullptr);
+        expect(snapshot().getPixelAt(5, 10) != juce::Colours::red);
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colours::red);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementsStyledBySelectors()
+    {
+        beginTest("svg / elements inside an SVG can be styled by type, ID and class");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("#square", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".bar", jive::Styles{}.withFill(juce::Colours::blue));
+        lookAndFeel.addStyles("svg > line", jive::Styles{}.withStroke(juce::Colours::lime));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="30" height="40">
+                    <rect id="square" width="10" height="20" fill="black" />
+                    <rect class="bar" x="10" width="10" height="20" />
+                    <rect x="20" width="10" height="20" fill="#FFFF00" />
+                    <line x1="0" y1="30" x2="30" y2="30" stroke-width="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(5, 10), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(15, 10), juce::Colours::blue);
+        expectEquals(snapshot.getPixelAt(25, 10), juce::Colour{ 0xFFFFFF00 });
+        expectEquals(snapshot.getPixelAt(15, 30), juce::Colours::lime);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementStylesOverrideTheSVGs()
+    {
+        beginTest("svg / an element's own style takes precedence over the SVG's");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("svg", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".blue", jive::Styles{}.withFill(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="10" height="20" fill="black" />
+                    <g>
+                        <rect class="blue" x="10" width="10" height="20" />
+                    </g>
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(5, 10), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(15, 10), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementStylesFollowAncestors()
+    {
+        beginTest("svg / an element's styles follow changes to its ancestors");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles(".red rect", jive::Styles{}.withFill(juce::Colours::red));
+        lookAndFeel.addStyles(".blue rect", jive::Styles{}.withFill(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component class="red" width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="black" />
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = [svgComponent] {
+            return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        };
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::red);
+
+        state.setProperty("class", "blue", nullptr);
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::blue);
+
+        state.setProperty("class", "", nullptr);
+        expectEquals(snapshot().getPixelAt(10, 10), juce::Colours::black);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGElementGradientSpansElement()
+    {
+        beginTest("svg / a gradient on an element inside an SVG spans the SVG's element");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles("#shape",
+                              jive::Styles{}.withFill(jive::Fill::fromString("linear-gradient(to right, red, blue)").value()));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 10 10" width="100" height="100">
+                    <rect id="shape" width="10" height="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectGreaterThan(snapshot.getPixelAt(5, 50).getRed(), snapshot.getPixelAt(5, 50).getBlue());
+        expectGreaterThan(snapshot.getPixelAt(95, 50).getBlue(), snapshot.getPixelAt(95, 50).getRed());
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGCurrentColourFollowsForeground()
+    {
+        beginTest("svg / currentColor is drawn in the element's foreground, and follows changes to it");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.applyTheme(jive::Theme::juce);
+        lookAndFeel.addStyles(".red", jive::Styles{}.withForeground(juce::Colours::red));
+        lookAndFeel.addStyles(".blue", jive::Styles{}.withForeground(juce::Colours::blue));
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component class="red" width="100" height="100">
+                <svg width="20" height="40">
+                    <rect width="10" height="20" fill="currentColor" />
+                    <rect x="10" width="10" height="20" fill="#00FF00" />
+                    <path d="M 0 30 L 20 30" fill="none" stroke="currentColor" stroke-width="10" />
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = [svgComponent] {
+            return svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        };
+        expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::red);
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xFF00FF00 });
+        expectEquals(snapshot().getPixelAt(10, 30), juce::Colours::red);
+
+        state.setProperty("class", "blue", nullptr);
+        expectEquals(snapshot().getPixelAt(5, 10), juce::Colours::blue);
+        expectEquals(snapshot().getPixelAt(15, 10), juce::Colour{ 0xFF00FF00 });
+        expectEquals(snapshot().getPixelAt(10, 30), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGSourceReplaced()
+    {
+        beginTest("svg / replacing the source shows the new one");
+
+        getSourceDirectory().deleteRecursively();
+
+        for (const auto* colour : { "red", "blue" })
+        {
+            writeSourceFile(juce::String{ colour } + ".svg",
+                            R"(<svg viewBox="0 0 10 10" width="100" height="100"><rect width="10" height="10" fill=")"
+                                + juce::String{ colour }
+                                + R"(" /></svg>)");
+        }
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(getSourceDirectory());
+        auto state = jive::parseXML(R"(
+            <Component width="100" height="100">
+                <Image width="100" height="100" />
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        const auto setSource = [&state](const juce::String& colour) {
+            state.getChild(0).setProperty("source", colour + ".svg", nullptr);
+        };
+        const auto centrePixel = [&parent] {
+            auto* imageComponent = parent->getChildren()[0]->getComponent().get();
+            return imageComponent->createComponentSnapshot(imageComponent->getLocalBounds()).getPixelAt(50, 50);
+        };
+        setSource("red");
+        setSource("blue");
+        expectEquals(centrePixel(), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+        getSourceDirectory().deleteRecursively();
+    }
+
+    void testSVGGradientFillSpansElement()
+    {
+        beginTest("svg / a gradient fill spans the element, whatever the size of its view-box");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#tinted",
+                              jive::Styles{}
+                                  .withFill(jive::fromVar<jive::Fill>("linear-gradient(to right, #FF0000, #0000FF)")));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg id="tinted" viewBox="0 0 10 10" width="100" height="100">
+                    <rect width="10" height="10" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectGreaterThan(snapshot.getPixelAt(5, 50).getRed(), snapshot.getPixelAt(5, 50).getBlue());
+        expectGreaterThan(snapshot.getPixelAt(95, 50).getBlue(), snapshot.getPixelAt(95, 50).getRed());
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGShadowFollowsShapes()
+    {
+        beginTest("svg / a shadow is cast from the outline of its shapes, rather than its bounds");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#backdrop",
+                              jive::Styles{}
+                                  .withBackground(juce::Colours::white));
+        lookAndFeel.addStyles("#glowing",
+                              jive::Styles{}
+                                  .withFill(juce::Colours::blue)
+                                  .withShadow(jive::fromVar<jive::Shadow>("0 0 0 5px #FF0000")));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component id="backdrop" width="100" height="100">
+                <svg id="glowing" viewBox="0 0 10 10" width="50" height="50">
+                    <rect x="4" y="4" width="2" height="2" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        // The image asks for its shadow while painting, and the shadow is
+        // added on the next frame, so it's only drawn from then on.
+        juce::ignoreUnused(parentComponent->createComponentSnapshot(parentComponent->getLocalBounds()));
+        lookAndFeel.simulateVBlank();
+        const auto snapshot = parentComponent->createComponentSnapshot(parentComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(25, 25), juce::Colours::blue);
+        expectEquals(snapshot.getPixelAt(17, 25), juce::Colours::red);
+        expectEquals(snapshot.getPixelAt(5, 5), juce::Colours::white);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGViewBoxScaledToFit()
+    {
+        beginTest("svg / a view-box is scaled to fit the element, keeping its aspect ratio");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 200 100" width="100" height="100">
+                    <rect x="100" y="0" width="100" height="100" fill="blue" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(75, 50), juce::Colours::blue);
+        expectEquals(snapshot.getPixelAt(75, 30), juce::Colours::blue);
+        expect(snapshot.getPixelAt(25, 50) != juce::Colours::blue);
+        expect(snapshot.getPixelAt(75, 10) != juce::Colours::blue);
+        expect(snapshot.getPixelAt(75, 90) != juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testInlineSVGAutoSize()
+    {
+        beginTest("svg / an inline SVG with no explicit size uses its view-box");
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="500" height="500" align-items="flex-start">
+                <svg viewBox="0 0 24 24">
+                    <rect x="5" y="7" width="10" height="8" />
+                </svg>
+            </Component>
+        )"));
+        const auto& boxModel = jive::boxModel(*parent->getChildren()[0]);
+        expectEquals(boxModel.getWidth(), 24.0f);
+        expectEquals(boxModel.getHeight(), 24.0f);
     }
 
 private:
-    void testImage()
+    static juce::File getSourceDirectory()
     {
-        beginTest("image");
-
-        {
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                }
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            expect(imageItem.getDrawable().isEmpty());
-
-            const juce::Image image{ juce::Image::ARGB, 120, 40, true };
-            tree.setProperty("source", juce::VariantConverter<juce::Image>::toVar(image), nullptr);
-            expect(imageItem.getDrawable().isImage());
-            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getWidth(), image.getWidth());
-            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getHeight(), image.getHeight());
-            expect(static_cast<juce::Image>(imageItem.getDrawable()).getPixelData() == image.getPixelData());
-            expect(dynamic_cast<juce::ImageComponent*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
-        }
-        {
-            const juce::Image image{ juce::Image::ARGB, 643, 111, true };
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "source", juce::VariantConverter<juce::Image>::toVar(image) },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            expect(imageItem.getDrawable().isImage());
-            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getWidth(), image.getWidth());
-            expectEquals(static_cast<juce::Image>(imageItem.getDrawable()).getHeight(), image.getHeight());
-            expect(static_cast<juce::Image>(imageItem.getDrawable()).getPixelData() == image.getPixelData());
-        }
+        return juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+            .getParentDirectory()
+            .getChildFile("image-tests/");
     }
 
-    void testPlacement()
+    static void writeSourceFile(const juce::String& path, const juce::String& contents)
     {
-        beginTest("placement");
+        const auto file = getSourceDirectory().getChildFile(path);
+        file.create();
+        file.replaceWithText(contents);
+    }
 
-        {
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "source", juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 51, 54, true }) },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            auto& image = dynamic_cast<juce::ImageComponent&>(*imageItem.getComponent()->getChildComponent(0));
-            expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::centred));
+    static void writeSourceImage(const juce::String& path,
+                                 int width,
+                                 int height,
+                                 juce::Colour colour = juce::Colours::transparentBlack)
+    {
+        juce::Image image{ juce::Image::ARGB, width, height, true };
+        image.clear(image.getBounds(), colour);
 
-            tree.setProperty("placement", "top right reduce-only", nullptr);
-            expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::yTop
-                                                       + juce::RectanglePlacement::xRight
-                                                       + juce::RectanglePlacement::onlyReduceInSize));
-        }
-        {
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "source", juce::VariantConverter<juce::Image>::toVar(juce::Image{ juce::Image::ARGB, 51, 54, true }) },
-                    { "placement", "stretch fill increase-only" },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            auto& image = dynamic_cast<juce::ImageComponent&>(*imageItem.getComponent()->getChildComponent(0));
-            expect(image.getImagePlacement().testFlags(juce::RectanglePlacement::stretchToFit
-                                                       + juce::RectanglePlacement::fillDestination
-                                                       + juce::RectanglePlacement::onlyIncreaseInSize));
-        }
+        const auto file = getSourceDirectory().getChildFile(path);
+        file.deleteFile();
+        file.getParentDirectory().createDirectory();
+        juce::FileOutputStream stream{ file };
+        juce::PNGImageFormat{}.writeImageToStream(image, stream);
+    }
+
+    #if JIVE_JUCE_9
+    using DrawableComponent = juce::DrawableComponent;
+    #else
+    using DrawableComponent = juce::Drawable;
+    #endif
+
+    void testSVGFillRespected()
+    {
+        beginTest("svg / an explicit fill is respected rather than overridden by the theme");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="blue" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::blue);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGContentStaysPutWhenResized()
+    {
+        beginTest("svg / content keeps its position within the view-box when resized");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="100" height="100">
+                <svg viewBox="0 0 100 100" width="100%" height="100%">
+                    <rect x="50" y="50" width="50" height="50" fill="blue" />
+                </svg>
+            </Component>
+        )");
+        auto parent = interpreter.interpret(state);
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto rectIsInTheBottomRightQuadrant = [svgComponent]() {
+            const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+            return snapshot.getPixelAt(75, 75) == juce::Colours::blue
+                && snapshot.getPixelAt(25, 25) != juce::Colours::blue;
+        };
+        expect(rectIsInTheBottomRightQuadrant());
+
+        state.setProperty("width", 40, nullptr);
+        state.setProperty("height", 40, nullptr);
+        state.setProperty("width", 100, nullptr);
+        state.setProperty("height", 100, nullptr);
+
+        expect(rectIsInTheBottomRightQuadrant());
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testSVGFillInherited()
+    {
+        beginTest("svg / a fill specified for an ancestor is inherited");
+
+        juce::Component root;
+        root.setSize(100, 100);
+        jive::LookAndFeel lookAndFeel{ root };
+        lookAndFeel.addStyles("#tinted",
+                              jive::Styles{}
+                                  .withFill(juce::Colours::red));
+
+        jive::Interpreter interpreter;
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component id="tinted" width="100" height="100">
+                <svg width="20" height="20">
+                    <rect width="20" height="20" />
+                </svg>
+            </Component>
+        )"));
+        auto* parentComponent = parent->getComponent().get();
+        root.addAndMakeVisible(*parentComponent);
+        parentComponent->setBounds(0, 0, 100, 100);
+
+        auto* svgComponent = parent->getChildren()[0]->getComponent().get();
+        const auto snapshot = svgComponent->createComponentSnapshot(svgComponent->getLocalBounds());
+        expectEquals(snapshot.getPixelAt(10, 10), juce::Colours::red);
+
+        root.removeChildComponent(parentComponent);
+    }
+
+    void testImage()
+    {
+        beginTest("image / the source can't be a juce::Image");
+
+        juce::ValueTree tree{
+            "Image",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            }
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                               .toType<jive::Image>();
+
+        const juce::Image image{ juce::Image::ARGB, 120, 40, true };
+        tree.setProperty("source", juce::VariantConverter<juce::Image>::toVar(image), nullptr);
+        expect(imageItem.getDrawable().isEmpty());
+    }
+
+    void testImageFile()
+    {
+        beginTest("image / the source can be the path of an image file in the sources");
+
+        const auto directory = getSourceDirectory();
+        directory.deleteRecursively();
+        writeSourceImage("images/picture.png", 80, 40, juce::Colours::red);
+
+        jive::Interpreter interpreter;
+        interpreter.addSourceDirectory(directory);
+        auto parent = interpreter.interpret(jive::parseXML(R"(
+            <Component width="222" height="333" align-items="flex-start">
+                <Image source="images/picture.png" />
+            </Component>
+        )"));
+        const auto imageItem = [&parent]() -> jive::Image& {
+            return *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
+                        .toType<jive::Image>();
+        };
+        const auto drawnImage = [&imageItem] {
+            return static_cast<juce::Image>(imageItem().getDrawable());
+        };
+        expect(imageItem().getDrawable().isImage());
+        expectEquals(drawnImage().getPixelAt(0, 0), juce::Colours::red);
+        expectEquals(jive::boxModel(imageItem()).getWidth(), 80.0f);
+        expectEquals(jive::boxModel(imageItem()).getHeight(), 40.0f);
+
+        writeSourceImage("images/picture.png", 80, 40, juce::Colours::blue);
+        directory.getChildFile("images/picture.png").setLastModificationTime(juce::Time::getCurrentTime() + juce::RelativeTime::seconds(10.0));
+        jive::FileObserver::triggerAllTimerCallbacks();
+        expectEquals(drawnImage().getPixelAt(0, 0), juce::Colours::blue);
+
+        imageItem().state.setProperty("source", "images/missing.png", nullptr);
+        expect(imageItem().getDrawable().isEmpty());
+
+        directory.deleteRecursively();
     }
 
     void testChildComponent()
@@ -346,7 +872,9 @@ private:
         beginTest("child-getComponent()");
 
         {
-            juce::Image image{ juce::Image::ARGB, 78, 27, true };
+            getSourceDirectory().deleteRecursively();
+            writeSourceImage("image.png", 78, 27);
+
             juce::ValueTree parentState{
                 "Component",
                 {
@@ -358,19 +886,17 @@ private:
                     juce::ValueTree{
                         "Image",
                         {
-                            {
-                                "source",
-                                juce::VariantConverter<juce::Image>::toVar(image),
-                            },
+                            { "source", "image.png" },
                         },
                     },
                 },
             };
             jive::Interpreter interpreter;
+            interpreter.addSourceDirectory(getSourceDirectory());
             auto parent = interpreter.interpret(parentState);
             auto& item = *parent->getChildren()[0];
             expectEquals(item.getComponent()->getNumChildComponents(), 1);
-            expectEquals(item.getComponent()->getLocalBounds(), image.getBounds());
+            expectEquals(item.getComponent()->getLocalBounds(), juce::Rectangle{ 78, 27 });
 
             auto& childComponent = *item.getComponent()->getChildComponent(0);
             expectEquals(childComponent.getBounds(), item.getComponent()->getLocalBounds());
@@ -378,149 +904,29 @@ private:
             parentState.getChild(0).setProperty("width", 134, nullptr);
             parentState.getChild(0).setProperty("height", 590, nullptr);
             expectEquals(childComponent.getBounds(), item.getComponent()->getLocalBounds());
+
+            getSourceDirectory().deleteRecursively();
         }
     }
 
     void testSVG()
     {
-        beginTest("svg");
+        beginTest("svg / the source can't be SVG markup");
 
-        {
-            static constexpr auto svg = R"(
-                <svg height="210" width="500">
-                    <polygon points="100,10 40,198 190,78 10,78 160,198"
-                             style="fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;"/>
-                </svg>
-            )";
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                }
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            expect(imageItem.getDrawable().isEmpty());
+        juce::ValueTree tree{
+            "Image",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            }
+        };
+        jive::Interpreter interpreter;
+        auto item = interpreter.interpret(tree);
+        auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
+                               .toType<jive::Image>();
 
-            tree.setProperty("source", svg, nullptr);
-            expect(imageItem.getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
-        }
-        {
-            const juce::Image image{ juce::Image::ARGB, 643, 111, true };
-            juce::ValueTree tree{
-                "Image",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    {
-                        "source",
-                        R"(
-                            <svg height="400" width="450">
-                                <path id="lineAB"
-                                      d="M 100 350 l 150 -300"
-                                      stroke="red"
-                                      stroke-width="3"
-                                      fill="none" />
-                                <path id="lineBC"
-                                      d="M 250 50 l 150 300"
-                                      stroke="red"
-                                      stroke-width="3"
-                                      fill="none" />
-                                <path d="M 100 350 q 150 -300 300 0"
-                                      stroke="blue"
-                                      stroke-width="5"
-                                      fill="none" />
-                            </svg>
-                        )",
-                    },
-                },
-            };
-            jive::Interpreter interpreter;
-            auto item = interpreter.interpret(tree);
-            auto& imageItem = *dynamic_cast<jive::GuiItemDecorator&>(*item)
-                                   .toType<jive::Image>();
-            expect(imageItem.getDrawable().isSVG());
-            expect(dynamic_cast<juce::Drawable*>(imageItem.getComponent()->getChildComponent(0)) != nullptr);
-        }
-    }
-
-    void testAutoSize()
-    {
-        beginTest("auto-size");
-
-        {
-            juce::ValueTree tree{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "align-items", "flex-start" },
-                },
-                {
-                    juce::ValueTree{
-                        "Image",
-                        {
-                            {
-                                "source",
-                                juce::VariantConverter<juce::Image>::toVar(juce::Image{
-                                    juce::Image::ARGB,
-                                    80,
-                                    40,
-                                    true,
-                                }),
-                            },
-                        },
-                    },
-                }
-            };
-            jive::Interpreter interpreter;
-            auto parent = interpreter.interpret(tree);
-            auto& item = *parent->getChildren()[0];
-            const auto& boxModel = jive::boxModel(item);
-            expectEquals(boxModel.getWidth(), 80.0f);
-            expectEquals(boxModel.getHeight(), 40.0f);
-        }
-        {
-            juce::ValueTree tree{
-                "Component",
-                {
-                    { "width", 222 },
-                    { "height", 333 },
-                    { "align-items", "flex-start" },
-                },
-                {
-                    juce::ValueTree{
-                        "Image",
-                        {
-                            {
-                                "source",
-                                R"(
-                                    <svg width="400" height="180">
-                                        <rect x="50"
-                                            y="20"
-                                            rx="20"
-                                            ry="20"
-                                            width="150"
-                                            height="150"
-                                            style="fill:red;stroke:black;stroke-width:5;opacity:0.5" />
-                                    </svg>
-                                )",
-                            },
-                        },
-                    },
-                }
-            };
-            jive::Interpreter interpreter;
-            auto parent = interpreter.interpret(tree);
-            auto& item = *parent->getChildren()[0];
-            const auto& boxModel = jive::boxModel(item);
-            expectEquals(boxModel.getWidth(), 155.0f);
-            expectEquals(boxModel.getHeight(), 155.0f);
-        }
+        tree.setProperty("source", R"(<svg width="500" height="210"><rect width="100" height="100" /></svg>)", nullptr);
+        expect(imageItem.getDrawable().isEmpty());
     }
 
     void testInlineSVG()

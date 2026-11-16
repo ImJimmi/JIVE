@@ -19,6 +19,8 @@ namespace juce
     {
         static jive::Display fromVar(const var& v);
         static var toVar(jive::Display display);
+        static bool isValid(const var& v);
+        static String getSyntax();
 
     private:
         static const Array<var> options;

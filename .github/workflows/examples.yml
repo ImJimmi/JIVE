@@ -1,0 +1,207 @@
+name: Examples
+run-name: "Examples `${{ github.ref_name || github.head_ref }}`"
+
+on: push
+
+env:
+  BUILD_TYPE: Debug
+  CMAKE_BUILD_DIRECTORY: build
+  CPM_CACHE_DIR: .cpm-cache
+  GH_TOKEN: ${{ github.token }}
+  SCCACHE_CACHE_MULTIARCH: 1
+  SCCACHE_GHA_ENABLED: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-example:
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets, boabass]
+        platform: [macos-latest, windows-latest, ubuntu-latest, ios, android]
+        project: [CMake, Projucer]
+        exclude:
+          - platform: windows-latest
+            project: Projucer
+          - platform: ubuntu-latest
+            project: Projucer
+          - platform: ios
+            project: CMake
+          - platform: android
+            project: CMake
+          - example: boabass
+            project: Projucer
+        include:
+          - platform: macos-latest
+            platform-name: macOS
+            package-manager: brew
+
+          - platform: windows-latest
+            platform-name: Windows
+            package-manager: choco
+
+          - platform: ubuntu-latest
+            platform-name: Linux
+
+          - platform: ios
+            platform-name: iOS
+            runner: macos-latest
+            package-manager: brew
+
+          - platform: android
+            platform-name: Android
+            runner: macos-latest
+            package-manager: brew
+
+          - project: Projucer
+            target-suffix: -projucer
+            cmake-options: -D JIVE_ENABLE_PROJUCER_PROJECTS=ON
+
+          - platform: ios
+            project: Projucer
+            target-suffix: -projucer-ios
+
+          - platform: android
+            project: Projucer
+            target-suffix: -projucer-android
+
+          - project: CMake
+            run-e2e-tests: true
+
+          - example: 05-widgets
+            project: CMake
+            target-suffix: _All
+            cmake-options: -D JIVE_ENABLE_PLUGINVAL=ON
+            run-pluginval: true
+
+          - example: boabass
+            project: CMake
+            target-suffix: _All
+            extra-targets: jive-boabass-app
+            cmake-options: -D JIVE_ENABLE_PLUGINVAL=ON
+            run-pluginval: true
+
+    name: ${{ matrix.example }} (${{ matrix.project }}, ${{ matrix.platform-name }})
+    runs-on: ${{ matrix.runner || matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            libasound2-dev \
+            libfontconfig1-dev \
+            libfreetype-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            xvfb
+
+      - name: Install Ninja
+        if: runner.os != 'Linux'
+        run: ${{ matrix.package-manager }} install ninja
+      - name: Setup devcmd
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+
+      - name: Setup Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Create Android debug keystore
+        if: matrix.platform == 'android'
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v \
+            -keystore ~/.android/debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Restore CPM dependencies
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.CPM_CACHE_DIR }}
+          key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+          restore-keys: |
+            cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
+            cpm-${{ runner.os }}-main
+            cpm-${{ runner.os }}
+
+      - name: CMake Generate
+        run: |
+          cmake \
+            -B ${{ env.CMAKE_BUILD_DIRECTORY }} \
+            -G Ninja \
+            -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -D JIVE_BUILD_EXAMPLES=ON \
+            -D CMAKE_C_COMPILER_LAUNCHER=sccache \
+            -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -D CPM_SOURCE_CACHE=${{ env.CPM_CACHE_DIR }} \
+            -D CMAKE_POLICY_DEFAULT_CMP0141=NEW \
+            -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \
+            ${{ matrix.cmake-options }}
+
+      - name: CMake Build
+        run: |
+          cmake \
+            --build ${{ env.CMAKE_BUILD_DIRECTORY }} \
+            --config ${{ env.BUILD_TYPE }} \
+            --target jive-${{ matrix.example }}${{ matrix.target-suffix }} ${{ matrix.extra-targets }} \
+            -- -k 0
+
+      - name: Run pluginval
+        if: matrix.run-pluginval
+        run: |
+          cd ${{ env.CMAKE_BUILD_DIRECTORY }}
+          ${{ runner.os == 'Linux' && 'xvfb-run -a' || '' }} ctest \
+            --output-on-failure \
+            -C ${{ env.BUILD_TYPE }} \
+            -R "jive-${{ matrix.example }}_.*pluginval"
+
+      - name: Setup uv
+        if: matrix.run-e2e-tests
+        uses: astral-sh/setup-uv@v6
+
+      - name: Resolve Python path
+        id: python
+        if: matrix.run-e2e-tests && runner.os != 'Linux'
+        working-directory: tests/e2e
+        run: echo "path=$(uv run python -c 'import os, sys; print(os.path.realpath(sys.executable))')" >> "$GITHUB_OUTPUT"
+
+      - name: Setup accessibility
+        if: matrix.run-e2e-tests && runner.os != 'Linux'
+        uses: xa11y/setup-a11y@v1
+        with:
+          macos-tcc-client: ${{ steps.python.outputs.path }}
+
+      - name: Run end-to-end tests
+        if: matrix.run-e2e-tests
+        working-directory: tests/e2e
+        env:
+          JIVE_BUILD_DIR: ${{ github.workspace }}/${{ env.CMAKE_BUILD_DIRECTORY }}
+          JIVE_BUILD_CONFIG: ${{ env.BUILD_TYPE }}
+        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}uv run pytest -v

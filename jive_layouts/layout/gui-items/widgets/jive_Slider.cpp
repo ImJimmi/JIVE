@@ -5,29 +5,34 @@
 namespace jive
 {
     Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate)
-        : Slider{ std::move(itemToDecorate), 135.0f, 20.0f }
+        : Slider{ std::move(itemToDecorate), { 135.0f, 20.0f }, DefaultSize::minimum }
     {
     }
 
-    Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight)
+    Slider::Slider(std::unique_ptr<GuiItem> itemToDecorate, juce::Point<float> defaultSize, DefaultSize defaultSizeKind)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , value{ state, "value" }
-        , min{ state, "min" }
-        , max{ state, "max" }
-        , mid{ state, "mid" }
-        , interval{ state, "interval" }
-        , orientation{ state, "orientation" }
-        , width{ state, "width" }
-        , height{ state, "height" }
-        , sensitivity{ state, "sensitivity" }
-        , isInVelocityMode{ state, "velocity-mode" }
-        , velocitySensitivity{ state, "velocity-sensitivity" }
-        , velocityThreshold{ state, "velocity-threshold" }
-        , velocityOffset{ state, "velocity-offset" }
-        , snapToMouse{ state, "snap-to-mouse" }
-        , focusable{ state, "focusable" }
-        , onChange{ state, "on-change" }
+        , value{ state, ids::value() }
+        , min{ state, ids::minValue() }
+        , max{ state, ids::maxValue() }
+        , mid{ state, ids::midValue() }
+        , interval{ state, ids::interval() }
+        , orientation{ state, ids::orientation() }
+        , width{ state, ids::width() }
+        , height{ state, ids::height() }
+        , minWidth{ state, ids::minWidth() }
+        , minHeight{ state, ids::minHeight() }
+        , sensitivity{ state, ids::sensitivity() }
+        , isInVelocityMode{ state, ids::velocityMode() }
+        , velocitySensitivity{ state, ids::velocitySensitivity() }
+        , velocityThreshold{ state, ids::velocityThreshold() }
+        , velocityOffset{ state, ids::velocityOffset() }
+        , snapToMouse{ state, ids::snapToMouse() }
+        , focusable{ state, ids::focusable() }
+        , tooltip{ state, ids::tooltip() }
+        , onChange{ state, ids::onChange() }
     {
+        state.addListener(this);
+
         const BoxModel::ScopedCallbackLock boxModelLock{ boxModel(*this) };
 
         if (!max.exists())
@@ -65,18 +70,13 @@ namespace jive
         orientation.onValueChange = [this]() {
             updateStyle();
         };
-        width.onValueChange = [this]() {
-            updateStyle();
-        };
-        height.onValueChange = [this]() {
-            updateStyle();
-        };
+        toType<CommonGuiItem>()->boxModel.addListener(*this);
         updateStyle();
 
         sensitivity.onValueChange = [this]() {
-            getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity));
+            getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity.get()));
         };
-        getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity));
+        getSlider().setMouseDragSensitivity(juce::roundToInt(250.0 / sensitivity.get()));
 
         isInVelocityMode.onValueChange = [this]() {
             getSlider().setVelocityBasedMode(isInVelocityMode);
@@ -84,28 +84,77 @@ namespace jive
         getSlider().setVelocityBasedMode(isInVelocityMode);
 
         velocitySensitivity.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
         velocityThreshold.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
         velocityOffset.onValueChange = [this]() {
-            getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+            getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
         };
-        getSlider().setVelocityModeParameters(velocitySensitivity, velocityThreshold, velocityOffset);
+        getSlider().setVelocityModeParameters(velocitySensitivity.get(), velocityThreshold.get(), velocityOffset.get());
 
         snapToMouse.onValueChange = [this]() {
             getSlider().setSliderSnapsToMousePosition(snapToMouse);
         };
         getSlider().setSliderSnapsToMousePosition(snapToMouse);
 
+        tooltip.onValueChange = [this]() {
+            getSlider().setTooltip(translate(tooltip));
+        };
+        getSlider().setTooltip(translate(tooltip));
+
         getSlider().setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         getSlider().addListener(this);
 
-        if (width.isAuto())
-            width = juce::String{ defaultWidth };
-        if (height.isAuto())
-            height = juce::String{ defaultHeight };
+        switch (defaultSizeKind)
+        {
+        case DefaultSize::minimum:
+            if (!minWidth.exists())
+                minWidth = defaultSize.x;
+            if (!minHeight.exists())
+                minHeight = defaultSize.y;
+            break;
+        case DefaultSize::fixed:
+            if (width.isAuto())
+                width = juce::String{ defaultSize.x };
+            if (height.isAuto())
+                height = juce::String{ defaultSize.y };
+            break;
+        }
+    }
+
+    Slider::~Slider()
+    {
+        toType<CommonGuiItem>()->boxModel.removeListener(*this);
+        state.removeListener(this);
+    }
+
+    void Slider::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree,
+                              property,
+                              value,
+                              min,
+                              max,
+                              mid,
+                              interval,
+                              orientation,
+                              width,
+                              height,
+                              sensitivity,
+                              isInVelocityMode,
+                              velocitySensitivity,
+                              velocityThreshold,
+                              velocityOffset,
+                              snapToMouse,
+                              tooltip);
+    }
+
+    void Slider::localisedStringsChanged()
+    {
+        GuiItemDecorator::localisedStringsChanged();
+        getSlider().setTooltip(translate(tooltip));
     }
 
     bool Slider::isContainer() const
@@ -131,6 +180,13 @@ namespace jive
     const juce::Slider& Slider::getSlider() const
     {
         return *dynamic_cast<const juce::Slider*>(getComponent().get());
+    }
+
+    double Slider::getNormalisedValue() const
+    {
+        return getSlider()
+            .getNormalisableRange()
+            .convertTo0to1(getSlider().getValue());
     }
 
     void Slider::updateStyle()
@@ -163,6 +219,11 @@ namespace jive
         onChange.triggerWithoutSelfCallback();
     }
 
+    void Slider::boxModelChanged(BoxModel&)
+    {
+        updateStyle();
+    }
+
     juce::Slider::SliderStyle Slider::getStyleForOrientation(Orientation ori)
     {
         switch (ori)
@@ -193,7 +254,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class SliderTest : public juce::UnitTest
 {
@@ -214,21 +275,22 @@ public:
         testTextBox();
         testAutoSize();
         testEvents();
+        testTooltip();
     }
 
 private:
-    std::unique_ptr<jive::Slider> createSlider(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Slider>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getSlider(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Slider>()->getSlider();
     }
 
     void testGuiItem()
     {
         beginTest("gui-item");
 
-        auto item = createSlider(juce::ValueTree{
+        auto item = interpreter.interpret(juce::ValueTree{
             "Slider",
             {
                 { "width", 222 },
@@ -250,28 +312,29 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expectEquals(item->getSlider().getValue(), 0.0);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getValue(), 0.0);
 
             tree.setProperty("value", 0.5, nullptr);
-            expectEquals(item->getSlider().getValue(), 0.5);
+            expectEquals(slider.getValue(), 0.5);
 
-            item->getSlider().valueFromTextFunction = [](const juce::String& text) {
+            slider.valueFromTextFunction = [](const juce::String& text) {
                 if (text == "foo")
                     return 1.0;
 
                 return 0.0;
             };
-            item->getSlider().textFromValueFunction = [](double value) {
+            slider.textFromValueFunction = [](double value) {
                 if (value == 1.0)
                     return "foo";
 
                 return "bar";
             };
             tree.setProperty("value", "foo", nullptr);
-            expectEquals(item->getSlider().getValue(), 1.0);
+            expectEquals(slider.getValue(), 1.0);
 
-            item->getSlider().setValue(0.0, juce::sendNotificationSync);
+            slider.setValue(0.0, juce::sendNotificationSync);
             expectEquals(tree["value"].toString(), juce::String{ "bar" });
         }
         {
@@ -283,8 +346,9 @@ private:
                     { "value", 0.73 },
                 },
             };
-            auto item = createSlider(tree);
-            expectEquals(item->getSlider().getValue(), 0.73);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getValue(), 0.73);
         }
     }
 
@@ -300,12 +364,13 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
             juce::NormalisableRange<double> expectedRange{ 0.0, 1.0 };
-            expectEquals(item->getSlider().getMinimum(), expectedRange.start);
-            expectEquals(item->getSlider().getMaximum(), expectedRange.end);
-            expectEquals(item->getSlider().getSkewFactor(), expectedRange.skew);
-            expectEquals(item->getSlider().getInterval(), expectedRange.interval);
+            expectEquals(slider.getMinimum(), expectedRange.start);
+            expectEquals(slider.getMaximum(), expectedRange.end);
+            expectEquals(slider.getSkewFactor(), expectedRange.skew);
+            expectEquals(slider.getInterval(), expectedRange.interval);
 
             tree.setProperty("min", 0.5, nullptr);
             tree.setProperty("max", 3.9, nullptr);
@@ -314,10 +379,10 @@ private:
             expectedRange = { 0.5, 3.9 };
             expectedRange.setSkewForCentre(1.3);
             expectedRange.interval = 0.1;
-            expectEquals(item->getSlider().getMinimum(), expectedRange.start);
-            expectEquals(item->getSlider().getMaximum(), expectedRange.end);
-            expectEquals(item->getSlider().getSkewFactor(), expectedRange.skew);
-            expectEquals(item->getSlider().getInterval(), expectedRange.interval);
+            expectEquals(slider.getMinimum(), expectedRange.start);
+            expectEquals(slider.getMaximum(), expectedRange.end);
+            expectEquals(slider.getSkewFactor(), expectedRange.skew);
+            expectEquals(slider.getInterval(), expectedRange.interval);
         }
         {
             juce::ValueTree tree{
@@ -331,14 +396,15 @@ private:
                     { "interval", 10.0 },
                 },
             };
-            auto item = createSlider(tree);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
             juce::NormalisableRange<double> expectedRange{ 20.0, 20000.0 };
             expectedRange.setSkewForCentre(632.456);
             expectedRange.interval = 10.0;
-            expectEquals(item->getSlider().getMinimum(), expectedRange.start);
-            expectEquals(item->getSlider().getMaximum(), expectedRange.end);
-            expectEquals(item->getSlider().getSkewFactor(), expectedRange.skew);
-            expectEquals(item->getSlider().getInterval(), expectedRange.interval);
+            expectEquals(slider.getMinimum(), expectedRange.start);
+            expectEquals(slider.getMaximum(), expectedRange.end);
+            expectEquals(slider.getSkewFactor(), expectedRange.skew);
+            expectEquals(slider.getInterval(), expectedRange.interval);
         }
     }
 
@@ -354,19 +420,20 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expect(item->getSlider().getSliderStyle() == juce::Slider::LinearHorizontal);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getSliderStyle() == juce::Slider::LinearHorizontal);
 
             tree.setProperty("width", 25, nullptr);
             tree.setProperty("height", 150, nullptr);
-            expect(item->getSlider().getSliderStyle() == juce::Slider::LinearVertical);
+            expect(slider.getSliderStyle() == juce::Slider::LinearVertical);
 
             tree.setProperty("width", 250, nullptr);
             tree.setProperty("height", 15, nullptr);
-            expect(item->getSlider().getSliderStyle() == juce::Slider::LinearHorizontal);
+            expect(slider.getSliderStyle() == juce::Slider::LinearHorizontal);
 
             tree.setProperty("orientation", "vertical", nullptr);
-            expect(item->getSlider().getSliderStyle() == juce::Slider::LinearVertical);
+            expect(slider.getSliderStyle() == juce::Slider::LinearVertical);
         }
         {
             juce::ValueTree tree{
@@ -377,8 +444,9 @@ private:
                     { "orientation", "vertical" },
                 },
             };
-            auto item = createSlider(tree);
-            expect(item->getSlider().getSliderStyle() == juce::Slider::LinearVertical);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getSliderStyle() == juce::Slider::LinearVertical);
         }
     }
 
@@ -394,11 +462,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expectEquals(item->getSlider().getMouseDragSensitivity(), 250);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getMouseDragSensitivity(), 250);
 
             tree.setProperty("sensitivity", 2.0, nullptr);
-            expectEquals(item->getSlider().getMouseDragSensitivity(), 125);
+            expectEquals(slider.getMouseDragSensitivity(), 125);
         }
         {
             juce::ValueTree tree{
@@ -409,8 +478,9 @@ private:
                     { "sensitivity", 0.639 },
                 },
             };
-            auto item = createSlider(tree);
-            expectEquals(item->getSlider().getMouseDragSensitivity(), 391);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getMouseDragSensitivity(), 391);
         }
     }
 
@@ -426,23 +496,24 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expect(!item->getSlider().getVelocityBasedMode());
-            expectEquals(item->getSlider().getVelocitySensitivity(), 1.0);
-            expectEquals(item->getSlider().getVelocityThreshold(), 1);
-            expectEquals(item->getSlider().getVelocityOffset(), 0.0);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(!slider.getVelocityBasedMode());
+            expectEquals(slider.getVelocitySensitivity(), 1.0);
+            expectEquals(slider.getVelocityThreshold(), 1);
+            expectEquals(slider.getVelocityOffset(), 0.0);
 
             tree.setProperty("velocity-mode", true, nullptr);
-            expect(item->getSlider().getVelocityBasedMode());
+            expect(slider.getVelocityBasedMode());
 
             tree.setProperty("velocity-sensitivity", 2.3, nullptr);
-            expectEquals(item->getSlider().getVelocitySensitivity(), 2.3);
+            expectEquals(slider.getVelocitySensitivity(), 2.3);
 
             tree.setProperty("velocity-threshold", 7, nullptr);
-            expectEquals(item->getSlider().getVelocityThreshold(), 7);
+            expectEquals(slider.getVelocityThreshold(), 7);
 
             tree.setProperty("velocity-offset", 3.4, nullptr);
-            expectEquals(item->getSlider().getVelocityOffset(), 3.4);
+            expectEquals(slider.getVelocityOffset(), 3.4);
         }
         {
             juce::ValueTree tree{
@@ -456,11 +527,12 @@ private:
                     { "velocity-offset", 8.3 },
                 },
             };
-            auto item = createSlider(tree);
-            expect(item->getSlider().getVelocityBasedMode());
-            expectEquals(item->getSlider().getVelocitySensitivity(), 0.43);
-            expectEquals(item->getSlider().getVelocityThreshold(), 4);
-            expectEquals(item->getSlider().getVelocityOffset(), 8.3);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getVelocityBasedMode());
+            expectEquals(slider.getVelocitySensitivity(), 0.43);
+            expectEquals(slider.getVelocityThreshold(), 4);
+            expectEquals(slider.getVelocityOffset(), 8.3);
         }
     }
 
@@ -476,11 +548,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expect(item->getSlider().getSliderSnapsToMousePosition());
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getSliderSnapsToMousePosition());
 
             tree.setProperty("snap-to-mouse", false, nullptr);
-            expect(!item->getSlider().getSliderSnapsToMousePosition());
+            expect(!slider.getSliderSnapsToMousePosition());
         }
         {
             juce::ValueTree tree{
@@ -491,8 +564,9 @@ private:
                     { "snap-to-mouse", false },
                 },
             };
-            auto item = createSlider(tree);
-            expect(!item->getSlider().getSliderSnapsToMousePosition());
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(!slider.getSliderSnapsToMousePosition());
         }
     }
 
@@ -508,37 +582,103 @@ private:
                     { "height", 333 },
                 },
             };
-            auto item = createSlider(tree);
-            expectEquals(item->getSlider().getTextBoxPosition(), juce::Slider::NoTextBox);
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getTextBoxPosition(), juce::Slider::NoTextBox);
         }
     }
 
     void testAutoSize()
     {
         beginTest("auto size");
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "align-items", "flex-start" },
+                },
+                {
+                    juce::ValueTree{ "Slider" },
+                },
+            };
+            auto parent = interpreter.interpret(parentState);
+            auto& item = *parent->getChildren()[0];
+            const auto& boxModel = jive::boxModel(item);
+            expectEquals(boxModel.getWidth(), 135.0f);
+            expectEquals(boxModel.getHeight(), 20.0f);
 
-        juce::ValueTree parentState{
-            "Component",
-            {
-                { "width", 222 },
-                { "height", 333 },
-            },
-            {
-                juce::ValueTree{ "Slider" },
-            },
-        };
-        jive::Interpreter interpreter;
-        auto parent = interpreter.interpret(parentState);
-        auto& item = *parent->getChildren()[0];
-        const auto& boxModel = jive::boxModel(item);
-        expectEquals(boxModel.getWidth(), 135.0f);
-        expectEquals(boxModel.getHeight(), 20.0f);
+            parentState.getChild(0).setProperty("width", 123.f, nullptr);
+            expectEquals(boxModel.getWidth(), 123.f);
+            expectEquals(item.getComponent()->getWidth(), 123);
 
-        parentState.getChild(0).setProperty("width", 123.f, nullptr);
-        expectEquals(boxModel.getWidth(), 123.f);
+            parentState.getChild(0).setProperty("height", 311.f, nullptr);
+            expectEquals(boxModel.getHeight(), 311.f);
+            expectEquals(item.getComponent()->getHeight(), 311);
+        }
 
-        parentState.getChild(0).setProperty("height", 311.f, nullptr);
-        expectEquals(boxModel.getHeight(), 311.f);
+        beginTest("auto size / stretches to fill its grid track");
+        {
+            auto parent = interpreter.interpret(jive::parseXML(R"(
+                <Component display="grid" width="300" height="100"
+                           grid-template-columns="100px 1fr" grid-template-rows="100px"
+                           align-items="centre">
+                    <Component width="100" height="40" />
+                    <Slider />
+                </Component>
+            )"));
+            const auto& slider = getSlider(*parent->getChildren()[1]);
+            expectEquals(slider.getBounds(), juce::Rectangle{ 100, 40, 200, 20 });
+            expect(slider.getSliderStyle() == juce::Slider::LinearHorizontal);
+        }
+
+        beginTest("auto size / can be given a size smaller than its default");
+        {
+            auto parent = interpreter.interpret(jive::parseXML(R"(
+                <Component display="grid" width="300" height="100"
+                           grid-template-columns="1fr" grid-template-rows="100px">
+                    <Slider width="100" height="10" />
+                </Component>
+            )"));
+            const auto& slider = getSlider(*parent->getChildren()[0]);
+            expectEquals(slider.getWidth(), 100);
+            expectEquals(slider.getHeight(), 10);
+        }
+    }
+
+    void testTooltip()
+    {
+        beginTest("tooltip");
+
+        {
+            juce::ValueTree tree{
+                "Slider",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                },
+            };
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expect(slider.getTooltip().isEmpty());
+
+            tree.setProperty("tooltip", "Drag me!", nullptr);
+            expectEquals(slider.getTooltip(), juce::String{ "Drag me!" });
+        }
+        {
+            juce::ValueTree tree{
+                "Slider",
+                {
+                    { "width", 222 },
+                    { "height", 333 },
+                    { "tooltip", "OneTwoThree" },
+                },
+            };
+            auto item = interpreter.interpret(tree);
+            auto& slider = getSlider(*item);
+            expectEquals(slider.getTooltip(), juce::String{ "OneTwoThree" });
+        }
     }
 
     void testEvents()
@@ -555,7 +695,6 @@ private:
                 juce::ValueTree{ "Slider" },
             },
         };
-        jive::Interpreter interpreter;
         auto parent = interpreter.interpret(parentState);
         auto& slider = *dynamic_cast<jive::GuiItemDecorator&>(*parent->getChildren()[0])
                             .toType<jive::Slider>();

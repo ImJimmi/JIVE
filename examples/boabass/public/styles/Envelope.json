@@ -1,0 +1,9 @@
+{
+  "background": "#0A1810",
+  "border": "$line",
+  "border-width": 1,
+  "border-radius": 6,
+  "fill": "linear-gradient(to bottom, rgba(74, 222, 128, 0.35), rgba(74, 222, 128, 0.02))",
+  "stroke": "$leaf",
+  "thumb": "$lime"
+}

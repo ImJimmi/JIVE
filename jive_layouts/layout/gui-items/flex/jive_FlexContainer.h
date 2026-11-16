@@ -6,7 +6,6 @@ namespace jive
 {
     class FlexContainer
         : public ContainerItem
-        , private juce::ValueTree::Listener
     {
     public:
         explicit FlexContainer(std::unique_ptr<GuiItem> itemToDecorate);
@@ -23,12 +22,14 @@ namespace jive
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) final;
 
         juce::FlexBox buildFlexBox(juce::Rectangle<float> bounds, LayoutStrategy strategy);
+        juce::Point<float> calculateGaps() const;
 
-        Property<juce::FlexBox::Direction> flexDirection;
-        Property<juce::FlexBox::Wrap> flexWrap;
-        Property<juce::FlexBox::JustifyContent> flexJustifyContent;
-        Property<juce::FlexBox::AlignItems> flexAlignItems;
-        Property<juce::FlexBox::AlignContent> flexAlignContent;
+        PassiveProperty<juce::FlexBox::Direction> flexDirection;
+        PassiveProperty<juce::FlexBox::Wrap> flexWrap;
+        PassiveProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
+        PassiveProperty<juce::FlexBox::AlignItems> flexAlignItems;
+        PassiveProperty<juce::FlexBox::AlignContent> flexAlignContent;
+        PassiveProperty<juce::Array<juce::Grid::Px>> gap;
 
         bool layoutRecursionLock = false;
         bool changesDuringLayout = false;

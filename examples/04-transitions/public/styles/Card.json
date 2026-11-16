@@ -1,0 +1,16 @@
+{
+  "transition": "background 600ms ease-in-out",
+
+  "#card": {
+    "background": "hsl(200, 70%, 60%)",
+    "border": "white",
+    "border-width": 2,
+    "border-radius": 16,
+    "shadow": "0 0 0px hotpink",
+    "foreground": "#16191C",
+    "fill": "#16191C",
+    ":hover": {
+      "background": "hsl(280, 70%, 60%)"
+    }
+  }
+}

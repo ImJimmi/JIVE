@@ -12,47 +12,56 @@ END_JUCE_MODULE_DECLARATION */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "compile-time-helpers/jive_JuceVersion.h"
-#include "logging/jive_ConsoleProgressBar.h"
-#include "logging/jive_ScopeIndentedLogger.h"
-#include "logging/jive_StringStreams.h"
+#if JIVE_IS_PLUGIN_PROJECT
+    #include <juce_audio_processors/juce_audio_processors.h>
+#endif
 
+#if PERFETTO
+    #include <melatonin_perfetto/melatonin_perfetto.h>
+
+    #define JIVE_TRACE(...) \
+        TRACE_COMPONENT(__VA_ARGS__)
+#else
+    #define JIVE_TRACE(...)
+#endif
+
+#include "algorithms/jive_Bezier.h"
 #include "algorithms/jive_Find.h"
 #include "algorithms/jive_Interpolate.h"
 #include "algorithms/jive_TransferFunction.h"
 #include "algorithms/jive_Visitor.h"
-
-#include "algorithms/jive_Bezier.h"
-
+#include "compile-time-helpers/jive_JuceVersion.h"
+#include "errors/jive_ErrorHandling.h"
+#include "files/jive_FileObserver.h"
+#include "files/jive_SourceDirectories.h"
+#include "files/jive_SourceFile.h"
+#include "files/jive_SourceRoot.h"
+#include "geometry/jive_Anchor.h"
+#include "geometry/jive_BorderRadii.h"
+#include "geometry/jive_BoxModel.h"
+#include "geometry/jive_Length.h"
+#include "geometry/jive_Orientation.h"
+#include "interface/jive_InteractionState.h"
 #include "kinetics/jive_Easing.h"
+#include "kinetics/jive_Transitions.h"
+#include "logging/jive_ConsoleProgressBar.h"
+#include "logging/jive_ScopeIndentedLogger.h"
+#include "logging/jive_StringStreams.h"
+#include "testing/jive_CapturingLogger.h"
+#include "testing/jive_TestZip.h"
+#include "testing/jive_UnitTest.h"
 #include "time/jive_TimeParser.h"
 #include "time/jive_Timer.h"
-#include "values/jive_PropertyBehaviours.h"
-
 #include "values/jive_Colours.h"
 #include "values/jive_Event.h"
+#include "values/jive_Identifiers.h"
+#include "values/jive_Number.h"
 #include "values/jive_Object.h"
 #include "values/jive_Property.h"
-#include "values/jive_ReferenceCountedValueTreeWrapper.h"
+#include "values/jive_PropertyBehaviours.h"
 #include "values/jive_XmlParser.h"
 #include "values/variant-converters/jive_AttributedStringVariantConverters.h"
 #include "values/variant-converters/jive_FlexVariantConverters.h"
 #include "values/variant-converters/jive_GridVariantConverters.h"
 #include "values/variant-converters/jive_MiscVariantConverters.h"
 #include "values/variant-converters/jive_VariantConvertion.h"
-
-#include "geometry/jive_BorderRadii.h"
-#include "geometry/jive_Length.h"
-#include "geometry/jive_Orientation.h"
-
-#include "geometry/jive_BoxModel.h"
-
-#include "graphics/jive_FontUtilities.h"
-#include "graphics/jive_Gradient.h"
-#include "graphics/jive_LookAndFeel.h"
-
-#include "graphics/jive_Fill.h"
-
-#include "interface/jive_ComponentInteractionState.h"
-
-#include "kinetics/jive_Transitions.h"

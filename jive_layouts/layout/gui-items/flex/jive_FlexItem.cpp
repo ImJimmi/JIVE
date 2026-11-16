@@ -12,47 +12,36 @@ namespace jive
 
         void resized() final
         {
-            if (strategy == LayoutStrategy::real)
-            {
-                boxModel(item)
-                    .setSize(static_cast<float>(getWidth()),
-                             static_cast<float>(getHeight()));
-            }
+            boxModel(item)
+                .setSize(static_cast<float>(getWidth()),
+                         static_cast<float>(getHeight()));
         }
 
         void moved() final
         {
-            if (strategy == LayoutStrategy::real)
-                item.getComponent()->setTopLeftPosition(getPosition());
-        }
-
-        void setStrategy(LayoutStrategy layoutStrategy)
-        {
-            strategy = layoutStrategy;
+            item.getComponent()->setTopLeftPosition(getPosition());
         }
 
     private:
-        LayoutStrategy strategy;
         GuiItem& item;
     };
 
     FlexItem::FlexItem(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem::Child{ std::move(itemToDecorate) }
-        , order{ state, "order" }
-        , flexGrow{ state, "flex-grow" }
-        , flexShrink{ state, "flex-shrink" }
-        , flexBasis{ state, "flex-basis" }
-        , alignSelf{ state, "align-self" }
+        , order{ state, ids::order() }
+        , flexGrow{ state, ids::flexGrow() }
+        , flexShrink{ state, ids::flexShrink() }
+        , flexBasis{ state, ids::flexBasis() }
+        , alignSelf{ state, ids::alignSelf() }
+        , parentDirection{ state.getParent(), ids::flexDirection() }
+        , parentAlignItems{ state.getParent(), ids::alignItems() }
         , layoutDummy{ std::make_unique<FlexLayoutDummy>(*this) }
     {
-        if (!flexShrink.exists())
-            flexShrink = juce::FlexItem{}.flexShrink;
-
         const auto updateParentLayout = [this]() {
             cachedItems.clear();
 
             if (auto* containerParent = dynamic_cast<GuiItemDecorator&>(*getParent()).getTopLevelDecorator().toType<ContainerItem>())
-                containerParent->updateIdealSizeUnrestrained();
+                containerParent->updateIdealSize();
         };
         order.onValueChange = updateParentLayout;
         flexGrow.onValueChange = updateParentLayout;
@@ -63,24 +52,42 @@ namespace jive
         flexBasis.onTransitionProgressed = updateParentLayout;
         alignSelf.onValueChange = updateParentLayout;
 
-        box.addListener(*this);
+        state.addListener(this);
     }
 
     FlexItem::~FlexItem()
     {
-        box.removeListener(*this);
+        state.removeListener(this);
     }
 
     juce::FlexItem FlexItem::toJuceFlexItem(juce::Rectangle<float> parentContentBounds,
                                             LayoutStrategy strategy)
     {
+        JIVE_TRACE("x", parentContentBounds.getX(), "y", parentContentBounds.getY(), "width", parentContentBounds.getWidth(), "height", parentContentBounds.getHeight(), "strategy", strategy);
+        const auto orientation = [this]() {
+            const auto direction = parentDirection.getOr(juce::FlexBox::Direction::column);
+
+            if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
+                return Orientation::horizontal;
+
+            return Orientation::vertical;
+        }();
+
+        if (box.getConstraintsVersion() != cachedItemsConstraintsVersion
+            || orientation != cachedItemsOrientation)
+        {
+            cachedItems.clear();
+            cachedItemsConstraintsVersion = box.getConstraintsVersion();
+            cachedItemsOrientation = orientation;
+        }
+
         const auto key = std::make_pair(parentContentBounds, strategy);
 
         if (cachedItems.find(key) == std::end(cachedItems))
         {
             juce::FlexItem flexItem{ *layoutDummy };
 
-            flexItem.flexShrink = flexShrink.calculateCurrent();
+            flexItem.flexShrink = flexShrink.exists() ? flexShrink.calculateCurrent().value : 1.0f;
 
             if (strategy == LayoutStrategy::real)
             {
@@ -89,38 +96,44 @@ namespace jive
                 flexItem.alignSelf = alignSelf;
             }
 
-            const auto orientation = [this]() {
-                const Property<juce::FlexBox::Direction> parentDirection{
-                    state.getParent(),
-                    "flex-direction",
-                };
-                const auto direction = parentDirection.get();
-
-                if (direction == juce::FlexBox::Direction::row || direction == juce::FlexBox::Direction::rowReverse)
-                    return Orientation::horizontal;
-
-                return Orientation::vertical;
-            };
             applyConstraints(flexItem,
                              parentContentBounds,
-                             orientation(),
+                             orientation,
                              strategy);
+
+            if (std::size(cachedItems) >= maxNumCachedItems)
+                cachedItems.clear();
 
             cachedItems[key] = flexItem;
         }
 
-        dynamic_cast<FlexLayoutDummy&>(*layoutDummy).setStrategy(strategy);
-        return cachedItems.find(key)->second;
+        auto flexItem = cachedItems.find(key)->second;
+        lastMinHeight = flexItem.minHeight;
+
+        if (strategy == LayoutStrategy::real
+            && flexItem.alignSelf == juce::FlexItem::AlignSelf::autoAlign
+            && !parentAlignItems.exists()
+            && !getTopLevelDecorator().stretchesByDefault())
+        {
+            flexItem.alignSelf = juce::FlexItem::AlignSelf::flexStart;
+        }
+
+        return flexItem;
     }
 
-    void FlexItem::boxModelChanged(BoxModel&)
+    void FlexItem::idealSizeChanged()
     {
         cachedItems.clear();
+    }
+
+    void FlexItem::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        forwardPropertyChange(tree, property, order, flexGrow, flexShrink, flexBasis, alignSelf);
     }
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class FlexItemUnitTest : public juce::UnitTest
 {
@@ -132,6 +145,10 @@ public:
 
     void runTest() final
     {
+        testExplicitlySizedItemNotShrunk();
+        testItemAfterSiblingThatReflows();
+        testConstraintsReusedAfterResize();
+        testConstraintsRecalculatedWhenParentDirectionChanges();
         testOrder();
         testFlexGrow();
         testFlexShrink();
@@ -143,6 +160,116 @@ public:
     }
 
 private:
+    void testExplicitlySizedItemNotShrunk()
+    {
+        beginTest("an item with an explicit size is not shrunk below it when a sibling grows");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="600" height="400" align-items="centre" justify-content="centre">
+                <Component id="heading" max-width="325" align-items="centre">
+                    <Component flex-direction="row" align-items="centre">
+                        <svg id="icon" width="25" height="25">
+                            <circle cx="50%" cy="50%" r="50%" fill="blue" />
+                        </svg>
+                        <Text id="title">Short</Text>
+                    </Component>
+                </Component>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto* icon = root->getChildren()[0]
+                         ->getChildren()[0]
+                         ->getChildren()[0]
+                         ->getComponent()
+                         .get();
+        expectEquals(icon->getWidth(), 25);
+        expectEquals(icon->getHeight(), 25);
+
+        // Growing a sibling so that the row would overflow the max-width should
+        // shrink/wrap that sibling, not the fixed-size icon.
+        auto titleState = state.getChild(0).getChild(0).getChild(1);
+        titleState.setProperty("text",
+                               "Live Editing Demo with a great deal more text that definitely wraps onto multiple lines",
+                               nullptr);
+
+        expectEquals(icon->getWidth(), 25);
+        expectEquals(icon->getHeight(), 25);
+    }
+
+    void testItemAfterSiblingThatReflows()
+    {
+        beginTest("an item is resized when a sibling before it reflows its text");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="1000" height="500">
+                <Component>
+                    <Text>This sentence is long enough that it has to wrap onto another line when its parent narrows.</Text>
+                </Component>
+                <Component height="10" />
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto& item = *root->getChildren()[1]->getComponent();
+        expectEquals(item.getWidth(), 1000);
+
+        state.setProperty("width", 300, nullptr);
+        expectEquals(item.getWidth(), 300);
+    }
+
+    void testConstraintsReusedAfterResize()
+    {
+        beginTest("an item's constraints aren't recalculated when it has only been resized");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto numIdealHeightCalculations = std::make_shared<int>(0);
+        auto text = state.getChild(0);
+        const auto calculateIdealHeight = text["jive::ideal-height"].getNativeFunction();
+        text.setProperty("jive::ideal-height",
+                         juce::var::NativeFunction{ [numIdealHeightCalculations, calculateIdealHeight](const juce::var::NativeFunctionArgs& args) {
+                             (*numIdealHeightCalculations)++;
+                             return calculateIdealHeight(args);
+                         } },
+                         nullptr);
+
+        state.setProperty("width", 200, nullptr);
+        expectEquals(root->getChildren()[0]->getComponent()->getWidth(), 200);
+
+        *numIdealHeightCalculations = 0;
+        state.setProperty("justify-content", "centre", nullptr);
+        expectEquals(*numIdealHeightCalculations, 0);
+    }
+
+    void testConstraintsRecalculatedWhenParentDirectionChanges()
+    {
+        beginTest("an item's constraints are recalculated when its parent's direction changes");
+
+        jive::Interpreter interpreter;
+        auto state = jive::parseXML(R"(
+            <Component width="300" height="300">
+                <Text>This sentence is long enough to wrap when its parent narrows.</Text>
+            </Component>
+        )");
+        auto root = interpreter.interpret(state);
+        auto& item = *dynamic_cast<jive::GuiItemDecorator&>(*root->getChildren()[0])
+                          .toType<jive::FlexItem>();
+        const juce::Rectangle<float> parentContentBounds{ 50.0f, 5.0f };
+
+        auto flexItem = item.toJuceFlexItem(parentContentBounds, jive::LayoutStrategy::real);
+        expectGreaterThan(flexItem.minHeight, parentContentBounds.getHeight());
+
+        state.setProperty("flex-direction", "row", nullptr);
+        flexItem = item.toJuceFlexItem(parentContentBounds, jive::LayoutStrategy::real);
+        expectEquals(flexItem.height, parentContentBounds.getHeight());
+    }
+
     void testOrder()
     {
         beginTest("order");

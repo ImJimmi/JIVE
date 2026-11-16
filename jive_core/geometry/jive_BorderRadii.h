@@ -1,6 +1,9 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
+#include <jive_core/algorithms/jive_Interpolate.h>
+#include <jive_core/values/variant-converters/jive_VariantValidation.h>
+
+#include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive
 {
@@ -76,6 +79,20 @@ namespace jive
         Arithmetic bottomRight{ 0 };
         Arithmetic bottomLeft{ 0 };
     };
+
+    template <typename T>
+    struct Interpolate<BorderRadii<T>>
+    {
+        [[nodiscard]] BorderRadii<T> operator()(BorderRadii<T> start, BorderRadii<T> end, double proportion) const
+        {
+            return BorderRadii<T>{
+                interpolate(start.topLeft, end.topLeft, proportion),
+                interpolate(start.topRight, end.topRight, proportion),
+                interpolate(start.bottomRight, end.bottomRight, proportion),
+                interpolate(start.bottomLeft, end.bottomLeft, proportion),
+            };
+        }
+    };
 } // namespace jive
 
 namespace juce
@@ -92,6 +109,19 @@ namespace juce
                 juce::String{ radii.bottomLeft },
             }
                 .joinIntoString(" ");
+        }
+
+        static bool isValid(const var& value)
+        {
+            return value.isVoid() || jive::areAllNumbers(value, 1, 4, { "px" });
+        }
+
+        static String getSyntax()
+        {
+            return "1-4 numbers (\"<all>\", "
+                   "\"<top-left-and-bottom-right> <top-right-and-bottom-left>\", "
+                   "\"<top-left> <top-right-and-bottom-left> <bottom-right>\", "
+                   "\"<top-left> <top-right> <bottom-right> <bottom-left>\")";
         }
 
         static jive::BorderRadii<Arithmetic> fromVar(const var& value)

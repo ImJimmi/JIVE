@@ -1,0 +1,41 @@
+{
+  "background": "$night",
+  "shadow": "0 6px 18px rgba(0, 0, 0, 0.45)",
+
+  "WhiteKey": {
+    "background": "radial-gradient(at 50% 0%, #d7f9bb, #e3f1d8)",
+    "border": "rgba(7, 18, 12, 0.45)",
+    "border-width": "0 1 0 1",
+    "border-radius": "0 0 8 8",
+    "foreground": "$fern",
+    "font-family": "Rubik Mono One",
+    "font-size": 10,
+    "transition": "background 180ms ease-in-out, foreground 180ms ease-in-out",
+
+    ":hover": {
+      "background": "radial-gradient(at 50% 0%, #ccff9f, #d7f9bb)",
+      "foreground": "$night"
+    }
+  },
+
+  "BlackKey": {
+    "background": "linear-gradient(to bottom, $night 0%, #0B1B12 80%, #1A3524 100%)",
+    "border": "$line-strong",
+    "border-width": "0 1.5 1.5 1.5",
+    "border-radius": "0 0 6 6",
+    "transition": "background 180ms ease-out",
+
+    ":hover": {
+      "background": "linear-gradient(to bottom, #0B1B12 0%, $moss 80%, #2D6142 100%)"
+    }
+  },
+
+  "WhiteKey, BlackKey": {
+    ":active": {
+      "background": "radial-gradient(at 50% 0%, #b3ff63, #ccff9f)",
+      "border": "black",
+      "foreground": "$night",
+      "transition": "background 0ms, foreground 0ms"
+    }
+  }
+}

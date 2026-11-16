@@ -14,12 +14,24 @@ namespace jive
 
     Label::Label(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
-        , border{ state, "border-width" }
+        , border{ state, ids::borderWidth() }
     {
         border.onValueChange = [this]() {
             getLabel().setBorderSize(toNearestInt(border));
         };
         getLabel().setBorderSize(toNearestInt(border));
+
+        state.addListener(this);
+    }
+
+    Label::~Label()
+    {
+        state.removeListener(this);
+    }
+
+    void Label::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        border.handlePropertyChange(tree, property);
     }
 
     bool Label::isContainer() const
@@ -45,7 +57,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class LabelUnitTest : public juce::UnitTest
 {
@@ -62,18 +74,18 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Label> createLabel(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Label>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getLabel(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Label>()->getLabel();
     }
 
     void testGuiItem()
     {
         beginTest("gui-item");
 
-        auto item = createLabel(juce::ValueTree{
+        auto item = interpreter.interpret(juce::ValueTree{
             "Label",
             {
                 { "width", 222 },
@@ -94,19 +106,20 @@ private:
                 { "height", 333 },
             },
         };
-        auto label = createLabel(tree);
+        auto item = interpreter.interpret(tree);
+        auto& label = getLabel(*item);
 
-        expect(label->getLabel().getBorderSize().getTop() == 0);
-        expect(label->getLabel().getBorderSize().getRight() == 0);
-        expect(label->getLabel().getBorderSize().getBottom() == 0);
-        expect(label->getLabel().getBorderSize().getLeft() == 0);
+        expect(label.getBorderSize().getTop() == 0);
+        expect(label.getBorderSize().getRight() == 0);
+        expect(label.getBorderSize().getBottom() == 0);
+        expect(label.getBorderSize().getLeft() == 0);
 
         tree.setProperty("border-width", "5 10 20 40", nullptr);
 
-        expect(label->getLabel().getBorderSize().getTop() == 5);
-        expect(label->getLabel().getBorderSize().getRight() == 10);
-        expect(label->getLabel().getBorderSize().getBottom() == 20);
-        expect(label->getLabel().getBorderSize().getLeft() == 40);
+        expect(label.getBorderSize().getTop() == 5);
+        expect(label.getBorderSize().getRight() == 10);
+        expect(label.getBorderSize().getBottom() == 20);
+        expect(label.getBorderSize().getLeft() == 40);
     }
 };
 

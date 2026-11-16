@@ -3,28 +3,26 @@
 #include "jive_FlexItem.h"
 
 #include <jive_layouts/layout/gui-items/jive_CommonGuiItem.h>
+#include <jive_layouts/utilities/jive_Display.h>
 
 namespace jive
 {
     FlexContainer::FlexContainer(std::unique_ptr<GuiItem> itemToDecorate)
         : ContainerItem{ std::move(itemToDecorate) }
-        , flexDirection{ state, "flex-direction" }
-        , flexWrap{ state, "flex-wrap" }
-        , flexJustifyContent{ state, "justify-content" }
-        , flexAlignItems{ state, "align-items" }
-        , flexAlignContent{ state, "align-content" }
+        , flexDirection{ state, ids::flexDirection() }
+        , flexWrap{ state, ids::flexWrap() }
+        , flexJustifyContent{ state, ids::justifyContent() }
+        , flexAlignItems{ state, ids::alignItems() }
+        , flexAlignContent{ state, ids::alignContent() }
+        , gap{ state, ids::gap() }
     {
-        jassert(state.hasProperty("display"));
-        jassert(state["display"] == juce::VariantConverter<Display>::toVar(Display::flex));
-
-        if (!flexDirection.exists())
-            flexDirection = juce::FlexBox::Direction::column;
+        jassert(state.getProperty(ids::display(), "flex") == juce::VariantConverter<Display>::toVar(Display::flex));
 
         flexDirection.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         flexWrap.onValueChange = [this] {
-            updateIdealSizeUnrestrained();
+            updateIdealSize();
         };
         flexJustifyContent.onValueChange = [this] {
             callLayoutChildrenWithRecursionLock();
@@ -35,19 +33,53 @@ namespace jive
         flexAlignContent.onValueChange = [this] {
             callLayoutChildrenWithRecursionLock();
         };
-
-        state.addListener(this);
+        gap.onValueChange = [this] {
+            updateIdealSize();
+        };
+        gap.onTransitionProgressed = [this] {
+            updateIdealSize();
+        };
     }
 
-    FlexContainer::~FlexContainer()
+    FlexContainer::~FlexContainer() = default;
+
+    // juce::FlexBox has no notion of gaps, so they're emulated by giving every
+    // item half a gap of margin on each side and laying the items out in bounds
+    // expanded by half a gap on each side. Gaps then only appear between
+    // adjacent items - never around the outside - on both axes, and on every
+    // line when items wrap.
+    static void applyGaps(juce::FlexBox& flex, juce::Point<float> gaps)
     {
-        state.removeListener(this);
+        for (auto& flexItem : flex.items)
+        {
+            flexItem.margin.left += gaps.x * 0.5f;
+            flexItem.margin.right += gaps.x * 0.5f;
+            flexItem.margin.top += gaps.y * 0.5f;
+            flexItem.margin.bottom += gaps.y * 0.5f;
+        }
+    }
+
+    static juce::Rectangle<float> expandToAccountForGaps(juce::Rectangle<float> bounds,
+                                                         juce::Point<float> gaps)
+    {
+        return bounds.expanded(gaps.x * 0.5f, gaps.y * 0.5f);
+    }
+
+    juce::Point<float> FlexContainer::calculateGaps() const
+    {
+        const auto gaps = gap.exists() ? gap.calculateCurrent() : juce::Array<juce::Grid::Px>{};
+        const auto rowGap = gaps.size() > 0 ? static_cast<float>(gaps.getUnchecked(0).pixels) : 0.0f;
+        const auto columnGap = gaps.size() > 1 ? static_cast<float>(gaps.getUnchecked(1).pixels) : rowGap;
+
+        return { columnGap, rowGap };
     }
 
     void FlexContainer::layOutChildren()
     {
         if (layoutRecursionLock)
             return;
+
+        JIVE_TRACE();
 
         const juce::ScopedValueSetter svs{ layoutRecursionLock, true };
 
@@ -58,11 +90,13 @@ namespace jive
         if (bounds.isEmpty())
             return;
 
+        const auto boundsToLayOutIn = expandToAccountForGaps(bounds, calculateGaps());
+
         do
         {
             changesDuringLayout = false;
             auto flexBox = buildFlexBox(bounds, LayoutStrategy::real);
-            flexBox.performLayout(bounds);
+            flexBox.performLayout(boundsToLayOutIn);
         }
         while (changesDuringLayout);
     }
@@ -76,30 +110,17 @@ namespace jive
     {
         constraints = constraints.withZeroOrigin();
 
-        switch (flexDirection.getOr(juce::FlexBox{}.flexDirection))
-        {
-        case juce::FlexBox::Direction::column:
-        case juce::FlexBox::Direction::columnReverse:
-            constraints.setHeight(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
-            break;
-        case juce::FlexBox::Direction::row:
-        case juce::FlexBox::Direction::rowReverse:
-            constraints.setWidth(static_cast<float>(std::numeric_limits<juce::uint16>::max()));
-            break;
-        default:
-            jassertfalse;
-        }
-
+        const auto gaps = calculateGaps();
         auto flex = const_cast<FlexContainer&>(*this)
                         .buildFlexBox(constraints, LayoutStrategy::dummy);
-        flex.performLayout(constraints);
+        flex.performLayout(expandToAccountForGaps(constraints, gaps));
 
         juce::Point extremities{ -1.0f, -1.0f };
 
         for (const auto& flexItem : flex.items)
         {
-            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right;
-            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom;
+            const auto right = flexItem.currentBounds.getRight() + flexItem.margin.right - gaps.x * 0.5f;
+            const auto bottom = flexItem.currentBounds.getBottom() + flexItem.margin.bottom - gaps.y * 0.5f;
 
             if (right > extremities.x)
                 extremities.x = right;
@@ -144,14 +165,28 @@ namespace jive
 
     void FlexContainer::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& id)
     {
+        ContainerItem::valueTreePropertyChanged(tree, id);
+
+        if (forwardPropertyChange(tree,
+                                  id,
+                                  flexDirection,
+                                  flexWrap,
+                                  flexJustifyContent,
+                                  flexAlignItems,
+                                  flexAlignContent,
+                                  gap))
+        {
+            return;
+        }
+
         if (tree != state && tree.getParent() != state)
             return;
 
         if (layoutRecursionLock)
         {
             static const juce::Array<juce::Identifier> propertiesForWhichChangesRequireAnotherLayOut{
-                "ideal-width",
-                "ideal-height",
+                "jive::ideal-width",
+                "jive::ideal-height",
             };
 
             if (propertiesForWhichChangesRequireAnotherLayOut.contains(id))
@@ -162,24 +197,40 @@ namespace jive
     juce::FlexBox FlexContainer::buildFlexBox(juce::Rectangle<float> bounds,
                                               LayoutStrategy strategy)
     {
+        JIVE_TRACE("x", bounds.getX(), "y", bounds.getY(), "width", bounds.getWidth(), "height", bounds.getHeight(), "strategy", strategy);
         juce::FlexBox flex;
 
-        flex.flexDirection = flexDirection;
-        flex.flexWrap = flexWrap;
+        flex.flexDirection = flexDirection.getOr(juce::FlexBox::Direction::column);
+        flex.flexWrap = flexWrap.getOr(juce::FlexBox::Wrap::noWrap);
 
         appendChildren(*this, flex, bounds, strategy);
+        applyGaps(flex, calculateGaps());
 
         switch (strategy)
         {
         case LayoutStrategy::real:
-            flex.justifyContent = flexJustifyContent;
-            flex.alignItems = flexAlignItems;
-            flex.alignContent = flexAlignContent;
+            flex.justifyContent = flexJustifyContent.getOr(juce::FlexBox::JustifyContent::flexStart);
+            flex.alignItems = flexAlignItems.getOr(juce::FlexBox::AlignItems::stretch);
+            flex.alignContent = flexAlignContent.getOr(juce::FlexBox::AlignContent::stretch);
             break;
         case LayoutStrategy::dummy:
             flex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
             flex.alignItems = juce::FlexBox::AlignItems::flexStart;
             flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+
+            // Reversing a direction or wrap only changes where items are
+            // positioned, not the size of the content. When measuring the ideal
+            // size a reversed direction or wrap pushes items against the far edge
+            // of the constraints, so the measured extent becomes the constraints'
+            // size rather than the intrinsic content size. Normalise to the
+            // forward direction and wrap.
+            if (flex.flexDirection == juce::FlexBox::Direction::rowReverse)
+                flex.flexDirection = juce::FlexBox::Direction::row;
+            else if (flex.flexDirection == juce::FlexBox::Direction::columnReverse)
+                flex.flexDirection = juce::FlexBox::Direction::column;
+
+            if (flex.flexWrap == juce::FlexBox::Wrap::wrapReverse)
+                flex.flexWrap = juce::FlexBox::Wrap::wrap;
             break;
         default:
             jassertfalse;
@@ -190,7 +241,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class FlexContainerUnitTest : public juce::UnitTest
 {
@@ -207,6 +258,7 @@ public:
         testAlignContent();
         testAlignItems();
         testJustifyContent();
+        testGap();
         testChildren();
         testPadding();
         testAutoSize();
@@ -263,6 +315,36 @@ private:
                                                   .toType<jive::FlexContainer>());
 
         expect(flexBox.flexWrap == juce::FlexBox::Wrap::wrapReverse);
+
+        beginTest("wrap / wrap-reverse doesn't change the ideal size");
+
+        juce::ValueTree parentState{
+            "Component",
+            {
+                { "width", 222 },
+                { "height", 333 },
+            },
+            {
+                juce::ValueTree{
+                    "Component",
+                    {
+                        { "flex-direction", "row" },
+                        { "flex-wrap", "wrap-reverse" },
+                    },
+                    {
+                        juce::ValueTree{
+                            "Component",
+                            {
+                                { "width", 43 },
+                                { "height", 84 },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        auto parent = interpreter.interpret(parentState);
+        expectEquals(jive::boxModel(*parent->getChildren()[0]).getHeight(), 84.0f);
     }
 
     void testAlignContent()
@@ -338,6 +420,122 @@ private:
                                                   .toType<jive::FlexContainer>());
 
         expect(flexBox.justifyContent == juce::FlexBox::JustifyContent::center);
+    }
+
+    void testGap()
+    {
+        juce::ValueTree columnState{
+            "Component",
+            {
+                { "width", 200 },
+                { "height", 300 },
+            },
+            {
+                juce::ValueTree{ "Component", { { "height", 30 } } },
+                juce::ValueTree{ "Component", { { "height", 30 } } },
+                juce::ValueTree{ "Component", { { "height", 30 } } },
+            },
+        };
+        jive::Interpreter interpreter;
+
+        beginTest("gap / column");
+        {
+            auto item = interpreter.interpret(columnState);
+            const auto& children = item->getChildren();
+            expectEquals(children[0]->getComponent()->getY(), 0);
+            expectEquals(children[1]->getComponent()->getY(), 30);
+            expectEquals(children[2]->getComponent()->getY(), 60);
+
+            columnState.setProperty("gap", 10, nullptr);
+            expectEquals(children[0]->getComponent()->getY(), 0);
+            expectEquals(children[1]->getComponent()->getY(), 40);
+            expectEquals(children[2]->getComponent()->getY(), 80);
+
+            expectEquals(children[0]->getComponent()->getX(), 0);
+            expectEquals(children[0]->getComponent()->getWidth(), 200);
+        }
+
+        beginTest("gap / row");
+        {
+            juce::ValueTree rowState{
+                "Component",
+                {
+                    { "width", 300 },
+                    { "height", 100 },
+                    { "flex-direction", "row" },
+                    { "align-items", "flex-start" },
+                    { "gap", "10 25" },
+                },
+                {
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                },
+            };
+            auto item = interpreter.interpret(rowState);
+            const auto& children = item->getChildren();
+            expectEquals(children[0]->getComponent()->getX(), 0);
+            expectEquals(children[1]->getComponent()->getX(), 65);
+            expectEquals(children[2]->getComponent()->getX(), 130);
+            expectEquals(children[0]->getComponent()->getY(), 0);
+            expectEquals(children[1]->getComponent()->getY(), 0);
+            expectEquals(children[2]->getComponent()->getY(), 0);
+        }
+
+        beginTest("gap / wrapped");
+        {
+            juce::ValueTree wrappedState{
+                "Component",
+                {
+                    { "width", 100 },
+                    { "height", 200 },
+                    { "flex-direction", "row" },
+                    { "flex-wrap", "wrap" },
+                    { "align-items", "flex-start" },
+                    { "align-content", "flex-start" },
+                    { "gap", 10 },
+                },
+                {
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                    juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                },
+            };
+            auto item = interpreter.interpret(wrappedState);
+            const auto& children = item->getChildren();
+            expectEquals(children[0]->getComponent()->getPosition(), juce::Point<int>{ 0, 0 });
+            expectEquals(children[1]->getComponent()->getPosition(), juce::Point<int>{ 50, 0 });
+            expectEquals(children[2]->getComponent()->getPosition(), juce::Point<int>{ 0, 40 });
+        }
+
+        beginTest("gap / auto-size");
+        {
+            juce::ValueTree parentState{
+                "Component",
+                {
+                    { "width", 200 },
+                    { "height", 300 },
+                },
+                {
+                    juce::ValueTree{
+                        "Component",
+                        {
+                            { "display", "flex" },
+                            { "gap", 10 },
+                        },
+                        {
+                            juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                            juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                            juce::ValueTree{ "Component", { { "width", 40 }, { "height", 30 } } },
+                        },
+                    },
+                },
+            };
+            auto parent = interpreter.interpret(parentState);
+            const auto& boxModel = jive::boxModel(*parent->getChildren()[0]);
+            expectEquals(boxModel.getWidth(), 200.0f);
+            expectEquals(boxModel.getHeight(), 110.0f);
+        }
     }
 
     void testChildren()
@@ -543,7 +741,7 @@ private:
                 containerState,
             },
         };
-        const jive::Interpreter interpreter;
+        jive::Interpreter interpreter;
 
         beginTest("nested widget with text / blank slate");
         {
@@ -592,8 +790,13 @@ private:
             "Text",
             {
                 { "text", "Lorem ipsum" },
-                { "typeface-name", font.getTypefaceName() },
-                { "font-height", font.getHeightInPoints() },
+                {
+                    "style",
+                    new jive::Object{
+                        { "font-family", font.getTypefaceName() },
+                        { "font-size", font.getHeightInPoints() },
+                    },
+                },
             },
         };
         buttonState.appendChild(textState, nullptr);
@@ -611,23 +814,34 @@ private:
                          font.getHeight());
         }
 
-        const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-        textState.setProperty("text", lorumIpsumSentence, nullptr);
-
         beginTest("nested widget with text / much longer text added to widget");
         {
+            const juce::String lorumIpsumSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+            textState.setProperty("text", lorumIpsumSentence, nullptr);
+
             const auto window = interpreter.interpret(windowState);
             jassert(window != nullptr);
 
             const auto& container = *window->getChildren()[0];
+            const auto& button = *container.getChildren()[0];
+            const auto& text = *button.getChildren()[0];
+            const auto& textComponent = *text.getComponent();
 
             const juce::AttributedString attributedString{ lorumIpsumSentence };
             juce::TextLayout layout;
-            layout.createLayout(attributedString, jive::boxModel(container).getContentBounds().getWidth());
+            layout.createLayout(attributedString, static_cast<float>(textComponent.getWidth()));
 
-            const auto& boxModel = jive::boxModel(container);
-            expectEquals(boxModel.getWidth(), 150.0f);
-            expectEquals(boxModel.getContentBounds().getHeight(), std::ceil(layout.getHeight()));
+            // JUCE 7 counts the space a line wraps on in the line's width, so
+            // each line's visible text is measured on its own.
+            for (auto i = 0; i < layout.getNumLines(); i++)
+            {
+                const auto range = layout.getLine(i).stringRange;
+                juce::TextLayout lineLayout;
+                lineLayout.createLayout(juce::AttributedString{ lorumIpsumSentence.substring(range.getStart(), range.getEnd()).trimEnd() },
+                                        static_cast<float>(std::numeric_limits<juce::uint16>::max()));
+                expectLessOrEqual(static_cast<int>(std::ceil(lineLayout.getWidth())), textComponent.getWidth());
+            }
+            expectEquals(textComponent.getHeight(), static_cast<int>(std::ceil(layout.getHeight())));
         }
     }
 

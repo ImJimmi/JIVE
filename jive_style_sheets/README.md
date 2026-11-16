@@ -1,311 +1,280 @@
 # JIVE Style Sheets
 
-- [JIVE Style Sheets](#jive-style-sheets)
-    - [Properties](#properties)
-        - [`background`](#background)
-        - [`foreground`](#foreground)
-        - [`border`](#border)
-        - [`border-radius`](#border-radius)
-        - [`font-family`](#font-family)
-        - [`font-size`](#font-size)
-        - [`font-stretch`](#font-stretch)
-        - [`font-style`](#font-style)
-        - [`font-weight`](#font-weight)
-        - [`letter-spacing`](#letter-spacing)
-        - [`text-decoration`](#text-decoration)
-        - [`transition`](#transition)
-    - [Selectors](#selectors)
-        - [Interaction States](#interaction-states)
-            - [`hover`](#hover)
-            - [`active`](#active)
-            - [`focus`](#focus)
-            - [`disabled`](#disabled)
-            - [Example](#example)
-        - [IDs](#ids)
-        - [Classes](#classes)
-        - [Child Components](#child-components)
+The `jive_style_sheets` module styles JIVE GUIs with JSON style sheets, using CSS-like selectors and properties.
 
+Every `jive::GuiItem` gets a `jive::StyleSheet`, which reads the item's `style` property and applies its rules to the corresponding component.
 
-The `jive_style_sheets` module provides tools for styling components using common CSS-like properties defined in JSON documents.
+The `style` property is the path of a JSON file:
 
-A `jive::StyleSheet` can be attached to a `juce::Component` along with a corresponding `juce::ValueTree` element to apply any styles from the element's `style` property to the component. Style sheets are hereditary, meaning that if a style property isn't explicitly defined for a component, the style sheet will inherit the style from the component's parent instead.
-
-The `style` property can be set using a JSON-formatted string, for example:
-
-```cpp
-juce::Component component;
-juce::ValueTree tree{ "Component" };
-
-tree.setProperty("style",
-                 R"({
-                    "background": "#7F007F",
-                    "foreground": "#7FFF7F",
-                 })",
-                 nullptr);
-
-jive::StyleSheet styleSheet{ component, tree };
+```xml
+<Window style="public/styles/Styles.json">
+    <!-- ... -->
+</Window>
 ```
 
-This approach however will not allow the style to be easily modified at runtime (without some sort of string-builder), and will be constantly parsed to a `jive::Object` internally. Therefore it's a lot more useful to instead set the `style` property using a `jive::Object` directly.
+Paths starting with `./` or `../` are relative to the file the element is declared in. Any other path is relative to the interpreter's source directories. Style sheet files on disk are hot-reloaded whenever they change.
 
-`jive::Object` derives from `juce::DynamicObject` but adds a useful listener mechanism allowing clients to get callbacks when a property is changed in the object. They can be constructed by parsing a JSON string:
+Once a file has been loaded, the `style` property holds its parsed `jive::Object`. Changing that object's properties from C++ updates the styles straight away, which is useful for things like changing a token at runtime:
 
 ```cpp
-juce::Component component;
-juce::ValueTree tree{ "Component" };
-auto styleValue = jive::parseJSON(R"({
-    "background": "#7F007F",
-    "foreground": "#7FFF7F",
-})");
+jive::Property<jive::Object::ReferenceCountedPointer> style{
+  root.state,
+  "style",
+};
 
-tree.setProperty("style", style, nullptr);
-jive::StyleSheet styleSheet{ component, tree };
-
-// Note that jive::parseJSON() returns a juce::var.
-// To get the underlying jive::Object, simply use a dynamic_cast:
-if (auto* styleObject = dynamic_cast<jive::Object>(tree["style"].getDynamicObject()))
-    styleObject->addListener(this);
+if (auto sheet = style.get())
+    sheet->setProperty("background", "#E77674");
 ```
+
+## Rules
+
+The properties at the top level of a style sheet apply to the component that declares it.
+
+```jsonc
+{
+  "background": "blue",
+  "font-family": "Comic Sans",
+  "font-size": 14,
+}
+```
+
+Selector properties can also be specified to add rules for other components that match the selector, such as components of a specific type, components with a given ID, or components with a given `class` property. Selectors can be combined in a single property name, or by adding nested selectors.
+
+```jsonc
+{
+  // Rules for all Button components
+  "Button": {
+    "foreground": "black",
+
+    // Nested rule for all Buttons that have the "primary" class.
+    ".primary": {
+      "background": "green",
+    },
+  },
+
+  // Combined selector to add rules for all components with BOTH
+  // "primary" and "large" classes.
+  ".primary.large": {
+    "font-size": 16,
+  },
+
+  // ID selector to add rules for a specific element
+  "#save-button": {
+    "border": "yellow",
+  },
+}
+```
+
+Style sheets can also have pseudo classes to add rules for elements in specific states, such as when they're hovered by the mouse, or focused by the keyboard. Pseudo classes can also be combined, or nested as with other selectors.
+
+```jsonc
+{
+  "background": "blue",
+
+  // Add rules for when the root component is hovered.
+  ":hover": {
+    "background": "skyblue",
+  },
+
+  "Button": {
+    "background": "red",
+
+    // Nested selector to add rules for Buttons that have been toggled-on
+    ":checked": {
+      "background": "green",
+    },
+  },
+
+  // Combined selector to add rules for sliders that have keyboard focus
+  "Slider:focus": {
+    "border": "yellow",
+  },
+}
+```
+
+_Selectors only match the root component and its descendants._
+
+### Selectors
+
+| Selector     | Example                                                | Matches                                                                                            |
+| ------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Universal    | `*`                                                    | Every component.                                                                                   |
+| Type         | `Button`                                               | Elements with the given name, like `<Button>` (see below).                                         |
+| Class        | `.toggle`                                              | Elements with the class in their `class` property.                                                 |
+| ID           | `#title`                                               | The element with the given `id`.                                                                   |
+| Pseudo-class | `:hover`, `:active`, `:focus`, `:disabled`, `:checked` | Components in the given interaction state.                                                         |
+| Compound     | `Checkbox:checked`, `.heading.large`, `:hover:active`  | Components that match every part.                                                                  |
+| Descendant   | `#toolbar Button`                                      | Components matching the second selector that are descendants of components matching the first.     |
+| Child        | `#toolbar > Button`                                    | Components matching the second selector that are direct children of components matching the first. |
+| List         | `Button, ComboBox`                                     | Components matching any of the selectors.                                                          |
+
+#### Type selectors
+
+Type selectors match the element's name, which is the type of its `juce::ValueTree`. `"Button"` matches `<Button>` elements, `"Checkbox"` matches `<Checkbox>` elements, and so on. Custom elements work the same way, so `"XYPad"` matches `<XYPad>` elements with no extra setup.
+
+Each element only matches its own name: `"Button"` doesn't match checkboxes or hyperlinks, and `"Slider"` doesn't match knobs or spinners. Use a list, like `"Button, Checkbox, Hyperlink"`, to style several types at once.
+
+A few components aren't created by any element, so they have their own type names instead:
+
+| Type         | Matches                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `ScrollBar`  | Scroll bars, such as a `juce::Viewport`'s.                                                                    |
+| `TextEditor` | Text editors, such as the one an editable combo box shows. Themes style these and `<TextBox>` elements alike. |
+| `Popup`      | A combo box's popup menu.                                                                                     |
+| `Option`     | The items in a combo box's popup menu. Each one also matches its `<Option>`'s ID and classes.                 |
+
+#### SVG elements
+
+The elements inside an inline `<svg>` can be matched by selectors too, as if they were components, so rules can set the `fill` and `stroke` of individual shapes:
+
+```xml
+<svg viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="24" />
+    <line class="needle" x1="32" y1="32" x2="32" y2="8" stroke-width="4" />
+</svg>
+```
+
+```json
+{
+  "svg": {
+    "fill": "#537D8D",
+
+    "line": {
+      "stroke": "#E5D352"
+    }
+  }
+}
+```
+
+Elements match by type (their tag name, like `line`), `id`, and `class`, and through their ancestors, so selectors like `svg > line`, `.knob .needle`, and `svg:hover circle` all work. The elements themselves are never hovered, focused, and so on, so pseudo-classes only apply to the components around them.
+
+A style that matches an element, or that it inherits from the `<svg>` or one of its ancestors, takes precedence over its `fill` and `stroke` attributes, as the `<svg>`'s styles do. The exception is an element whose attributes make it transparent (both `fill="none"` and no stroke), which only takes styles that match it directly.
+
+Elements filled or stroked with a `url(...)`, such as an SVG gradient, keep it. Styles only apply to elements inside inline SVGs. An `<Image>`'s SVG source is styled as a whole.
+
+### Precedence
+
+When more than one rule sets the same property on a component, the most specific selector wins, as in CSS: IDs beat classes and pseudo-classes, which beat types. A list of selectors is as specific as the most specific selector in it. Properties at the top level of a style sheet beat any selector.
+
+## Tokens
+
+Top-level properties whose names start with `$` are tokens. A token can be referenced in any property value in the same style sheet, including as part of a longer value:
+
+```jsonc
+{
+  "$accent": "#4FADE4",
+  "$radius": 6,
+
+  "Button, ComboBox": {
+    "border-radius": "$radius",
+  },
+  ".toggle:checked": {
+    "background": "$accent",
+    "shadow": "0 0 12px $accent",
+  },
+}
+```
+
+## Imports
+
+Style sheets can import other style sheets in two ways.
+
+A selector can be given a path instead of an object. The file's rules become that selector's rules, at any depth:
+
+```jsonc
+{
+  "Button": "./Button.json",
+  "Slider": { ":hover": "./SliderHover.json" },
+}
+```
+
+An `"imports"` array adds every rule from each listed file:
+
+```jsonc
+{
+  "imports": ["design-system/Widgets.json", "./Overrides.json"],
+  "background": "#1E1E1E",
+}
+```
+
+Import paths are found like the `style` property: `./` and `../` paths are relative to the importing file, and other paths are relative to the source directories. A value only counts as an import if it ends in `.json`. Icon paths stay relative to the file they're written in.
+
+Imported rules merge selector by selector. When two files set the same property for the same selector, the later one wins: imports apply in the order they're listed, then the importing sheet's own rules apply on top.
+
+Imported files can import others with either method. A file that imports itself is skipped. Editing any imported file hot-reloads every sheet that uses it.
+
+Tokens are shared across imports. Tokens at the top level of the sheet or of any file in its `"imports"` can be used anywhere. Tokens in a selector import sit under that selector, so they're ignored.
+
+## Themes
+
+The `theme` property of a `<Window>` or `<Editor>` picks a set of built-in styles: `juce`, `steel`, `material`, `synthwave`, or `high-contrast`. The default theme is `steel`.
+
+A theme's styles never take precedence over the rules in a style sheet, so a style sheet only has to set what it wants to change.
 
 ## Properties
 
-### `background`
+Where possible, property names and their accepted values match their equivalents from CSS.
 
-The component's background style. Can be either a solid colour or a gradient:
+Inherited properties apply to the descendants of any component they're set on, unless a descendant sets its own value. Font styles are combined with inherited ones rather than replacing them.
 
-```json
-{
-    // Hex colour
-    "background": "#00FF00",
+| Property                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"accent"`                | The colour of a checkbox's tick.<br>Can be a colour, or a gradient (see [Fills](#fills) below).                                                                                                                                                                                                                                                                                                                                                                                    |
+| `"background"`            | The component's background fill.<br>Can be a colour, a gradient, or a backdrop (see [Fills](#fills) below).                                                                                                                                                                                                                                                                                                                                                                        |
+| `"border"`                | The component's border fill.<br>Can be a colour, or a gradient (see [Fills](#fills) below).                                                                                                                                                                                                                                                                                                                                                                                        |
+| `"border-radius"`         | The radius of the component's rounded corners.<br>See CSS [`border-radius`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius) for supported values.                                                                                                                                                                                                                                                                                             |
+| `"border-width"`          | The width of the component's border.<br>See CSS [`border-width`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-width) for supported values.<br>_Can also be specified as a property on GUI items._                                                                                                                                                                                                                                                  |
+| `"direction"`             | The reading direction of text.<br>See CSS [`direction`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/direction) for supported values.                                                                                                                                                                                                                                                                                                                     |
+| `"fill"`                  | The fill of SVG shapes.<br>Applies to every shape in an SVG, and to the elements inside an inline SVG that match a rule directly (see [SVG elements](#svg-elements)).<br>Can be a colour, or a gradient (see [Fills](#fills) below).<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                  |
+| `"font-ascent-override"`  | Overrides the font's ascent, as a proportion of its height.<br>**Requires JUCE 8 or above.**<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                          |
+| `"font-descent-override"` | Overrides the font's descent, as a proportion of its height.<br>**Requires JUCE 8 or above.**<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                         |
+| `"font-family"`           | The name of the font to use.<br>JUCE requires any non-standard fonts to be registered with [`juce::Typeface::createSystemTypefaceFor()`](https://docs.juce.com/master/classjuce_1_1Typeface.html#a24b3cafbfaca34528b6c366dce5e7ba7) and the returned value to be kept in-scope while the font is in use. See the [05-widgets example](../examples/05-widgets/) for a working example.<br>_Components will inherit this value from their parents if no rule matches them directly._ |
+| `"font-kerning"`          | Extra spacing between characters, as a proportion of the font's height.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                                               |
+| `"font-scale"`            | The font's horizontal scale.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                                                                                          |
+| `"font-size"`             | The font's point size.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                                                                                                |
+| `"font-styles"`           | Any of `bold`, `italic`, and `underlined`, separated by spaces.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                                                       |
+| `"foreground"`            | The colour of text, and of a combo box's arrow.<br>See [Fills](#fills) for supported values.<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                                                                                                                                                          |
+| `"icon"`                  | A combo box's arrow, as SVG markup or the path of an SVG file.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `"line-spacing"`          | Extra spacing between lines of text.<br>_Components will inherit this value from their parents if no rule matches them directly._<br>_Can also be specified as a property on GUI items._                                                                                                                                                                                                                                                                                           |
+| `"opacity"`               | The opacity of the component and its children, from `0` to `1`.<br>See CSS [`opacity`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/opacity) for supported values.                                                                                                                                                                                                                                                                                        |
+| `"shadow"`                | The component's drop shadow.<br>See CSS [`box-shadow`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/box-shadow) for supported values.                                                                                                                                                                                                                                                                                                                     |
+| `"stroke"`                | The stroke of SVG shapes.<br>Applies to every shape in an SVG, and to the elements inside an inline SVG that match a rule directly (see [SVG elements](#svg-elements)).<br>Can be a colour, or a gradient (see [Fills](#fills) below).<br>_Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                |
+| `"text-align"`            | The justification of text.<br>One of `centred-left`, `top-left`, `centred-top`, `top-right`, `centred-right`, `bottom-right`, `centred-bottom`, `bottom-left`, or `centred`.<br>Defaults to `centred-left`, or `centred-right` when `"direction"` is `rtl`.                                                                                                                                                                                                                        |
+| `"thumb"`                 | The thumb colour of sliders, knobs, progress bars, or scroll bars.<br> See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                   |
+| `"title-bar"`             | The colour of a `<Window>`'s native title bar on Windows 11. Defaults to the window's background colour (or the backdrop material for `glass` and `tinted`). A gradient uses its first colour.<br>See [Fills](#fills) for supported values.                                                                                                                                                                                                                                        |
+| `"track"`                 | The track colour of sliders, knobs, progress bars, or scroll bars.<br> See [Fills](#fills) for supported values.                                                                                                                                                                                                                                                                                                                                                                   |
+| `"transition"`            | The rules for how a property transitions from one value to another.<br>**Only read at the top level of a style sheet.**<br>See CSS [`transition`](https://www.w3schools.com/css/css3_transitions.asp) for supported values. _Components will inherit this value from their parents if no rule matches them directly._                                                                                                                                                              |
 
-    // RGB colour
-    "background": "rgb(255, 0, 0)",
+### Fills
 
-    // RGBA colour
-    "background": "rgba(255, 0, 0, 0.25)",
+JUCE supports both solid-colour and gradient fills, using CSS syntax.
 
-    // HSL colour
-    "background": "hsl(240, 100%, 50%)",
+#### Colours
 
-    // Named colour from juce::Colours namespace
-    "background": "mediumorchid",
+Colours can be one of:
 
-    // Vertical linear gradient
-    "background": {
-        "stops": {
-            "0.0": "hsl(300, 100%, 80%)",
-            "0.3": "#FF00FF",
-            "1.0": "rgba(255, 0, 255, 0.5)"
-        },
-        "gradient": "linear", // optional
-        "orientation": "vertical", // optional
-    },
+- **Named colour**<br>`skyblue`, `hotpink`, `darkgoldenrod`<br>See [`juce::Colours` namespace](https://docs.juce.com/master/namespacejuce_1_1Colours.html)
+- **Hex colour** with 3, 4, 6, or 8 values<br>`#BC9`, `#7D3B`, `#931F1D`, `#C45BAA2F`<br>See [CSS `<hex-color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/hex-color)
+- **Colour function**<br>`rgb()`, `rgba()`, `hsl()`, or `hsla()`<br>See [CSS `rgb()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/rgb) and [CSS `hsl()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/hsl) for supported syntax
 
-    // Horizontal linear gradient
-    "background": {
-        "orientation": "horizontal",
-        "stops": {...},
-    },
+#### Gradients
 
-    // Radial gradient
-    // (Centred, ending in top-right corner)
-    "background": {
-        "gradient": "radial",
-        "start": "0.5, 0.5", // Normalised coordinates
-        "end": "1.0, 0.0",
-    }
-}
-```
+Gradients can be one of:
 
-### `foreground`
+- **Linear Gradient**<br>`linear-gradient(#f69d3c, #3f87a6)`, `linear-gradient(137deg, #333, #333 50%, #eee 75%, #333 75%)`<br>See [CSS `linear-gradient()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/gradient/linear-gradient) for supported syntax
+- **Radial Gradient**<br>`radial-gradient(#e66465, #9198e5)`, `radial-gradient(ellipse at top, #e66465, transparent)`<br>See [CSS `radial-gradient()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/gradient/radial-gradient) for supported syntax
 
-The component's foreground colour - applied to text and icons. Can be either solid colour or gradient (see `background` for examples).
+#### Backdrops
 
-### `border`
+A `<Window>`'s background can be one of two native materials:
 
-The component's border colour. Can be either a solid colour of gradient (see `background` for examples).
-
-Note that the border thickness is specified as a separate property on the `juce::ValueTree`, _not_ in the style sheet. This is because it's also used by `jive_layouts`.
-
-### `border-radius`
-
-The radius of the component's corners.
+- **`glass`**: a translucent, live blur of whatever is behind the window.
+- **`tinted`**: a calm surface, lightly tinted by the desktop.
 
 ```json
 {
-    // Same radius for all-four corners
-    "border-radius": 5,
-
-    // First value applied to top-left and bottom-right
-    // Second value applied to bottom-left and top-right
-    // (Blame CSS for this madness)
-    "border-radius": "3, 7",
-
-    // First value applied to top-left
-    // Second value applied to bottom-left and top-right
-    // Third value applied to bottom-right
-    "border-radius": "1, 4, 9",
-
-    // Each corner with a different value
-    "border-radius": "2, 4, 6, 7",
+  "background": "glass"
 }
 ```
 
-### `font-family`
-
-The font family to use, e.g. Helvetica, Arial, etc.
-
-### `font-size`
-
-The **point-height** to use for the font.
-
-### `font-stretch`
-
-The horizontal scale of the font, with `1.0` being the default.
-
-### `font-style`
-
-The style to use for the font, either `"normal"` or `"italic"`.
-
-### `font-weight`
-
-The weight to use for the font, either `"normal"` or `"bold`".
-
-### `letter-spacing`
-
-The amount of extra space to leave between characters, in pixels.
-
-### `text-decoration`
-
-The decoration to use for the font, either `"normal"` or `"underlined"`.
-
-### `transition`
-
-Defines how properties change from one value to the next using interpolation. See [CSS Transitions](https://www.w3schools.com/css/css3_transitions.asp)
-
-## Selectors
-
-As well as the above properties, style sheets can also use _selectors_ to apply styles to child components and/or different interaction states.
-
-### Interaction States
-
-#### `hover`
-
-Styles in the `hover` object will be applied when the mouse is hovering over the component.
-
-#### `active`
-
-Styles in the `active` object will be applied when the mouse is held down on a component, or when it is dragged.
-
-#### `focus`
-
-Styles in the `focus` object will be applied when the component has keyboard focus.
-
-#### `disabled`
-
-Styles in the `disabled` object will be applied when the component is not enabled.
-
-#### Example
-
-```json
-{
-    "background": "green",
-
-    "hover": {
-        "background": "lime",
-    },
-    "active": {
-        "background": "darkgreen",
-    },
-    "focus": {
-        "border": "yellow",
-    },
-    "disabled": {
-        "background": "grey",
-    }
-}
-```
-
-### IDs
-
-Styles can be applied to elements with a specified `"id"` property. The style sheet must append a `"#"` to the ID of the element it's targetting. For example:
-
-```xml
-<Button id="save-button"></Button>
-```
-
-```json
-{
-    "#save-button": {
-        "foreground": "blue"
-    }
-}
-```
-
-### Classes
-
-Styles can be applied to elements according to one or more tokens from the element's `"class"` property. The style sheet must append a `"."` to the class name it's targetting. For example:
-
-```xml
-<Button class="button-primary bg-red"></Button>
-```
-
-```json
-{
-    ".button-primary": {
-        "border-radius": 10,
-        "font-weight": "bold",
-    },
-    ".bg-red": {
-        "background": "red",
-    }
-}
-```
-
-Note that if two or more classes define the same property, the element will take the value of the _first_ element in its `"class"` list. For example:
-
-```json
-{
-    ".foo": {
-        "background": "red"
-    },
-    ".bar": {
-        "background": "green"
-    }
-}
-```
-
-This element will have a red background:
-
-```xml
-<Component class="foo bar"></Component>
-```
-
-This element will have a green background:
-
-```xml
-<Component class="bar foo"></Component>
-```
-
-### Child Components
-
-If a property in the object matches the type name of any child elements of the `juce::ValueTree` on which the object is assigned to the `style` property, the styles defined in that property will be applied to those children.
-
-```json
-{
-    "background": "darkgrey", // Window background
-
-    "Button": {
-        "background": "blue", // Make all buttons blue
-    },
-    "Knob": {
-        "border": "yellow",
-    },
-    "MyCustomGroup": {
-        // Make all <MyCustomWidget/> components within <MyCustomGroup/> components have pink text.
-        "MyCustomWidget": {
-            "foreground": "pink",
-        },
-    },
-}
-```
+Backdrops apply on macOS and Windows 11 (22H2+), where `glass` is Acrylic and `tinted` is Mica. Other platforms fall back to the default window colour. Components inside the window draw a backdrop as transparent, so the window's material shows through.

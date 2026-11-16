@@ -1,0 +1,6 @@
+<Component class="choices" parameter="{{ parameter }}" flex-direction="row" gap="4">
+    <Component template="./WaveButton.xml" wave="sine" />
+    <Component template="./WaveButton.xml" wave="triangle" />
+    <Component template="./WaveButton.xml" wave="saw" />
+    <Component template="./WaveButton.xml" wave="square" />
+</Component>

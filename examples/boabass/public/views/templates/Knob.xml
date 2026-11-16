@@ -1,0 +1,7 @@
+<Component class="control" align-items="center" gap="4" min-width="{{ width = "72" }}">
+    <Knob class="{{ size = "medium" }}" parameter="{{ parameter }}" width="{{ diameter = "52" }}" height="{{ diameter = "52" }}" />
+    <Component align-self="stretch" align-items="center" gap="2">
+        <Text class="caption" word-wrap="none">{{ label }}</Text>
+        <Text class="readout" parameter="{{ parameter }}" word-wrap="none" accessible="false" />
+    </Component>
+</Component>

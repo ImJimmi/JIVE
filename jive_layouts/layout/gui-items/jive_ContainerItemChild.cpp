@@ -2,18 +2,21 @@
 
 #include "jive_CommonGuiItem.h"
 
+#include <jive_layouts/layout/gui-items/widgets/jive_Viewport.h>
+
 namespace jive
 {
     class ContainerItem::Child::Pimpl
     {
     public:
         explicit Pimpl(jive::GuiItemDecorator& item)
-            : state{ item.state }
-            , order{ state, "order" }
-            , width{ state, "width" }
-            , height{ state, "height" }
-            , idealWidth{ state, "ideal-width" }
-            , idealHeight{ state, "ideal-height" }
+            : decorator{ item }
+            , state{ item.state }
+            , order{ state, ids::order() }
+            , width{ state, ids::width() }
+            , height{ state, ids::height() }
+            , idealWidth{ state, ids::idealWidth() }
+            , idealHeight{ state, ids::idealHeight() }
             , boxModel{ item.toType<CommonGuiItem>()->boxModel }
         {
         }
@@ -24,6 +27,7 @@ namespace jive
                               Orientation orientation,
                               LayoutStrategy strategy) const
         {
+            JIVE_TRACE();
             const auto minBounds = boxModel.getMinimumBounds();
             item.minWidth = minBounds.getWidth();
             item.minHeight = minBounds.getHeight();
@@ -59,33 +63,52 @@ namespace jive
                                                     juce::Rectangle<float> parentContentBounds,
                                                     LayoutStrategy strategy) const
         {
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+
             if (!width.isAuto())
             {
-                item.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minWidth = item.width;
             }
-            else if (idealWidth.exists())
+            else if (idealWidth.exists() && !scrollsItsContent())
             {
-                if (idealWidth.get() < parentContentBounds.getWidth() || strategy == LayoutStrategy::dummy)
-                    item.minWidth = juce::jmax(item.minWidth, idealWidth.get());
+                if (idealWidth.get() < parentContentBounds.getWidth())
+                    item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
                 else
                     item.width = parentContentBounds.getWidth();
             }
 
             if (!height.isAuto())
             {
-                item.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minHeight = item.height;
+            }
+            else if (scrollsItsContent())
+            {
+                // A viewport starts at its content's height, but can shrink
+                // to nothing, and doesn't make its parent any taller.
+                if constexpr (std::is_same_v<FlexOrGridItem, juce::FlexItem>)
+                {
+                    if (strategy == LayoutStrategy::real && idealHeight.exists())
+                    {
+                        const auto contentWidth = item.width > 0.0f ? item.width : parentContentBounds.getWidth();
+                        item.height = calculateIdealHeight(contentWidth);
+                    }
+                }
             }
             else if (idealHeight.exists())
             {
-                const auto property = state["ideal-height"];
+                const auto property = state[idealHeight.id];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
                 {
                     juce::var args[] = {
-                        strategy == LayoutStrategy::dummy
-                            ? juce::jmin(idealWidth.get(), parentContentBounds.getWidth())
-                            : juce::jmax(item.width, item.minWidth),
+                        juce::jmax(item.width, item.minWidth),
                     };
                     item.minHeight = juce::jmax(item.minHeight,
                                                 static_cast<float>(calculateHeight({ property, args, 1 })));
@@ -93,7 +116,7 @@ namespace jive
                 else
                 {
                     item.minHeight = juce::jmax(item.minHeight,
-                                                static_cast<float>(property));
+                                                calculateIdealHeight(juce::jmax(item.width, item.minWidth)));
                 }
             }
         }
@@ -103,18 +126,33 @@ namespace jive
                                                       juce::Rectangle<float> parentContentBounds,
                                                       LayoutStrategy strategy) const
         {
+            const auto widthUpperLimit = item.maxWidth >= 0 ? item.maxWidth : std::numeric_limits<juce::uint16>::max();
+
             if (!width.isAuto())
-                item.width = width.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
-            else if (idealWidth.exists())
-                item.width = idealWidth.get();
+            {
+                item.width = width.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getWidth() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minWidth = item.width;
+            }
+            else if (idealWidth.exists() && !scrollsItsContent())
+            {
+                if (idealWidth.get() < parentContentBounds.getWidth())
+                    item.minWidth = juce::jlimit(item.minWidth, widthUpperLimit, idealWidth.get());
+                else
+                    item.width = parentContentBounds.getWidth();
+            }
 
             if (!height.isAuto())
             {
-                item.height = height.toPixels(strategy == LayoutStrategy::real ? parentContentBounds : juce::Rectangle<float>{});
+                item.height = height.get().toPixels(strategy == LayoutStrategy::real ? parentContentBounds.getHeight() : 0.0f);
+                // An explicit size should be firm: don't let flex shrink the
+                // item below it (matching how an intrinsic/ideal size does).
+                item.minHeight = item.height;
             }
-            else if (idealHeight.exists())
+            else if (idealHeight.exists() && !scrollsItsContent())
             {
-                const auto property = state["ideal-height"];
+                const auto property = state[idealHeight.id];
 
                 if (const auto calculateHeight = property.getNativeFunction();
                     calculateHeight != nullptr)
@@ -134,7 +172,7 @@ namespace jive
                 else
                 {
                     item.minHeight = juce::jmax(item.minHeight,
-                                                static_cast<float>(property));
+                                                calculateIdealHeight(juce::jmax(item.width, item.minWidth)));
                 }
             }
         }
@@ -153,20 +191,35 @@ namespace jive
             };
         }
 
+        // A viewport's content scrolls, so it doesn't need room for it.
+        [[nodiscard]] bool scrollsItsContent() const
+        {
+            return decorator.getTopLevelDecorator().toType<Viewport>() != nullptr;
+        }
+
+        [[nodiscard]] float calculateIdealHeight(float itemWidth) const
+        {
+            if (auto* container = decorator.getTopLevelDecorator().toType<ContainerItem>(); container != nullptr && itemWidth > 0.0f)
+                return container->calculateIdealHeight(itemWidth);
+
+            return idealHeight.get();
+        }
+
+        const jive::GuiItemDecorator& decorator;
         const juce::ValueTree state;
-        const Property<int> order;
-        const Length width;
-        const Length height;
-        const Property<float> idealWidth;
-        const Property<float> idealHeight;
+        const PassiveProperty<int> order;
+        const PassiveProperty<Length> width;
+        const PassiveProperty<Length> height;
+        const PassiveProperty<float> idealWidth;
+        const PassiveProperty<float> idealHeight;
         const BoxModel& boxModel;
     };
 
     ContainerItem::Child::Child(std::unique_ptr<GuiItem> itemToDecorate)
         : GuiItemDecorator{ std::move(itemToDecorate) }
         , pimpl{ std::make_unique<Pimpl>(*this) }
-        , idealWidth{ state, "ideal-width" }
-        , idealHeight{ state, "ideal-height" }
+        , idealWidth{ state, ids::idealWidth() }
+        , idealHeight{ state, ids::idealHeight() }
     {
         getComponent()->addComponentListener(this);
     }
@@ -201,8 +254,12 @@ namespace jive
 
         if (auto* container = getTopLevelDecorator().toType<ContainerItem>())
         {
-            if (getComponent()->getWidth() < idealWidth.get() || getComponent()->getHeight() < idealHeight.get())
-                container->updateIdealSizeWithinConstraints();
+            if ((static_cast<float>(getComponent()->getWidth()) < idealWidth.get()
+                 || static_cast<float>(getComponent()->getHeight()) < idealHeight.get())
+                && !static_cast<bool>(state[ids::setupInProgress()]))
+            {
+                container->updateIdealSize(true, false);
+            }
         }
     }
 } // namespace jive

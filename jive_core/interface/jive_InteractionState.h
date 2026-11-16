@@ -1,0 +1,319 @@
+#pragma once
+
+#include <jive_core/values/jive_Identifiers.h>
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+namespace jive
+{
+    // Popups are painted at different times, such as when they open while
+    // their combo box is pressed and when an item is highlighted after the
+    // mouse has moved into them. So that every part of a popup looks the same,
+    // it's styled while this is set, which ignores everything interacting with
+    // the components behind it.
+    inline thread_local auto ignoreInteractions = false;
+
+    // Some components are highlighted on behalf of something else under the
+    // mouse, such as the stand-in for an item in a popup menu.
+    [[nodiscard]] inline auto isMouseOverOrDragging(const juce::Component& component)
+    {
+        if (ignoreInteractions)
+            return static_cast<bool>(component.getProperties()[ids::highlighted()]);
+
+        return component.isMouseOverOrDragging(true)
+            || static_cast<bool>(component.getProperties()[ids::highlighted()])
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::hover"])
+#endif
+            ;
+    }
+
+    // Likewise, some are pressed on behalf of something else, such as the
+    // stand-in for a key on a keyboard.
+    [[nodiscard]] inline auto isMouseDown(const juce::Component& component)
+    {
+        if (ignoreInteractions)
+            return false;
+
+        return component.isMouseButtonDown(true)
+            || static_cast<bool>(component.getProperties()[ids::pressed()])
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::active"])
+#endif
+            ;
+    }
+
+    [[nodiscard]] inline auto hasKeyboardFocus(const juce::Component& component)
+    {
+        if (ignoreInteractions)
+            return false;
+
+        return component.hasKeyboardFocus(false)
+#if JIVE_UNIT_TESTS
+            || static_cast<bool>(component.getProperties()["jive::focus"])
+#endif
+            ;
+    }
+
+    // Represents a specific state a component might be in, and includes
+    // methods for check if this state applies to a given component, and
+    // finding the most applicable properties according to this state.
+    class InteractionState
+    {
+    public:
+        enum Flag
+        {
+            focus = 1 << 0,
+            hover = 1 << 1,
+            active = 1 << 2,
+            checked = 1 << 3,
+            disabled = 1 << 4,
+        };
+
+        // Constructs an InteractionState that represents the state of the
+        // given component.
+        explicit InteractionState(const juce::Component& component)
+        {
+            if (component.isMouseOverOrDragging(true))
+                setHovered();
+            if (component.isMouseButtonDown(true))
+                setActive();
+            if (!component.isEnabled())
+                setDisabled();
+            if (component.hasKeyboardFocus(false))
+                setFocused();
+            if (const auto* button = dynamic_cast<const juce::Button*>(&component);
+                button != nullptr && button->getToggleState())
+            {
+                setChecked();
+            }
+        }
+
+        // Constructs an InteractionState from one or more flags. This can
+        // usually be called as an initializer-list for cleaner construction,
+        // e.g.
+        // ```
+        // state = {InteractionState::hover, InteractionState::checked}; // target components that are checked-on, and are being hovered by the mouse.
+        // state = InteractionState::focus; // Implicit constructor straight from a single flag.
+        // ```
+        template <typename... Flags>
+        InteractionState(Flags... initialFlags)
+            : flags{ initialFlags... }
+        {
+            static_assert((std::is_same_v<Flags, Flag> && ...));
+        }
+
+        InteractionState() = default;
+        InteractionState(const InteractionState&) = default;
+        InteractionState& operator=(const InteractionState&) = default;
+        InteractionState(InteractionState&&) = default;
+        InteractionState& operator=(InteractionState&&) = default;
+        ~InteractionState() = default;
+
+        InteractionState& set(const juce::String& propertyName)
+        {
+            if (propertyName == "hover")
+                return setHovered();
+            if (propertyName == "active")
+                return setActive();
+            if (propertyName == "disabled")
+                return setDisabled();
+            if (propertyName == "focus")
+                return setFocused();
+            if (propertyName == "checked")
+                return setChecked();
+
+            jassertfalse;
+            return *this;
+        }
+
+        InteractionState& setHovered()
+        {
+            flags.emplace(hover);
+            return *this;
+        }
+
+        [[nodiscard]] auto isHovered() const
+        {
+            return flags.count(hover) > 0;
+        }
+
+        InteractionState& setActive()
+        {
+            flags.emplace(active);
+            return *this;
+        }
+
+        [[nodiscard]] auto isActive() const
+        {
+            return flags.count(active) > 0;
+        }
+
+        InteractionState& setDisabled()
+        {
+            flags.emplace(disabled);
+            return *this;
+        }
+
+        [[nodiscard]] auto isDisabled() const
+        {
+            return flags.count(disabled) > 0;
+        }
+
+        InteractionState& setFocused()
+        {
+            flags.emplace(focus);
+            return *this;
+        }
+
+        [[nodiscard]] auto isFocused() const
+        {
+            return flags.count(focus) > 0;
+        }
+
+        InteractionState& setChecked()
+        {
+            flags.emplace(checked);
+            return *this;
+        }
+
+        [[nodiscard]] auto ischecked() const
+        {
+            return flags.count(checked) > 0;
+        }
+
+        [[nodiscard]] auto asInt() const
+        {
+            auto value = 0;
+
+            for (const auto& flag : flags)
+                value += static_cast<int>(flag);
+
+            return value;
+        }
+
+        [[nodiscard]] auto asDotSeparatedString() const
+        {
+            juce::StringArray parts;
+
+            for (const auto& flag : flags)
+                parts.add(names.at(flag));
+
+            return parts.joinIntoString(".");
+        }
+
+        [[nodiscard]] static InteractionState fromDotSeparatedString(const juce::String& string)
+        {
+            InteractionState state;
+
+            for (const auto& part : juce::StringArray::fromTokens(string, ".", ""))
+                state.set(part);
+
+            return state;
+        }
+
+        // Returns true if this object represents the state of the given
+        // component.
+        [[nodiscard]] auto appliesTo(const juce::Component& component) const
+        {
+            auto toggleApplies = !flags.count(checked);
+
+            if (auto* button = dynamic_cast<const juce::Button*>(&component))
+                toggleApplies = (flags.count(checked) > 0 && button->getToggleState()) || flags.count(checked) == 0;
+
+            return !((flags.count(hover) > 0 && !isMouseOverOrDragging(component))
+                     || (flags.count(active) > 0 && !isMouseDown(component))
+                     || (flags.count(disabled) > 0 && component.isEnabled())
+                     || (flags.count(focus) > 0 && !hasKeyboardFocus(component))
+                     || !toggleApplies);
+        }
+
+        // Searches the given set of properties for one with the given
+        // baseProperty name that this object also represents.
+        // Note that this does not only check for an exact match, but also
+        // checks for other applicable states - e.g. the property
+        // `"background.disabled"` would be considered applicable to an
+        // InteractionState object with the flags
+        // `{InteractionState::hover, InteractionState::disabled}` because the
+        // property is _less_ specific than the current state.
+        // `"background.hover.disabled"` would be _more_ applicable and so
+        // would be the one returned by this method, but a property that's more
+        // specific, e.g. `"background.hover.focus.disabled"` would not be
+        // applicable.
+        [[nodiscard]] std::optional<juce::var> findMostApplicable(const juce::NamedValueSet& properties,
+                                                                  const juce::String& baseProperty) const
+        {
+            juce::Array<std::pair<juce::String, juce::StringArray>> keys;
+
+            for (const auto& [key, value] : properties)
+            {
+                if (key.toString().startsWith(baseProperty))
+                {
+                    auto parts = juce::StringArray::fromTokens(key
+                                                                   .toString()
+                                                                   .fromFirstOccurrenceOf(baseProperty + ".", false, false),
+                                                               ".",
+                                                               "");
+                    parts.removeDuplicates(true);
+                    parts.sort(false);
+                    keys.addIfNotAlreadyThere(std::make_pair(key.toString(), parts));
+                }
+            }
+
+            static constexpr auto sum = static_cast<int>(Flag::focus)
+                                      + static_cast<int>(Flag::disabled)
+                                      + static_cast<int>(Flag::active)
+                                      + static_cast<int>(Flag::hover)
+                                      + static_cast<int>(Flag::checked);
+
+            for (auto bitset = sum; bitset >= 0; bitset--)
+            {
+                juce::StringArray parts;
+
+                for (auto i = 0; i < 4; i++)
+                {
+                    if ((bitset & (1 << i)) != 0 && flags.count(static_cast<Flag>(1 << i)) > 0)
+                        parts.add(names.at(static_cast<Flag>(1 << i)));
+                }
+
+                parts.sort(false);
+
+                for (const auto& [property, propertyParts] : keys)
+                {
+                    if (parts == propertyParts)
+                        return properties[property];
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        [[nodiscard]] auto operator==(const InteractionState& other) const
+        {
+            return flags == other.flags;
+        }
+
+        [[nodiscard]] auto operator!=(const InteractionState& other) const
+        {
+            return !(*this == other);
+        }
+
+        static inline const std::unordered_set<juce::String> propertyNames{
+            "hover",
+            "active",
+            "disabled",
+            "focus",
+            "checked",
+        };
+
+    public:
+        std::unordered_set<Flag> flags;
+        static inline const std::unordered_map<Flag, juce::String> names{
+            { Flag::hover, "hover" },
+            { Flag::active, "active" },
+            { Flag::disabled, "disabled" },
+            { Flag::focus, "focus" },
+            { Flag::checked, "checked" }
+        };
+    };
+} // namespace jive

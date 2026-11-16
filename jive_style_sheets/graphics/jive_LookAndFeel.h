@@ -1,0 +1,347 @@
+#pragma once
+
+#include "jive_Shadow.h"
+#include "jive_StyleSelector.h"
+#include "jive_Styles.h"
+
+#include <jive_core/interface/jive_InteractionState.h>
+#include <jive_core/values/jive_Identifiers.h>
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+namespace jive
+{
+    class Caret;
+
+    enum class Theme
+    {
+        juce,
+        steel,
+        material,
+        synthwave,
+        highContrast,
+    };
+
+    // Allows for custom styles and renderers to be specified for chosen
+    // components using predicates.
+    //
+    // Use this class like any other LookAndFeel class - you can even use it
+    // has the base class for your existing custom LookAndFeel. Use the various
+    // `add_` methods to specify how different components should be styled.
+    class LookAndFeel : public juce::LookAndFeel_V4
+    {
+    public:
+        // Should draw the current state of the given component to the graphics
+        // context provided, using the set of styles provided.
+        using ComponentPainter = std::function<void(juce::Component&,
+                                                    const Styles&,
+                                                    juce::Graphics&)>;
+
+        using juce::LookAndFeel_V4::LookAndFeel_V4;
+
+        // Automatically attaches this look-and-feel to the given component,
+        // and detaches just before this object is destroyed.
+        explicit LookAndFeel(juce::Component&);
+
+        ~LookAndFeel() override;
+
+        // Adds a painter that will be used to paint any component that matches
+        // the given selector
+        juce::Uuid addPainter(const StyleSelector& selector,
+                              const ComponentPainter&);
+
+        // Removes the specified painter
+        void removePainter(const juce::Uuid& uuid);
+
+        // Removes all the custom painters from this object.
+        void clearPainters();
+
+        // Adds a set of styles that will be used to style any component that
+        // matches the given selector.
+        juce::Uuid addStyles(const StyleSelector& selector,
+                             const Styles&);
+
+        // Returns a pointer to any styles with the given ID. Changes made
+        // through it are picked up the next time styles are resolved, so make
+        // them before then.
+        [[nodiscard]] Styles* findStyles(const juce::Uuid& uuid);
+        [[nodiscard]] const Styles* findStyles(const juce::Uuid& uuid) const;
+
+        // Removes the specified styles
+        void removeStyles(const juce::Uuid& uuid);
+
+        // Removes all the custom styles from this object.
+        void clearStyles();
+
+        // Updates the shadow component (if any) associated with the given
+        // component using the styles provided.
+        // A shadow component is a child of one of the component's ancestors,
+        // which may be painting its children, so adding or removing one is
+        // left until the next frame.
+        template <typename ComponentType>
+        void updateShadow(std::remove_const_t<ComponentType>& component, const Styles& styles) const
+        {
+            auto* shadowComponent = dynamic_cast<ReferenceCountedShadowComponent*>(component
+                                                                                       .getProperties()[ids::attachedShadowComponent()]
+                                                                                       .getObject());
+
+            if (styles.shadow.hasValue() != (shadowComponent != nullptr))
+            {
+                componentsAwaitingShadowChanges.addIfNotAlreadyThere(&component);
+                return;
+            }
+
+            if (shadowComponent != nullptr)
+                shadowComponent->shadow->setShadow(styles.find<Shadow>("shadow").value());
+        }
+
+        // Updates the shadow component (if any) associated with the given
+        // component.
+        template <typename ComponentType>
+        void updateShadow(std::remove_const_t<ComponentType>& component) const
+        {
+            updateShadow<ComponentType>(component, findMostApplicableStyles(component));
+        }
+
+        // Adds and removes the shadow components that updating shadows has
+        // left until the next frame. Call this to have them before then.
+        void addAndRemoveShadows();
+
+        // Replaces the styles of the previously applied theme with those of the
+        // given one. Styles and painters added in any other way, such as by
+        // style sheets, are kept.
+        void applyTheme(Theme theme);
+
+        // Uses all the styles and predicates given to this object using
+        // `addStyles()` to find the most applicable set.
+        // This includes the "cascading" feature of CLAF, where all applicable
+        // styles for this component will be merged such that the returned
+        // object contains the final set of properties that should be used to
+        // render the given component.
+        [[nodiscard]] Styles findMostApplicableStyles(const juce::Component&) const;
+
+        // Finds the styles for the given combo box's popup. Style sheets style
+        // the popup through its stand-in, and anything they don't set falls
+        // back to the combo box's own styles.
+        [[nodiscard]] Styles findPopupStyles(const juce::ComboBox&) const;
+
+        // Finds the styles for an item in the given combo box's popup, which
+        // inherit from the popup's.
+        [[nodiscard]] Styles findPopupItemStyles(const juce::ComboBox&,
+                                                 const juce::PopupMenu::Item&,
+                                                 const InteractionState&) const;
+
+        // Finds the styles for a tooltip from its stand-in, as though the
+        // component it belongs to were at rest.
+        [[nodiscard]] Styles findTooltipStyles(const juce::Component& standIn) const;
+
+        // Searches all the painters given to this object to find the one
+        // (if any) that's most applicable to the given component.
+        [[nodiscard]] std::optional<ComponentPainter> findMostApplicablePainter(const juce::Component&) const;
+
+        // Can be overridden to change where the actual check-box for the given
+        // toggle button should be positioned relative to the button's bounds.
+        // Positioned center-left by default.
+        virtual juce::Rectangle<int> getToggleButtonCheckboxBounds(const juce::ToggleButton&, const Styles&) const;
+
+        // Returns the space that should be left clear at the left of the given
+        // toggle button so its text doesn't overlap its check-box.
+        [[nodiscard]] float getToggleButtonTextInset(const juce::ToggleButton&, const Styles&) const;
+
+        // Returns where the icon of the given combo box, the arrow that shows it
+        // can be opened, should be drawn. Positioned centre-right by default.
+        [[nodiscard]] juce::Rectangle<float> getComboBoxIconBounds(const juce::ComboBox&, const Styles&) const;
+
+        // Returns the smallest size the given combo box can be while still fitting
+        // the text of any of its items alongside its icon.
+        [[nodiscard]] juce::Rectangle<float> getIdealComboBoxSize(const juce::ComboBox&) const;
+
+        // A generic component drawer - useful for drawing simple components
+        // that just have a background, border, corner radius, etc.
+        virtual void drawComponent(juce::Graphics&, juce::Component&) const;
+
+        // Draws a popup menu's background that's associated with the given
+        // combo box (as opposed to a standalone menu, or one associated with a
+        // different sort of component).
+        virtual void drawComboBoxPopupBackground(juce::Graphics&,
+                                                 const juce::ComboBox&,
+                                                 const juce::PopupMenu::Options&,
+                                                 const juce::Rectangle<float>&) const;
+
+        // Draws an item in a popup menu that's associated with the given
+        // combo box.
+        virtual void drawComboBoxPopupItem(juce::Graphics&,
+                                           const juce::PopupMenu::Item&,
+                                           const juce::ComboBox&,
+                                           const juce::PopupMenu::Options&,
+                                           const InteractionState&,
+                                           const juce::Rectangle<float>&) const;
+
+        // =============================================================================================================
+        // Overridden JUCE methods - see JUCE documentation for details.
+
+        // juce::ScrollBar
+        void drawScrollbarButton(juce::Graphics&, juce::ScrollBar&, int, int, int, bool, bool, bool) override;
+        void drawScrollbar(juce::Graphics&, juce::ScrollBar&, int, int, int, int, bool, int, int, bool, bool) override;
+
+        // juce::Button
+        void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
+        void drawButtonText(juce::Graphics&, juce::TextButton&, bool, bool) override;
+        void drawToggleButton(juce::Graphics&, juce::ToggleButton&, bool, bool) override;
+
+        // juce::TextEditor
+        void fillTextEditorBackground(juce::Graphics&, int, int, juce::TextEditor&) override;
+        void drawTextEditorOutline(juce::Graphics&, int, int, juce::TextEditor&) override;
+        juce::CaretComponent* createCaretComponent(juce::Component* keyFocusOwner) override;
+
+        // juce::PopupMenu
+        void drawPopupMenuBackgroundWithOptions(juce::Graphics&, int, int, const juce::PopupMenu::Options&) override;
+        void drawPopupMenuItemWithOptions(juce::Graphics&, const juce::Rectangle<int>&, bool, const juce::PopupMenu::Item&, const juce::PopupMenu::Options&) override;
+        void getIdealPopupMenuItemSizeWithOptions(const juce::String& text, bool isSeparator, int standardMenuItemHeight, int& idealWidth, int& idealHeight, const juce::PopupMenu::Options&) override;
+        int getPopupMenuBorderSizeWithOptions(const juce::PopupMenu::Options&) override;
+        void preparePopupMenuWindow(juce::Component&) override;
+
+        // juce::ComboBox
+        void drawComboBox(juce::Graphics&, int, int, bool, int, int, int, int, juce::ComboBox&) override;
+        juce::Font getComboBoxFont(juce::ComboBox&) override;
+        juce::Label* createComboBoxTextBox(juce::ComboBox&) override;
+        void positionComboBoxText(juce::ComboBox&, juce::Label&) override;
+
+        // juce::Label
+        void drawLabel(juce::Graphics&, juce::Label&) override;
+
+        // juce::Slider
+        void drawLinearSlider(juce::Graphics&, int, int, int, int, float, float, float, juce::Slider::SliderStyle, juce::Slider&) override;
+        void drawRotarySlider(juce::Graphics&, int, int, int, int, float, float, float, juce::Slider&) override;
+
+        // juce::ResizableWindow
+        void fillResizableWindowBackground(juce::Graphics&, int, int, const juce::BorderSize<int>&, juce::ResizableWindow&) override;
+
+        // juce::GroupComponent
+        void drawGroupComponentOutline(juce::Graphics&, int, int, const juce::String& text, const juce::Justification&, juce::GroupComponent&) override;
+
+        // juce::ProgressBar
+        void drawProgressBar(juce::Graphics&, juce::ProgressBar&, int, int, double, const juce::String&) override;
+
+        // =============================================================================================================
+
+#if JIVE_UNIT_TESTS
+        // Runs the per-frame update that would normally be driven by the
+        // display's vertical blank. Exposed for testing so the behaviour can be
+        // exercised deterministically.
+        void simulateVBlank()
+        {
+            onVBlankUpdate();
+        }
+
+        [[nodiscard]] int getNumTransitioningComponents() const
+        {
+            return transitioningComponents.size();
+        }
+#endif
+
+    private:
+        template <class PaintFunction>
+        struct Painter
+        {
+            juce::Uuid id;
+            PaintFunction paint;
+            StyleSelector selector;
+        };
+
+        struct Styler
+        {
+            juce::Uuid id;
+            StyleSelector selector;
+            Styles styles;
+        };
+
+        // Everything about a component that a selector can match against.
+        struct SelectorInputs
+        {
+            explicit SelectorInputs(const juce::Component&);
+            [[nodiscard]] bool operator==(const SelectorInputs&) const;
+
+            const juce::Component* component;
+            juce::String id;
+            juce::var classes;
+            int interactionState;
+            juce::var type;
+        };
+
+        struct ComponentStylesCache
+        {
+            juce::Component::SafePointer<juce::Component> component;
+            Styles styles;
+
+            // The inputs of the component and each of its ancestors that the
+            // styles were last resolved from.
+            std::vector<SelectorInputs> resolvedFrom;
+            std::uint64_t resolvedFromStylersVersion;
+            bool appliedOpacity;
+        };
+
+        template <typename Component, typename DefaultStyleDrawer>
+        void draw(juce::Graphics& g,
+                  Component& component,
+                  DefaultStyleDrawer drawDefaultStyle) const
+        {
+            const auto styles = findMostApplicableStyles(component);
+            applyChildOpacities(component);
+
+            if (const auto painter = findMostApplicablePainter(component);
+                painter.has_value())
+            {
+                (*painter)(component, styles, g);
+            }
+            else
+            {
+                drawDefaultStyle(styles);
+            }
+
+            updateShadow<Component>(component, styles);
+        }
+
+        void applyOpacity(ComponentStylesCache&) const;
+        void applyChildOpacities(const juce::Component&) const;
+        void onVBlankUpdate();
+
+        juce::Component::SafePointer<juce::Component> attachedComponent;
+
+        std::vector<Painter<ComponentPainter>> painters;
+        std::vector<Styler> stylers;
+        std::vector<juce::Uuid> themeStyles;
+        std::uint64_t stylersVersion = 0;
+        mutable bool usesOpacity = false;
+        mutable std::vector<ComponentStylesCache> stylesCache;
+
+        juce::VBlankAttachment vBlank;
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> transitioningComponents;
+        mutable juce::Array<juce::Component::SafePointer<juce::Component>> componentsAwaitingShadowChanges;
+    };
+
+    // A custom Caret component which is drawn by its look-and-feel, rather
+    // than the hard-coded drawing of the base class.
+    class Caret : public juce::CaretComponent
+    {
+    public:
+        using juce::CaretComponent::CaretComponent;
+        void paint(juce::Graphics&) override;
+    };
+} // namespace jive
+
+namespace juce
+{
+    template <>
+    class VariantConverter<jive::Theme>
+    {
+    public:
+        static jive::Theme fromVar(const var& v);
+        static var toVar(const jive::Theme& theme);
+        static bool isValid(const var& v);
+        static String getSyntax();
+
+    private:
+        static const Array<var> options;
+    };
+} // namespace juce

@@ -1,44 +1,83 @@
 cmake_minimum_required(VERSION 3.15)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if (POLICY CMP0141)
+        cmake_policy(SET CMP0141 NEW)
+    endif ()
+    set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+endif ()
+
 project(JIVE
-        VERSION 1.2.0
+        VERSION 2.0.0
 )
 configure_file(version.txt.in
                version.txt
 )
+set_directory_properties(
+    PROPERTIES
+        JUCE_COMPANY_NAME "JIVE"
+        JUCE_COMPANY_WEBSITE "https://github.com/ImJimmi/JIVE"
+)
 
-include(cmake/jive_options.cmake)
+option(JIVE_BUILD_BENCHMARKS "Build JIVE's benchmarks?" OFF)
+option(JIVE_BUILD_EXAMPLES "Build JIVE's examples?" OFF)
+option(JIVE_BUILD_TEST_RUNNER "Build JIVE's test runner?" OFF)
+option(JIVE_ENABLE_COVERAGE "Generate coverage reports when running tests?" OFF)
+option(JIVE_ENABLE_MELATONIN_INSPECTOR "Add the component inspector to the demos and examples?" OFF)
+option(JIVE_ENABLE_PLUGINVAL "Add pluginval tests for the demo plugins?" OFF)
+option(JIVE_ENABLE_PROJUCER_PROJECTS "Add Projucer targets?" OFF)
+
 include(cmake/jive_code_coverage.cmake)
 include(cmake/jive_compiler_and_linker_options.cmake)
+include(cmake/jive_sources.cmake)
 
 if (JIVE_BUILD_BENCHMARKS
-    OR JIVE_BUILD_DEMO_RUNNER
     OR JIVE_BUILD_TEST_RUNNER
+    OR JIVE_BUILD_EXAMPLES
 )
-    include(CTest)
+    set_property(GLOBAL PROPERTY USE_FOLDERS YES)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
+
     include(cmake/CPM.cmake)
     CPMUsePackageLock(package-lock.cmake)
+    CPMGetPackage(JUCE)
 endif ()
 
-add_subdirectory(jive_components)
+if (JIVE_ENABLE_MELATONIN_INSPECTOR)
+    include(cmake/melatonin_inspector.cmake)
+endif()
+
+if (JIVE_ENABLE_PERFETTO)
+    include(cmake/melatonin_perfetto.cmake)
+endif()
+
+if (JIVE_ENABLE_PLUGINVAL)
+    include(cmake/pluginval.cmake)
+endif()
+
+if (JIVE_ENABLE_PROJUCER_PROJECTS)
+    include(cmake/projucer.cmake)
+endif()
+
+if (JIVE_BUILD_BENCHMARKS
+    OR JIVE_BUILD_TEST_RUNNER
+    OR JIVE_ENABLE_PLUGINVAL
+)
+    include(CTest)
+endif ()
+
 add_subdirectory(jive_core)
 add_subdirectory(jive_layouts)
 add_subdirectory(jive_style_sheets)
 
-if (JIVE_BUILD_BENCHMARKS
-    OR JIVE_BUILD_DEMO_RUNNER
-    OR JIVE_BUILD_TEST_RUNNER
-    OR JIVE_BUILD_EXAMPLES
-)
-    CPMGetPackage(JUCE)
-endif ()
+if (JIVE_BUILD_TEST_RUNNER)
+    add_subdirectory(tests/unit-tests)
+endif()
 
-set_directory_properties(PROPERTIES JUCE_COMPANY_NAME
-                                    "JIVE"
-                                    JUCE_COMPANY_WEBSITE
-                                    "https://github.com/ImJimmi/JIVE"
-)
-
-add_subdirectory(runners)
+if (JIVE_BUILD_BENCHMARKS)
+    add_subdirectory(tests/benchmarks)
+endif()
 
 if (JIVE_BUILD_EXAMPLES)
     add_subdirectory(examples)

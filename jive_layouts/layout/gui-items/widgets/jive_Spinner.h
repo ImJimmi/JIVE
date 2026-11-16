@@ -11,8 +11,9 @@ namespace jive
 
     private:
         juce::Slider::SliderStyle getStyleForOrientation(Orientation orientation) final;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) final;
 
-        Property<bool> draggable;
+        PassiveProperty<bool> draggable;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Spinner)
     };

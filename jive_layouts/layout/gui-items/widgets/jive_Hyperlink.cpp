@@ -4,12 +4,20 @@ namespace jive
 {
     Hyperlink::Hyperlink(std::unique_ptr<GuiItem> itemToDecorate)
         : Button(std::move(itemToDecorate))
-        , url{ state, "url" }
+        , url{ state, ids::url() }
     {
         url.onValueChange = [this]() {
             getHyperlink().setURL(url);
         };
         getHyperlink().setURL(url);
+    }
+
+    void Hyperlink::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+    {
+        if (url.handlePropertyChange(tree, property))
+            return;
+
+        Button::valueTreePropertyChanged(tree, property);
     }
 
     bool Hyperlink::isContainer() const
@@ -29,7 +37,7 @@ namespace jive
 } // namespace jive
 
 #if JIVE_UNIT_TESTS
-    #include <jive_layouts/layout/jive_Interpreter.h>
+    #include <jive_layouts/layout/interpreter/jive_Interpreter.h>
 
 class HyperlinkTest : public juce::UnitTest
 {
@@ -46,18 +54,18 @@ public:
     }
 
 private:
-    std::unique_ptr<jive::Hyperlink> createHyperlink(juce::ValueTree tree)
-    {
-        jive::Interpreter interpreter;
+    jive::Interpreter interpreter;
 
-        return std::make_unique<jive::Hyperlink>(interpreter.interpret(tree));
+    [[nodiscard]] auto& getLink(jive::GuiItem& item)
+    {
+        return dynamic_cast<jive::GuiItemDecorator&>(item).toType<jive::Hyperlink>()->getHyperlink();
     }
 
     void testGuiItem()
     {
         beginTest("gui-item");
 
-        auto item = createHyperlink(juce::ValueTree{
+        auto item = interpreter.interpret(juce::ValueTree{
             "Hyperlink",
             {
                 { "width", 222 },
@@ -79,11 +87,12 @@ private:
                     { "height", 333 },
                 },
             };
-            auto hyperlink = createHyperlink(tree);
-            expect(hyperlink->getHyperlink().getURL().isEmpty());
+            auto item = interpreter.interpret(tree);
+            auto& hyperlink = getLink(*item);
+            expect(hyperlink.getURL().isEmpty());
 
             tree.setProperty("url", "example.com", nullptr);
-            expect(hyperlink->getHyperlink().getURL() == juce::URL{ "example.com" });
+            expect(hyperlink.getURL() == juce::URL{ "example.com" });
         }
         {
             juce::ValueTree tree{
@@ -94,8 +103,9 @@ private:
                     { "url", "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" },
                 },
             };
-            auto hyperlink = createHyperlink(tree);
-            expect(hyperlink->getHyperlink().getURL() == juce::URL{ "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" });
+            auto item = interpreter.interpret(tree);
+            auto& hyperlink = getLink(*item);
+            expect(hyperlink.getURL() == juce::URL{ "github.com/ImJimmi/JIVE/blob/main/jive_layouts/layout/gui-items/widgets/jive_Hyperlink.cpp" });
         }
     }
 };

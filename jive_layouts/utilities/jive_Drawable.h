@@ -1,5 +1,6 @@
 #pragma once
 
+#include <jive_core/compile-time-helpers/jive_JuceVersion.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jive
@@ -8,20 +9,25 @@ namespace jive
     {
     public:
         Drawable() = default;
+        Drawable(Drawable&& other) = default;
+        Drawable& operator=(Drawable&& other) = default;
+        ~Drawable() = default;
+
         Drawable(const Drawable& other);
         Drawable& operator=(const Drawable& other);
-        Drawable(Drawable&& other);
-        Drawable& operator=(Drawable&& other);
 
-        explicit Drawable(juce::Image image);
-        Drawable& operator=(juce::Image image);
+        explicit Drawable(const juce::Image& image);
+        Drawable& operator=(const juce::Image& image);
         operator juce::Image() const;
         bool isImage() const;
 
-        explicit Drawable(const juce::String& svgString);
+#if JUCE_VERSION < JIVE_JUCE_VERSION(9, 0, 0)
         explicit Drawable(const juce::XmlElement& svgElement);
-        Drawable& operator=(const juce::String& svgString);
         Drawable& operator=(const juce::XmlElement& svgElement);
+#endif
+
+        explicit Drawable(const juce::String& svgString);
+        Drawable& operator=(const juce::String& svgString);
         operator juce::String() const;
         bool isSVG() const;
 
@@ -34,15 +40,3 @@ namespace jive
         JUCE_LEAK_DETECTOR(Drawable)
     };
 } // namespace jive
-
-namespace juce
-{
-    template <>
-    struct VariantConverter<jive::Drawable>
-    {
-        static jive::Drawable fromVar(const var& v);
-        static var toVar(const jive::Drawable& drawable);
-    };
-
-    String& operator<<(String& str, const jive::Drawable& drawable);
-} // namespace juce

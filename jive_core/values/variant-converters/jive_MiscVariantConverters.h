@@ -1,11 +1,54 @@
 #pragma once
 
+#include "jive_VariantValidation.h"
+
 #include <jive_core/values/jive_Colours.h>
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace juce
 {
+    template <>
+    struct VariantConverter<bool>
+    {
+        static bool fromVar(const var& v)
+        {
+            return static_cast<bool>(v);
+        }
+
+        static var toVar(bool value)
+        {
+            return value;
+        }
+
+        static bool isValid(const var& v)
+        {
+            return v.isBool() || jive::isNumber(v) || jive::isOneOf(v, options);
+        }
+
+        static String getSyntax()
+        {
+            return jive::oneOfSyntax(options, { "a number" });
+        }
+
+    private:
+        static const inline Array<var> options{ "true", "false" };
+    };
+
+    template <typename T>
+    struct VariantConverter<juce::ReferenceCountedObjectPtr<T>>
+    {
+        static juce::ReferenceCountedObjectPtr<T> fromVar(const var& value)
+        {
+            return dynamic_cast<T*>(value.getObject());
+        }
+
+        static var toVar(juce::ReferenceCountedObjectPtr<T> ptr)
+        {
+            return var{ ptr.get() };
+        }
+    };
+
     template <>
     struct VariantConverter<Justification>
     {
@@ -56,6 +99,29 @@ namespace juce
 
             return {};
         }
+
+        static bool isValid(const var& v)
+        {
+            return jive::isOneOf(v, options);
+        }
+
+        static String getSyntax()
+        {
+            return jive::oneOfSyntax(options);
+        }
+
+    private:
+        static const inline Array<var> options{
+            "centred-left",
+            "top-left",
+            "centred-top",
+            "top-right",
+            "centred-right",
+            "bottom-right",
+            "centred-bottom",
+            "bottom-left",
+            "centred",
+        };
     };
 
     template <typename ValueType>
@@ -108,6 +174,19 @@ namespace juce
 
             return tokens.joinIntoString(" ");
         }
+
+        static bool isValid(const var& v)
+        {
+            return v.isVoid() || jive::areAllNumbers(v, 1, 4, { "px" });
+        }
+
+        static String getSyntax()
+        {
+            return "1-4 numbers (\"<all>\", "
+                   "\"<top and bottom> <left and right>\", "
+                   "\"<top> <left and right> <bottom>\", "
+                   "\"<top> <right> <bottom> <left>\")";
+        }
     };
 
     template <>
@@ -142,6 +221,16 @@ namespace juce
 
             jassert(options.size() >= index);
             return options[index];
+        }
+
+        static bool isValid(const var& v)
+        {
+            return jive::isOneOf(v, options);
+        }
+
+        static String getSyntax()
+        {
+            return jive::oneOfSyntax(options);
         }
 
     private:
@@ -217,6 +306,34 @@ namespace juce
                 result.append(VariantConverter<T>::toVar(value));
 
             return result;
+        }
+
+        static bool isValid(const var& v)
+        {
+            if (v.isArray())
+            {
+                return std::all_of(std::begin(*v.getArray()),
+                                   std::end(*v.getArray()),
+                                   [](const auto& value) {
+                                       return value.isVoid() || jive::isValidVar<T>(value);
+                                   });
+            }
+
+            if (v.isString())
+            {
+                const auto tokens = StringArray::fromTokens(v.toString(), " ", {});
+
+                if (tokens.size() > 1)
+                {
+                    return std::all_of(std::begin(tokens),
+                                       std::end(tokens),
+                                       [](const auto& token) {
+                                           return jive::isValidVar<T>(token);
+                                       });
+                }
+            }
+
+            return v.isVoid() || jive::isValidVar<T>(v);
         }
     };
 
@@ -294,6 +411,17 @@ namespace juce
 
             return tokens.joinIntoString(" ");
         }
+
+        static bool isValid(const var& v)
+        {
+            const auto tokens = StringArray::fromTokens(v.toString(), false);
+
+            return std::all_of(std::begin(tokens),
+                               std::end(tokens),
+                               [](const auto& token) {
+                                   return token == "close" || token == "minimise" || token == "maximise";
+                               });
+        }
     };
 
     template <>
@@ -309,7 +437,11 @@ namespace juce
 
         static var toVar(const Image& image)
         {
+#if JUCE_MAJOR_VERSION >= 8
             return var{ image.getPixelData().get() };
+#else
+            return var{ image.getPixelData() };
+#endif
         }
     };
 
@@ -339,6 +471,17 @@ namespace juce
             jassert(stringFlagPair != std::end(map));
 
             return stringFlagPair->first;
+        }
+
+        static bool isValid(const var& v)
+        {
+            const auto tokens = StringArray::fromTokens(v.toString(), false);
+
+            return std::all_of(std::begin(tokens),
+                               std::end(tokens),
+                               [](const auto& token) {
+                                   return map.count(token) > 0;
+                               });
         }
 
     private:
@@ -377,6 +520,41 @@ namespace juce
         {
             return colour.toString();
         }
+
+        static bool isValid(const var& v)
+        {
+            if (v.isVoid() || v.isInt() || v.isInt64())
+                return true;
+
+            if (!v.isString())
+                return false;
+
+            static constexpr auto hexDigits = "0123456789abcdefABCDEF";
+            const auto text = v.toString().trim();
+
+            if (text.startsWith("rgb") || text.startsWith("hsl"))
+                return text.endsWithChar(')');
+
+            if (text.startsWithChar('#'))
+            {
+                const auto hex = text.substring(1);
+                return hex.containsOnly(hexDigits)
+                    && (hex.length() == 3 || hex.length() == 4 || hex.length() == 6 || hex.length() == 8);
+            }
+
+            static const Colour notFound{ 0x12345670 };
+
+            if (Colours::findColourForName(text, notFound) != notFound)
+                return true;
+
+            const auto hex = text.startsWithIgnoreCase("0x") ? text.substring(2) : text;
+            return hex.isNotEmpty() && hex.containsOnly(hexDigits);
+        }
+
+        static String getSyntax()
+        {
+            return "named colour, hex colour (3, 4, 6, or 8 values), rgb()/rgba(), or hsl()/hsla()";
+        }
     };
 
     template <typename Arithmetic>
@@ -408,6 +586,18 @@ namespace juce
         {
             return point.toString();
         }
+
+        static bool isValid(const var& value)
+        {
+            if (value.isVoid())
+                return true;
+
+            const auto tokens = StringArray::fromTokens(value.toString(), ",", "");
+
+            return tokens.size() == 2
+                && jive::isNumber(tokens[0])
+                && jive::isNumber(tokens[1]);
+        }
     };
 
     template <typename Arithmetic>
@@ -429,6 +619,11 @@ namespace juce
         static var toVar(const Rectangle<Arithmetic>& rectangle)
         {
             return rectangle.toString();
+        }
+
+        static bool isValid(const var& value)
+        {
+            return value.isVoid() || jive::areAllNumbers(value, 4, 4);
         }
     };
 
@@ -460,6 +655,109 @@ namespace juce
         {
             static constexpr auto includeGetParameters = true;
             return url.toString(includeGetParameters);
+        }
+    };
+
+    template <typename T>
+    class VariantConverter<std::unordered_set<T>>
+    {
+    public:
+        static std::unordered_set<T> fromVar(const var& v)
+        {
+            if (!v.isArray())
+                return { VariantConverter<T>::fromVar(v) };
+
+            std::unordered_set<T> set;
+
+            for (const auto& value : *v.getArray())
+                set.emplace(VariantConverter<T>::fromVar(value));
+
+            return set;
+        }
+
+        static var toVar(const std::unordered_set<T>& set)
+        {
+            Array<var> values;
+
+            for (const auto& item : set)
+                values.add(VariantConverter<T>::toVar(item));
+
+            return values;
+        }
+
+        static bool isValid(const var& v)
+        {
+            if (!v.isArray())
+                return v.isVoid() || jive::isValidVar<T>(v);
+
+            return std::all_of(std::begin(*v.getArray()),
+                               std::end(*v.getArray()),
+                               [](const auto& value) {
+                                   return jive::isValidVar<T>(value);
+                               });
+        }
+
+        static String getSyntax()
+        {
+            if constexpr (jive::hasVariantSyntax<T>())
+                return "one or multiple of " + VariantConverter<T>::getSyntax();
+            else
+                return {};
+        }
+    };
+
+    template <>
+    class VariantConverter<juce::Font::FontStyleFlags>
+    {
+    public:
+        static juce::Font::FontStyleFlags fromVar(const var& v)
+        {
+            int flags = 0;
+
+            if (v.toString().contains("italic"))
+                flags += juce::Font::italic;
+            if (v.toString().contains("bold"))
+                flags += juce::Font::bold;
+            if (v.toString().contains("underlined"))
+                flags += juce::Font::underlined;
+
+            return static_cast<juce::Font::FontStyleFlags>(flags);
+        }
+
+        static var toVar(const juce::Font::FontStyleFlags& flags)
+        {
+            juce::StringArray result;
+
+            if (flags & juce::Font::italic)
+                result.add("italic");
+            if (flags & juce::Font::bold)
+                result.add("bold");
+            if (flags & juce::Font::underlined)
+                result.add("underlined");
+
+            if (result.isEmpty())
+                return "normal";
+
+            return result.joinIntoString(" ");
+        }
+
+        static bool isValid(const var& v)
+        {
+            const auto tokens = StringArray::fromTokens(v.toString(), false);
+
+            return std::all_of(std::begin(tokens),
+                               std::end(tokens),
+                               [](const auto& token) {
+                                   return token == "normal"
+                                       || token == "italic"
+                                       || token == "bold"
+                                       || token == "underlined";
+                               });
+        }
+
+        static String getSyntax()
+        {
+            return "one or multiple of \"normal\", \"italic\", \"bold\", \"underlined\"";
         }
     };
 } // namespace juce

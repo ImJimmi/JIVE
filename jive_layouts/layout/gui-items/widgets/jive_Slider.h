@@ -4,12 +4,20 @@
 
 namespace jive
 {
+    using Sensitivity = Number<double, struct SensitivityTag>;
+    using VelocitySensitivity = Number<double, struct VelocitySensitivityTag>;
+    using VelocityThreshold = Number<int, struct VelocityThresholdTag>;
+    using VelocityOffset = Number<double, struct VelocityOffsetTag>;
+
     class Slider
         : public GuiItemDecorator
         , private juce::Slider::Listener
+        , private juce::ValueTree::Listener
+        , private BoxModel::Listener
     {
     public:
         explicit Slider(std::unique_ptr<GuiItem> itemToDecorate);
+        ~Slider() override;
 
         bool isContainer() const override;
 
@@ -20,33 +28,47 @@ namespace jive
         juce::Slider& getSlider();
         const juce::Slider& getSlider() const;
 
+        [[nodiscard]] double getNormalisedValue() const;
+
     protected:
-        Slider(std::unique_ptr<GuiItem> itemToDecorate, float defaultWidth, float defaultHeight);
+        enum class DefaultSize
+        {
+            minimum,
+            fixed,
+        };
+
+        Slider(std::unique_ptr<GuiItem> itemToDecorate, juce::Point<float> defaultSize, DefaultSize defaultSizeKind);
 
         void updateStyle();
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
+        void localisedStringsChanged() override;
 
     private:
         void sliderValueChanged(juce::Slider* slider) override;
+        void boxModelChanged(BoxModel& boxModel) override;
 
         virtual juce::Slider::SliderStyle getStyleForOrientation(Orientation orientation);
 
         void updateRange();
 
-        Property<juce::String> value;
-        Property<juce::String> min;
-        Property<juce::String> max;
-        Property<juce::String> mid;
-        Property<juce::String> interval;
-        Property<Orientation> orientation;
-        Length width;
-        Length height;
-        Property<double> sensitivity;
-        Property<bool> isInVelocityMode;
-        Property<double> velocitySensitivity;
-        Property<int> velocityThreshold;
-        Property<double> velocityOffset;
-        Property<bool> snapToMouse;
-        Property<bool> focusable;
+        PassiveProperty<juce::String> value;
+        PassiveProperty<juce::String> min;
+        PassiveProperty<juce::String> max;
+        PassiveProperty<juce::String> mid;
+        PassiveProperty<juce::String> interval;
+        PassiveProperty<Orientation> orientation;
+        PassiveProperty<Length> width;
+        PassiveProperty<Length> height;
+        PassiveProperty<float> minWidth;
+        PassiveProperty<float> minHeight;
+        PassiveProperty<Sensitivity> sensitivity;
+        PassiveProperty<bool> isInVelocityMode;
+        PassiveProperty<VelocitySensitivity> velocitySensitivity;
+        PassiveProperty<VelocityThreshold> velocityThreshold;
+        PassiveProperty<VelocityOffset> velocityOffset;
+        PassiveProperty<bool> snapToMouse;
+        PassiveProperty<bool> focusable;
+        PassiveProperty<juce::String> tooltip;
 
         Event onChange;
 

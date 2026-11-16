@@ -1,0 +1,31 @@
+{
+  ".panel": {
+    "background": "linear-gradient(to bottom, #11291B, $pine)",
+    "border": "$line",
+    "border-width": 1,
+    "border-radius": "$radius",
+    "shadow": "0 6px 18px rgba(0, 0, 0, 0.45)"
+  },
+  ".panel-title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14,
+    "foreground": "$leaf"
+  },
+  ".panel.off": {
+    ".panel-title": {
+      "foreground": "$muted"
+    },
+    ".panel-body": {
+      "opacity": 0.3
+    }
+  },
+  ".caption": {
+    "font-size": 13,
+    "foreground": "$ink"
+  },
+  ".readout": {
+    "font-family": "Source Code Pro",
+    "font-size": 12,
+    "foreground": "$muted"
+  }
+}

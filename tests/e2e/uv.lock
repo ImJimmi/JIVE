@@ -1,0 +1,92 @@
+version = 1
+revision = 5
+requires-python = ">=3.14"
+
+[[package]]
+name = "colorama"
+version = "0.4.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+]
+
+[[package]]
+name = "iniconfig"
+version = "2.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/e1/2069291243c926a2ff1cd706c7f3eeb9b62144bf60f77c9fb9ff2fb26bd3/iniconfig-2.3.1.tar.gz", hash = "sha256:67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960", size = 21209, upload-time = "2026-10-06T22:48:38.076Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/43/4ca9e49d27a1fcf6bece6f6aec0ea46bb9112489b93d4b688fb415457bdb/iniconfig-2.3.1-py3-none-any.whl", hash = "sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7", size = 7552, upload-time = "2026-10-06T22:48:36.959Z" },
+]
+
+[[package]]
+name = "jive-e2e"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pytest" },
+    { name = "xa11y" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pytest", specifier = ">=9.2.0" },
+    { name = "xa11y", specifier = ">=0.15.4" },
+]
+
+[[package]]
+name = "packaging"
+version = "26.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79", size = 313412, upload-time = "2026-08-04T18:15:28.737Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c", size = 129956, upload-time = "2026-08-04T18:15:27.159Z" },
+]
+
+[[package]]
+name = "pluggy"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz", hash = "sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8", size = 123304, upload-time = "2026-10-15T09:50:58.343Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl", hash = "sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec", size = 27082, upload-time = "2026-10-15T09:50:56.808Z" },
+]
+
+[[package]]
+name = "pygments"
+version = "2.21.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz", hash = "sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c", size = 5005329, upload-time = "2026-08-17T08:02:48.824Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl", hash = "sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9", size = 1250147, upload-time = "2026-08-17T08:02:44.912Z" },
+]
+
+[[package]]
+name = "pytest"
+version = "9.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/42/bb4641652e58dedeac2ec51abc1f8cae4fee4ec63899a0999016229a0f2a/pytest-9.2.0.tar.gz", hash = "sha256:97c4f3b1f3c7414aa36465e09b8220f1d03627993bd51b1282e193753c80557b", size = 1797555, upload-time = "2026-10-27T21:30:20.728Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/39/1f5d8c8877a0fa327db959c19341d4be61660de1ab6b7391f9eb805bcd67/pytest-9.2.0-py3-none-any.whl", hash = "sha256:07acdcf88ec174f907dc01af70bf52d49b014bbab03faeeade31c96b18c2e588", size = 411776, upload-time = "2026-10-27T21:30:19.131Z" },
+]
+
+[[package]]
+name = "xa11y"
+version = "0.15.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9c/59/5713dada5144502c503c55189a81cf6553b2553ee4397eaeb74318893e92/xa11y-0.15.4.tar.gz", hash = "sha256:a2aa620a06717eb0fc60d9aca6d2e6a80c2291652e40e435cb3857c1bd73c6b9", size = 685729, upload-time = "2026-10-24T13:19:24.715Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/61/62fdd498c7632be9b789da4c7e7c642ba9c8517e24699b332b35e68c79f2/xa11y-0.15.4-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:3cb4db68ae12a123731687c366de4d7561187492e5718a9e29a355f4e2d0d445", size = 1204951, upload-time = "2026-10-24T13:19:15.788Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/53/2cbf5de560b37e686f6132dead3e669f88dfaff169cea26a6bbb27905acf/xa11y-0.15.4-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:d7e3e4f8018bee968820220faffcbc8c6e8ec402f6df6068cf3dfc5f9c8359ae", size = 1174492, upload-time = "2026-10-24T13:19:17.914Z" },
+    { url = "https://files.pythonhosted.org/packages/65/54/17df92ac6b17a33763aa5f783999f766320c6f7c7ed3e22c0d76fc3205d7/xa11y-0.15.4-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cb61fcca0abae50e2b413f5298fad8b82f8fe5dc57da3199d35f58c91872208d", size = 2923054, upload-time = "2026-10-24T13:19:19.537Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/25/47768cf5f5f177429f44bf9a7528a5a3e282ab6faf5c8f51774b2741f255/xa11y-0.15.4-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:192862a0b653cba03849cc75e2c0f1ff8f690bee147ed944e4566d65371d0272", size = 2981294, upload-time = "2026-10-24T13:19:21.212Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/3a/0f2b507d9f253bfa590180694599296aed275416a84dee2f817dfc16a5bb/xa11y-0.15.4-cp39-abi3-win_amd64.whl", hash = "sha256:b208f89e7df9da3457c75c7c35f247ca89f1d2a311de9329957b91b3348726fe", size = 1069754, upload-time = "2026-10-24T13:19:23.068Z" },
+]

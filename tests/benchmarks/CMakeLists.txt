@@ -1,0 +1,31 @@
+juce_add_console_app(jive-benchmarking
+                     PRODUCT_NAME
+                     "JIVE Benchmarking"
+)
+
+target_sources(jive-benchmarking
+               PRIVATE source/main.cpp
+)
+
+target_include_directories(jive-benchmarking
+                           PRIVATE source
+)
+
+target_compile_definitions(jive-benchmarking
+                           PRIVATE JIVE_UNIT_TESTS=0
+                                   JIVE_EXAMPLE_01_TEXT_VIEWS_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/../../examples/01-text/source/views"
+                                   JUCE_APPLICATION_NAME="$<TARGET_PROPERTY:jive-benchmarking,JUCE_PRODUCT_NAME>"
+                                   JUCE_APPLICATION_VERSION="$<TARGET_PROPERTY:jive-benchmarking,JUCE_VERSION>"
+)
+
+target_link_libraries(jive-benchmarking
+                      PRIVATE jive::compiler_and_linker_options
+                              jive::jive_layouts
+                              juce::juce_recommended_config_flags
+                              juce::juce_recommended_lto_flags
+                              juce::juce_recommended_warning_flags
+)
+
+if (JIVE_ENABLE_PERFETTO)
+    add_melatonin_perfetto(jive-benchmarking)
+endif()

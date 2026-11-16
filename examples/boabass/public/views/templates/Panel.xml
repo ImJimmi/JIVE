@@ -1,0 +1,10 @@
+<Component class="panel" flex-grow="{{ grow = "1" }}" flex-basis="0" padding="12 14 14 14" gap="10">
+    <Component class="panel-header" flex-direction="row" align-items="center" justify-content="space-between">
+        <Text class="panel-title">{{ title }}</Text>
+        <Snippet name="header" />
+    </Component>
+
+    <Component class="panel-body" flex-direction="{{ direction = "row" }}" flex-grow="1" align-items="center" justify-content="{{ justify = "space-around" }}" gap="{{ gap = "10" }}">
+        <Snippet name="body" />
+    </Component>
+</Component>

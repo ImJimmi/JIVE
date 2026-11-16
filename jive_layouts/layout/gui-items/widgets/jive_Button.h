@@ -4,10 +4,13 @@
 
 namespace jive
 {
+    using RadioGroup = Number<int, struct RadioGroupTag>;
+
     class Button
         : public GuiItemDecorator
         , private juce::Button::Listener
         , private juce::ComponentListener
+        , private juce::ValueTree::Listener
     {
     public:
         enum class TriggerEvent
@@ -26,25 +29,52 @@ namespace jive
         juce::Button& getButton();
         const juce::Button& getButton() const;
 
+        bool stretchesByDefault() const override;
+        void layOutChildren() override;
+
+    protected:
+        void localisedStringsChanged() override;
+        void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
+
     private:
+        static constexpr auto defaultMinHeight = 20.0f;
+        static constexpr auto defaultHorizontalPadding = 15.0f;
+        static constexpr auto defaultVerticalPadding = 10.0f;
+
         void buttonClicked(juce::Button* button) final;
         void componentParentHierarchyChanged(juce::Component& component) final;
 
-        void updateTriggerEvent();
+        // Returns the underlying component as a check-box, or nullptr if this
+        // button isn't one.
+        [[nodiscard]] const juce::ToggleButton* getCheckbox() const;
 
-        Property<bool> toggleable;
-        Property<bool> toggled;
-        Property<bool> toggleOnClick;
-        Property<int> radioGroup;
-        Property<TriggerEvent> triggerEvent;
-        Property<juce::String> tooltip;
-        Property<juce::String, Inheritance::doNotInherit, Accumulation::accumulate> text;
-        Property<juce::FlexBox::Direction> flexDirection;
-        Property<juce::FlexBox::JustifyContent> justifyContent;
-        Property<juce::BorderSize<float>> padding;
-        Property<float> minWidth;
-        Property<float> minHeight;
-        Property<bool> focusable;
+        void updateTriggerEvent();
+        void reserveSpaceForCheckbox();
+
+        PassiveProperty<bool> toggleable;
+        PassiveProperty<bool> toggled;
+        PassiveProperty<bool> toggleOnClick;
+        PassiveProperty<RadioGroup> radioGroup;
+        PassiveProperty<TriggerEvent> triggerEvent;
+        PassiveProperty<juce::String> tooltip;
+        PassiveProperty<juce::String, Accumulation::accumulate> text;
+        PassiveProperty<float> minWidth;
+        PassiveProperty<float> minHeight;
+        PassiveProperty<bool> focusable;
+        template <typename ValueType>
+        using DisplayDependentProperty = Property<ValueType,
+                                                  Inheritance::doNotInherit,
+                                                  Accumulation::doNotAccumulate,
+                                                  false,
+                                                  Responsiveness::ignoreChanges,
+                                                  false>;
+
+        DisplayDependentProperty<juce::FlexBox::JustifyContent> flexJustifyContent;
+        DisplayDependentProperty<juce::FlexBox::AlignItems> flexAlignItems;
+        PassiveProperty<juce::BorderSize<float>> padding;
+
+        bool hasAutomaticPadding{ false };
+        bool hasAutomaticMinHeight{ false };
 
         Event onClick;
 
@@ -64,6 +94,9 @@ namespace juce
     public:
         static jive::Button::TriggerEvent fromVar(const var& v);
         static var toVar(const jive::Button::TriggerEvent& event);
+        static bool isValid(const var& v);
+        static String getSyntax();
+        static jive::Button::TriggerEvent defaultValue();
 
     private:
         static const Array<var> options;

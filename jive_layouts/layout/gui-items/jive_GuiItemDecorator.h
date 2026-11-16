@@ -19,10 +19,13 @@ namespace jive
 
         bool isContainer() const override;
         bool isContent() const override;
+        bool stretchesByDefault() const override;
 
 #if JIVE_IS_PLUGIN_PROJECT
         void attachToParameter(juce::RangedAudioParameter*, juce::UndoManager*) override;
 #endif
+
+        void layOutChildren() override;
 
         GuiItemDecorator& getTopLevelDecorator();
         const GuiItemDecorator& getTopLevelDecorator() const;
@@ -44,13 +47,36 @@ namespace jive
             return const_cast<GuiItemDecorator*>(this)->toType<ItemType>();
         }
 
-        void layOutChildren() override;
+        // Calling this will leave this item in an invalid state. Make sure you
+        // delete this decorator immediately after taking ownership of the
+        // underlying item returned by this method.
+        [[nodiscard]] std::unique_ptr<GuiItem> stripAllDecorators();
 
-        const std::unique_ptr<GuiItem> item;
+    protected:
+        void localisedStringsChanged() override;
+        [[nodiscard]] const juce::LocalisedStrings* getLocalisedStrings() const override;
+
+        // Tells the whole item, and every descendant that translates with these
+        // strings, that they've changed.
+        void setLocalisedStrings(std::optional<juce::LocalisedStrings> strings);
+
+        std::unique_ptr<GuiItem> item;
 
     private:
         GuiItemDecorator* owner = nullptr;
 
         JUCE_LEAK_DETECTOR(GuiItemDecorator)
     };
+
+    [[nodiscard]] std::unique_ptr<GuiItem> decorate(std::unique_ptr<GuiItem> item,
+                                                    const std::vector<std::pair<juce::Identifier, std::function<std::unique_ptr<GuiItemDecorator>(std::unique_ptr<GuiItem>)>>>& customDecorators);
+
+    template <typename ItemType>
+    [[nodiscard]] ItemType* findItemWithIDAndType(GuiItem& root, const juce::Identifier& id)
+    {
+        if (auto* decorator = dynamic_cast<jive::GuiItemDecorator*>(findItemWithID(root, id)))
+            return decorator->toType<ItemType>();
+
+        return nullptr;
+    }
 } // namespace jive

@@ -1,0 +1,3 @@
+<Button class="choice wave" toggleable="true" padding="6 8" tooltip="{{ wave }}">
+    <Image source="public/images/{{ wave }}.svg" width="22" height="14" />
+</Button>

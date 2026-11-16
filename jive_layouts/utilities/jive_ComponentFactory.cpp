@@ -1,6 +1,11 @@
 #include "jive_ComponentFactory.h"
 
-#include <jive_components/jive_components.h>
+#include <jive_style_sheets/components/accessibility/jive_IgnoredComponent.h>
+#include <jive_style_sheets/components/widgets/jive_ComboBoxComponent.h>
+#include <jive_style_sheets/components/widgets/jive_ImageComponent.h>
+#include <jive_style_sheets/components/widgets/jive_KeyboardComponent.h>
+#include <jive_style_sheets/components/widgets/jive_NormalisedProgressBar.h>
+#include <jive_style_sheets/components/widgets/jive_TextComponent.h>
 
 namespace jive
 {
@@ -9,96 +14,116 @@ namespace jive
         creators.insert({
             "Button",
             []() {
-                return std::make_unique<juce::TextButton>();
+                return std::make_shared<juce::TextButton>();
             },
         });
         creators.insert({
             "Checkbox",
             []() {
-                return std::make_unique<juce::ToggleButton>();
+                return std::make_shared<juce::ToggleButton>();
             },
         });
         creators.insert({
             "ComboBox",
             []() {
-                return std::make_unique<juce::ComboBox>();
+                return std::make_shared<ComboBoxComponent>();
             },
         });
         creators.insert({
             "Component",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_shared<IgnoredComponent>();
             },
         });
         creators.insert({
             "Editor",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_shared<IgnoredComponent>();
             },
         });
         creators.insert({
             "Hyperlink",
             []() {
-                return std::make_unique<juce::HyperlinkButton>();
+                return std::make_shared<juce::HyperlinkButton>();
             },
         });
         creators.insert({
             "Image",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_shared<ImageComponent>();
             },
         });
+#if JUCE_MODULE_AVAILABLE_juce_audio_utils
+        creators.insert({
+            "Keyboard",
+            []() {
+                return std::make_shared<KeyboardComponent>();
+            },
+        });
+#endif
         creators.insert({
             "Knob",
             []() {
-                return std::make_unique<juce::Slider>();
+                return std::make_shared<juce::Slider>();
             },
         });
         creators.insert({
             "Label",
             []() {
-                return std::make_unique<juce::Label>();
+                return std::make_shared<juce::Label>();
             },
         });
         creators.insert({
             "ProgressBar",
             []() {
-                return std::make_unique<NormalisedProgressBar>();
+                return std::make_shared<NormalisedProgressBar>();
             },
         });
         creators.insert({
             "Slider",
             []() {
-                return std::make_unique<juce::Slider>();
+                return std::make_shared<juce::Slider>();
             },
         });
         creators.insert({
             "Spinner",
             []() {
-                return std::make_unique<juce::Slider>();
+                return std::make_shared<juce::Slider>();
             },
         });
         creators.insert({
             "svg",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_shared<ImageComponent>();
             },
         });
         creators.insert({
             "Text",
             []() {
-                return std::make_unique<TextComponent>();
+                return std::make_shared<TextComponent>();
+            },
+        });
+        creators.insert({
+            "TextBox",
+            []() {
+                return std::make_shared<juce::TextEditor>();
+            },
+        });
+        creators.insert({
+            "Viewport",
+            []() {
+                return std::make_shared<IgnoredComponent>();
             },
         });
         creators.insert({
             "Window",
             []() {
-                return std::make_unique<IgnoredComponent>();
+                return std::make_shared<IgnoredComponent>();
             },
         });
     }
 
-    std::unique_ptr<juce::Component> ComponentFactory::create(juce::Identifier name) const
+    std::shared_ptr<juce::Component> ComponentFactory::create(juce::Identifier name) const
     {
         auto nameFactoryPair = creators.find(name);
 
@@ -110,7 +135,7 @@ namespace jive
 
     void ComponentFactory::set(juce::Identifier name, ComponentCreator creator)
     {
-        creators.insert({ name, creator });
+        creators.insert_or_assign(name, creator);
     }
 } // namespace jive
 
@@ -155,6 +180,11 @@ private:
             return std::make_unique<Card>();
         });
         expect(dynamic_cast<Card*>(factory.create("Card").get()) != nullptr);
+
+        factory.set("Button", []() {
+            return std::make_unique<Card>();
+        });
+        expect(dynamic_cast<Card*>(factory.create("Button").get()) != nullptr);
     }
 };
 

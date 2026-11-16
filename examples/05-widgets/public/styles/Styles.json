@@ -1,0 +1,43 @@
+{
+  "$tint": "rgba(127, 127, 127, 0.0666)",
+  "$line": "rgba(127, 127, 127, 0.2)",
+  "$glow": "#F2B53A",
+
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14
+  },
+  ".value": {
+    "font-family": "Source Code Pro"
+  },
+  ".preview": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 1
+  },
+  "XYPad": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 1,
+    "border-radius": 6,
+    "track": "$line",
+    "thumb": "$glow"
+  },
+  ".icon": {
+    "fill": "$line"
+  },
+  ".icon.on": {
+    "fill": "radial-gradient(#FFF8E1 0%, $glow 40%)",
+    "shadow": "0 0 14px 2px $glow"
+  },
+  "#light.on": {
+    "fill": "radial-gradient(at 50% 39%, #FFF8E1 0%, $glow 40%)"
+  }
+}

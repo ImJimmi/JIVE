@@ -1,0 +1,892 @@
+#include "jive_Fill.h"
+
+#include "jive_LookAndFeel.h"
+#include "jive_Styles.h"
+
+#include <jive_core/logging/jive_StringStreams.h>
+#include <jive_core/values/variant-converters/jive_MiscVariantConverters.h>
+#include <jive_core/values/variant-converters/jive_VariantConvertion.h>
+#include <jive_style_sheets/geometry/jive_Geometry.h>
+
+namespace jive
+{
+    Fill::Fill(const juce::Colour& colour)
+        : fill{ juce::FillType{ colour } }
+    {
+    }
+
+    Fill::Fill(const juce::ColourGradient& gradient)
+        : fill{ juce::FillType{ gradient } }
+    {
+    }
+
+    Fill::Fill(const juce::FillType& fillType)
+        : fill{ fillType }
+    {
+    }
+
+    Fill::Fill(const Gradient& gradient)
+        : fill{ gradient }
+    {
+    }
+
+    Fill::Fill(Backdrop backdrop)
+        : fill{ backdrop }
+    {
+    }
+
+    Fill::Fill(const juce::String& fillString)
+    {
+        *this = fromString(fillString).value_or(juce::Colours::transparentBlack);
+    }
+
+    Fill::Fill(const char* fillString)
+        : Fill{ juce::String{ fillString } }
+    {
+    }
+
+    bool Fill::isColour() const
+    {
+        return std::holds_alternative<juce::FillType>(fill) && std::get<juce::FillType>(fill).isColour();
+    }
+
+    bool Fill::isGradient() const
+    {
+        return (std::holds_alternative<juce::FillType>(fill) && std::get<juce::FillType>(fill).isGradient())
+            || std::holds_alternative<Gradient>(fill);
+    }
+
+    std::optional<Gradient> Fill::getJiveGradient() const
+    {
+        if (std::holds_alternative<Gradient>(fill))
+            return std::get<Gradient>(fill);
+
+        return std::nullopt;
+    }
+
+    std::optional<Backdrop> Fill::getBackdrop() const
+    {
+        if (std::holds_alternative<Backdrop>(fill))
+            return std::get<Backdrop>(fill);
+
+        return std::nullopt;
+    }
+
+    juce::FillType Fill::toJuceFillType(const juce::Rectangle<float>& bounds) const
+    {
+        if (std::holds_alternative<juce::FillType>(fill))
+            return std::get<juce::FillType>(fill);
+
+        if (std::holds_alternative<Backdrop>(fill))
+            return juce::FillType{ juce::Colours::transparentBlack };
+
+        return juce::FillType{ std::get<Gradient>(fill).toJuceColourGradient(bounds) };
+    }
+
+    Fill& Fill::operator=(const juce::Colour& colour)
+    {
+        fill = juce::FillType{ colour };
+        return *this;
+    }
+
+    Fill& Fill::operator=(const juce::ColourGradient& gradient)
+    {
+        fill = juce::FillType{ gradient };
+        return *this;
+    }
+
+    Fill& Fill::operator=(const juce::FillType& fillType)
+    {
+        fill = fillType;
+        return *this;
+    }
+
+    Fill& Fill::operator=(const Gradient& gradient)
+    {
+        fill = gradient;
+        return *this;
+    }
+
+    Fill& Fill::operator=(const juce::String& fillString)
+    {
+        *this = fromString(fillString).value_or(juce::Colours::transparentBlack);
+        return *this;
+    }
+
+    bool Fill::operator==(const Fill& other) const
+    {
+        return fill == other.fill;
+    }
+
+    bool Fill::operator!=(const Fill& other) const
+    {
+        return !(*this == other);
+    }
+
+    bool Fill::operator==(const juce::Colour& colour) const
+    {
+        return *this == juce::FillType{ colour };
+    }
+
+    bool Fill::operator==(const juce::ColourGradient& gradient) const
+    {
+        return *this == juce::FillType{ gradient };
+    }
+
+    bool Fill::operator==(const juce::FillType& fillType) const
+    {
+        return std::holds_alternative<juce::FillType>(fill) && std::get<juce::FillType>(fill) == fillType;
+    }
+
+    bool Fill::operator==(const Gradient& gradient) const
+    {
+        return std::holds_alternative<Gradient>(fill) && std::get<Gradient>(fill) == gradient;
+    }
+
+    bool Fill::operator==(Backdrop backdrop) const
+    {
+        return getBackdrop() == backdrop;
+    }
+
+    [[nodiscard]] static std::optional<Backdrop> parseBackdrop(const juce::String& text)
+    {
+        if (text == "glass")
+            return Backdrop::glass;
+        if (text == "tinted")
+            return Backdrop::tinted;
+
+        return std::nullopt;
+    }
+
+    std::optional<Fill> Fill::fromString(const juce::String& fillString)
+    {
+        if (auto backdrop = parseBackdrop(fillString))
+            return Fill{ *backdrop };
+
+        if (auto gradient = Gradient::fromString(fillString))
+            return Fill{ *gradient };
+
+        return Fill{ parseColour(fillString) };
+    }
+
+    [[nodiscard]] static std::optional<juce::Colour> findColour(const juce::Component& component,
+                                                                int colourID,
+                                                                bool inheritFromAncestors = true)
+    {
+        if (colourID < 0)
+            return std::nullopt;
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = inheritFromAncestors ? currentComponent->getParentComponent() : nullptr)
+        {
+            if (currentComponent->isColourSpecified(colourID)
+                || currentComponent->getLookAndFeel().isColourSpecified(colourID))
+            {
+                return currentComponent->findColour(colourID);
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    static std::optional<Fill> findFill(const juce::Component& component,
+                                        const juce::String& propertyName,
+                                        const Styles& styles,
+                                        bool inheritFromAncestors,
+                                        int colourID)
+    {
+        const InteractionState state{ component };
+
+        for (const auto* currentComponent = &component;
+             currentComponent != nullptr;
+             currentComponent = inheritFromAncestors ? currentComponent->getParentComponent() : nullptr)
+        {
+            if (const auto property = state.findMostApplicable(currentComponent->getProperties(),
+                                                               propertyName);
+                property.has_value())
+            {
+                return parseColour(property->toString());
+            }
+        }
+
+        if (const auto style = styles.find<Fill>(propertyName);
+            style.has_value())
+        {
+            return style;
+        }
+
+        if (const auto colour = findColour(component, colourID, inheritFromAncestors);
+            colour.has_value())
+        {
+            return Fill{ *colour };
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<Fill> findBackgroundFill(const juce::Component& component,
+                                           const Styles& styles,
+                                           int colourID)
+    {
+        return findFill(component, "background", styles, false, colourID);
+    }
+
+    std::optional<Fill> findForegroundFill(const juce::Component& component,
+                                           const Styles& styles,
+                                           int colourID)
+    {
+        return findFill(component, "foreground", styles, true, colourID);
+    }
+
+    std::optional<Fill> findBorderFill(const juce::Component& component,
+                                       const Styles& styles,
+                                       int colourID)
+    {
+        return findFill(component, "border", styles, true, colourID);
+    }
+
+    static std::optional<Fill> findThumbFill(const juce::Component& component,
+                                             const Styles& styles,
+                                             int colourID)
+    {
+        return findFill(component, "thumb", styles, true, colourID);
+    }
+
+    std::optional<Fill> findTrackFill(const juce::Component& component,
+                                      const Styles& styles,
+                                      int colourID)
+    {
+        return findFill(component, "track", styles, true, colourID);
+    }
+
+    std::optional<Fill> findAccentFill(const juce::Component& component,
+                                       const Styles& styles,
+                                       int colourID)
+    {
+        return findFill(component, "accent", styles, true, colourID);
+    }
+
+    std::optional<Fill> findFill(const juce::Component& component,
+                                 const Styles& styles,
+                                 int colourID)
+    {
+        return findFill(component, "fill", styles, true, colourID);
+    }
+
+    std::optional<Fill> findStroke(const juce::Component& component,
+                                   const Styles& styles,
+                                   int colourID)
+    {
+        return findFill(component, "stroke", styles, true, colourID);
+    }
+
+    juce::FillType getBackgroundFill(const juce::Component& component,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findBackgroundFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::Component& component,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findForegroundFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::Component& component,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return jive::findBorderFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getFill(const juce::Component& component,
+                           const Styles& styles,
+                           const Fill& defaultFill)
+    {
+        return jive::findFill(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getStroke(const juce::Component& component,
+                             const Styles& styles,
+                             const Fill& defaultFill)
+    {
+        return jive::findStroke(component, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(component.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::Label& label,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        if (label.isBeingEdited())
+        {
+            if (const auto result = jive::findBackgroundFill(label, styles, juce::Label::backgroundWhenEditingColourId);
+                result.has_value())
+            {
+                return result->toJuceFillType(label.getLocalBounds().toFloat());
+            }
+        }
+
+        return jive::findBackgroundFill(label, styles, juce::Label::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(label.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::Label& label,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        if (label.isBeingEdited())
+        {
+            if (const auto result = jive::findBorderFill(label, styles, juce::Label::outlineWhenEditingColourId);
+                result.has_value())
+            {
+                return result->toJuceFillType(label.getLocalBounds().toFloat());
+            }
+        }
+
+        return jive::findBorderFill(label, styles, juce::Label::outlineColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(label.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::Label& label,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        if (label.isBeingEdited())
+        {
+            if (const auto result = jive::findForegroundFill(label, styles, juce::Label::textWhenEditingColourId);
+                result.has_value())
+            {
+                return result->toJuceFillType(label.getLocalBounds().toFloat());
+            }
+        }
+
+        return jive::findForegroundFill(label, styles, juce::Label::textColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(label.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::Slider& slider,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        if (slider.isRotary())
+        {
+            if (const auto result = jive::findBackgroundFill(slider, styles, juce::Slider::rotarySliderOutlineColourId);
+                result.has_value())
+            {
+                return result->toJuceFillType(slider.getLocalBounds().toFloat());
+            }
+        }
+
+        return jive::findBackgroundFill(slider, styles, juce::Slider::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(slider.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getThumbFill(const juce::Slider& slider,
+                                const Styles& styles,
+                                const juce::Rectangle<float>& thumbBounds,
+                                const Fill& defaultFill)
+    {
+        return jive::findThumbFill(slider, styles, juce::Slider::thumbColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(thumbBounds);
+    }
+
+    juce::FillType getTrackFill(const juce::Slider& slider,
+                                const Styles& styles,
+                                const Fill& defaultFill)
+    {
+        return jive::findTrackFill(slider, styles, juce::Slider::trackColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(slider.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::ScrollBar& scrollBar,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findBackgroundFill(scrollBar, styles, juce::ScrollBar::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(scrollBar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getThumbFill(const juce::ScrollBar& scrollBar,
+                                const Styles& styles,
+                                const Fill& defaultFill)
+    {
+        return jive::findThumbFill(scrollBar, styles, juce::ScrollBar::thumbColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(scrollBar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getTrackFill(const juce::ScrollBar& scrollBar,
+                                const Styles& styles,
+                                const Fill& defaultFill)
+    {
+        return jive::findTrackFill(scrollBar, styles, juce::ScrollBar::trackColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(scrollBar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::Button& button,
+                                     const Styles& styles,
+                                     const Fill& defaultFill,
+                                     const Fill& defaultToggledFill)
+    {
+        if (const auto result = jive::findBackgroundFill(button, styles))
+            return result->toJuceFillType(button.getLocalBounds().toFloat());
+
+        const auto colourID = button.getToggleState()
+                                ? juce::TextButton::buttonOnColourId
+                                : juce::TextButton::buttonColourId;
+
+        if (auto colour = findColour(button, colourID))
+        {
+            if (button.isOver() || button.isDown())
+                colour = colour->contrasting(button.isDown() ? 0.2f : 0.05f);
+
+            return juce::FillType{ *colour };
+        }
+
+        return (button.getToggleState() ? defaultToggledFill : defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::Button& button,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return jive::findBorderFill(button, styles, juce::ComboBox::outlineColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::Button& button,
+                                     const Styles& styles,
+                                     const Fill& defaultFill,
+                                     const Fill& defaultToggledFill)
+    {
+        return jive::findForegroundFill(button,
+                                        styles,
+                                        button.getToggleState()
+                                            ? juce::TextButton::textColourOffId
+                                            : juce::TextButton::textColourOnId)
+            .value_or(button.getToggleState() ? defaultToggledFill : defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::ToggleButton& button,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findBackgroundFill(button, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(dynamic_cast<LookAndFeel&>(button.getLookAndFeel())
+                                .getToggleButtonCheckboxBounds(button, styles)
+                                .toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::ToggleButton& button,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return jive::findBorderFill(button, styles, juce::ComboBox::outlineColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::ToggleButton& button,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findForegroundFill(button, styles, juce::ToggleButton::textColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getAccentFill(const juce::ToggleButton& button,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return jive::findAccentFill(button, styles, juce::ToggleButton::tickColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(button.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::TextEditor& textEditor,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findBackgroundFill(textEditor, styles, juce::TextEditor::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(textEditor.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::TextEditor& textEditor,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        const auto colourID = textEditor.hasKeyboardFocus(true)
+                                ? juce::TextEditor::focusedOutlineColourId
+                                : juce::TextEditor::outlineColourId;
+        return jive::findBorderFill(textEditor, styles, colourID)
+            .value_or(defaultFill)
+            .toJuceFillType(textEditor.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::TextEditor& textEditor,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return jive::findForegroundFill(textEditor, styles, juce::TextEditor::textColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(textEditor.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::PopupMenu&,
+                                     const juce::PopupMenu::Options& options,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        if (const auto* const target = options.getTopLevelTargetComponent())
+        {
+            return jive::findBackgroundFill(*target, styles, juce::PopupMenu::backgroundColourId)
+                .value_or(defaultFill)
+                .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+        }
+
+        return styles
+            .find<Fill>("background")
+            .value_or(defaultFill)
+            .toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::PopupMenu&,
+                                 const juce::PopupMenu::Options& options,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+
+        if (const auto* const target = options.getTopLevelTargetComponent())
+        {
+            if (const auto& colour = findColour(*target, juce::PopupMenu::textColourId))
+                return colour->withAlpha(0.6f);
+        }
+
+        return defaultFill.toJuceFillType(options.getTargetScreenArea().withZeroOrigin().toFloat());
+    }
+
+    // Unless they're given a background, items show the popup's, and
+    // highlighted ones are tinted with their text's colour to stand out from it.
+    juce::FillType getBackgroundFill(const juce::PopupMenu::Item& item,
+                                     const juce::PopupMenu::Options& options,
+                                     const Styles& styles,
+                                     const InteractionState& interactionState,
+                                     const juce::Rectangle<float>& bounds,
+                                     const Fill& defaultFill)
+    {
+        if (auto fill = styles.find<Fill>("background"); fill.has_value())
+            return fill->toJuceFillType(bounds);
+
+        if (!interactionState.isHovered() || !item.isEnabled)
+            return defaultFill.toJuceFillType(bounds);
+
+        auto fill = getForegroundFill(item, options, styles, InteractionState{}, bounds);
+        fill.setOpacity(fill.getOpacity() * 0.15f);
+        return fill;
+    }
+
+    juce::FillType getBorderFill(const juce::PopupMenu::Item&,
+                                 const juce::PopupMenu::Options& options,
+                                 const Styles& styles,
+                                 const juce::Rectangle<float>& bounds,
+                                 const Fill& defaultFill)
+    {
+        if (auto fill = styles.find<Fill>("border"); fill.has_value())
+            return fill->toJuceFillType(bounds);
+
+        if (const auto* const target = options.getTopLevelTargetComponent())
+        {
+            if (const auto& colour = findColour(*target, juce::PopupMenu::textColourId))
+                return colour->withAlpha(0.3f);
+        }
+
+        return defaultFill.toJuceFillType(bounds);
+    }
+
+    juce::FillType getForegroundFill(const juce::PopupMenu::Item& item,
+                                     const juce::PopupMenu::Options& options,
+                                     const Styles& styles,
+                                     const InteractionState& interactionState,
+                                     const juce::Rectangle<float>& bounds,
+                                     const Fill& defaultFill,
+                                     const Fill& defaultSelectedFill)
+    {
+        if (auto fill = styles.find<Fill>("foreground"); fill.has_value())
+        {
+            auto fillType = fill->toJuceFillType(bounds);
+            fillType.setOpacity(fillType.getOpacity() * (item.isEnabled ? 1.0f : 0.5f));
+            return fillType;
+        }
+
+        if (const auto* const target = options.getTopLevelTargetComponent())
+        {
+            const auto colourID = interactionState.isHovered()
+                                    ? juce::PopupMenu::highlightedTextColourId
+                                    : juce::PopupMenu::textColourId;
+
+            if (const auto& colour = findColour(*target, colourID))
+                return colour->withAlpha((interactionState.isHovered() || item.isEnabled) ? 1.0f : 0.5f);
+        }
+
+        return (item.isTicked ? defaultSelectedFill : defaultFill)
+            .toJuceFillType(bounds);
+    }
+
+    juce::FillType getBackgroundFill(const juce::ComboBox& comboBox,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findBackgroundFill(comboBox, styles, juce::ComboBox::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(comboBox.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::ComboBox& comboBox,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return findBorderFill(comboBox, styles, juce::ComboBox::outlineColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(comboBox.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::ComboBox& comboBox,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findForegroundFill(comboBox, styles, juce::ComboBox::textColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(comboBox.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getArrowFill(const juce::ComboBox& comboBox,
+                                const Styles& styles,
+                                const Fill& defaultFill)
+    {
+        return findForegroundFill(comboBox, styles, juce::ComboBox::arrowColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(comboBox.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBackgroundFill(const juce::ResizableWindow& window,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findBackgroundFill(window, styles, juce::ResizableWindow::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(window.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::GroupComponent& group,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findForegroundFill(group, styles, juce::GroupComponent::textColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(getTitleBounds(group, styles));
+    }
+
+    juce::FillType getBackgroundFill(const juce::GroupComponent& group,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findBackgroundFill(group, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(getGroupBounds(group, styles));
+    }
+
+    juce::FillType getBorderFill(const juce::GroupComponent& group,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return findBorderFill(group, styles, juce::GroupComponent::outlineColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(getGroupBounds(group, styles));
+    }
+
+    juce::FillType getBackgroundFill(const juce::ProgressBar& bar,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findBackgroundFill(bar, styles, juce::ProgressBar::backgroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(bar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getTrackFill(const juce::ProgressBar& bar,
+                                const Styles& styles,
+                                const Fill& defaultFill)
+    {
+        return findTrackFill(bar, styles, juce::ProgressBar::foregroundColourId)
+            .value_or(defaultFill)
+            .toJuceFillType(bar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getBorderFill(const juce::ProgressBar& bar,
+                                 const Styles& styles,
+                                 const Fill& defaultFill)
+    {
+        return findBorderFill(bar, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(bar.getLocalBounds().toFloat());
+    }
+
+    juce::FillType getForegroundFill(const juce::ProgressBar& bar,
+                                     const Styles& styles,
+                                     const Fill& defaultFill)
+    {
+        return findForegroundFill(bar, styles)
+            .value_or(defaultFill)
+            .toJuceFillType(bar.getLocalBounds().toFloat());
+    }
+} // namespace jive
+
+namespace juce
+{
+    jive::Fill VariantConverter<jive::Fill>::fromVar(const var& v)
+    {
+        if (v.isString())
+        {
+            if (auto backdrop = jive::parseBackdrop(v.toString()))
+                return jive::Fill{ *backdrop };
+            if (auto gradient = jive::Gradient::fromString(v.toString()))
+                return jive::Fill{ *gradient };
+
+            return jive::Fill{ VariantConverter<Colour>::fromVar(v) };
+        }
+
+        if (v.hasProperty(jive::ids::gradient()))
+            return jive::Fill{ VariantConverter<jive::Gradient>::fromVar(v) };
+
+        return jive::Fill{ Colour{} };
+    }
+
+    var VariantConverter<jive::Fill>::toVar(const jive::Fill& fill)
+    {
+        if (const auto backdrop = fill.getBackdrop())
+            return *backdrop == jive::Backdrop::glass ? "glass" : "tinted";
+        if (auto gradient = fill.getJiveGradient())
+            return jive::toVar(*gradient);
+
+        return jive::toVar(fill.toJuceFillType().colour);
+    }
+
+    std::optional<jive::Fill> VariantConverter<jive::Fill>::tryFromVar(const var& v)
+    {
+        if (v.isString())
+        {
+            if (auto backdrop = jive::parseBackdrop(v.toString()))
+                return jive::Fill{ *backdrop };
+            if (auto gradient = jive::Gradient::fromString(v.toString()))
+                return jive::Fill{ *gradient };
+        }
+
+        if (v.hasProperty(jive::ids::gradient()))
+            return jive::Fill{ VariantConverter<jive::Gradient>::fromVar(v) };
+
+        if (VariantConverter<Colour>::isValid(v))
+            return jive::Fill{ VariantConverter<Colour>::fromVar(v) };
+
+        return std::nullopt;
+    }
+
+    bool VariantConverter<jive::Fill>::isValid(const var& v)
+    {
+        return tryFromVar(v).has_value();
+    }
+
+    String VariantConverter<jive::Fill>::getSyntax()
+    {
+        return "colour (" + VariantConverter<Colour>::getSyntax() + "), gradient (" + VariantConverter<jive::Gradient>::getSyntax() + "), glass, or tinted";
+    }
+} // namespace juce
+
+#if JIVE_UNIT_TESTS
+    #include <jive_core/testing/jive_UnitTest.h>
+
+static jive::UnitTest fillInterpolationTest{
+    "jive",
+    "jive::Fill",
+    "Fills interpolate between colours",
+    [](auto& test) {
+        test.expect(jive::interpolate(jive::Fill{ juce::Colours::orange },
+                                      jive::Fill{ juce::Colours::cornflowerblue },
+                                      0.3)
+                    == jive::Fill{ juce::Colours::orange.interpolatedWith(juce::Colours::cornflowerblue, 0.3f) });
+    },
+};
+
+static jive::UnitTest fillParsingTest{
+    "jive",
+    "jive::Fill",
+    "Fills are parsed in one go, giving nothing for invalid values",
+    [](auto& test) {
+        const auto gradient = jive::tryFromVar<jive::Fill>("linear-gradient(90deg, red, blue)");
+        test.expect(gradient.has_value() && gradient->getJiveGradient().has_value());
+
+        test.expect(jive::tryFromVar<jive::Fill>("red") == jive::Fill{ juce::Colours::red });
+        test.expect(jive::tryFromVar<jive::Fill>(juce::int64{ 0xff6495ed }) == jive::Fill{ juce::Colour{ 0xff6495ed } });
+        test.expect(!jive::tryFromVar<jive::Fill>("nope").has_value());
+
+        test.expect(jive::tryFromVar<jive::Fill>("glass") == jive::Fill{ jive::Backdrop::glass });
+        test.expect(jive::tryFromVar<jive::Fill>("tinted") == jive::Fill{ jive::Backdrop::tinted });
+        test.expect(jive::Fill{ "glass" }.getBackdrop() == jive::Backdrop::glass);
+        test.expect(jive::Fill{ jive::Backdrop::tinted }.toJuceFillType() == juce::FillType{ juce::Colours::transparentBlack });
+        test.expect(!jive::Fill{ juce::Colours::red }.getBackdrop().has_value());
+    },
+};
+static jive::UnitTest fillGradientInterpolationTest{
+    "jive",
+    "jive::Fill",
+    "Gradients interpolate stop by stop, and colours interpolate with gradients",
+    [](auto& test) {
+        const auto start = *jive::Fill::fromString("linear-gradient(0deg, #000000, #FF0000)");
+        const auto end = *jive::Fill::fromString("linear-gradient(90deg, #FFFFFF, #0000FF)");
+        const auto halfway = jive::interpolate(start, end, 0.5).getJiveGradient();
+        test.expect(halfway.has_value());
+        test.expect(halfway->stops[0].colour == juce::Colour{ 0xFF000000 }.interpolatedWith(juce::Colours::white, 0.5f));
+        test.expect(halfway->stops[1].colour == juce::Colour{ 0xFFFF0000 }.interpolatedWith(juce::Colour{ 0xFF0000FF }, 0.5f));
+        test.expectWithinAbsoluteError(std::get<float>(halfway->linearAngle), juce::MathConstants<float>::pi / 4.0f, 0.001f);
+
+        const auto fromColour = jive::interpolate(jive::Fill{ juce::Colours::black }, end, 0.5).getJiveGradient();
+        test.expect(fromColour.has_value());
+        test.expect(fromColour->stops[0].colour == juce::Colours::black.interpolatedWith(juce::Colours::white, 0.5f));
+
+        const auto toColour = jive::interpolate(end, jive::Fill{ juce::Colours::black }, 0.5).getJiveGradient();
+        test.expect(toColour.has_value());
+        test.expect(toColour->stops[1].colour == juce::Colour{ 0xFF0000FF }.interpolatedWith(juce::Colours::black, 0.5f));
+
+        const auto mismatched = *jive::Fill::fromString("linear-gradient(0deg, #000000, #FF0000, #00FF00)");
+        test.expect(jive::interpolate(mismatched, end, 0.5) == end);
+    },
+};
+#endif

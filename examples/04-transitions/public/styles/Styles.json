@@ -1,0 +1,62 @@
+{
+  "$tint": "rgba(127, 127, 127, 0.12)",
+  "$line": "rgba(127, 127, 127, 0.35)",
+
+  "font-family": "Rubik",
+  "font-size": 14,
+
+  "#title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 40
+  },
+  ".heading": {
+    "font-family": "Rubik Mono One",
+    "font-size": 14
+  },
+  ".value": {
+    "font-family": "Source Code Pro"
+  },
+  ".preview, .code": {
+    "background": "$tint",
+    "border": "$line",
+    "border-width": 1
+  },
+  ".code": {
+    "font-family": "Source Code Pro",
+    "font-size": 12
+  },
+  ".track, .sample": {
+    "background": "$tint",
+    "border-radius": 4
+  },
+
+  ".box": {
+    "border-radius": 4
+  },
+  ".box-red": {
+    "background": "#E77674"
+  },
+  ".box-orange": {
+    "background": "#D8924D"
+  },
+  ".box-yellow": {
+    "background": "#AFAF3F"
+  },
+  ".box-green": {
+    "background": "#74B670"
+  },
+  ".box-blue": {
+    "background": "#4FADE4"
+  },
+  ".box-purple": {
+    "background": "#BE89DD"
+  },
+  "#flex-box": {
+    "border": "rgba(255, 255, 255, 0.85)"
+  },
+
+  "#card-title": {
+    "font-family": "Rubik Mono One",
+    "font-size": 18
+  }
+}
