@@ -854,6 +854,12 @@ namespace jive
             return;
         }
 
+        if (transitions == nullptr && destination.hasValue() && !(destination == source))
+        {
+            destination.setTransitioningFrom(source.get(), source.get());
+            return;
+        }
+
         // If the value is changing while a transition is still in progress,
         // restart the transition from the current (interpolated) value so the
         // animation continues smoothly instead of jumping back to the old
@@ -877,12 +883,13 @@ namespace jive
         destination.set(source.get());
     }
 
-    static void update(Styles& destination, const Styles& source)
+    // Like CSS, components that aren't showing change without transitioning.
+    static void update(Styles& destination, const Styles& source, bool isShowing)
     {
         // Interruptions are calculated against the transition that's currently
         // governing the cached value (i.e. the existing one), so this is read
         // before the transitions themselves are updated below.
-        auto* const transitions = destination.transitions.get();
+        auto* const transitions = isShowing ? destination.transitions.get() : nullptr;
 
         updateStyleProperty(destination.accent, source.accent, transitions);
         updateStyleProperty(destination.background, source.background, transitions);
@@ -928,7 +935,7 @@ namespace jive
 
         if (inputs != entry.resolvedFrom || stylersVersion != entry.resolvedFromStylersVersion)
         {
-            update(entry.styles, buildStyles(stylers, component));
+            update(entry.styles, buildStyles(stylers, component), component.isShowing());
             entry.resolvedFrom = std::move(inputs);
             entry.resolvedFromStylersVersion = stylersVersion;
         }

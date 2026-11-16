@@ -735,6 +735,7 @@ private:
         auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
         jive::LookAndFeel lookAndFeel{ button };
         auto sheet = jive::StyleSheet::create(button, state);
+        show(button);
 
         beginTest("transitions / background");
         {
@@ -789,6 +790,7 @@ private:
         };
         jive::LookAndFeel lookAndFeel{ parent };
         lookAndFeel.applyTheme(jive::Theme::juce);
+        show(parent);
         auto sheet = jive::StyleSheet::create(parent, state);
         expectEquals(resolvedColour(lookAndFeel, child, "background"), juce::Colours::red);
 
@@ -816,8 +818,44 @@ private:
             .colour;
     }
 
+    static void show(juce::Component& component)
+    {
+        component.addToDesktop(0);
+        component.setVisible(true);
+    }
+
     void testTransitionDetails()
     {
+        beginTest("transition details / components that aren't showing change instantly");
+        {
+            juce::TextButton button;
+            button.getProperties().set("jive::type", "Button");
+            button.setSize(100, 25);
+            juce::ValueTree state{
+                "Button",
+                {
+                    {
+                        "style",
+                        new jive::Object{
+                            { "background", "red" },
+                            { "transition", "background 1s linear" },
+                        },
+                    },
+                },
+            };
+            auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
+            jive::LookAndFeel lookAndFeel{ button };
+            auto sheet = jive::StyleSheet::create(button, state);
+            expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
+
+            style.setProperty("background", "blue");
+            expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::blue);
+
+            show(button);
+            style.setProperty("background", "green");
+            expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::blue);
+        }
+
         beginTest("transition details / multiple properties transition independently");
         {
             juce::TextButton button;
@@ -839,6 +877,7 @@ private:
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
             auto sheet = jive::StyleSheet::create(button, state);
+            show(button);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
             expectEquals(resolvedColour(lookAndFeel, button, "foreground"), juce::Colours::black);
@@ -884,6 +923,7 @@ private:
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
             auto sheet = jive::StyleSheet::create(button, state);
+            show(button);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
             expectEquals(resolvedColour(lookAndFeel, button, "foreground"), juce::Colours::black);
@@ -917,6 +957,7 @@ private:
             auto& style = dynamic_cast<jive::Object&>(*state["style"].getDynamicObject());
             jive::LookAndFeel lookAndFeel{ button };
             auto sheet = jive::StyleSheet::create(button, state);
+            show(button);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
 
@@ -964,6 +1005,7 @@ private:
             };
             jive::LookAndFeel lookAndFeel{ button };
             auto sheet = jive::StyleSheet::create(button, state);
+            show(button);
 
             expectEquals(resolvedColour(lookAndFeel, button, "background"), juce::Colours::red);
 
@@ -2021,6 +2063,7 @@ private:
                                                           .getDynamicObject());
             jive::LookAndFeel lookAndFeel{ parent };
             auto sheet = jive::StyleSheet::create(parent, state);
+            show(parent);
 
             parent.createComponentSnapshot(parent.getLocalBounds());
             expectWithinAbsoluteError(child.getAlpha(), 0.0f, alphaTolerance);
