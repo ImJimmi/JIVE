@@ -21,12 +21,12 @@ namespace boabass
             static constexpr auto ledPitch = 6.0f;
             static constexpr auto gap = 2.0f;
 
-            auto* lookAndFeel = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
+            auto* jiveLookAndFeel = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
 
-            if (lookAndFeel == nullptr)
+            if (jiveLookAndFeel == nullptr)
                 return;
 
-            const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+            const auto styles = jiveLookAndFeel->findMostApplicableStyles(*this);
             const auto bounds = getLocalBounds().toFloat();
             const auto numLeds = juce::jmax(1, static_cast<int>(bounds.getHeight() / ledPitch));
             const auto ledHeight = bounds.getHeight() / static_cast<float>(numLeds);

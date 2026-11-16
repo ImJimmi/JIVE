@@ -29,14 +29,14 @@ namespace boabass
 
         void paint(juce::Graphics& g) final
         {
-            auto* lookAndFeel = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
+            auto* jiveLookAndFeel = dynamic_cast<jive::LookAndFeel*>(&getLookAndFeel());
 
-            if (lookAndFeel == nullptr)
+            if (jiveLookAndFeel == nullptr)
                 return;
 
-            lookAndFeel->drawComponent(g, *this);
+            jiveLookAndFeel->drawComponent(g, *this);
 
-            const auto styles = lookAndFeel->findMostApplicableStyles(*this);
+            const auto styles = jiveLookAndFeel->findMostApplicableStyles(*this);
             const auto area = getLocalBounds().toFloat().reduced(8.0f, 10.0f);
             const auto points = calculatePoints(area);
 

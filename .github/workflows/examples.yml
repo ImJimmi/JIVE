@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets]
+        example: [01-text, 02-layouts, 03-style-sheets, 04-transitions, 05-widgets, boabass]
         platform: [macos-latest, windows-latest, ubuntu-latest, ios, android]
         project: [CMake, Projucer]
         exclude:
@@ -32,6 +32,8 @@ jobs:
             project: CMake
           - platform: android
             project: CMake
+          - example: boabass
+            project: Projucer
         include:
           - platform: macos-latest
             platform-name: macOS
@@ -72,6 +74,13 @@ jobs:
           - example: 05-widgets
             project: CMake
             target-suffix: _All
+            cmake-options: -D JIVE_ENABLE_PLUGINVAL=ON
+            run-pluginval: true
+
+          - example: boabass
+            project: CMake
+            target-suffix: _All
+            extra-targets: jive-boabass-app
             cmake-options: -D JIVE_ENABLE_PLUGINVAL=ON
             run-pluginval: true
 
@@ -161,7 +170,7 @@ jobs:
           cmake \
             --build ${{ env.CMAKE_BUILD_DIRECTORY }} \
             --config ${{ env.BUILD_TYPE }} \
-            --target jive-${{ matrix.example }}${{ matrix.target-suffix }} \
+            --target jive-${{ matrix.example }}${{ matrix.target-suffix }} ${{ matrix.extra-targets }} \
             -- -k 0
 
       - name: Run pluginval
@@ -171,7 +180,7 @@ jobs:
           ${{ runner.os == 'Linux' && 'xvfb-run -a' || '' }} ctest \
             --output-on-failure \
             -C ${{ env.BUILD_TYPE }} \
-            -R pluginval
+            -R "jive-${{ matrix.example }}_.*pluginval"
 
       - name: Setup uv
         if: matrix.run-e2e-tests
