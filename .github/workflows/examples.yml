@@ -88,7 +88,7 @@ jobs:
     runs-on: ${{ matrix.runner || matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -119,10 +119,10 @@ jobs:
 
       - name: Setup Java
         if: matrix.platform == 'android'
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 25
 
       - name: Create Android debug keystore
         if: matrix.platform == 'android'
@@ -139,10 +139,10 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Restore CPM dependencies
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CPM_CACHE_DIR }}
           key: cpm-${{ runner.os }}-${{ github.ref_name || github.head_ref }}
@@ -184,7 +184,7 @@ jobs:
 
       - name: Setup uv
         if: matrix.run-e2e-tests
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Resolve Python path
         id: python
