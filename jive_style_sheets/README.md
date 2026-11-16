@@ -175,6 +175,36 @@ Top-level properties whose names start with `$` are tokens. A token can be refer
 }
 ```
 
+## Imports
+
+Style sheets can import other style sheets in two ways.
+
+A selector can be given a path instead of an object. The file's rules become that selector's rules, at any depth:
+
+```jsonc
+{
+  "Button": "./Button.json",
+  "Slider": { ":hover": "./SliderHover.json" },
+}
+```
+
+An `"imports"` array adds every rule from each listed file:
+
+```jsonc
+{
+  "imports": ["design-system/Widgets.json", "./Overrides.json"],
+  "background": "#1E1E1E",
+}
+```
+
+Import paths are found like the `style` property: `./` and `../` paths are relative to the importing file, and other paths are relative to the source directories. A value only counts as an import if it ends in `.json`. Icon paths stay relative to the file they're written in.
+
+Imported rules merge selector by selector. When two files set the same property for the same selector, the later one wins: imports apply in the order they're listed, then the importing sheet's own rules apply on top.
+
+Imported files can import others with either method. A file that imports itself is skipped. Editing any imported file hot-reloads every sheet that uses it.
+
+Tokens are shared across imports. Tokens at the top level of the sheet or of any file in its `"imports"` can be used anywhere. Tokens in a selector import sit under that selector, so they're ignored.
+
 ## Themes
 
 The `theme` property of a `<Window>` or `<Editor>` picks a set of built-in styles: `juce`, `steel`, `material`, `synthwave`, or `high-contrast`. The default theme is `steel`.

@@ -38,7 +38,7 @@ The following properties apply to all elements.
 | `"name"`                 | The component's name.<br>See [`juce::Component::setName()`](https://docs.juce.com/master/classjuce_1_1Component.html#a8a7af7334f6136ed745b82a1b55d93d1).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `"opaque"`               | Whether the component paints every pixel of its bounds, which lets JUCE skip painting anything behind it.<br>See [`juce::Component::setOpaque()`](https://docs.juce.com/master/classjuce_1_1Component.html#a862fe9788d2f2a16f9ad2bb7d8f2e0ec).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `"padding"`              | The amount of space to inset the component's children by.<br>See CSS [`padding`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/padding) for supported values.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `"template"`             | The path to an XML or SVG file to build the component from. This should be a relative path to a source root defined with either `jive_sources()` in CMake, or `jive::SourceRoot` in C++, or should be a path relative to the current file starting with `"./"` or `"../"`.<br>Placeholders like `{{ name }}` in the file are replaced with the value of the same-named attribute on the component before the file is parsed, so they can be used for types and attribute names as well as values.<br>Each `<Snippet name="...">` in the file is replaced by the children of the `<Snippet>` with the same name in the component, or by its own children if the component has no such snippet.<br>See [Your First View](../docs/guides/01-Your%20First%20View.md) for a more in-depth guide to sources, and the [example projects](../examples/) for working examples. |
+| `"template"`             | The path to an XML or SVG file to build the component from. This should be a relative path to a source root defined with either `jive_sources()` in CMake, or `jive::SourceRoot` in C++, or should be a path relative to the current file starting with `"./"` or `"../"`.<br>See [Templates](#templates).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `"title"`                | The element's title for accessibility clients.<br>See [`juce::Component::setTitle()`](https://docs.juce.com/master/classjuce_1_1Component.html#a51b89d7bd4d43ef495f21ceab8c008e6).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `"tooltip"`              | Text shown when the mouse hovers over the component.<br>Tooltips are only shown if the application or plugin has a [`juce::TooltipWindow`](https://docs.juce.com/master/classjuce_1_1TooltipWindow.html).<br>See [`juce::Component::setHelpText()`](https://docs.juce.com/master/classjuce_1_1Component.html#ad84ab870f0f31829fac6d9714ecf4558).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `"transition"`           | The rules for how layout properties transition from one value to another.<br>See CSS [`transition`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/transition) for supported values.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -293,3 +293,65 @@ A `<Viewport>` lays out its children like a `<Component>`, but scrolls them vert
 </Viewport>
 ```
 
+## Templates
+
+A template is an XML file that describes a reusable piece of UI. Any element can use one with the `template` attribute:
+
+```xml
+<!-- public/Track.xml -->
+<Component class="track" flex-direction="row">
+  <Text flex-grow="1">{{ name }}</Text>
+  <Slider value="{{ volume = 0.5 }}"/>
+  <Snippet name="controls">
+    <Checkbox>Mute</Checkbox>
+  </Snippet>
+</Component>
+```
+
+```xml
+<!-- public/View.xml -->
+<Component template="public/Track.xml" name="Drums" volume="0.8">
+  <Snippet name="controls">
+    <Checkbox>Mute</Checkbox>
+    <Checkbox>Solo</Checkbox>
+  </Snippet>
+</Component>
+```
+
+The element using the template takes on the template's root:
+
+- The root's type replaces the element's type. `<Component template="Knob.xml"/>` becomes a `<Slider>` if `Knob.xml` has a `<Slider>` root.
+- The element's attributes are added to the root and override the root's own.
+- The element's children, other than `<Snippet>`s, are added after the template's children.
+
+Template files on disk are hot-reloaded whenever they change. Templates can use other templates to any depth.
+
+See [Templates](../docs/guides/02-Templates.md) for an in-depth guide.
+
+### Placeholders
+
+`{{ name }}` is a placeholder. It's replaced by the value of the `name` attribute on the element using the template. Whitespace inside the braces is ignored.
+
+- Placeholders are filled in before the file is parsed, so they can stand in for types and attribute names as well as values.
+- Values are escaped for XML, so `&`, `<`, and quotes are safe.
+- `{{ name = value }}` gives a default for when the attribute is missing. Quotes around the default are optional.
+- A placeholder with no value and no default becomes an empty string.
+
+A template only fills its own placeholders. To let callers set a placeholder in a nested template, forward it with an attribute like `name="{{ name }}"`. A forwarded empty value still counts as a value, so repeat any default in the outer template.
+
+### Snippets
+
+`<Snippet name="...">` marks where a template takes child elements. It's replaced by the children of the `<Snippet>` with the same name on the element using the template. A snippet nobody fills keeps its own children as default content.
+
+A template only fills its own snippets. To forward content to a nested template's snippet, fill that snippet with a snippet of your own:
+
+```xml
+<!-- Outer.xml -->
+<Component template="./Inner.xml">
+  <Snippet name="children">
+    <Snippet name="inner-children"/>
+  </Snippet>
+</Component>
+```
+
+Paths in a snippet's `template` attributes stay relative to the file that wrote the snippet.

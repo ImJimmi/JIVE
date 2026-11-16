@@ -110,7 +110,7 @@ Templates can invoke other templates, down to any depth.
   <Component
     template="public/templates/Panel.xml"
     title="Cool Templates!"
-    body-text="Lorum Ipsum..."
+    body-text="Lorem Ipsum..."
   />
 </Window>
 ```
@@ -123,7 +123,7 @@ After both the templates are invoked, this becomes:
   <Component class="panel">
     <Component class="card" padding="10">
       <Text class="title">Cool Templates!</Text>
-      <Text>Lorum Ipsum...</Text>
+      <Text>Lorem Ipsum...</Text>
     </Component>
   </Component>
 </Window>
@@ -310,7 +310,7 @@ To allow the invoker of the outer template to pass content to the inner template
 ```xml
 <!-- Outer.xml -->
 <Component>
-  <Component templates="./Inner.xml">
+  <Component template="./Inner.xml">
 
     <!-- Implement the inner template's "children" snippet -->
     <Snippet name="children">
