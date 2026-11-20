@@ -6,9 +6,10 @@
   "git-submodules": {
     "enabled": true
   },
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": ["(^|/)package-lock\\.cmake$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)package-lock\\.cmake$/"],
       "matchStrings": [
         "CPMDeclarePackage\\s*\\(\\s*\\w+[\\s\\S]*?GIT_TAG\\s+\"?(?<currentValue>[^\"\\s]+)\"?[\\s\\S]*?GITHUB_REPOSITORY\\s+\"?(?<depName>[^\"\\s]+)\"?",
         "CPMDeclarePackage\\s*\\(\\s*\\w+[\\s\\S]*?GITHUB_REPOSITORY\\s+\"?(?<depName>[^\"\\s]+)\"?[\\s\\S]*?GIT_TAG\\s+\"?(?<currentValue>[^\"\\s]+)\"?"
@@ -19,10 +20,10 @@
   ],
   "packageRules": [
     {
-      "matchPackagePatterns": ["*"],
       "matchUpdateTypes": ["major", "minor", "patch"],
       "groupName": "All",
-      "groupSlug": "all-deps"
+      "groupSlug": "all-deps",
+      "matchPackageNames": ["*"]
     }
   ]
 }
