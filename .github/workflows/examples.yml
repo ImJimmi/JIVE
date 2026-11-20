@@ -184,7 +184,7 @@ jobs:
 
       - name: Setup uv
         if: matrix.run-e2e-tests
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@v10.4.0
 
       - name: Resolve Python path
         id: python
