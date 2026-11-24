@@ -1,7 +1,9 @@
 name: Test Runner
 run-name: "Test Runner `${{ github.ref_name || github.head_ref }}`"
 
-on: push
+on:
+  push:
+  pull_request:
 
 env:
   BUILD_TYPE: Debug
