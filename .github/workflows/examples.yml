@@ -1,7 +1,9 @@
 name: Examples
 run-name: "Examples `${{ github.ref_name || github.head_ref }}`"
 
-on: push
+on:
+  push:
+  pull_request:
 
 env:
   BUILD_TYPE: Debug
