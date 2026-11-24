@@ -294,7 +294,7 @@ namespace jive
 
         for (const auto& token : juce::StringArray::fromTokens(shadowString, " ", "()"))
         {
-            if (token.containsOnly("0123456789.px"))
+            if (token.containsOnly("-0123456789.px"))
                 numbers.push_back(token.getFloatValue());
             else
                 shadowColour = parseColour(token);
@@ -518,6 +518,19 @@ namespace jive
 
 #if JIVE_UNIT_TESTS
     #include <jive_core/testing/jive_UnitTest.h>
+
+static jive::UnitTest shadowParsesNegativeOffsetsTest{
+    "jive",
+    "jive::Shadow",
+    "Parses negative offsets",
+    [](auto& test) {
+        const auto shadow = jive::Shadow::fromString("-3px -5px 4px #ff0000");
+
+        test.expectEquals(shadow.getOffset(), juce::Point{ -3, -5 });
+        test.expectEquals(shadow.getBlurRadius(), 4.0f);
+        test.expect(shadow.getColour() == juce::Colours::red);
+    },
+};
 
 static jive::UnitTest shadowFollowsAncestorsTest{
     "jive",
